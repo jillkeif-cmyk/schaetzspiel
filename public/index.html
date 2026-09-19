@@ -394,6 +394,21 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 @keyframes emberglow{from{filter:drop-shadow(0 0 4px rgba(255,140,40,.45)) saturate(1.05)}to{filter:drop-shadow(0 0 14px rgba(255,170,60,.9)) saturate(1.25) brightness(1.06)}}
 .pglow.p11::before{content:"";position:absolute;inset:-20%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(255,200,80,.55),rgba(255,120,20,.22) 42%,transparent 70%);filter:blur(7px);animation:masterglow 3s ease-in-out infinite alternate;pointer-events:none}
 .pglow.p11 img,.pglow.p11 .embimg{animation:masterpulse 3.2s ease-in-out infinite alternate}
+/* Effekte direkt im Emblem: per Maske auf die Form des Bildes begrenzt */
+.pglow::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.pglow.p9::after{-webkit-mask-image:url(/emblems/p9.webp?v=${AVER});mask-image:url(/emblems/p9.webp?v=${AVER});
+  background:radial-gradient(circle at 50% 52%,rgba(255,255,255,.95),rgba(255,70,110,.75) 22%,rgba(255,40,80,.15) 40%,transparent 60%);
+  animation:gemflash 2.4s ease-in-out infinite}
+@keyframes gemflash{0%,100%{opacity:.12;transform:scale(.97)}40%{opacity:1;transform:scale(1.03)}55%{opacity:.55}70%{opacity:.85}}
+.pglow.p10::after{-webkit-mask-image:url(/emblems/p10.webp?v=${AVER});mask-image:url(/emblems/p10.webp?v=${AVER});
+  background:radial-gradient(ellipse 42% 60% at 50% 70%,rgba(255,235,150,.95),rgba(255,150,30,.55) 45%,rgba(255,70,0,.12) 70%,transparent 85%);
+  background-size:100% 190%;animation:burn 1.9s ease-in-out infinite alternate;opacity:.75}
+@keyframes burn{from{background-position:0 88%;opacity:.45}to{background-position:0 22%;opacity:.95}}
+.pglow.p11::after{-webkit-mask-image:url(/emblems/p11.webp?v=${AVER});mask-image:url(/emblems/p11.webp?v=${AVER});
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.1) 45%,rgba(255,245,200,.85) 50%,rgba(255,255,255,.1) 55%,transparent 65%);
+  background-size:300% 300%;animation:sheen 3s ease-in-out infinite}
+@keyframes sheen{0%{background-position:140% 140%}50%,100%{background-position:-70% -70%}}
 @keyframes masterpulse{from{filter:drop-shadow(0 0 5px rgba(255,190,60,.45))}to{filter:drop-shadow(0 0 16px rgba(255,210,90,.95)) brightness(1.07)}}
 @keyframes masterglow{from{opacity:.4;transform:scale(.96)}to{opacity:.95;transform:scale(1.06)}}
 
