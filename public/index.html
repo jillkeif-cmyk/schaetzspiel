@@ -317,6 +317,11 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #chatLog .sys{font-size:13.5px;color:var(--muted);font-style:italic}
 #chatLog .empty{color:var(--muted);font-size:14px}
 @media (min-width:1000px){#chatLog{max-height:340px}}
+
+#quit{position:fixed;right:12px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:6;display:none;width:46px;height:46px;border-radius:50%;font:700 20px/1 Archivo;color:var(--muted);background:rgba(5,26,29,.85);backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+#quit.on{display:grid;place-items:center}
+#quit:active{color:var(--hit);transform:scale(.94)}
+@media (min-width:1000px){#quit{right:28px;bottom:28px;width:56px;height:56px;font-size:24px}}
 </style>
 </head>
 <body>
@@ -324,6 +329,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   <div id="tape" aria-hidden="true"><div id="tapeBand"></div><div id="tapeSec"></div></div>
   <main id="app"></main>
 </div>
+<button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
 <div id="emotes"></div>
 <div id="unlock"></div>
 <div id="modal"></div>
@@ -615,6 +621,7 @@ function barHtml(cur, goal, done) { return `<div class="bar ${done ? 'done' : ''
 const OPTS = { pointLimit: ['Punktelimit', [500, 1000, 2000], ''], maxQuestions: ['Höchstens Fragen', [15, 25, 40], ''], countdown: ['Countdown vor dem Start', [30, 60, 120], ' s'], answerTime: ['Zeit pro Schätzfrage', [20, 30, 45], ' s'] };
 
 function update() {
+  $('#quit').classList.toggle('on', !!(token && S && (S.phase === 'question' || S.phase === 'reveal' || S.phase === 'countdown')));
   const tray = $('#emotes'), showTray = !!(token && S && (S.phase === 'reveal' || S.phase === 'finished' || (S.phase === 'question' && S.myAnswer !== null)));
   if (showTray && !tray.innerHTML) tray.innerHTML = EMOJIS.map((e, i) => `<button data-emote="${i}" style="--i:${i}" aria-label="Emote ${e}">${e}</button>`).join('');
   tray.classList.toggle('on', showTray);
@@ -760,7 +767,10 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.i !== undefined && S && S.phase === 'question') socket.emit('answer', Number(t.dataset.i));
   else if (['create', 'start', 'skip', 'again', 'report'].includes(t.id)) socket.emit(t.id);
   else if (t.id === 'createDone') socket.emit('create_done');
-  else if (t.id === 'leave') { if (S.phase === 'lobby' || S.phase === 'countdown' || S.phase === 'finished' || confirm('Match wirklich verlassen?')) socket.emit('leave'); }
+  else if (t.id === 'leave' || t.id === 'quit') {
+    const midGame = S.phase === 'question' || S.phase === 'reveal';
+    if (!midGame || confirm('Match wirklich verlassen? Du bekommst für dieses Match keine XP und keine Weltranglistenpunkte.')) socket.emit('leave');
+  }
   else if (t.id === 'logout') logout();
   else if (t.id === 'mute') { muted = !muted; try { localStorage.setItem('sz_mute', muted ? '1' : '0'); } catch (e2) {} update(); if (!muted) sfx('sent'); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
