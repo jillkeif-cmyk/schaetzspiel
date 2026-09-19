@@ -17,7 +17,6 @@ Dann http://localhost:3000 öffnen.
 | `DATABASE_URL` | Postgres-URL. Ohne sie liegen Accounts und Statistiken nur im Arbeitsspeicher |
 | `ANTHROPIC_API_KEY` | Schaltet live generierte Fragen während des Countdowns ein |
 | `ANTHROPIC_MODEL` | Standard `claude-sonnet-5` |
-| `MAX_MATCHES` | Standard 2 |
 
 ## Punkte
 - Schätzfrage: 0 bis 100 Punkte nach Nähe (0 Punkte ab 50 % Abweichung, bei Jahreszahlen ab 50/100/200 Jahren)
