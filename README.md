@@ -27,6 +27,7 @@ Dann http://localhost:3000 öffnen.
 
 ## Spielerkarten
 - 10 Embleme und 10 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
+- Titel sind eigene Banner-Grafiken (`public/emblems/title_*.webp`), Embleme eigene Icons (`pc_*.webp`)
 - Die Spielerkarte zeigt Profilbild, Emblem, Clan-Tag, Name, Titel, Level-Balken, Prestige-Logo und die Siegesserie als Flamme (1 bis 5, Farbe steigt)
 - Auswahl im Profil, sichtbar in Lobby, Punktestand, Auflösung, Endstand und den Ranglisten
 - Geheime Freischaltung: Emblem „Pink Pages“ und Titel „BookTok-Legende“ über den Code `GRACE`
