@@ -76,7 +76,8 @@ label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
 .chip b{font-stretch:70%;font-weight:800}
 .plist{display:flex;flex-direction:column;gap:8px}
 .pl{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--bg-deep);border-left:6px solid var(--c)}
-.pl .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.pl .nm{flex:1;min-width:0;overflow:hidden;font-weight:600}
+.pl .nm .title{font-size:11.5px;padding:3px 8px;margin-top:2px}
 .pl small{color:var(--muted)}
 .pl .gain{color:var(--ok);font-weight:800;font-stretch:70%;min-width:54px;text-align:right}
 .pl .gain.zero{color:var(--muted)}
@@ -322,6 +323,33 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #quit.on{display:grid;place-items:center}
 #quit:active{color:var(--hit);transform:scale(.94)}
 @media (min-width:1000px){#quit{right:28px;bottom:28px;width:56px;height:56px;font-size:24px}}
+
+/* Spielerkarte: Emblem + Titel */
+.pcemb{width:var(--s,34px);height:var(--s,34px);flex:none;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.title{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;padding:4px 10px;border-radius:7px;font:800 13px/1.25 Archivo;font-stretch:78%;letter-spacing:.3px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 6px rgba(0,0,0,.35);white-space:nowrap}
+.title.s-grau{background:linear-gradient(180deg,#6E8A89,#3C5250)}
+.title.s-bronze{background:linear-gradient(180deg,#D08A46,#8A5424)}
+.title.s-gruen{background:linear-gradient(180deg,#5FC87A,#26723E)}
+.title.s-gold{background:linear-gradient(180deg,#FFE07A,#C08A10);color:#241C05;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.title.s-lila{background:linear-gradient(180deg,#B98BFF,#5B2FA8)}
+.title.s-eis{background:linear-gradient(180deg,#9FE8FF,#1E6E9C);color:#06222E;text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.title.s-feuer{background:linear-gradient(100deg,#FF3D2E,#FF8A00,#FFD23F,#FF8A00,#FF3D2E);background-size:250% 100%;animation:shine 2.6s linear infinite}
+.title.s-legende{background:linear-gradient(100deg,#8A6B12,#FFE88A,#FFF6CC,#FFE88A,#8A6B12);background-size:250% 100%;animation:shine 3.4s linear infinite;color:#241C05;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.title.s-pink{background:linear-gradient(100deg,#FF4FBF,#FF8AD8,#FFD1F0,#FF8AD8,#FF4FBF);background-size:250% 100%;animation:shine 2.8s linear infinite;color:#3A0726;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 16px rgba(255,79,191,.5)}
+.title.big{font-size:17px;padding:7px 16px}
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
+.cardgrid button{padding:8px 4px 6px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);line-height:1.15;text-align:center}
+.cardgrid button.on{box-shadow:inset 0 0 0 2.5px var(--tape);color:var(--paper)}
+.cardgrid button.lock{opacity:.45}
+.cardgrid button.lock .pcemb{filter:grayscale(1) brightness(.5)}
+.tlist{display:flex;flex-direction:column;gap:8px}
+.tlist button{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}
+.tlist button.on{box-shadow:inset 0 0 0 2.5px var(--tape)}
+.tlist button.lock{opacity:.5}
+.tlist button.lock .title{filter:grayscale(1) brightness(.65)}
+.tlist .why{flex:1;min-width:0;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.secret{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 8px,transparent 8px 16px),var(--bg-deep)!important}
+.pcard-big{display:flex;align-items:center;gap:14px}
 </style>
 </head>
 <body>
@@ -352,6 +380,8 @@ function avatar(p, size = 40, emb = true) {
   const t = p.prestige || 0;
   return `<span class="ava t${t}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
 }
+const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp" alt="">` : '');
+const titleHtml = (p, big) => (p && p.title ? `<span class="title s-${esc(p.title.style)}${big ? ' big' : ''}">${esc(p.title.text)}</span>` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
@@ -465,6 +495,7 @@ function build() {
     <div id="profHead"></div>
     <div><input type="file" id="avaFile" accept="image/*" hidden><button class="btn ghost" id="avaBtn">Profilbild ändern</button></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
+    <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
     <div class="panel" id="tagBox" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="adminBox"></div>
     <div class="panel" id="nextPrestige" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -539,7 +570,7 @@ function build() {
   if (S.phase === 'finished') { const ps = [...S.players].sort((a, b) => b.score - a.score); const w = ps.filter((p) => S.winners.includes(p.id));
     return `<div class="col">
     <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
-    <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
+    <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${embHtml(p, 30)}${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
     </div><div class="col"><div id="xpSum"></div>
     <div id="chatBox"></div>
     <div id="endAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`; }
@@ -585,12 +616,12 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 40)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br><span class="lv">${rankText(p)}</span></span>${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${embHtml(p, 30)}${avatar(p, 40)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
 function sideHtml() {
-  return [...S.players].sort((a, b) => b.score - a.score).map((p, i) => `<div class="pl ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="width:18px">${i + 1}</span>${avatar(p, 40)}<span class="nm">${withTag(p)}<br><span class="lv">${rankText(p)}</span></span>${S.phase === 'question' ? `<span class="tick" style="color:var(--ok);font-weight:800">${p.answered ? '✓' : ''}</span>` : ''}<span class="num">${p.score}</span></div>`).join('');
+  return [...S.players].sort((a, b) => b.score - a.score).map((p, i) => `<div class="pl ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="width:18px">${i + 1}</span>${embHtml(p, 28)}${avatar(p, 40)}<span class="nm">${withTag(p)}<br><span class="lv">${rankText(p)}</span></span>${S.phase === 'question' ? `<span class="tick" style="color:var(--ok);font-weight:800">${p.answered ? '✓' : ''}</span>` : ''}<span class="num">${p.score}</span></div>`).join('');
 }
 function friendsHtml() {
   if (!friends.length) return '<p class="sub">Noch keine Freunde. Füge jemanden per Spielername hinzu oder tippe nach einem Match auf „+ Freund“.</p>';
@@ -600,7 +631,7 @@ function friendsHtml() {
 async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
-    $('#modal').innerHTML = `<div class="panel" style="gap:16px"><div class="row" style="gap:18px">${avatar(u, 84)}<div class="grow"><h2>${withTag(u)}</h2><p class="sub">${u.prestige ? 'Prestige ' + u.prestige + ' · ' : ''}Level ${u.level} · ${u.online ? 'online' : 'offline'}</p></div></div>
+    $('#modal').innerHTML = `<div class="panel" style="gap:16px"><div class="row" style="gap:18px">${embHtml(u, 56)}${avatar(u, 84)}<div class="grow"><h2>${withTag(u)}</h2>${titleHtml(u)}<p class="sub" style="margin-top:6px">${u.prestige ? 'Prestige ' + u.prestige + ' · ' : ''}Level ${u.level} · ${u.online ? 'online' : 'offline'}</p></div></div>
       <div class="stats">${[[u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
       <button class="btn ghost" id="pwCancel">Schließen</button><button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -628,6 +659,17 @@ function update() {
   if (!token) return;
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
+    if ($('#cardBox') && home && home.cards) {
+      const C = home.cards, me = home.me;
+      const lockNote = (i) => i.secret ? 'GEHEIM' : i.need;
+      $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
+        <label>Embleme (${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length})</label>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div>
+        <label style="margin-top:6px">Titel (${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length})</label>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}"><span class="title s-${t.secret && !t.unlocked ? 'grau' : t.style}">${esc(t.secret && !t.unlocked ? '???' : t.text)}</span><span class="why">${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
+        <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
+        <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
+    }
     if ($('#tagBox') && !$('#tagForm')) {
       const cols = (home.tagColors || []).filter((c) => c !== 'rainbow' || home.me.admin);
       $('#tagBox').innerHTML = `<b>Clan-Tag</b><p class="sub">Steht vor deinem Namen, 2 bis 5 Zeichen. Leer lassen entfernt ihn.</p>
@@ -641,7 +683,7 @@ function update() {
     if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>Admin: Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off"><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
     if (!$('#profHead') || !home) return;
     const me = home.me, pr = home.progress, st = pr.prestige;
-    $('#profHead').innerHTML = `<div class="row" style="gap:20px">${avatar(me, 92)}<div class="grow"><h2>${withTag(me)} <span class="wp" style="font-size:19px">${fmt(me.rankPoints || 0)} WP</span></h2><p class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Noch kein Prestige'}</p>
+    $('#profHead').innerHTML = `<div class="row" style="gap:16px">${embHtml(me, 62)}${avatar(me, 92)}<div class="grow"><h2>${withTag(me)} <span class="wp" style="font-size:19px">${fmt(me.rankPoints || 0)} WP</span></h2>${titleHtml({ title: me.titleShown }, true)}<p class="sub" style="margin-top:6px">${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Noch kein Prestige'}</p>
       <p style="margin:8px 0 5px" class="row"><b class="num" style="font-size:22px">Level ${me.level}</b><span class="sub" style="margin-left:auto">${me.max ? 'Maximum erreicht' : me.into + ' / ' + me.next + ' XP'}</span></p>${barHtml(me.into, me.next, me.max)}</div></div>`;
     $('#nextPrestige').innerHTML = st.next ? `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">${emblem(st.next)}</span><div><p class="sub">Nächster Rang</p><h2>Prestige ${st.next} · ${esc(st.name)}</h2></div></div>
       ${st.reqs.map((r) => `<div class="req"><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
@@ -661,9 +703,9 @@ function update() {
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
     $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${6 - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
-    $('#openProfile').innerHTML = me ? `${avatar(me, 64)}<span class="grow"><b style="font-size:20px">${withTag(me)}</b><br><span class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}Level ${me.level}</span> <span class="wp">${fmt(me.rankPoints || 0)} WP</span><span style="display:block;margin-top:7px">${barHtml(me.into, me.next, me.max)}</span><span class="lv">Profil und Prestige ansehen</span></span>` : '<span class="sub">Lädt …</span>';
+    $('#openProfile').innerHTML = me ? `${avatar(me, 64)}${embHtml(me, 40)}<span class="grow"><b style="font-size:20px">${withTag(me)}</b> ${titleHtml({ title: me.titleShown })}<br><span class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}Level ${me.level}</span> <span class="wp">${fmt(me.rankPoints || 0)} WP</span><span style="display:block;margin-top:7px">${barHtml(me.into, me.next, me.max)}</span><span class="lv">Profil und Prestige ansehen</span></span>` : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
-    $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${rankText(u)}</span></span><span class="wp">${fmt(u.rankPoints)} WP</span></div>`).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
+    $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 28)}${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${rankText(u)}</span></span><span class="wp">${fmt(u.rankPoints)} WP</span></div>`).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     $('#board').innerHTML = home && home.leaderboard.length ? home.leaderboard.map((u, i) => `<div class="pl" style="--c:var(--line)"><span class="num" style="width:20px">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${rankText(u)}</span></span><small>${u.wins} Siege</small></div>`).join('') : '<p class="sub">Noch keine Matches gespielt. Eröffne das erste.</p>';
     return;
   }
@@ -740,6 +782,10 @@ function bind() {
   }
 }
 document.addEventListener('submit', (e) => {
+  if (e.target.id !== 'codeForm') return; e.preventDefault();
+  api('/api/redeem', { code: $('#codeIn').value }).then(async (r) => { toast('Freigeschaltet: ' + r.reward); $('#codeIn').value = ''; await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message));
+});
+document.addEventListener('submit', (e) => {
   if (e.target.id !== 'chatForm') return; e.preventDefault();
   const i = $('#chatIn'); if (i.value.trim()) { socket.emit('chat', i.value); i.value = ''; }
 });
@@ -776,6 +822,14 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
+  else if (t.dataset.emb !== undefined || t.dataset.title !== undefined) {
+    if (t.classList.contains('lock')) return toast(t.title || 'Noch nicht freigeschaltet.');
+    const me = home.me, cur = t.dataset.emb !== undefined ? me.emblem : (me.title || '');
+    const val = (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title) === cur ? '' : (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
+    const body = t.dataset.emb !== undefined ? { emblem: val, title: me.title || '' } : { emblem: me.emblem || '', title: val };
+    api('/api/card', body).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
+  }
+  else if (t.id === 'cardClear') api('/api/card', { emblem: '', title: '' }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
   else if (t.dataset.color) { tagColor = t.dataset.color; document.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('on', b === t)); $('#tagIn').dispatchEvent(new Event('input')); }
   else if (t.id === 'accPub') { privMode = false; socket.emit('settings', { password: '' }); }
   else if (t.id === 'accPriv') { privMode = true; update(); $('#pwInput').focus(); }

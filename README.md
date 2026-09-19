@@ -25,6 +25,12 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Spielerkarten
+- 10 Embleme und 10 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
+- Auswahl im Profil, sichtbar in Lobby, Punktestand, Auflösung, Endstand und den Ranglisten
+- Geheime Freischaltung: Emblem „Pink Pages“ und Titel „BookTok-Legende“ über den Code `GRACE`
+- Weitere Codes in `CODES` in `lib/cards.js` eintragen
+
 ## Clan-Tags
 - 2 bis 5 Zeichen vor dem Namen, Farbe wählbar
 - `DEV`, `ADMIN`, `MOD` und der Regenbogen-Verlauf sind dem Admin (`ADMIN_NAME`) vorbehalten

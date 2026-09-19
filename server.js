@@ -7,6 +7,7 @@ const store = require('./lib/store');
 const attachGame = require('./lib/game');
 const ai = require('./lib/ai');
 const progress = require('./lib/progress');
+const cards = require('./lib/cards');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -40,7 +41,7 @@ const TAG_COLORS = ['cyan', 'blau', 'rot', 'gruen', 'gelb', 'lila', 'orange', 'p
 const RESERVED_TAGS = ['dev', 'admin', 'mod', 'staff', 'owner', 'system', 'claude', 'anthropic'];
 
 const publicStats = (u) => ({
-  id: u.id, name: u.name, tag: u.tag || '', tagColor: u.tag_color || '', matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -78,9 +79,32 @@ app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), admin: !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
       world: (await store.worldRanking()).map(publicStats),
+      cards: cards.view(u),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Spielerkarte: Emblem und Titel wählen
+app.post('/api/card', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const emblem = String(req.body.emblem || ''), title = String(req.body.title || '');
+    if (!cards.canUse(u, emblem, title)) return res.status(403).json({ error: 'Das hast du noch nicht freigeschaltet.' });
+    await store.save(u.id, { emblem, title });
+    res.json({ emblem, title });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Code einlösen
+app.post('/api/redeem', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const r = cards.redeem(u, req.body.code);
+    if (!r.ok) return res.status(400).json({ error: r.error });
+    await store.save(u.id, { codes: r.codes });
+    res.json({ reward: r.reward });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
