@@ -400,7 +400,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .chipbtn{padding:7px 11px;border-radius:9px;background:var(--bg-deep);font-size:13px;font-weight:700;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
 .chipbtn.on{background:var(--tape);color:var(--ink);box-shadow:none}
 
-.titleimg{display:block;width:100%;max-width:240px;height:auto;border-radius:9px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.titleimg{display:block;width:100%;max-width:240px;height:auto;border-radius:10px;
+  box-shadow:0 0 0 1.5px rgba(255,210,63,.85),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.35),0 4px 12px rgba(0,0,0,.5)}
 .titleimg.big{max-width:340px}
 .pl .titleimg{max-width:180px;margin-top:3px}
 .tlist button .titleimg{max-width:210px;flex:none}
@@ -427,7 +428,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '6';
+const AVER = '7';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -617,7 +618,10 @@ function build() {
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
       <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>alle Themen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
-      <div id="themeBox"></div></div>
+      <div id="themeBox"></div>
+      <label style="margin:6px 0 0">Neue Fragen</label>
+      <div class="seg"><button id="waitOff">Sofort starten</button><button id="waitOn">Auf frische Fragen warten</button></div>
+      <p class="sub" id="waitNote2"></p></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><label style="margin:0">Zugang</label>
       <div class="seg"><button id="accPub">Öffentlich</button><button id="accPriv">Mit Passwort</button></div>
       <form id="pwForm" class="row" hidden><input class="field grow" id="pwInput" maxlength="20" autocomplete="off" placeholder="Passwort festlegen"><button class="btn small">Speichern</button></form>
@@ -635,7 +639,7 @@ function build() {
     <div id="lobbyAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`;
 
   if (S.phase === 'countdown') return `
-    <div class="center" style="padding-top:4vh"><p class="sub">Es geht los in</p><div class="num big" id="bigSec"></div><p id="aiNote" class="sub" style="margin-top:8px"></p>
+    <div class="center" style="padding-top:4vh"><p class="sub" id="cdLabel">Es geht los in</p><div class="num big" id="bigSec"></div><p id="aiNote" class="sub" style="margin-top:8px"></p>
       <p class="sub" style="margin-top:14px">Freunde können bis zum Start noch beitreten</p><div class="code" style="font-size:44px;margin-top:4px">${esc(S.code)}</div>
       <button class="link" id="share">Einladungslink kopieren</button></div>
     <div id="players" class="plist"></div>
@@ -874,6 +878,8 @@ function update() {
         : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div>`;
       themeSel = [...S.themes];
     }
+    $('#waitOff').classList.toggle('on', !S.waitAi); $('#waitOn').classList.toggle('on', !!S.waitAi);
+    $('#waitNote2').textContent = S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens eine Minute länger.' : 'Sind die neuen Fragen nicht rechtzeitig fertig, wird mit dem festen Pool gespielt.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
     return;
@@ -888,7 +894,7 @@ function update() {
     $('#lobbyAct').innerHTML = (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
-    $('#aiNote').textContent = { loading: 'Neue Fragen werden gerade erstellt … wenn es zu lange dauert, geht es mit dem festen Pool los.', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen kamen nicht rechtzeitig. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
+    $('#aiNote').textContent = { loading: S.waitAi ? 'Neue Fragen werden erstellt. Das Match startet, sobald sie fertig sind.' : 'Neue Fragen werden gerade erstellt … wenn es zu lange dauert, geht es mit dem festen Pool los.', waiting: 'Warte auf die frischen Fragen …', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen kamen nicht rechtzeitig. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
     $('#cdAct').innerHTML = (host ? '<button class="btn ghost" id="skip">Sofort loslegen</button>' : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'question') {
@@ -991,6 +997,8 @@ document.addEventListener('click', (e) => {
   }
   else if (t.id === 'cardClear') api('/api/card', { emblem: '', title: '' }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
   else if (t.dataset.color) { tagColor = t.dataset.color; document.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('on', b === t)); $('#tagIn').dispatchEvent(new Event('input')); }
+  else if (t.id === 'waitOn') socket.emit('settings', { waitAi: true });
+  else if (t.id === 'waitOff') socket.emit('settings', { waitAi: false });
   else if (t.id === 'accPub') { privMode = false; socket.emit('settings', { password: '' }); }
   else if (t.id === 'accPriv') { privMode = true; update(); $('#pwInput').focus(); }
   else if (t.id === 'doPrestige') { if (confirm('Prestige aktivieren? Level und XP starten wieder bei 1.')) api('/api/prestige', {}).then(async (r) => { await loadHome(); showUnlock(r.prestige, home.progress.names[r.prestige]); }).catch((e) => toast(e.message)); }
@@ -999,6 +1007,7 @@ document.addEventListener('click', (e) => {
 
 // ---------- Maßband-Timer ----------
 function tick() {
+  if (S && S.phase === 'countdown' && !S.endsAt) { const b = $('#bigSec'); if (b) b.textContent = '…'; const l = $('#cdLabel'); if (l) l.textContent = 'Fragen werden fertig gemacht'; }
   const tape = $('#tape'), on = S && S.endsAt && S.phase !== 'finished' && S.phase !== 'lobby';
   tape.classList.toggle('on', !!on);
   if (on) {

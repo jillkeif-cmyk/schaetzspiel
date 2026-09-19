@@ -26,7 +26,7 @@ Dann http://localhost:3000 öffnen.
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
 ## Spielerkarten
-- 20 Embleme und 21 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
+- 30 Embleme und 31 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
 - Titel sind eigene Banner-Grafiken (`public/emblems/title_*.webp`), Embleme eigene Icons (`pc_*.webp`)
 - Die Spielerkarte zeigt Profilbild, Emblem, Clan-Tag, Name, Titel, Level-Balken, Prestige-Logo und die Siegesserie als Flamme (1 bis 5, Farbe steigt)
 - Auswahl im Profil, sichtbar in Lobby, Punktestand, Auflösung, Endstand und den Ranglisten
@@ -50,7 +50,7 @@ Dann http://localhost:3000 öffnen.
 ## Ablauf
 1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.
 2. **Match eröffnen** — Pre-Lobby mit Code, Spielerliste und Chat. Ab jetzt können andere beitreten.
-3. **Match starten** — Countdown, in dem die Fragen erstellt werden. Beitritt bleibt bis zum Start möglich, der Host kann abkürzen.
+3. **Match starten** — Countdown, in dem die Fragen erstellt werden. Steht „Auf frische Fragen warten“ an, startet das Match erst, wenn die KI fertig ist (höchstens eine Minute länger). Beitritt bleibt bis zum Start möglich, der Host kann abkürzen.
 4. Ab der ersten Frage ist das Match geschlossen. Aussteigen geht jederzeit über das ✕ unten rechts, dann aber ohne XP und Weltranglistenpunkte für dieses Match.
 
 Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das Match existiert und ist weg, sobald alle es verlassen haben.
