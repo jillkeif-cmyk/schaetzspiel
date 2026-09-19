@@ -349,7 +349,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tlist button.on{box-shadow:inset 0 0 0 2.5px var(--tape)}
 .tlist button.lock{opacity:.5}
 .tlist button.lock .title{filter:grayscale(1) brightness(.65)}
-.tlist .why{flex:1;min-width:0;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.tlist .why{flex:1;min-width:0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere;line-height:1.25}
+.tlist button .titleimg{max-width:190px}
+@media (max-width:420px){.tlist button .titleimg{max-width:150px}}
 .secret{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 8px,transparent 8px 16px),var(--bg-deep)!important}
 #openProfile{padding:0;background:none;box-shadow:none;width:100%;display:block;text-align:left}
 #openProfile .pcard{width:100%}
@@ -707,7 +709,7 @@ function modEdit(id, page) {
   const body = page === 'cards'
     ? `<p class="sub">Frei = grün. Freigeschaltet gilt zusätzlich zu dem, was er selbst geschafft hat.</p>
        <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp" alt="">${esc(e.name)}</button>`).join('')}</div>
-       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}"></button>`).join('')}</div>
+       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
        <div class="row"><button class="chipbtn" data-mu="*" data-on="1">Alles freischalten</button><button class="chipbtn" data-mu="*" data-on="0">Alles zurücksetzen</button></div>
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
@@ -766,7 +768,7 @@ function update() {
         <label>Embleme (${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length})</label>
         <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div>
         <label style="margin-top:6px">Titel (${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length})</label>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}">`}<span class="why">${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}">`}<span class="why"><b style="display:block;color:var(--paper);font-size:14.5px">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
     }
