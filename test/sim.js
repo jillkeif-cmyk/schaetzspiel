@@ -20,6 +20,8 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   await sleep(400);
   socks[0].emit('create'); await sleep(200);
   const code = states[0].code; assert.equal(states[0].phase, 'lobby');
+  assert.equal(states[0].setup, true, 'Match startet in der Einrichtung');
+  socks[0].emit('create_done'); await sleep(150); assert.equal(states[0].setup, false);
   socks[1].emit('join', code.toLowerCase()); socks[2].emit('join', code); await sleep(200);
   assert.equal(states[0].players.length, 3);
   socks[1].emit('settings', { maxQuestions: 5 }); await sleep(100); // kein Host -> ignoriert
@@ -50,6 +52,7 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   socks[1].emit('leave'); socks[2].emit('leave'); await sleep(200);
   assert.equal(states[1], null);
   socks[1].emit('create'); await sleep(200); assert.ok(states[1].code);
+  socks[1].emit('create_done'); await sleep(120);
   let err = null; socks[2].once('err', (e) => { err = e; }); socks[2].emit('create'); await sleep(200);
   assert.ok(err && /Matches/.test(err));
   assert.ok(home.me.level >= 1 && home.progress.challenges.length === 8 && states[0].summary.gained > 0, 'XP-Zusammenfassung fehlt');
@@ -63,6 +66,8 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   assert.ok(states[0] && states[0].locked && states[0].password === undefined && states[1].password === 'geheim');
   socks[0].emit('leave'); await sleep(150);
   // Wiedereinstieg mitten im Spiel
+  socks[1].emit('chat', '  hallo   zusammen  '); await sleep(150);
+  assert.ok(states[1].chat.some((c) => c.text === 'hallo zusammen'), 'Chat-Nachricht fehlt');
   socks[1].emit('settings', { countdown: 1, maxQuestions: 5 }); socks[1].emit('start'); await sleep(1500);
   assert.equal(states[1].phase, 'question');
   socks[1].disconnect(); await sleep(200);

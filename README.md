@@ -29,10 +29,13 @@ Dann http://localhost:3000 öffnen.
 - 2 bis 5 Zeichen vor dem Namen, Farbe wählbar
 - `DEV`, `ADMIN`, `MOD` und der Regenbogen-Verlauf sind dem Admin (`ADMIN_NAME`) vorbehalten
 
-## Lobby
-- Host stellt Modus, Themen, Zugang und Regeln ein, dann „Match starten“
-- Danach läuft der Countdown als Pre-Lobby: Spieler können bis zum Start weiter beitreten, der Host kann abkürzen
-- Ab der ersten Frage ist das Match geschlossen
+## Ablauf
+1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.
+2. **Match eröffnen** — Pre-Lobby mit Code, Spielerliste und Chat. Ab jetzt können andere beitreten.
+3. **Match starten** — Countdown, in dem die Fragen erstellt werden. Beitritt bleibt bis zum Start möglich, der Host kann abkürzen.
+4. Ab der ersten Frage ist das Match geschlossen.
+
+Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das Match existiert und ist weg, sobald alle es verlassen haben.
 
 ## Modi
 - **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
