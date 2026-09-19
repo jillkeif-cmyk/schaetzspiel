@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: schaetzspiel
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: SECRET
+        generateValue: true
+      - key: INVITE_CODE
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

@@ -1,0 +1,179 @@
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const crypto = require('crypto');
+const { Server } = require('socket.io');
+const store = require('./lib/store');
+const attachGame = require('./lib/game');
+const ai = require('./lib/ai');
+const progress = require('./lib/progress');
+
+const PORT = process.env.PORT || 3000;
+const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
+const ADMIN_NAME = (process.env.ADMIN_NAME || '').trim().toLowerCase();
+const INVITE_CODE = (process.env.INVITE_CODE || 'schaetzen').trim().toLowerCase();
+if (!process.env.SECRET) console.warn('SECRET fehlt: Logins gelten nur bis zum nächsten Neustart.');
+if (!process.env.INVITE_CODE) console.warn('INVITE_CODE fehlt: Standardcode "schaetzen" ist aktiv.');
+
+// --- Passwort & Token ---
+const hashPass = (pw, salt = crypto.randomBytes(16).toString('hex')) => salt + ':' + crypto.scryptSync(pw, salt, 32).toString('hex');
+const checkPass = (pw, stored) => { const [salt, h] = stored.split(':'); const a = Buffer.from(h, 'hex'); const b = crypto.scryptSync(pw, salt, 32); return a.length === b.length && crypto.timingSafeEqual(a, b); };
+const sign = (body) => crypto.createHmac('sha256', SECRET).update(body).digest('base64url');
+const makeToken = (id) => { const body = id + '.' + (Date.now() + 90 * 864e5); return body + '.' + sign(body); };
+function readToken(t) {
+  const parts = String(t || '').split('.'); if (parts.length !== 3) return null;
+  const body = parts[0] + '.' + parts[1];
+  const a = Buffer.from(sign(body)), b = Buffer.from(parts[2]);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b) || Number(parts[1]) < Date.now()) return null;
+  return Number(parts[0]);
+}
+
+// --- Einfache Bremse gegen Passwort-Raten ---
+const hits = new Map();
+function limited(ip) {
+  const now = Date.now(); const h = (hits.get(ip) || []).filter((t) => now - t < 10 * 60000);
+  h.push(now); hits.set(ip, h); return h.length > 30;
+}
+setInterval(() => hits.clear(), 3600000).unref();
+
+const publicStats = (u) => ({
+  id: u.id, name: u.name, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
+  bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
+});
+const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
+
+const app = express();
+app.set('trust proxy', 1);
+app.use(express.json({ limit: '120kb' }));
+app.get('/healthz', (_, res) => res.send('ok'));
+
+app.post('/api/register', async (req, res) => {
+  try {
+    if (limited(req.ip)) return res.status(429).json({ error: 'Zu viele Versuche. Warte ein paar Minuten.' });
+    const name = String(req.body.name || '').trim().replace(/\s+/g, ' ');
+    const pw = String(req.body.password || '');
+    if (String(req.body.code || '').trim().toLowerCase() !== INVITE_CODE) return res.status(403).json({ error: 'Der Einladungscode stimmt nicht.' });
+    if (!/^[\p{L}\p{N} _.-]{2,16}$/u.test(name)) return res.status(400).json({ error: 'Name: 2 bis 16 Zeichen, Buchstaben und Zahlen.' });
+    if (pw.length < 6 || pw.length > 100) return res.status(400).json({ error: 'Passwort: mindestens 6 Zeichen.' });
+    const u = await store.createUser(name, hashPass(pw));
+    if (!u) return res.status(409).json({ error: 'Dieser Name ist schon vergeben.' });
+    res.json({ token: makeToken(u.id), me: publicStats(u) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler bei der Registrierung.' }); }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    if (limited(req.ip)) return res.status(429).json({ error: 'Zu viele Versuche. Warte ein paar Minuten.' });
+    const u = await store.userByName(String(req.body.name || '').trim());
+    if (!u || !checkPass(String(req.body.password || ''), u.pass)) return res.status(401).json({ error: 'Name oder Passwort stimmt nicht.' });
+    res.json({ token: makeToken(u.id), me: publicStats(u) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler beim Anmelden.' }); }
+});
+
+app.get('/api/home', async (req, res) => {
+  try {
+    const u = await auth(req);
+    if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    res.json({ me: { ...publicStats(u), admin: !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
+      progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Freunde
+app.get('/api/friends', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const out = [];
+    for (const f of await store.friendList(u.id)) {
+      const o = await store.userById(f.id); if (!o) continue;
+      const m = game.matches.get(game.userMatch.get(o.id));
+      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished',
+        joinCode: f.status === 'ok' && m && m.phase === 'lobby' && m.players.size < 6 ? m.code : null });
+    }
+    res.json({ friends: out });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/friends/:act', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const o = req.body.id ? await store.userById(Number(req.body.id)) : await store.userByName(String(req.body.name || '').trim());
+    if (!o) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    if (o.id === u.id) return res.status(400).json({ error: 'Das bist du selbst.' });
+    if (req.params.act === 'add') return res.json({ status: await store.friendAdd(u.id, o.id), name: o.name });
+    if (req.params.act === 'accept' || req.params.act === 'decline') { await store.friendRespond(u.id, o.id, req.params.act === 'accept'); return res.json({ ok: true }); }
+    if (req.params.act === 'remove') { await store.friendRemove(u.id, o.id); return res.json({ ok: true }); }
+    res.status(404).json({ error: 'Unbekannte Aktion.' });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/user/:id', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const o = await store.userById(Number(req.params.id)); if (!o) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    res.json({ user: { ...publicStats(o), online: game.online.has(o.id) } });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Admin setzt das Passwort eines Spielers neu (es gibt keine E-Mail-Funktion)
+app.post('/api/admin/reset', async (req, res) => {
+  try {
+    const u = await auth(req);
+    if (!u || !ADMIN_NAME || u.name.toLowerCase() !== ADMIN_NAME) return res.status(403).json({ error: 'Nur der Admin darf Passwörter zurücksetzen.' });
+    const target = await store.userByName(String(req.body.name || '').trim());
+    const pw = String(req.body.password || '');
+    if (!target) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    if (pw.length < 6) return res.status(400).json({ error: 'Passwort: mindestens 6 Zeichen.' });
+    await store.setPass(target.id, hashPass(pw));
+    res.json({ ok: true, name: target.name });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Prestige: setzt Level und XP zurück und schaltet den nächsten Rahmen frei
+app.post('/api/prestige', async (req, res) => {
+  try {
+    const u = await auth(req);
+    if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!progress.prestigeStatus(u).can) return res.status(400).json({ error: 'Die Bedingungen für den nächsten Prestige-Rang sind noch nicht erfüllt.' });
+    await store.save(u.id, { prestige: u.prestige + 1, xp: 0 });
+    res.json({ prestige: u.prestige + 1 });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Profilbild: kommt vom Handy schon verkleinert als Data-URL
+app.post('/api/avatar', async (req, res) => {
+  try {
+    const u = await auth(req);
+    if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const data = String(req.body.data || '');
+    if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(data) || data.length > 90000) return res.status(400).json({ error: 'Das Bild ist zu groß oder kein JPG/PNG.' });
+    res.json({ av: await store.setAvatar(u.id, data) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler beim Speichern des Bildes.' }); }
+});
+app.get('/api/avatar/:id', async (req, res) => {
+  try {
+    const u = await store.userById(Number(req.params.id), true);
+    const m = u && u.avatar && /^data:(image\/\w+);base64,(.+)$/.exec(u.avatar);
+    if (!m) return res.status(404).end();
+    res.set({ 'content-type': m[1], 'cache-control': 'public, max-age=31536000, immutable', 'x-content-type-options': 'nosniff' }).send(Buffer.from(m[2], 'base64'));
+  } catch (e) { res.status(500).end(); }
+});
+
+app.use('/emblems', express.static(path.join(__dirname, 'public/emblems'), { maxAge: '30d', immutable: true }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
+
+const server = http.createServer(app);
+const io = new Server(server, { pingInterval: 10000, pingTimeout: 8000 });
+io.use(async (socket, next) => {
+  try {
+    const id = readToken(socket.handshake.auth?.token);
+    const u = id && (await store.userById(id));
+    if (!u) return next(new Error('auth'));
+    socket.data.user = { id: u.id, name: u.name };
+    next();
+  } catch (e) { next(new Error('auth')); }
+});
+const game = attachGame(io, store);
+
+store.init().then(() => {
+  server.listen(PORT, () => console.log(`Schätzspiel läuft auf Port ${PORT} | Speicher: ${store.kind} | KI-Fragen: ${ai.enabled() ? 'an' : 'aus'}`));
+}).catch((e) => { console.error('Datenbank nicht erreichbar:', e.message); process.exit(1); });
