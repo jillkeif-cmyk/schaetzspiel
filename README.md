@@ -11,6 +11,7 @@ Dann http://localhost:3000 öffnen.
 | Variable | Zweck |
 |---|---|
 | `INVITE_CODE` | Code, den neue Spieler bei der Registrierung brauchen (Standard: `schaetzen`) |
+| `MAX_MATCHES` | Wie viele Matches gleichzeitig laufen dürfen (Standard 2) |
 | `ADMIN_NAME` | Spielername, der im Profil Passwörter anderer Spieler neu setzen darf |
 | `SECRET` | Schlüssel für Login-Tokens. Fest setzen, sonst fliegen alle nach jedem Neustart raus |
 | `DATABASE_URL` | Postgres-URL. Ohne sie liegen Accounts und Statistiken nur im Arbeitsspeicher |
@@ -24,6 +25,10 @@ Dann http://localhost:3000 öffnen.
 - Punktlandung: 500 Punkte (×5)
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
+
+## Clan-Tags
+- 2 bis 5 Zeichen vor dem Namen, Farbe wählbar
+- `DEV`, `ADMIN`, `MOD` und der Regenbogen-Verlauf sind dem Admin (`ADMIN_NAME`) vorbehalten
 
 ## Lobby
 - Host stellt Modus, Themen, Zugang und Regeln ein, dann „Match starten“
