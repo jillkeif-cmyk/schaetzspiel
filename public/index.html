@@ -411,6 +411,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+const AVER = '5';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -422,14 +423,14 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = p.prestige || 0;
   return `<span class="ava t${t}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
 }
 function streakHtml(p) {
   const n = Math.min(5, p.streak || 0);
-  return n ? `<div class="streak"><img src="/emblems/streak${n}.webp" alt=""><b>${n}</b></div>` : '';
+  return n ? `<div class="streak"><img src="/emblems/streak${n}.webp?v=${AVER}" alt=""><b>${n}</b></div>` : '';
 }
 function playerCard(p, extra) {
   const lv = p.max ? 1 : (p.next ? p.into / p.next : 0);
@@ -437,13 +438,13 @@ function playerCard(p, extra) {
     <div class="pcl">${avatar(p, 62)}</div>
     <div class="mid"><div class="who">${tagHtml(p)}<b>${esc(p.name)}</b></div>
       <div class="trow">${p.title ? titleHtml(p) : '<span class="sub" style="font-size:13px">Kein Titel</span>'}
-        ${p.emblem ? `<img class="pcemb" style="--s:52px" src="/emblems/pc_${esc(p.emblem)}.webp" alt="">` : ''}</div>
+        ${p.emblem ? `<img class="pcemb" style="--s:52px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
       <div class="lvrow"><span class="num" style="font-size:16px;color:var(--paper)">Lv ${p.level}</span><span class="bar"><i style="width:${Math.round(lv * 100)}%"></i></span><span>${p.max ? 'max' : p.into + '/' + p.next}</span></div>
       ${extra || ''}</div>
     ${streakHtml(p)}</div>`;
 }
-const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp" alt="">` : '');
-const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}" src="/emblems/title_${esc(p.title.id)}.webp" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
+const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
+const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
@@ -542,7 +543,7 @@ function render() {
 
 function build() {
   if (!token) return `
-    <div style="padding-top:3vh" class="center"><img class="logo" src="/emblems/logo.webp" alt=""><h1 style="margin-top:14px">Schätzspiel</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
+    <div style="padding-top:3vh" class="center"><img class="logo" src="/emblems/logo.webp?v=${AVER}" alt=""><h1 style="margin-top:14px">Schätzspiel</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
     <div class="tabs"><button data-tab="login" class="${authTab === 'login' ? 'on' : ''}">Anmelden</button><button data-tab="register" class="${authTab === 'register' ? 'on' : ''}">Neu hier</button></div>
     <form id="authForm" class="panel" style="display:flex;flex-direction:column;gap:14px">
       <div><label for="fName">Spielername</label><input class="field" id="fName" autocomplete="username" maxlength="16" required></div>
@@ -567,7 +568,7 @@ function build() {
     <div><h2 style="margin-bottom:10px">Herausforderungen</h2><div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div></div>`;
 
   if (!S) return `<div class="col">
-    <div class="brand"><img src="/emblems/logo.webp" alt=""><h1>Schätzspiel</h1></div>
+    <div class="brand"><img src="/emblems/logo.webp?v=${AVER}" alt=""><h1>Schätzspiel</h1></div>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -632,7 +633,7 @@ function build() {
 
   if (S.phase === 'finished') { const ps = [...S.players].sort((a, b) => b.score - a.score); const w = ps.filter((p) => S.winners.includes(p.id));
     return `<div class="col">
-    <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
+    <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp?v=${AVER}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
     <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${embHtml(p, 30)}${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
     </div><div class="col"><div id="xpSum"></div>
     <div id="chatBox"></div>
@@ -665,7 +666,7 @@ function buildReveal() {
   const diffText = (r) => r.value === null ? 'keine Schätzung' : r.exact ? 'genau richtig' : `${fmt(Math.abs(r.value - R.answer), R.unit)}${U} ${r.value > R.answer ? 'zu hoch' : 'zu niedrig'}`;
   return head + `
     <div class="answer" style="--d:${delay}"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
-    ${exact.length ? `<div class="banner" style="--d:${delay}"><img src="/emblems/c_exact.webp" alt="">Punktlandung! ${esc(exact.map((r) => P[r.id]?.name).join(' & '))} ×5</div>` : ''}
+    ${exact.length ? `<div class="banner" style="--d:${delay}"><img src="/emblems/c_exact.webp?v=${AVER}" alt="">Punktlandung! ${esc(exact.map((r) => P[r.id]?.name).join(' & '))} ×5</div>` : ''}
     <div class="ruler"><div class="band"></div>
       ${order.map((r, i) => `<div class="pin${me(r.id)}${r.closest ? ' best' : ''}" style="left:${pos(r.value)}%;--c:${P[r.id]?.color};--i:${i};--h:${10 + (i % 3) * 22}px"><b>${esc(r.id === S.you ? 'DU' : initials(P[r.id]?.name || '?'))}</b></div>`).join('')}
       <div class="truth" style="left:${pos(R.answer)}%;--d:${delay}"></div>
@@ -708,8 +709,8 @@ function modEdit(id, page) {
   const f = (k, label, v) => `<div><label>${label}</label><input class="field" data-f="${k}" inputmode="numeric" value="${v}"></div>`;
   const body = page === 'cards'
     ? `<p class="sub">Frei = grün. Freigeschaltet gilt zusätzlich zu dem, was er selbst geschafft hat.</p>
-       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp" alt="">${esc(e.name)}</button>`).join('')}</div>
-       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
+       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.name)}</button>`).join('')}</div>
+       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
        <div class="row"><button class="chipbtn" data-mu="*" data-on="1">Alles freischalten</button><button class="chipbtn" data-mu="*" data-on="0">Alles zurücksetzen</button></div>
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
@@ -766,9 +767,9 @@ function update() {
       const lockNote = (i) => i.secret ? 'GEHEIM' : i.need;
       $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
         <label>Embleme (${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length})</label>
-        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div>
         <label style="margin-top:6px">Titel (${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length})</label>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp" alt="${esc(t.text)}">`}<span class="why"><b style="display:block;color:var(--paper);font-size:14.5px">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="display:block;color:var(--paper);font-size:14.5px">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
     }
@@ -797,7 +798,7 @@ function update() {
       <button class="btn" id="doPrestige" ${st.can ? '' : 'disabled'}>Prestige aktivieren</button><p class="sub">Level und XP starten wieder bei 1. Statistik, Herausforderungen und Rahmen bleiben.</p>`
       : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
     $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : ''} ${i + 1 === me.prestige ? 'cur' : ''}">${emblem(i + 1)}Rang ${i + 1}</div>`).join('');
-    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/c_${c.key}.webp" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/c_${c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`).join('');
     return;
   }
