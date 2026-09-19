@@ -52,7 +52,7 @@ Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das
 
 ## Modi
 - **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
-- **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte
+- **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte. Es kommen ausschließlich Fragen aus den gewählten Themen, auch die live erzeugten. Reicht der Themenpool nicht für die eingestellte Fragenzahl, wird die Runde kürzer statt themenfremd
 - Themen und ihre Kategorien stehen in `lib/themes.js`
 
 ## Fortschritt

@@ -466,7 +466,7 @@ async function uploadAvatar(file) {
 }
 
 // Kleine Synth-Sounds, kein Download nötig
-let tagColor = 'cyan';
+let tagColor = 'cyan', themeSel = null;
 let actx = null, master = null, muted = false, vol = 0.7; try { muted = localStorage.getItem('sz_mute') === '1'; const v = parseFloat(localStorage.getItem('sz_vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
 function setVol() { if (master) master.gain.value = vol * 1.6; }
 function tone(f, t0, dur, type = 'triangle', vol = 0.12) {
@@ -835,9 +835,14 @@ function update() {
     $('#accPub').classList.toggle('on', !S.locked && !privMode); $('#accPriv').classList.toggle('on', S.locked || privMode);
     $('#pwForm').hidden = !(S.locked || privMode); if (S.locked && document.activeElement !== $('#pwInput')) $('#pwInput').value = S.password || '';
     document.querySelectorAll('#modepick button').forEach((b) => b.classList.toggle('on', (b.dataset.mode === 'ranked') === S.ranked));
-    $('#themeBox').innerHTML = S.ranked
-      ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
-      : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div>`;
+    const tkey = S.ranked ? 'ranked' : S.themes.join(',');
+    if ($('#themeBox').dataset.k !== tkey) {
+      $('#themeBox').dataset.k = tkey;
+      $('#themeBox').innerHTML = S.ranked
+        ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
+        : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div>`;
+      themeSel = [...S.themes];
+    }
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
     return;
@@ -847,12 +852,13 @@ function update() {
     const tn = S.themeList.filter((x) => S.themes.includes(x.key)).map((x) => x.name);
     $('#rules').innerHTML = `<div class="row"><b class="grow">${S.ranked ? 'Rangliste' : 'Freies Spiel'}</b>${S.locked ? '<span class="tag">🔒 Passwort</span>' : ''}</div>
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
-      <p class="sub">Bis ${S.settings.pointLimit} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage</p>`;
+      <p class="sub">Bis ${S.settings.pointLimit} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage</p>
+      ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
     $('#lobbyAct').innerHTML = (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
-    $('#aiNote').textContent = { loading: 'Neue Fragen werden gerade erstellt …', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen ließen sich nicht erstellen. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
-    $('#cdAct').innerHTML = (host ? `<button class="btn ghost" id="skip" ${S.aiStatus === 'loading' ? 'disabled' : ''}>Sofort loslegen</button>` : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
+    $('#aiNote').textContent = { loading: 'Neue Fragen werden gerade erstellt … wenn es zu lange dauert, geht es mit dem festen Pool los.', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen kamen nicht rechtzeitig. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
+    $('#cdAct').innerHTML = (host ? '<button class="btn ghost" id="skip">Sofort loslegen</button>' : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'question') {
     const mine = S.myAnswer, q = S.question, left = S.players.filter((p) => p.connected && !p.answered).length;
@@ -922,10 +928,13 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.set) socket.emit('settings', { [t.dataset.set]: Number(t.dataset.v) });
   else if (t.dataset.mode) socket.emit('settings', { ranked: t.dataset.mode === 'ranked' });
   else if (t.dataset.theme) {
-    const has = S.themes.includes(t.dataset.theme);
-    if (!has && S.themes.length >= S.maxThemes) return toast(`Höchstens ${S.maxThemes} Themen.`);
-    if (has && S.themes.length === 1) return toast('Mindestens ein Thema muss aktiv bleiben.');
-    socket.emit('settings', { themes: has ? S.themes.filter((x) => x !== t.dataset.theme) : [...S.themes, t.dataset.theme] });
+    if (!themeSel) themeSel = [...S.themes];
+    const has = themeSel.includes(t.dataset.theme);
+    if (!has && themeSel.length >= S.maxThemes) return toast(`Höchstens ${S.maxThemes} Themen.`);
+    if (has && themeSel.length === 1) return toast('Mindestens ein Thema muss aktiv bleiben.');
+    themeSel = has ? themeSel.filter((x) => x !== t.dataset.theme) : [...themeSel, t.dataset.theme];
+    t.classList.toggle('on', !has);
+    socket.emit('settings', { themes: themeSel });
   }
   else if (t.dataset.i !== undefined && S && S.phase === 'question') socket.emit('answer', Number(t.dataset.i));
   else if (['create', 'start', 'skip', 'again', 'report'].includes(t.id)) socket.emit(t.id);
