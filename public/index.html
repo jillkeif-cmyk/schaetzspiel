@@ -387,14 +387,16 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pcard .streak b{font:800 15px/1 Archivo;font-stretch:70%;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);margin-bottom:6px}
 @keyframes flick{from{transform:scaleY(.94) translateY(1px);opacity:.88}to{transform:scaleY(1.06) translateY(-1px);opacity:1}}
 /* Prestige 9 und 10 leben */
-.pglow{position:relative;display:inline-block}
-.pglow.p9::after{content:"";position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(255,60,90,.55),transparent 62%);animation:ruby 1.9s ease-in-out infinite;pointer-events:none}
-.pglow.p10::after{content:"";position:absolute;inset:-14%;border-radius:50%;background:radial-gradient(circle at 50% 58%,rgba(255,170,50,.5),rgba(255,80,20,.18) 38%,transparent 66%);filter:blur(4px);animation:blaze 2.2s ease-in-out infinite alternate;pointer-events:none}
-.pglow.p10 img,.pglow.p10 .embimg{animation:flick 2.4s ease-in-out infinite alternate}
-.pglow.p11::after{content:"";position:absolute;inset:-16%;border-radius:50%;background:radial-gradient(circle,rgba(255,205,90,.5),rgba(255,120,20,.2) 40%,transparent 68%);filter:blur(5px);animation:masterglow 2.6s ease-in-out infinite alternate;pointer-events:none}
-.pglow.p11 img,.pglow.p11 .embimg{animation:master 3.2s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,190,60,.55))}
+.pglow{position:relative;display:inline-block;isolation:isolate}
+.pglow.p9::before{content:"";position:absolute;inset:-10%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(255,60,90,.6),transparent 64%);filter:blur(3px);animation:ruby 1.9s ease-in-out infinite;pointer-events:none}
+.pglow.p10::before{content:"";position:absolute;inset:-18%;border-radius:50%;z-index:-1;background:radial-gradient(circle at 50% 60%,rgba(255,150,40,.55),rgba(255,70,15,.22) 42%,transparent 70%);filter:blur(6px);animation:blaze 2.6s ease-in-out infinite alternate;pointer-events:none}
+.pglow.p10 img,.pglow.p10 .embimg{animation:emberglow 2.6s ease-in-out infinite alternate}
+@keyframes emberglow{from{filter:drop-shadow(0 0 4px rgba(255,140,40,.45)) saturate(1.05)}to{filter:drop-shadow(0 0 14px rgba(255,170,60,.9)) saturate(1.25) brightness(1.06)}}
+.pglow.p11::before{content:"";position:absolute;inset:-20%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(255,200,80,.55),rgba(255,120,20,.22) 42%,transparent 70%);filter:blur(7px);animation:masterglow 3s ease-in-out infinite alternate;pointer-events:none}
+.pglow.p11 img,.pglow.p11 .embimg{animation:masterpulse 3.2s ease-in-out infinite alternate}
+@keyframes masterpulse{from{filter:drop-shadow(0 0 5px rgba(255,190,60,.45))}to{filter:drop-shadow(0 0 16px rgba(255,210,90,.95)) brightness(1.07)}}
 @keyframes masterglow{from{opacity:.4;transform:scale(.96)}to{opacity:.95;transform:scale(1.06)}}
-@keyframes master{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+
 @keyframes ruby{0%,100%{opacity:.35;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
 @keyframes blaze{from{opacity:.45;transform:scale(.97)}to{opacity:.95;transform:scale(1.05)}}
 /* Mod-Menü */
@@ -433,7 +435,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '7';
+const AVER = '8';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
