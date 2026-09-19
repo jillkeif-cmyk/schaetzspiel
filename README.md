@@ -25,6 +25,11 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Lobby
+- Host stellt Modus, Themen, Zugang und Regeln ein, dann „Match starten“
+- Danach läuft der Countdown als Pre-Lobby: Spieler können bis zum Start weiter beitreten, der Host kann abkürzen
+- Ab der ersten Frage ist das Match geschlossen
+
 ## Modi
 - **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
 - **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte

@@ -474,7 +474,9 @@ function build() {
     <div id="lobbyAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`;
 
   if (S.phase === 'countdown') return `
-    <div class="center" style="padding-top:6vh"><p class="sub">Es geht los in</p><div class="num big" id="bigSec"></div><p id="aiNote" class="sub" style="margin-top:8px"></p></div>
+    <div class="center" style="padding-top:4vh"><p class="sub">Es geht los in</p><div class="num big" id="bigSec"></div><p id="aiNote" class="sub" style="margin-top:8px"></p>
+      <p class="sub" style="margin-top:14px">Freunde können bis zum Start noch beitreten</p><div class="code" style="font-size:44px;margin-top:4px">${esc(S.code)}</div>
+      <button class="link" id="share">Einladungslink kopieren</button></div>
     <div id="players" class="plist"></div>
     <div id="cdAct"></div>
     <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung fünffach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
@@ -604,7 +606,7 @@ function update() {
     $('#create').disabled = full;
     $('#onlineText').textContent = L.online ? `${L.online} Spieler online: ${(L.onlineNames || []).join(', ')}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
-    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · ${m.players} Spieler` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${m.phase === 'lobby' && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
+    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${6 - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${(m.phase === 'lobby' || m.phase === 'countdown') && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
     $('#openProfile').innerHTML = me ? `${avatar(me, 64)}<span class="grow"><b style="font-size:20px">${esc(me.name)}</b><br><span class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}Level ${me.level}</span> <span class="wp">${fmt(me.rankPoints || 0)} WP</span><span style="display:block;margin-top:7px">${barHtml(me.into, me.next, me.max)}</span><span class="lv">Profil und Prestige ansehen</span></span>` : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
@@ -630,7 +632,7 @@ function update() {
   }
   if (S.phase === 'countdown') {
     $('#aiNote').textContent = { loading: 'Neue Fragen werden gerade erstellt …', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen ließen sich nicht erstellen. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
-    $('#cdAct').innerHTML = host ? `<button class="btn ghost" id="skip" ${S.aiStatus === 'loading' ? 'disabled' : ''}>Sofort loslegen</button>` : '';
+    $('#cdAct').innerHTML = (host ? `<button class="btn ghost" id="skip" ${S.aiStatus === 'loading' ? 'disabled' : ''}>Sofort loslegen</button>` : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'question') {
     const mine = S.myAnswer, q = S.question, left = S.players.filter((p) => p.connected && !p.answered).length;
