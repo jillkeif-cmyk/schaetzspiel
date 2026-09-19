@@ -765,6 +765,18 @@ function modEdit(id, page) {
     api('/api/admin/user', body).then((res) => { toast('Gespeichert'); modUsers = modUsers.map((x) => x.id === res.user.id ? res.user : x); modLoad($('#modQ') ? $('#modQ').value : ''); modEdit(id, ''); }).catch((er) => toast(er.message));
   };
 }
+function showInvite() {
+  const inMatch = S ? S.players.map((p) => p.id) : [];
+  const list = friends.filter((f) => f.status === 'ok' && f.online && !f.playing && !inMatch.includes(f.id));
+  $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>Freunde einladen</h2>
+    ${list.length ? `<div class="plist">${list.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 36)}<span class="nm">${withTag(f)}<br><span class="lv">${rankText(f)}</span></span><button class="mini go" data-fight="${f.id}">Einladen</button></div>`).join('')}</div>`
+      : '<p class="sub">Gerade ist kein Freund online und frei. Über die Ranglisten kannst du jeden Online-Spieler herausfordern, oder du teilst den Code.</p>'}
+    <button class="btn small" id="inviteShare" style="width:100%">Einladungslink kopieren</button>
+    <p class="sub">Match-Code: <b>${S ? esc(S.code) : ''}</b></p>
+    <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+  $('#inviteShare').onclick = () => { const url = location.origin + '/?join=' + S.code; (navigator.share ? navigator.share({ title: 'PUNKTLANDUNG', text: 'Spiel mit! Code ' + S.code, url }) : navigator.clipboard.writeText(url).then(() => toast('Link kopiert'))).catch(() => {}); };
+}
 async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
@@ -895,7 +907,7 @@ function update() {
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
       <p class="sub">Bis ${S.settings.pointLimit} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage</p>
       ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
-    $('#lobbyAct').innerHTML = (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
+    $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
     $('#aiNote').textContent = { loading: S.waitAi ? 'Neue Fragen werden erstellt. Das Match startet, sobald sie fertig sind.' : 'Neue Fragen werden gerade erstellt … wenn es zu lange dauert, geht es mit dem festen Pool los.', waiting: 'Warte auf die frischen Fragen …', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen kamen nicht rechtzeitig. Es wird mit dem festen Pool gespielt.', off: '', idle: '' }[S.aiStatus] || '';
@@ -989,6 +1001,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mute') { muted = !muted; try { localStorage.setItem('sz_mute', muted ? '1' : '0'); } catch (e2) {} update(); if (!muted) sfx('sent'); }
   else if (t.dataset.board) { boardMode = t.dataset.board; update(); }
   else if (t.dataset.fight) socket.emit('challenge', Number(t.dataset.fight));
+  else if (t.id === 'invite') showInvite();
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();

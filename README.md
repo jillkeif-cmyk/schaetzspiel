@@ -36,7 +36,7 @@ Dann http://localhost:3000 öffnen.
 ## Ranglisten
 - Weltrangliste nach Weltranglistenpunkten (nur Ranglisten-Matches)
 - Bestenliste mit zwei Ansichten: nach Gesamtpunkten (Standard) und nach Rang (Prestige, Level, Siege)
-- Siegesserien erscheinen als Flamme neben dem Namen, Online-Spieler lassen sich mit ⚔ ins eigene Match holen
+- Siegesserien erscheinen als Flamme neben dem Namen. Mit ⚔ lässt sich jeder Online-Spieler herausfordern: wer kein Match offen hat, eröffnet mit dem Klick automatisch eines. In der Lobby gibt es zusätzlich „Freunde einladen“
 
 ## Rollen und Mod-Menü
 - `ADMIN_NAME` ist der Hauptadmin, er vergibt Rollen: `coadmin` (voller Zugriff aufs Mod-Menü, Regenbogen-Tag) und `supporter` (bisher nur eine Markierung)
