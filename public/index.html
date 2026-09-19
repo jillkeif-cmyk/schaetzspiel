@@ -165,8 +165,10 @@ label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
 .chal{display:flex;flex-direction:column;gap:7px;padding:13px 14px;border-radius:var(--r);background:var(--panel)}
 .xpbig{font-size:52px;line-height:1;color:var(--tape)}
 .parts{font-size:14.5px;color:var(--muted)}.parts div{display:flex;justify-content:space-between;padding:3px 0}
-#modal{position:fixed;inset:0;background:rgba(3,15,17,.8);display:none;place-items:center;padding:20px;z-index:8}
-#modal.on{display:grid}#modal .panel{width:100%;max-width:400px;display:flex;flex-direction:column;gap:12px}
+#modal{position:fixed;inset:0;background:rgba(3,15,17,.8);display:none;z-index:8;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:max(20px,env(safe-area-inset-top)) 20px max(28px,env(safe-area-inset-bottom))}
+#modal.on{display:flex;align-items:flex-start;justify-content:center}
+#modal .panel{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;margin:auto 0}
+@media (min-width:1000px){#modal{padding:32px 20px}#modal .panel{max-width:560px}}
 .center{text-align:center}
 .crown{color:var(--tape)}
 
