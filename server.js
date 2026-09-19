@@ -40,12 +40,13 @@ setInterval(() => hits.clear(), 3600000).unref();
 const TAG_COLORS = ['cyan', 'blau', 'rot', 'gruen', 'gelb', 'lila', 'orange', 'pink', 'weiss', 'rainbow'];
 const RESERVED_TAGS = ['dev', 'admin', 'mod', 'staff', 'owner', 'system', 'claude', 'anthropic'];
 
+const shownPrestige = (u) => (u.pres_shown === -1 ? 0 : u.pres_shown > 0 ? Math.min(u.pres_shown, u.prestige) : u.prestige);
 const isAdmin = (u) => !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME;
 const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
 const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
-  id: u.id, name: u.name, role: u.role || '', streak: u.streak || 0, presShown: Math.min(u.pres_shown ?? u.prestige, u.prestige), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, role: u.role || '', streak: u.streak || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -96,9 +97,9 @@ app.post('/api/prestige-icon', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const n = Math.round(Number(req.body.n));
-    if (!Number.isFinite(n) || n < 0 || n > u.prestige) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
+    if (!Number.isFinite(n) || n < -1 || n > u.prestige) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
     await store.save(u.id, { pres_shown: n });
-    res.json({ presShown: n });
+    res.json({ presShown: n === -1 ? 0 : n });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

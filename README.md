@@ -1,4 +1,4 @@
-# Schätzspiel
+# PUNKTLANDUNG
 
 Multiplayer-Schätzspiel für bis zu 6 Spieler pro Match, maximal 2 Matches gleichzeitig.
 
@@ -21,12 +21,12 @@ Dann http://localhost:3000 öffnen.
 ## Punkte
 - Schätzfrage: 0 bis 100 Punkte nach Nähe (0 Punkte ab 50 % Abweichung, bei Jahreszahlen ab 50/100/200 Jahren)
 - Sehr nah dran (innerhalb 4 % dieser Spanne): 200 Punkte (×2)
-- Punktlandung: 500 Punkte (×5)
+- Punktlandung: 500 Punkte (×5); der Punkteabfall ist quadratisch, weit daneben gibt fast nichts
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
 ## Spielerkarten
-- 10 Embleme und 10 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
+- 20 Embleme und 21 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
 - Titel sind eigene Banner-Grafiken (`public/emblems/title_*.webp`), Embleme eigene Icons (`pc_*.webp`)
 - Die Spielerkarte zeigt Profilbild, Emblem, Clan-Tag, Name, Titel, Level-Balken, Prestige-Logo und die Siegesserie als Flamme (1 bis 5, Farbe steigt)
 - Auswahl im Profil, sichtbar in Lobby, Punktestand, Auflösung, Endstand und den Ranglisten
@@ -65,6 +65,7 @@ Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das
 - XP pro Match: 100 fürs Beenden, halbe Punktzahl, 10 pro beantworteter Frage, 250 für den Sieg, 500 pro Punktlandung, dazu Herausforderungs-Stufen
 - 30 Level pro Prestige (15.225 XP), 10 Prestige-Ränge mit eigenen Emblemen und Profilbild-Rahmen
 - Das getragene Prestige-Logo ist frei wählbar, bis zum erreichten Rang (oder ganz ohne)
+- Prestige 11 ist das Meisterprestige mit eigenem animierten Logo und dem exklusiven Titel „Meister aller Klassen“
 - Prestige braucht Level 30 plus Bedingungen je Rang (Rang 1: 3 Siege ... Rang 10: 100 Siege, 15 Punktlandungen, 5 Siege in Folge). Werte stehen in `lib/progress.js`
 - Wer ein Match vorzeitig verlässt, bekommt keine XP
 
