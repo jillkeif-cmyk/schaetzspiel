@@ -33,6 +33,11 @@ Dann http://localhost:3000 öffnen.
 - Geheime Freischaltung: Emblem „Pink Pages“ und Titel „BookTok-Legende“ über den Code `GRACE`
 - Weitere Codes in `CODES` in `lib/cards.js` eintragen
 
+## Ranglisten
+- Weltrangliste nach Weltranglistenpunkten (nur Ranglisten-Matches)
+- Bestenliste mit zwei Ansichten: nach Gesamtpunkten (Standard) und nach Rang (Prestige, Level, Siege)
+- Siegesserien erscheinen als Flamme neben dem Namen, Online-Spieler lassen sich mit ⚔ ins eigene Match holen
+
 ## Rollen und Mod-Menü
 - `ADMIN_NAME` ist der Hauptadmin, er vergibt Rollen: `coadmin` (voller Zugriff aufs Mod-Menü, Regenbogen-Tag) und `supporter` (bisher nur eine Markierung)
 - Mod-Menü im Profil: alle Spieler durchsuchen, Level, Prestige, WP, Siege, Serie usw. einzeln setzen (Level und Prestige unabhängig), Embleme und Titel freischalten oder alles zurücksetzen
@@ -59,6 +64,7 @@ Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das
 ## Fortschritt
 - XP pro Match: 100 fürs Beenden, halbe Punktzahl, 10 pro beantworteter Frage, 250 für den Sieg, 500 pro Punktlandung, dazu Herausforderungs-Stufen
 - 30 Level pro Prestige (15.225 XP), 10 Prestige-Ränge mit eigenen Emblemen und Profilbild-Rahmen
+- Das getragene Prestige-Logo ist frei wählbar, bis zum erreichten Rang (oder ganz ohne)
 - Prestige braucht Level 30 plus Bedingungen je Rang (Rang 1: 3 Siege ... Rang 10: 100 Siege, 15 Punktlandungen, 5 Siege in Folge). Werte stehen in `lib/progress.js`
 - Wer ein Match vorzeitig verlässt, bekommt keine XP
 
