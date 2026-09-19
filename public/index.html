@@ -266,6 +266,34 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   #emotes button{font-size:38px;width:60px;height:60px}.emo-fly{font-size:84px}
   #unlock .big-emb{width:340px}#unlock h1{font-size:84px}
 }
+
+.wp{color:var(--tape);font-weight:800;font-stretch:70%;text-shadow:0 0 12px rgba(255,210,63,.45)}
+.themes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.themes button{padding:12px 10px;border-radius:12px;background:var(--bg-deep);font-weight:700;font-size:15px;color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}
+.themes button.on{background:var(--tape);color:var(--ink);box-shadow:none}
+.themes button[disabled]{opacity:.5}
+.modepick{display:flex;gap:10px}
+.modepick button{flex:1;padding:14px 10px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);text-align:center}
+.modepick button b{display:block;font:800 17px/1.2 Archivo;font-stretch:85%;color:var(--paper)}
+.modepick button small{color:var(--muted);font-size:12.5px}
+.modepick button.on{background:linear-gradient(180deg,#FFE88A,#E8A91C)}
+.modepick button.on b,.modepick button.on small{color:var(--ink)}
+/* Auflösung: klarere Zeilen */
+.pl.me{box-shadow:inset 0 0 0 2px var(--tape),0 4px 10px rgba(0,0,0,.25)}
+.pl .pos{width:26px;text-align:center;font:800 18px/1 Archivo;font-stretch:70%;color:var(--muted)}
+.pl.win .pos{color:var(--tape)}
+.diff{font-size:13px;color:var(--muted);white-space:nowrap}
+.res{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:var(--r);background:linear-gradient(180deg,#0B2B30,#07201F);border-left:5px solid var(--c);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.res.me{box-shadow:inset 0 0 0 2px var(--tape)}
+.res .nm{flex:1;min-width:0;overflow:hidden;font-weight:700}
+.res .nm .tag{vertical-align:2px}
+.res .val{font:800 19px/1 Archivo;font-stretch:66%;text-align:right}
+.res .pts{min-width:64px;text-align:right;font:800 19px/1 Archivo;font-stretch:70%;color:var(--ok)}
+.res .pts.zero{color:var(--muted)}
+.mark{font-size:20px;width:24px;text-align:center}
+.ruler .pin.me b{box-shadow:0 0 0 2.5px #fff,0 0 14px rgba(255,255,255,.6)}
+.ruler .pin.best b::before{content:"★ "}
+.ruler .truthlab{position:absolute;bottom:0;transform:translateX(-50%);background:var(--hit);color:#fff;font:800 13px/1 Archivo;padding:5px 8px;border-radius:7px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -427,7 +455,8 @@ function build() {
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
-    <div><h2 style="margin-bottom:10px">Bestenliste</h2><div id="board" class="plist"></div></div></div>`;
+    <div><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
+    <div><h2 style="margin-bottom:10px">Bestenliste nach Rang</h2><div id="board" class="plist"></div></div></div>`;
 
   if (S.phase === 'lobby') return `<div class="col">
     <div class="center"><p class="sub">Match-Code</p><div class="code">${esc(S.code)}</div>
@@ -438,6 +467,9 @@ function build() {
       ${S.hostId === S.you ? `<div class="seg"><button id="accPub">Öffentlich</button><button id="accPriv">Mit Passwort</button></div>
       <form id="pwForm" class="row" hidden><input class="field grow" id="pwInput" maxlength="20" autocomplete="off" placeholder="Passwort festlegen"><button class="btn small">Speichern</button></form>` : ''}
       <p class="sub" id="accNote"></p></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
+      <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>alle Themen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
+      <div id="themeBox"></div></div>
     <div class="panel" id="settings" style="display:flex;flex-direction:column;gap:14px"></div>
     <div id="lobbyAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`;
 
@@ -445,7 +477,7 @@ function build() {
     <div class="center" style="padding-top:6vh"><p class="sub">Es geht los in</p><div class="num big" id="bigSec"></div><p id="aiNote" class="sub" style="margin-top:8px"></p></div>
     <div id="players" class="plist"></div>
     <div id="cdAct"></div>
-    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung zehnfach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
+    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung fünffach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
 
   if (S.phase === 'question') { const q = S.question; return `
     <div id="chips" class="chips mobonly"></div><div class="col">
@@ -474,9 +506,14 @@ function buildReveal() {
   const q = S.question, R = S.reveal, P = Object.fromEntries(S.players.map((p) => [p.id, p]));
   const head = `<div id="chips" class="chips mobonly"></div><div class="col"><div class="cat"><span>${esc(q.cat)}</span><span>Frage ${S.qIndex} von ${S.qTotal}</span></div><div class="qtext" style="font-size:20px">${esc(q.text)}</div>`;
   const foot = `<button class="link" id="report" style="align-self:center"></button><div class="deskonly" style="flex-direction:column;gap:10px;margin-top:8px"><h2>Punktestand</h2><div class="plist" id="sideboard"></div></div></div>`;
-  if (q.type === 'mc') return head + `<div class="opts">${q.options.map((o, i) => { const who = R.results.filter((r) => r.value === i);
+  const me = (id) => (id === S.you ? ' me' : '');
+
+  if (q.type === 'mc') {
+    const rows = [...R.results].sort((a, b) => (b.right ? 1 : 0) - (a.right ? 1 : 0));
+    return head + `<div class="opts">${q.options.map((o, i) => { const who = R.results.filter((r) => r.value === i);
       return `<div class="opt ${i === R.correctIndex ? 'right' : 'wrong'}"><em>${'ABCD'[i]}</em>${esc(o)}<span class="who">${who.map((r) => `<i style="--c:${P[r.id]?.color}" title="${esc(P[r.id]?.name || '')}"></i>`).join('')}</span></div>`; }).join('')}</div></div><div class="col side">
-    <div class="plist">${R.results.map((r) => `<div class="pl" data-pid="${r.id}" style="--c:${P[r.id]?.color}"><span class="nm">${esc(P[r.id]?.name || '?')}</span><small>${r.value === null ? 'keine Antwort' : r.right ? 'richtig' : 'falsch'}</small><span class="gain ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
+      <div class="plist">${rows.map((r) => `<div class="res${me(r.id)}" data-pid="${r.id}" style="--c:${P[r.id]?.color}"><span class="mark">${r.value === null ? '⏳' : r.right ? '✅' : '❌'}</span>${avatar(P[r.id] || { name: '?' }, 34, false)}<span class="nm">${esc(P[r.id]?.name || '?')}${r.id === S.you ? ' <small>(du)</small>' : ''}<br><span class="diff">${r.value === null ? 'keine Antwort' : 'ABCD'[r.value] + ' · ' + esc(q.options[r.value])}</span></span><span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
+  }
 
   const given = R.results.filter((r) => r.value !== null);
   const vals = [...given.map((r) => r.value), R.answer];
@@ -486,15 +523,17 @@ function buildReveal() {
   const delay = (given.length * 0.12 + 0.35).toFixed(2) + 's';
   const exact = given.filter((r) => r.exact);
   const order = [...given].sort((a, b) => a.value - b.value);
+  const U = R.unit === 'Jahr' ? '' : ' ' + R.unit;
+  const diffText = (r) => r.value === null ? 'keine Schätzung' : r.exact ? 'genau richtig' : `${fmt(Math.abs(r.value - R.answer), R.unit)}${U} ${r.value > R.answer ? 'zu hoch' : 'zu niedrig'}`;
   return head + `
     <div class="answer" style="--d:${delay}"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
-    ${exact.length ? `<div class="banner" style="--d:${delay}"><img src="/emblems/c_exact.webp" alt="">Punktlandung! ${esc(exact.map((r) => P[r.id]?.name).join(' & '))} ×10</div>` : ''}
+    ${exact.length ? `<div class="banner" style="--d:${delay}"><img src="/emblems/c_exact.webp" alt="">Punktlandung! ${esc(exact.map((r) => P[r.id]?.name).join(' & '))} ×5</div>` : ''}
     <div class="ruler"><div class="band"></div>
-      ${order.map((r, i) => `<div class="pin" style="left:${pos(r.value)}%;--c:${P[r.id]?.color};--i:${i};--h:${10 + (i % 3) * 22}px"><b>${esc(initials(P[r.id]?.name || '?'))}</b></div>`).join('')}
+      ${order.map((r, i) => `<div class="pin${me(r.id)}${r.closest ? ' best' : ''}" style="left:${pos(r.value)}%;--c:${P[r.id]?.color};--i:${i};--h:${10 + (i % 3) * 22}px"><b>${esc(r.id === S.you ? 'DU' : initials(P[r.id]?.name || '?'))}</b></div>`).join('')}
       <div class="truth" style="left:${pos(R.answer)}%;--d:${delay}"></div>
+      <div class="truthlab" style="left:${pos(R.answer)}%">${fmt(R.answer, R.unit)}${U}</div>
       <div class="ends"><span>${fmt(lo, R.unit)}</span><span>${log ? 'logarithmisch' : ''}</span><span>${fmt(hi, R.unit)}</span></div></div></div><div class="col side">
-    <div class="plist">${R.results.map((r) => `<div class="pl" data-pid="${r.id}" style="--c:${P[r.id]?.color}"><span class="nm">${esc(P[r.id]?.name || '?')} ${r.exact ? '<span class="tag hit">×10</span>' : r.close ? '<span class="tag">×2</span>' : ''} ${r.closest && !r.exact ? '<span class="tag" style="background:var(--line);color:var(--paper)">am nächsten</span>' : ''}</span>
-      <small>${r.value === null ? 'keine Schätzung' : fmt(r.value, R.unit)}</small><span class="gain ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
+    <div class="plist">${R.results.map((r, i) => `<div class="res${me(r.id)}" data-pid="${r.id}" style="--c:${P[r.id]?.color}"><span class="pos">${r.value === null ? '–' : i + 1}</span>${avatar(P[r.id] || { name: '?' }, 34, false)}<span class="nm">${esc(P[r.id]?.name || '?')}${r.id === S.you ? ' <small>(du)</small>' : ''}${r.exact ? ' <span class="tag hit">×5</span>' : r.close ? ' <span class="tag">×2</span>' : ''}${r.closest && !r.exact ? ' <span class="tag">★</span>' : ''}<br><span class="diff">${diffText(r)}</span></span><span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span><span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
 }
 
 // ---------- Dynamische Teile ----------
@@ -518,7 +557,7 @@ async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
     $('#modal').innerHTML = `<div class="panel" style="gap:16px"><div class="row" style="gap:18px">${avatar(u, 84)}<div class="grow"><h2>${esc(u.name)}</h2><p class="sub">${u.prestige ? 'Prestige ' + u.prestige + ' · ' : ''}Level ${u.level} · ${u.online ? 'online' : 'offline'}</p></div></div>
-      <div class="stats">${[[u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [u.bestStreak, 'Beste Serie'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="stats">${[[u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
       <button class="btn ghost" id="pwCancel">Schließen</button><button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   } catch (e) { toast(e.message); }
@@ -547,7 +586,7 @@ function update() {
     if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>Admin: Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off"><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
     if (!$('#profHead') || !home) return;
     const me = home.me, pr = home.progress, st = pr.prestige;
-    $('#profHead').innerHTML = `<div class="row" style="gap:20px">${avatar(me, 92)}<div class="grow"><h2>${esc(me.name)}</h2><p class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Noch kein Prestige'}</p>
+    $('#profHead').innerHTML = `<div class="row" style="gap:20px">${avatar(me, 92)}<div class="grow"><h2>${esc(me.name)} <span class="wp" style="font-size:19px">${fmt(me.rankPoints || 0)} WP</span></h2><p class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Noch kein Prestige'}</p>
       <p style="margin:8px 0 5px" class="row"><b class="num" style="font-size:22px">Level ${me.level}</b><span class="sub" style="margin-left:auto">${me.max ? 'Maximum erreicht' : me.into + ' / ' + me.next + ' XP'}</span></p>${barHtml(me.into, me.next, me.max)}</div></div>`;
     $('#nextPrestige').innerHTML = st.next ? `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">${emblem(st.next)}</span><div><p class="sub">Nächster Rang</p><h2>Prestige ${st.next} · ${esc(st.name)}</h2></div></div>
       ${st.reqs.map((r) => `<div class="req"><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
@@ -565,10 +604,11 @@ function update() {
     $('#create').disabled = full;
     $('#onlineText').textContent = L.online ? `${L.online} Spieler online: ${(L.onlineNames || []).join(', ')}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
-    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match<br><small>${m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · ${m.players} Spieler` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${m.phase === 'lobby' && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
+    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · ${m.players} Spieler` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${m.phase === 'lobby' && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
-    $('#openProfile').innerHTML = me ? `${avatar(me, 64)}<span class="grow"><b style="font-size:20px">${esc(me.name)}</b><br><span class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}Level ${me.level}</span><span style="display:block;margin-top:7px">${barHtml(me.into, me.next, me.max)}</span><span class="lv">Profil und Prestige ansehen</span></span>` : '<span class="sub">Lädt …</span>';
+    $('#openProfile').innerHTML = me ? `${avatar(me, 64)}<span class="grow"><b style="font-size:20px">${esc(me.name)}</b><br><span class="sub">${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}Level ${me.level}</span> <span class="wp">${fmt(me.rankPoints || 0)} WP</span><span style="display:block;margin-top:7px">${barHtml(me.into, me.next, me.max)}</span><span class="lv">Profil und Prestige ansehen</span></span>` : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
+    $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${esc(u.name)}<br><span class="lv">${rankText(u)}</span></span><span class="wp">${fmt(u.rankPoints)} WP</span></div>`).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     $('#board').innerHTML = home && home.leaderboard.length ? home.leaderboard.map((u, i) => `<div class="pl" style="--c:var(--line)"><span class="num" style="width:20px">${i + 1}</span>${avatar(u, 36)}<span class="nm">${esc(u.name)}<br><span class="lv">${rankText(u)}</span></span><small>${u.wins} Siege</small></div>`).join('') : '<p class="sub">Noch keine Matches gespielt. Eröffne das erste.</p>';
     return;
   }
@@ -579,6 +619,10 @@ function update() {
   if (S.phase === 'lobby') {
     $('#pcount').textContent = `${S.players.length} von 6`;
     if (host) { $('#accPub').classList.toggle('on', !S.locked && !privMode); $('#accPriv').classList.toggle('on', S.locked || privMode); $('#pwForm').hidden = !(S.locked || privMode); if (S.locked && document.activeElement !== $('#pwInput')) $('#pwInput').value = S.password || ''; }
+    document.querySelectorAll('#modepick button').forEach((b) => { b.classList.toggle('on', (b.dataset.mode === 'ranked') === S.ranked); b.disabled = !host; });
+    $('#themeBox').innerHTML = S.ranked
+      ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
+      : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''}" ${host ? '' : 'disabled'}>${esc(t.name)}</button>`).join('')}</div>`;
     $('#accNote').textContent = S.locked ? (host ? 'Wer beitritt, muss dieses Passwort eingeben. Das Match bleibt in der Liste sichtbar.' : 'Dieses Match ist mit einem Passwort geschützt.') : (host ? 'Jeder mit Konto kann über die Liste oder den Code beitreten.' : 'Dieses Match ist öffentlich.');
     $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}" ${host ? '' : 'disabled'}>${v}${suf}</button>`).join('')}</div></div>`).join('')
       + (host ? '' : '<p class="sub">Nur der Host ändert die Einstellungen.</p>');
@@ -600,7 +644,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -637,6 +681,13 @@ document.addEventListener('click', (e) => {
   if (t.dataset.tab) { authTab = t.dataset.tab; render(); }
   else if (t.dataset.join) socket.emit('join', t.dataset.join);
   else if (t.dataset.set) socket.emit('settings', { [t.dataset.set]: Number(t.dataset.v) });
+  else if (t.dataset.mode) socket.emit('settings', { ranked: t.dataset.mode === 'ranked' });
+  else if (t.dataset.theme) {
+    const has = S.themes.includes(t.dataset.theme);
+    if (!has && S.themes.length >= S.maxThemes) return toast(`Höchstens ${S.maxThemes} Themen.`);
+    if (has && S.themes.length === 1) return toast('Mindestens ein Thema muss aktiv bleiben.');
+    socket.emit('settings', { themes: has ? S.themes.filter((x) => x !== t.dataset.theme) : [...S.themes, t.dataset.theme] });
+  }
   else if (t.dataset.i !== undefined && S && S.phase === 'question') socket.emit('answer', Number(t.dataset.i));
   else if (['create', 'start', 'skip', 'again', 'report'].includes(t.id)) socket.emit(t.id);
   else if (t.id === 'leave') { if (S.phase === 'lobby' || S.phase === 'finished' || confirm('Match wirklich verlassen?')) socket.emit('leave'); }

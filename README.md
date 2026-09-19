@@ -20,10 +20,15 @@ Dann http://localhost:3000 öffnen.
 
 ## Punkte
 - Schätzfrage: 0 bis 100 Punkte nach Nähe (0 Punkte ab 50 % Abweichung, bei Jahreszahlen ab 50/100/200 Jahren)
-- Sehr nah dran (innerhalb 4 % dieser Spanne): 200 Punkte
-- Punktlandung: 1000 Punkte
+- Sehr nah dran (innerhalb 4 % dieser Spanne): 200 Punkte (×2)
+- Punktlandung: 500 Punkte (×5)
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
+
+## Modi
+- **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
+- **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte
+- Themen und ihre Kategorien stehen in `lib/themes.js`
 
 ## Fortschritt
 - XP pro Match: 100 fürs Beenden, halbe Punktzahl, 10 pro beantworteter Frage, 250 für den Sieg, 500 pro Punktlandung, dazu Herausforderungs-Stufen

@@ -38,7 +38,7 @@ setInterval(() => hits.clear(), 3600000).unref();
 
 const publicStats = (u) => ({
   id: u.id, name: u.name, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
-  mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
+  mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
 const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
@@ -76,6 +76,7 @@ app.get('/api/home', async (req, res) => {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     res.json({ me: { ...publicStats(u), admin: !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
+      world: (await store.worldRanking()).map(publicStats),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
