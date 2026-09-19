@@ -40,8 +40,12 @@ setInterval(() => hits.clear(), 3600000).unref();
 const TAG_COLORS = ['cyan', 'blau', 'rot', 'gruen', 'gelb', 'lila', 'orange', 'pink', 'weiss', 'rainbow'];
 const RESERVED_TAGS = ['dev', 'admin', 'mod', 'staff', 'owner', 'system', 'claude', 'anthropic'];
 
+const isAdmin = (u) => !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME;
+const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
+const ROLES = ['', 'coadmin', 'supporter'];
+
 const publicStats = (u) => ({
-  id: u.id, name: u.name, tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, role: u.role || '', streak: u.streak || 0, tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -79,7 +83,7 @@ app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(publicStats), ai: ai.enabled(),
       world: (await store.worldRanking()).map(publicStats),
       cards: cards.view(u),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
@@ -112,13 +116,13 @@ app.post('/api/redeem', async (req, res) => {
 app.post('/api/tag', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    const isAdmin = !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME;
+    const mod = isMod(u);
     const tag = String(req.body.tag || '').trim().toUpperCase();
     const color = String(req.body.color || '').trim().toLowerCase();
     if (tag && !/^[A-Z0-9ÄÖÜ]{2,5}$/.test(tag)) return res.status(400).json({ error: 'Clan-Tag: 2 bis 5 Buchstaben oder Zahlen.' });
-    if (tag && !isAdmin && RESERVED_TAGS.includes(tag.toLowerCase())) return res.status(403).json({ error: 'Dieser Tag ist reserviert.' });
+    if (tag && !isAdmin(u) && RESERVED_TAGS.includes(tag.toLowerCase())) return res.status(403).json({ error: 'Dieser Tag ist reserviert.' });
     if (color && !TAG_COLORS.includes(color)) return res.status(400).json({ error: 'Unbekannte Farbe.' });
-    if (color === 'rainbow' && !isAdmin) return res.status(403).json({ error: 'Regenbogen ist reserviert.' });
+    if (color === 'rainbow' && !mod) return res.status(403).json({ error: 'Regenbogen ist reserviert.' });
     await store.save(u.id, { tag, tag_color: tag ? color || 'cyan' : '' });
     res.json({ tag, color: tag ? color || 'cyan' : '' });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -158,11 +162,65 @@ app.get('/api/user/:id', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// --- Mod-Menü: nur Admin und Co-Admins ---
+const modAuth = async (req, res) => {
+  const u = await auth(req);
+  if (!u) { res.status(401).json({ error: 'Bitte neu anmelden.' }); return null; }
+  if (!isMod(u)) { res.status(403).json({ error: 'Kein Zugriff.' }); return null; }
+  return u;
+};
+const modView = (t) => ({ ...publicStats(t), xp: t.xp, emblem: t.emblem || '', titleId: t.title || '', unlocks: String(t.unlocks || '').split(',').filter(Boolean), codes: String(t.codes || '').split(',').filter(Boolean) });
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const list = await store.searchUsers(req.query.q, 50);
+    res.json({ total: await store.countUsers(), users: list.map(modView), roles: ROLES, admin: isAdmin(u) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Werte eines Spielers ändern. Level und Prestige lassen sich getrennt setzen.
+const NUM_FIELDS = { level: 1, xp: 1, prestige: 1, rank_points: 1, wins: 1, matches: 1, exact: 1, close: 1, answered: 1, mc_right: 1, mc_total: 1, points: 1, best_score: 1, streak: 1, best_streak: 1 };
+app.post('/api/admin/user', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const t = await store.userById(Number(req.body.id)); if (!t) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    const f = {};
+    for (const k of Object.keys(NUM_FIELDS)) {
+      if (req.body[k] === undefined || req.body[k] === '') continue;
+      const v = Math.max(0, Math.round(Number(req.body[k])));
+      if (!Number.isFinite(v)) continue;
+      if (k === 'level') f.xp = progress.xpForLevel(Math.min(v, progress.MAX_LEVEL));
+      else if (k === 'prestige') f.prestige = Math.min(v, progress.MAX_PRESTIGE);
+      else f[k] = v;
+    }
+    if (req.body.role !== undefined) {
+      if (!isAdmin(u)) return res.status(403).json({ error: 'Nur der Admin vergibt Rollen.' });
+      if (!ROLES.includes(String(req.body.role))) return res.status(400).json({ error: 'Unbekannte Rolle.' });
+      f.role = String(req.body.role);
+    }
+    await store.save(t.id, f);
+    res.json({ user: modView(await store.userById(t.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Embleme und Titel für einen Spieler einzeln freischalten oder zurücksetzen
+app.post('/api/admin/unlock', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const t = await store.userById(Number(req.body.id)); if (!t) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    const list = cards.setUnlock(t, String(req.body.card || ''), !!req.body.on);
+    if (list === null) return res.status(400).json({ error: 'Unbekanntes Emblem oder Titel.' });
+    await store.save(t.id, { unlocks: list });
+    res.json({ user: modView(await store.userById(t.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 // Admin setzt das Passwort eines Spielers neu (es gibt keine E-Mail-Funktion)
 app.post('/api/admin/reset', async (req, res) => {
   try {
     const u = await auth(req);
-    if (!u || !ADMIN_NAME || u.name.toLowerCase() !== ADMIN_NAME) return res.status(403).json({ error: 'Nur der Admin darf Passwörter zurücksetzen.' });
+    if (!u || !isMod(u)) return res.status(403).json({ error: 'Kein Zugriff.' });
     const target = await store.userByName(String(req.body.name || '').trim());
     const pw = String(req.body.password || '');
     if (!target) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });

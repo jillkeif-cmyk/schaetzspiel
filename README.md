@@ -27,9 +27,15 @@ Dann http://localhost:3000 öffnen.
 
 ## Spielerkarten
 - 10 Embleme und 10 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
+- Die Spielerkarte zeigt Profilbild, Emblem, Clan-Tag, Name, Titel, Level-Balken, Prestige-Logo und die Siegesserie als Flamme (1 bis 5, Farbe steigt)
 - Auswahl im Profil, sichtbar in Lobby, Punktestand, Auflösung, Endstand und den Ranglisten
 - Geheime Freischaltung: Emblem „Pink Pages“ und Titel „BookTok-Legende“ über den Code `GRACE`
 - Weitere Codes in `CODES` in `lib/cards.js` eintragen
+
+## Rollen und Mod-Menü
+- `ADMIN_NAME` ist der Hauptadmin, er vergibt Rollen: `coadmin` (voller Zugriff aufs Mod-Menü, Regenbogen-Tag) und `supporter` (bisher nur eine Markierung)
+- Mod-Menü im Profil: alle Spieler durchsuchen, Level, Prestige, WP, Siege, Serie usw. einzeln setzen (Level und Prestige unabhängig), Embleme und Titel freischalten oder alles zurücksetzen
+- Reservierte Tags (DEV usw.) bleiben dem Hauptadmin vorbehalten
 
 ## Clan-Tags
 - 2 bis 5 Zeichen vor dem Namen, Farbe wählbar
