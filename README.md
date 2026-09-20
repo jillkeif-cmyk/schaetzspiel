@@ -27,7 +27,8 @@ Dann http://localhost:3000 öffnen.
 
 ## Sammelkarten
 - Diamanten gibt es für Matches (bis 200 pro Sieg, abhängig vom Punktestand), Admin kann sie über `/api/admin/diamonds` setzen
-- Karten, Varianten und Booster stehen in `lib/tcg.js`, Bilder unter `public/tcg/`
+- 100 Karten in `lib/tcg.js` (je 50 pro Booster), Bilder unter `public/tcg/`
+- Häufige Karten gibt es nur einstufig, seltene und legendäre je in drei Stufen (Selten/Holo/Ultra bzw. Legendär/Ultra/Extended Art)
 - Kartenseite über die Startseite: Sammlung, Booster-Inventar, Shop, Börse und Tausch
 - Börse: Karte gegen Diamanten anbieten, kaufen, Angebot zurückziehen. Tausch: Karte gegen Karte mit Freunden, mit Push-Nachricht
 - Die Duell-Logik fehlt noch, der Knopf im Kartenbereich ist ausgegraut
