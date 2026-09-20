@@ -1449,7 +1449,7 @@ function update() {
       <p class="sub">Bis ${fmt(S.settings.pointLimit)} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage${S.settings.answerTime <= 8 ? ' ⚡ Schnellmodus' : ''}</p>
       ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
     const an = $('#aiLobby');
-    if (an) an.textContent = { loading: 'Frische Fragen werden im Hintergrund erstellt, der feste Pool sichert ab.', waiting: 'Warte auf die frischen Fragen …', ready: 'Frische Fragen sind fertig.', failed: 'Diesmal ohne frische Fragen, gespielt wird mit dem festen Pool.', off: 'Gespielt wird mit dem festen Fragenpool.', idle: 'Beim Start werden Fragen zusammengestellt, frische kommen dazu.' }[S.aiStatus] || '';
+    if (an) an.textContent = { loading: 'Frische Fragen werden schon jetzt erstellt …', waiting: 'Warte auf die frischen Fragen …', ready: '✓ Frische Fragen sind fertig, ihr könnt starten.', failed: 'Mehrere Anläufe ohne Erfolg, gespielt wird mit dem festen Pool.', off: 'Gespielt wird mit dem festen Fragenpool.', idle: 'Fragen werden gleich angefordert …' }[S.aiStatus] || '';
     $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
