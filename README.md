@@ -27,7 +27,8 @@ Dann http://localhost:3000 öffnen.
 
 ## Sammelkarten
 - Diamanten gibt es für Matches (bis 200 pro Sieg, abhängig vom Punktestand), Admin kann sie über `/api/admin/diamonds` setzen
-- 100 Karten in `lib/tcg.js` (je 50 pro Booster), Bilder unter `public/tcg/`
+- 110 Karten in `lib/tcg.js`: je 50 im Standard- und Premium-Booster, dazu 10 eigene Ghost-Rare-Karten
+- Der Geister-Booster (5.200 Diamanten) enthält alle Karten beider Sets, aber kein Extended Art; dafür als einziger die Ghost-Rare-Karten (0,6 %)
 - Häufige Karten gibt es nur einstufig, seltene und legendäre je in drei Stufen (Selten/Holo/Ultra bzw. Legendär/Ultra/Extended Art)
 - Kartenseite über die Startseite: Sammlung, Booster-Inventar, Shop, Börse und Tausch
 - Sammlung: eigene Karten zuerst, Filter nach Besitz und Seltenheit, Seltenheits-Symbol auf jeder Kachel
