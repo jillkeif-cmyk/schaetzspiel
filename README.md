@@ -84,7 +84,7 @@ Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das
 ## Modi
 - **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
 - **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte. Es kommen ausschließlich Fragen aus den gewählten Themen, auch die live erzeugten. Reicht der Themenpool nicht für die eingestellte Fragenzahl, wird die Runde kürzer statt themenfremd
-- Themen und ihre Kategorien stehen in `lib/themes.js`; ein Thema kann dort einen `hint` haben, der der KI mitgegeben wird (BookTok: nur Bücher ab 2000)
+- 13 Themen, ihre Kategorien stehen in `lib/themes.js`; ein Thema kann dort einen `hint` haben, der der KI mitgegeben wird (BookTok: nur Bücher ab 2000)
 - Innerhalb eines Matches wiederholt sich keine Frage, auch nicht nach „Nochmal spielen“. Geht der Themenpool zur Neige, wird die Runde kürzer; erst wenn alles durch ist, beginnt der Pool von vorn
 
 ## Fortschritt
