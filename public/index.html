@@ -1080,7 +1080,7 @@ function build() {
     <div class="center" style="padding-top:2vh"><h1>Match einrichten</h1><p class="sub" style="margin-top:8px">Erst einstellen, dann eröffnen. Danach können Freunde beitreten.</p></div>
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
-      <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>alle Themen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
+      <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
       <div id="themeBox"></div>
       <label style="margin:6px 0 0">Neue Fragen</label>
       <div class="seg"><button id="waitOff">Sofort starten</button><button id="waitOn">Auf frische Fragen warten</button></div>
@@ -1098,6 +1098,7 @@ function build() {
     <div><h2 style="margin-bottom:10px">Spieler <span class="sub" id="pcount"></span></h2><div id="players" class="plist"></div></div>
     </div><div class="col">
     <div class="panel" id="rules" style="display:flex;flex-direction:column;gap:8px"></div>
+    <p class="sub" id="aiLobby"></p>
     <div id="chatBox"></div>
     <div id="lobbyAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`;
 
@@ -1407,10 +1408,12 @@ function update() {
   if (S.phase === 'lobby') {
     $('#pcount').textContent = `${S.players.length} von ${S.maxPlayers || 8}`;
     const tn = S.themeList.filter((x) => S.themes.includes(x.key)).map((x) => x.name);
-    $('#rules').innerHTML = `<div class="row"><b class="grow">${S.ranked ? 'Rangliste' : 'Freies Spiel'}</b>${S.locked ? '<span class="tag">🔒 Passwort</span>' : ''}</div>
+    $('#rules').innerHTML = `<div class="row"><b class="grow">${S.ranked ? 'Rangliste · Allgemeinwissen' : 'Freies Spiel'}</b>${S.locked ? '<span class="tag">🔒 Passwort</span>' : ''}</div>
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
       <p class="sub">Bis ${S.settings.pointLimit} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage</p>
       ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
+    const an = $('#aiLobby');
+    if (an) an.textContent = { loading: 'Neue Fragen werden im Hintergrund erstellt …', waiting: 'Warte auf die frischen Fragen …', ready: 'Neue Fragen sind fertig.', failed: 'Neue Fragen kamen nicht rechtzeitig, es wird mit dem festen Pool gespielt.', off: 'Es wird mit dem festen Fragenpool gespielt.', idle: 'Die Fragen werden beim Start zusammengestellt.' }[S.aiStatus] || '';
     $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
