@@ -486,6 +486,17 @@ const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb" style="--s:${s
 const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
+function seenText(u) {
+  if (!u || !u.lastSeen) return 'noch nie online';
+  const m = Math.round((Date.now() - u.lastSeen) / 60000);
+  if (m < 1) return 'gerade eben';
+  if (m < 60) return 'vor ' + m + ' Min.';
+  const h = Math.round(m / 60);
+  if (h < 24) return 'vor ' + h + ' Std.';
+  const d = Math.round(h / 24);
+  return d === 1 ? 'gestern' : 'vor ' + d + ' Tagen';
+}
+const onlineText = (u) => (u.online ? 'online' : 'zuletzt ' + seenText(u));
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
 function closeModal() { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; }
 function askPassword(code, wrong) {
@@ -741,7 +752,7 @@ function sideHtml() {
 function friendsHtml() {
   if (!friends.length) return '<p class="sub">Noch keine Freunde. Füge jemanden per Spielername hinzu oder tippe nach einem Match auf „+ Freund“.</p>';
   const order = { in: 0, ok: 1, out: 2 };
-  return [...friends].sort((a, b) => order[a.status] - order[b.status] || b.online - a.online || a.name.localeCompare(b.name)).map((f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? 'spielt gerade' : f.online ? 'online' : 'offline')}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`).join('');
+  return [...friends].sort((a, b) => order[a.status] - order[b.status] || b.online - a.online || a.name.localeCompare(b.name)).map((f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? 'spielt gerade' : onlineText(f))}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`).join('');
 }
 let modUsers = [], modRoles = [''];
 async function modLoad(q) {
@@ -749,7 +760,7 @@ async function modLoad(q) {
     const r = await api('/api/admin/users' + (q ? '?q=' + encodeURIComponent(q) : ''));
     modUsers = r.users; modRoles = r.roles;
     if (!$('#modList')) return;
-    $('#modList').innerHTML = `<p class="sub">${r.users.length} von ${r.total} Spielern</p>` + r.users.map((u) => `<div class="pl" data-mod="${u.id}" style="--c:var(--line)">${avatar(u, 36)}<span class="nm">${withTag(u)}${u.role ? ` <span class="tag">${esc(u.role)}</span>` : ''}<br><span class="lv">Lv ${u.level} · P${u.prestige} · ${fmt(u.rankPoints)} WP · ${u.wins}/${u.matches}</span></span><span class="mini">ändern</span></div>`).join('');
+    $('#modList').innerHTML = `<p class="sub">${r.users.length} von ${r.total} Spielern</p>` + r.users.map((u) => `<div class="pl" data-mod="${u.id}" style="--c:var(--line)">${avatar(u, 36)}<span class="nm">${withTag(u)}${u.role ? ` <span class="tag">${esc(u.role)}</span>` : ''}<br><span class="lv">Lv ${u.level} · P${u.prestige} · ${fmt(u.rankPoints)} WP · ${u.wins}/${u.matches} · ${esc(seenText(u))}</span></span><span class="mini">ändern</span></div>`).join('');
   } catch (e) { toast(e.message); }
 }
 let modOpen = null;
@@ -797,7 +808,7 @@ function showInvite() {
 async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
-    $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${u.online ? 'online' : 'offline'}</span></div>`)}
+    $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${esc(u.playing ? 'spielt gerade' : onlineText(u))}</span></div>`)}
       <div class="stats">${[[u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
       <button class="btn ghost" id="pwCancel">Schließen</button><button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -878,7 +889,7 @@ function update() {
     const me = home && home.me;
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
-    const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
+    const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
     const blist = boardMode === 'points' ? (home && home.points) || [] : (home && home.leaderboard) || [];

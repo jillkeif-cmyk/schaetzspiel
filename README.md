@@ -36,6 +36,7 @@ Dann http://localhost:3000 öffnen.
 ## Ranglisten
 - Weltrangliste nach Weltranglistenpunkten (nur Ranglisten-Matches)
 - Bestenliste mit zwei Ansichten: nach Gesamtpunkten (Standard) und nach Rang (Prestige, Level, Siege)
+- Zuletzt-online-Zeit wird bei jedem Verbinden und Trennen gespeichert und in Freundesliste, Ranglisten, Spielerprofil und Mod-Menü angezeigt
 - Siegesserien erscheinen als Flamme neben dem Namen. Mit ⚔ lässt sich jeder Online-Spieler herausfordern: wer kein Match offen hat, eröffnet mit dem Klick automatisch eines. In der Lobby gibt es zusätzlich „Freunde einladen“
 
 ## Rollen und Mod-Menü
