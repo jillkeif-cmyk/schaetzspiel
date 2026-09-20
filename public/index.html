@@ -568,6 +568,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tabs2 button.on{background:var(--tape);color:var(--ink);box-shadow:none}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .cgrid figure{display:flex;flex-direction:column;gap:6px;position:relative}
+#opener .slot .cbadge{left:auto;right:6px;top:6px}
 .cgrid img{width:100%;height:auto;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,.45)}
 .cgrid .miss img{filter:grayscale(1) brightness(.35)}
 .cgrid figcaption{font-size:12.5px;color:var(--muted);line-height:1.25}
@@ -580,9 +581,18 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #opener{position:fixed;inset:0;z-index:11;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(255,210,63,.18),rgba(3,15,17,.92) 60%)}
 #opener.on{display:grid}
 #opener .wrap{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:20px}
-#opener .rev{width:min(42vw,190px);border-radius:12px;box-shadow:0 18px 36px rgba(0,0,0,.6);cursor:pointer;
-  animation:flip .6s cubic-bezier(.2,.9,.3,1) both}
-#opener .rev:nth-child(2){animation-delay:.25s}#opener .rev:nth-child(3){animation-delay:.5s}
+#opener .slot{position:relative;border-radius:14px;animation:flip .55s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--d)}
+#opener .rev{display:block;width:min(42vw,190px);border-radius:12px;cursor:pointer}
+#opener .slot::after{content:"";position:absolute;inset:-6px;border-radius:18px;pointer-events:none;opacity:0;
+  animation:glowin .5s ease-out forwards;animation-delay:calc(var(--d) + .35s)}
+#opener .slot.r-haeufig::after{box-shadow:0 0 0 2px rgba(200,220,220,.5),0 0 18px rgba(200,220,220,.35)}
+#opener .slot.r-selten::after{box-shadow:0 0 0 2px rgba(120,180,255,.8),0 0 26px rgba(90,169,255,.7)}
+#opener .slot.r-holo::after{box-shadow:0 0 0 2px rgba(150,240,255,.9),0 0 34px rgba(120,220,255,.85)}
+#opener .slot.r-ultra::after,#opener .slot.r-legend::after{box-shadow:0 0 0 3px rgba(255,255,255,.95),0 0 44px rgba(255,240,180,.95)}
+#opener .slot.r-ext::after{box-shadow:0 0 0 3px rgba(255,170,60,1),0 0 54px rgba(255,140,30,.95)}
+#opener .slot.r-ultra,#opener .slot.r-legend,#opener .slot.r-ext{animation:flip .55s cubic-bezier(.2,.9,.3,1) both, shake .5s ease-out both}
+@keyframes glowin{from{opacity:0}to{opacity:1}}
+@keyframes shake{0%,100%{}30%{transform:translateY(-6px) scale(1.04)}60%{transform:translateY(2px) scale(1)}}
 @keyframes flip{0%{transform:rotateY(90deg) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
 #opener .cta{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
 .sold{opacity:.55}
@@ -598,7 +608,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #cardview{position:fixed;inset:0;z-index:13;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(20,70,80,.6),rgba(3,12,14,.95) 65%);padding:20px;overflow:auto}
 #cardview.on{display:grid}
 #cardview .stage{perspective:1100px;display:flex;flex-direction:column;align-items:center;gap:14px}
-#cardview .tilt{position:relative;width:min(78vw,340px);transform-style:preserve-3d;transition:transform .12s ease-out;border-radius:16px}
+#cardview .tilt{position:relative;width:min(78vw,340px);transform-style:preserve-3d;border-radius:16px;touch-action:none;cursor:grab;will-change:transform}
+#cardview .tilt.grab{cursor:grabbing}
 #cardview .tilt img{width:100%;height:auto;display:block;border-radius:16px;box-shadow:0 26px 50px rgba(0,0,0,.65)}
 #cardview .sheen{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:screen;opacity:.85;
   background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,rgba(140,220,255,.5) 50%,rgba(255,160,230,.4) 55%,transparent 70%);
@@ -891,9 +902,14 @@ async function openPack(pid) {
   try {
     const r = await api('/api/tcg/open', { pack: pid });
     tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
-    sfx('exact');
+    // ein Ton je Karte, gute Karten klingen anders
+    r.pulled.forEach((c, i) => setTimeout(() => {
+      const top = ['ultra', 'ext', 'legend'].includes(c.variant);
+      sfx(top ? 'exact' : c.variant === 'holo' ? 'dartbest' : 'dart');
+      if (top) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e2) {}
+    }, i * 650 + 350));
     const el = $('#opener');
-    el.innerHTML = `<div class="wrap">${r.pulled.map((c) => `<img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
+    el.innerHTML = `<div class="wrap">${r.pulled.map((c, i) => `<span class="slot r-${esc(c.variant)}" style="--d:${(i * 0.65).toFixed(2)}s"><img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}</span>`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
     el.classList.add('on');
   } catch (e) { toast(e.message); }
 }
@@ -938,14 +954,25 @@ function showCard(key) {
     <button class="btn ghost" id="closeCard" style="min-width:200px">Schließen</button></div>`;
   el.classList.add('on');
   const t = $('#tiltc');
-  const set = (px, py) => {
-    const rx = (0.5 - py) * 18, ry = (px - 0.5) * 22;
-    t.style.transform = `rotateX(${rx.toFixed(1)}deg) rotateY(${ry.toFixed(1)}deg) scale(1.02)`;
-    t.style.setProperty('--sx', (px * 100).toFixed(0) + '%');
-    t.style.setProperty('--sy', (py * 100).toFixed(0) + '%');
+  let tx = 0.5, ty = 0.5, cx = 0.5, cy = 0.5, raf = 0, drag = false;
+  const draw = () => {
+    cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
+    const rx = (0.5 - cy) * 26, ry = (cx - 0.5) * 30;
+    t.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(${drag ? 1.04 : 1})`;
+    t.style.setProperty('--sx', (cx * 100).toFixed(1) + '%');
+    t.style.setProperty('--sy', (cy * 100).toFixed(1) + '%');
+    if (Math.abs(tx - cx) > 0.001 || Math.abs(ty - cy) > 0.001 || drag) raf = requestAnimationFrame(draw); else raf = 0;
   };
-  t.onpointermove = (e) => { const r = t.getBoundingClientRect(); set((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
-  t.onpointerleave = () => { t.style.transform = ''; };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(draw); };
+  const clamp01 = (v) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.5);
+  const at = (e) => { const r = t.getBoundingClientRect(); tx = clamp01((e.clientX - r.left) / r.width); ty = clamp01((e.clientY - r.top) / r.height); kick(); };
+  t.addEventListener('pointerdown', (e) => { drag = true; t.classList.add('grab'); t.setPointerCapture(e.pointerId); at(e); e.preventDefault(); });
+  t.addEventListener('pointermove', (e) => { if (drag || e.pointerType === 'mouse') at(e); });
+  const stopDrag = () => { drag = false; t.classList.remove('grab'); tx = 0.5; ty = 0.5; kick(); };
+  t.addEventListener('pointerup', stopDrag);
+  t.addEventListener('pointercancel', stopDrag);
+  t.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && !drag) stopDrag(); });
+  const set = (px, py) => { tx = clamp01(px); ty = clamp01(py); kick(); };
   const gyro = (e) => { if (e.gamma == null) return; set(Math.min(1, Math.max(0, (e.gamma + 35) / 70)), Math.min(1, Math.max(0, (e.beta - 10) / 70))); };
   const startGyro = () => {
     if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
