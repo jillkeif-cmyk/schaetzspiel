@@ -81,6 +81,11 @@ Dann http://localhost:3000 öffnen.
 - Danach erscheint der Sieger im goldenen Banner, bei einer Punktlandung zusätzlich das Bullseye-Abzeichen
 - Jede einrastende Zeile hat einen eigenen Einschlagsound
 
+## Einstellungen
+- Punktelimit 500 bis 4000 (Server erlaubt bis 10.000), Fragen 15 bis 40, Countdown 30 bis 120 s
+- Zeit pro Schätzfrage 8, 20, 30 oder 45 s; der Schnellmodus setzt 8 s
+- „Auf frische Fragen warten“ hält den Start bis zu 2 Minuten an, der feste Pool sichert immer ab
+
 ## Ablauf
 1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.
 2. **Match eröffnen** — Pre-Lobby mit Code, Spielerliste und Chat. Ab jetzt können andere beitreten.

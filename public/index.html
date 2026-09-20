@@ -1082,6 +1082,9 @@ function build() {
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
       <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
       <div id="themeBox"></div>
+      <label style="margin:6px 0 0">Tempo</label>
+      <div class="seg"><button id="quickOff">Normal</button><button id="quickOn">Schnellmodus ⚡</button></div>
+      <p class="sub" id="quickNote"></p>
       <label style="margin:6px 0 0">Neue Fragen</label>
       <div class="seg"><button id="waitOff">Pünktlich starten</button><button id="waitOn">Auf frische Fragen warten</button></div>
       <p class="sub" id="waitNote2"></p></div>
@@ -1279,7 +1282,7 @@ function showEmote(pid, i) {
   sfx('emote');
 }
 function barHtml(cur, goal, done) { return `<div class="bar ${done ? 'done' : ''}"><i style="width:${goal ? Math.min(100, 100 * cur / goal) : 100}%"></i></div>`; }
-const OPTS = { pointLimit: ['Punktelimit', [500, 1000, 2000], ''], maxQuestions: ['Höchstens Fragen', [15, 25, 40], ''], countdown: ['Countdown vor dem Start', [30, 60, 120], ' s'], answerTime: ['Zeit pro Schätzfrage', [20, 30, 45], ' s'] };
+const OPTS = { pointLimit: ['Punktelimit', [500, 1000, 2000, 3000, 4000], ''], maxQuestions: ['Höchstens Fragen', [15, 25, 40], ''], countdown: ['Countdown vor dem Start', [30, 60, 120], ' s'], answerTime: ['Zeit pro Schätzfrage', [8, 20, 30, 45], ' s'] };
 
 function update() {
   $('#quit').classList.toggle('on', !!(token && S && (S.phase === 'question' || S.phase === 'reveal' || S.phase === 'countdown')));
@@ -1398,6 +1401,9 @@ function update() {
         : `<label>Themen (${graceOn ? '1 von 1' : S.themes.length + ' von ' + S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>${graceOn ? '<p class="sub">GRACE läuft allein: andere Themen und neue KI-Fragen sind in dieser Runde aus.</p>' : ''}`;
       themeSel = [...S.themes];
     }
+    const quick = S.settings.answerTime <= 8;
+    $('#quickOff').classList.toggle('on', !quick); $('#quickOn').classList.toggle('on', quick);
+    $('#quickNote').textContent = quick ? 'Nur 8 Sekunden pro Schätzfrage. Wer zögert, verliert.' : 'Normale Bedenkzeit, änderbar unten bei „Zeit pro Schätzfrage“.';
     const gr = S.themes.includes('grace');
     document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
     $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens 2 Minuten länger. Der feste Pool bleibt als Absicherung dahinter.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
@@ -1410,7 +1416,7 @@ function update() {
     const tn = S.themeList.filter((x) => S.themes.includes(x.key)).map((x) => x.name);
     $('#rules').innerHTML = `<div class="row"><b class="grow">${S.ranked ? 'Rangliste · Allgemeinwissen' : 'Freies Spiel'}</b>${S.locked ? '<span class="tag">🔒 Passwort</span>' : ''}</div>
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
-      <p class="sub">Bis ${S.settings.pointLimit} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage</p>
+      <p class="sub">Bis ${fmt(S.settings.pointLimit)} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage${S.settings.answerTime <= 8 ? ' ⚡ Schnellmodus' : ''}</p>
       ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
     const an = $('#aiLobby');
     if (an) an.textContent = { loading: 'Frische Fragen werden im Hintergrund erstellt, der feste Pool sichert ab.', waiting: 'Warte auf die frischen Fragen …', ready: 'Frische Fragen sind fertig.', failed: 'Diesmal ohne frische Fragen, gespielt wird mit dem festen Pool.', off: 'Gespielt wird mit dem festen Fragenpool.', idle: 'Beim Start werden Fragen zusammengestellt, frische kommen dazu.' }[S.aiStatus] || '';
@@ -1594,6 +1600,8 @@ document.addEventListener('click', (e) => {
   }
   else if (t.id === 'cardClear') api('/api/card', { emblem: '', title: '' }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
   else if (t.dataset.color) { tagColor = t.dataset.color; document.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('on', b === t)); $('#tagIn').dispatchEvent(new Event('input')); }
+  else if (t.id === 'quickOn') socket.emit('settings', { answerTime: 8 });
+  else if (t.id === 'quickOff') socket.emit('settings', { answerTime: 30 });
   else if (t.id === 'waitOn') socket.emit('settings', { waitAi: true });
   else if (t.id === 'waitOff') socket.emit('settings', { waitAi: false });
   else if (t.id === 'accPub') { privMode = false; socket.emit('settings', { password: '' }); }
