@@ -1436,7 +1436,7 @@ function update() {
     $('#quickNote').textContent = quick ? 'Nur 8 Sekunden pro Schätzfrage. Wer zögert, verliert.' : 'Normale Bedenkzeit, änderbar unten bei „Zeit pro Schätzfrage“.';
     const gr = S.themes.includes('grace');
     document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
-    $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens 2 Minuten länger. Der feste Pool bleibt als Absicherung dahinter.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
+    $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Fast alle Fragen sind dann frisch. Es wird bis zu drei Mal versucht und notfalls mehrere Minuten gewartet.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
     return;
@@ -1453,7 +1453,7 @@ function update() {
     $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {
-    $('#aiNote').textContent = { loading: S.waitAi ? 'Frische Fragen werden erstellt. Das Match startet, sobald sie da sind, höchstens 2 Minuten länger.' : 'Frische Fragen werden erstellt … was nicht rechtzeitig fertig wird, kommt aus dem festen Pool.', waiting: 'Warte auf die frischen Fragen …', ready: 'Frische Fragen sind fertig.', failed: 'Diesmal ohne frische Fragen, der feste Pool übernimmt.', off: '', idle: '' }[S.aiStatus] || '';
+    $('#aiNote').textContent = { loading: S.waitAi ? 'Frische Fragen werden erstellt. Das Match startet, sobald sie da sind.' : 'Frische Fragen werden erstellt … was nicht rechtzeitig fertig wird, kommt aus dem festen Pool.', waiting: 'Warte auf die frischen Fragen, es wird noch einmal versucht …', ready: 'Frische Fragen sind fertig.', failed: S.waitAi ? 'Mehrere Anläufe ohne Erfolg, der feste Pool übernimmt.' : 'Diesmal ohne frische Fragen, der feste Pool übernimmt.', off: '', idle: '' }[S.aiStatus] || '';
     $('#cdAct').innerHTML = (host ? '<button class="btn ghost" id="skip">Sofort loslegen</button>' : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'question') {
