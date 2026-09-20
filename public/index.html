@@ -1155,10 +1155,12 @@ function modEdit(id, page) {
 }
 function showInvite() {
   const inMatch = S ? S.players.map((p) => p.id) : [];
-  const list = friends.filter((f) => f.status === 'ok' && f.online && !f.playing && !inMatch.includes(f.id));
+  const list = friends.filter((f) => f.status === 'ok' && !f.playing && !inMatch.includes(f.id))
+    .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
   $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>Freunde einladen</h2>
-    ${list.length ? `<div class="plist">${list.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 36)}<span class="nm">${withTag(f)}<br><span class="lv">${rankText(f)}</span></span><button class="mini go" data-fight="${f.id}">Einladen</button></div>`).join('')}</div>`
-      : '<p class="sub">Gerade ist kein Freund online und frei. Über die Ranglisten kannst du jeden Online-Spieler herausfordern, oder du teilst den Code.</p>'}
+    ${list.length ? `<div class="plist">${list.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 36)}<span class="nm">${withTag(f)}<br><span class="lv">${rankText(f)} · ${esc(onlineText(f))}</span></span><button class="mini go" data-fight="${f.id}">Einladen</button></div>`).join('')}</div>`
+      : '<p class="sub">Du hast noch keine Freunde für eine Einladung. Über die Ranglisten kannst du jeden herausfordern, oder du teilst den Code.</p>'}
+    <p class="sub">Wer offline ist, bekommt eine Benachrichtigung aufs Handy, sofern er sie erlaubt hat.</p>
     <button class="btn small" id="inviteShare" style="width:100%">Einladungslink kopieren</button>
     <p class="sub">Match-Code: <b>${S ? esc(S.code) : ''}</b></p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
