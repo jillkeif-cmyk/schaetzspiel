@@ -25,6 +25,12 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Aktion GRACE
+- Eigenes Fragenthema `GRACE` (Kategorie `GRACE` in `lib/questions.js`, dort eintragen)
+- Läuft bis zum Zeitpunkt in `lib/event.js` bzw. der Variable `GRACE_END`
+- Wer in dieser Zeit eine Runde mit dem Thema GRACE gewinnt, schaltet Rahmen `fgrace`, Titel `tgrace` und Emblem `egrace` frei
+- Nach Ablauf verschwindet das Thema aus der Auswahl, freigeschaltete Sachen bleiben
+
 ## Profilrahmen
 - 22 runde Rahmen ums Profilbild (`lib/frames.js`), 20 über Herausforderungen, „Pink Pages“ über den Code `GRACE`, „DEV“ nur für Admin und Co-Admins
 - Fünf davon sind animiert (Flamme, Blitz, Gift, Sternenstaub, Lavagold), der DEV-Rahmen rotiert und wechselt die Farbe

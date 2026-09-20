@@ -280,6 +280,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .themes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .themes button{padding:12px 10px;border-radius:12px;background:var(--bg-deep);font-weight:700;font-size:15px;color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}
 .themes button.on{background:var(--tape);color:var(--ink);box-shadow:none}
+.themes button.evt{box-shadow:inset 0 0 0 2px #FF79C6;color:#FFB8E6}
+.themes button.evt.on{background:linear-gradient(180deg,#FF9AD5,#FF4FBF);color:#3A0726}
 .themes button[disabled]{opacity:.5}
 .modepick{display:flex;gap:10px}
 .modepick button{flex:1;padding:14px 10px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);text-align:center}
@@ -508,6 +510,30 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .step .pts.zero{color:var(--muted)}
 @keyframes stepin{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes grow2{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+#bullsfx{position:fixed;inset:0;z-index:12;display:none;place-items:center;pointer-events:none;
+  background:radial-gradient(circle at 50% 45%,rgba(255,190,60,.35),rgba(3,15,17,.82) 62%)}
+#bullsfx.on{display:grid;animation:bfade 2.4s ease-out forwards}
+#bullsfx .rays{position:absolute;left:50%;top:45%;width:180vmax;height:180vmax;margin:-90vmax;
+  background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.16) 0 7deg,transparent 7deg 18deg);animation:spin 14s linear infinite;
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 55%);mask:radial-gradient(circle,#000 0,transparent 55%)}
+#bullsfx .in{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+#bullsfx img{width:min(46vw,190px);filter:drop-shadow(0 0 30px rgba(255,200,80,.85));animation:slam .55s cubic-bezier(.2,1.4,.4,1) both}
+#bullsfx h1{font-size:min(13vw,58px);animation:pop .4s .2s both}
+#bullsfx p{font-size:19px;animation:pop .4s .35s both}
+@keyframes bfade{0%{opacity:0}8%{opacity:1}80%{opacity:1}100%{opacity:0}}
+/* Kompakte Zeilen, damit acht Spieler auf einen Handy-Schirm passen */
+@media (max-height:900px){
+  .stairs{gap:6px}
+  .step{padding:7px 10px;gap:8px}
+  .step .ava{--s:32px!important}
+  .step .rk{width:22px;font-size:16px}
+  .step .val{font-size:16px}.step .pts{font-size:17px;min-width:54px}
+  .step .diff{font-size:11.5px}
+  .step .bar{height:6px}
+  .answer .num{font-size:44px}
+  .winbox{max-width:320px;margin-top:6px}
+}
 </style>
 </head>
 <body>
@@ -518,12 +544,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <button id="sound" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
 <button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
 <div id="emotes"></div>
+<div id="bullsfx"></div>
 <div id="unlock"></div>
 <div id="modal"></div>
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '9';
+const AVER = '10';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -641,6 +668,12 @@ function unlockAudio() {
 }
 document.addEventListener('pointerdown', unlockAudio, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') unlockAudio(); });
+function showBulls(names) {
+  const el = $('#bullsfx');
+  el.innerHTML = `<div class="rays"></div><div class="in"><img src="/emblems/bullseye.webp?v=${AVER}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(showBulls.t); showBulls.t = setTimeout(() => el.classList.remove('on'), 2500);
+}
 function showUnlock(rank, name) {
   const u = $('#unlock');
   u.innerHTML = `<div class="rays"></div><div class="in"><p class="sub">Neuer Rang freigeschaltet</p><div class="big-emb">${emblem(rank)}</div><h1>Prestige ${rank}</h1><p style="font-size:20px;font-weight:700">${esc(name)}</p><p class="sub">Der neue Rahmen ist jetzt an deinem Profilbild.</p><button class="btn" id="unlockOk" style="margin-top:10px">Weiter</button></div>`;
@@ -1049,7 +1082,7 @@ function update() {
       $('#themeBox').dataset.k = tkey;
       $('#themeBox').innerHTML = S.ranked
         ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
-        : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''}">${esc(t.name)}</button>`).join('')}</div>`;
+        : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>`;
       themeSel = [...S.themes];
     }
     $('#waitOff').classList.toggle('on', !S.waitAi); $('#waitOn').classList.toggle('on', !!S.waitAi);
@@ -1086,7 +1119,13 @@ function update() {
       const n = S.reveal.results.length;
       S.reveal.results.forEach((r, k) => setTimeout(() => sfx(r.exact ? 'dartexact' : k === 0 ? 'dartbest' : 'dart'), (n - 1 - k) * 350));
       const ex = given.some((r) => r.exact);
-      setTimeout(() => { if (ex) { sfx('exact'); try { navigator.vibrate && navigator.vibrate([60, 40, 200]); } catch (e) {} } else sfx('reveal'); }, (n - 1) * 350 + 300);
+      setTimeout(() => {
+        if (ex) {
+          sfx('exact'); try { navigator.vibrate && navigator.vibrate([60, 40, 200]); } catch (e) {}
+          const who = S.reveal.results.filter((r) => r.exact).map((r) => (S.players.find((p) => p.id === r.id) || {}).name || '?');
+          showBulls(who.join(' & ') + (who.length > 1 ? ' treffen' : ' trifft') + ' genau');
+        } else sfx('reveal');
+      }, (n - 1) * 350 + 300);
     } else sfx(S.reveal.results.some((r) => r.right && r.id === S.you) ? 'reveal' : 'sent');
   }
   if (S.phase === 'finished' && lastVibe !== 'f' + S.code) { lastVibe = 'f' + S.code; if (S.winners.includes(S.you)) sfx('win'); }
