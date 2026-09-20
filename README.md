@@ -60,6 +60,8 @@ Dann http://localhost:3000 öffnen.
 3. **Match starten** — Countdown, in dem die Fragen erstellt werden. Steht „Auf frische Fragen warten“ an, startet das Match erst, wenn die KI fertig ist (höchstens eine Minute länger). Beitritt bleibt bis zum Start möglich, der Host kann abkürzen.
 4. Ab der ersten Frage ist das Match geschlossen. Aussteigen geht jederzeit über das ✕ unten rechts, dann aber ohne XP und Weltranglistenpunkte für dieses Match.
 
+Der Ton lässt sich jederzeit über den Lautsprecher-Knopf unten rechts umschalten; Lautstärke im Profil.
+
 Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das Match existiert und ist weg, sobald alle es verlassen haben.
 
 ## Modi
