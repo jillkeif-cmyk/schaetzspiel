@@ -88,6 +88,17 @@ Dann http://localhost:3000 öffnen.
 - Zeit pro Schätzfrage 8, 20, 30 oder 45 s; der Schnellmodus setzt 8 s
 - „Auf frische Fragen warten“ hält den Start bis zu 2 Minuten an, der feste Pool sichert immer ab
 
+## Wetten
+- In der Pre-Lobby kann jeder Diamanten auf den eigenen Sieg setzen (mindestens 50)
+- Der Einsatz wird sofort gesperrt, bei Rücknahme oder Verlassen der Lobby gibt es ihn zurück
+- Sieg: doppelter Einsatz zurück. Niederlage: der Einsatz geht zu gleichen Teilen an die Sieger
+- Allein gespielte Runden zählen nicht, der Einsatz kommt zurück
+
+## Zuschauen
+- Wer einem laufenden oder vollen Match beitritt, landet automatisch als Zuschauer darin
+- Zuschauer sehen Fragen, Auflösung und Punktestand, können aber nicht antworten
+- Oben steht, wie viele zuschauen; Zuschauer dürfen jederzeit Reaktionen schicken
+
 ## Ablauf
 1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.
 2. **Match eröffnen** — Pre-Lobby mit Code, Spielerliste und Chat. Ab jetzt können andere beitreten.

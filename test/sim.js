@@ -53,8 +53,19 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   assert.equal(states[1], null);
   socks[1].emit('create'); await sleep(200); assert.ok(states[1].code);
   socks[1].emit('create_done'); await sleep(120);
-  let err = null; socks[2].once('err', (e) => { err = e; }); socks[2].emit('create'); await sleep(200);
-  assert.ok(err && /Matches/.test(err));
+  // Match-Limit: mit weiteren Konten so lange eröffnen, bis der Server abwinkt
+  let err = null;
+  const extra = [];
+  for (let i = 0; i < 5; i++) {
+    const u = await post('/api/register', { name: 'Limit' + i, password: 'geheim1', code: 'TEST' });
+    const sx = io(URL, { auth: { token: u.token } });
+    sx.on('err', (e) => { if (/Matches/.test(e)) err = e; });
+    extra.push(sx); await sleep(150);
+    sx.emit('create'); await sleep(220);
+  }
+  assert.ok(err && /Matches/.test(err), 'Match-Limit greift nicht');
+  for (const sx of extra) sx.close();
+  await sleep(200);
   assert.ok(home.me.level >= 1 && home.progress.challenges.length === 8 && states[0].summary.gained > 0, 'XP-Zusammenfassung fehlt');
   // Passwortschutz
   socks[1].emit('settings', { password: 'geheim' }); await sleep(100);

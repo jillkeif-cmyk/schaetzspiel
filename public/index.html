@@ -624,6 +624,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #cardview .meta{max-width:min(90vw,420px);text-align:center;color:var(--muted);font-size:14.5px}
 #cardview .meta b{display:block;color:var(--paper);font:800 20px/1.2 Archivo;font-stretch:82%;margin-bottom:4px}
 #cardview .miss2{margin-top:6px;color:#FFB3AC;font-weight:700}
+.watchbar{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(5,26,29,.9);backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);font-size:13.5px;color:var(--muted)}
+.watchbar b{color:var(--paper)}
+.watchbar[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -634,6 +637,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <button id="sound" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
 <button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
 <div id="emotes"></div>
+<div class="watchbar" id="watchbar" hidden></div>
 <div id="cardview"></div>
 <div id="opener"></div>
 <div id="bullsfx"></div>
@@ -1028,6 +1032,7 @@ function connect() {
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
   socket.on('note', (m) => { toast(m); sfx('sent'); });
+  socket.on('diamonds', (n) => { if (home && home.me) { home.me.diamonds = n; if (tcg) tcg.diamonds = n; viewKey = ''; update(); } });
   socket.on('needpw', (d) => askPassword(d.code, d.wrong));
   socket.on('challenged', (d) => {
     sfx('exact');
@@ -1091,7 +1096,7 @@ function build() {
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
       <button class="btn" id="create">Match eröffnen</button>
-      <form id="joinForm" class="row"><input class="field grow" id="joinCode" placeholder="Code, z. B. KXRT" maxlength="4" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"><button class="btn small">Beitreten</button></form>
+      <p class="sub">Offene Matches stehen unten in der Liste, ein Tipp auf „Beitreten“ reicht.</p>
       <div id="slots" class="sub"></div>
     </div>
     <div class="row" id="online" style="gap:10px;padding:0 4px"><span style="width:10px;height:10px;border-radius:50%;background:#8BE28B;box-shadow:0 0 10px #8BE28B;flex:none"></span><span class="sub grow" id="onlineText"></span>
@@ -1132,6 +1137,7 @@ function build() {
     </div><div class="col">
     <div class="panel" id="rules" style="display:flex;flex-direction:column;gap:8px"></div>
     <p class="sub" id="aiLobby"></p>
+    <div class="panel" id="betBox" style="display:flex;flex-direction:column;gap:10px"></div>
     <div id="chatBox"></div>
     <div id="lobbyAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`;
 
@@ -1320,7 +1326,15 @@ function update() {
   sb.classList.toggle('on', !!(token && S));
   sb.classList.toggle('off', muted);
   sb.textContent = muted ? '🔇' : '🔊';
-  const tray = $('#emotes'), showTray = !!(token && S && (S.phase === 'reveal' || S.phase === 'finished' || (S.phase === 'question' && S.myAnswer !== null)));
+  const wb = $('#watchbar');
+  if (wb) {
+    const n = (S && S.watchers) || 0;
+    wb.hidden = !S || (!n && !S.watching);
+    wb.innerHTML = S && S.watching
+      ? `👀 <b>Du schaust zu</b> · ${n} ${n === 1 ? 'Zuschauer' : 'Zuschauer'} · <button class="link" id="stopWatch">verlassen</button>`
+      : `👀 <b>${n}</b> ${n === 1 ? 'schaut zu' : 'schauen zu'}`;
+  }
+  const tray = $('#emotes'), showTray = !!(token && S && (S.watching || S.phase === 'reveal' || S.phase === 'finished' || (S.phase === 'question' && S.myAnswer !== null)));
   if (showTray && !tray.innerHTML) tray.innerHTML = EMOJIS.map((e, i) => `<button data-emote="${i}" style="--i:${i}" aria-label="Emote ${e}">${e}</button>`).join('');
   tray.classList.toggle('on', showTray);
   if (showTray && S.phase === 'finished') {
@@ -1387,7 +1401,7 @@ function update() {
     $('#create').disabled = full;
     $('#onlineText').textContent = L.online ? `${L.online} Spieler online: ${(L.onlineNames || []).join(', ')}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
-    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
+    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : !m.setup && m.phase !== 'finished' ? `<button class="btn small ghost" data-watch="${esc(m.code)}">Zuschauen</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
     pushUI();
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
@@ -1448,6 +1462,17 @@ function update() {
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
       <p class="sub">Bis ${fmt(S.settings.pointLimit)} Punkte · höchstens ${S.settings.maxQuestions} Fragen · ${S.settings.answerTime} s pro Schätzfrage${S.settings.answerTime <= 8 ? ' ⚡ Schnellmodus' : ''}</p>
       ${!S.ranked && S.themes.length <= 2 ? '<p class="sub">Bei wenigen Themen kann die Runde kürzer ausfallen, weil nur Fragen aus diesen Themen kommen.</p>' : ''}`;
+    const bb = $('#betBox');
+    if (bb) {
+      const mine2 = (S.bets || []).find((b) => b.id === S.you);
+      const others = (S.bets || []).filter((b) => b.id !== S.you);
+      const dia = (home && home.me && home.me.diamonds) || 0;
+      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+        <p class="sub">Setze darauf, dass du gewinnst. Gewinnst du, bekommst du das Doppelte. Verlierst du, geht dein Einsatz an die Sieger.</p>
+        ${mine2 ? `<div class="row"><b class="grow">Dein Einsatz: ${fmt(mine2.amount)} 💎</b><button class="btn small ghost" data-bet="0">Zurücknehmen</button></div>`
+          : `<div class="row" style="flex-wrap:wrap;gap:6px">${[50, 100, 250, 500].map((v) => `<button class="chipbtn" data-bet="${v}" ${dia < v ? 'disabled style="opacity:.4"' : ''}>${v} 💎</button>`).join('')}</div>`}
+        ${others.length ? `<p class="sub">${others.map((b) => `${esc(b.name)}: ${fmt(b.amount)} 💎`).join(' · ')}</p>` : ''}`;
+    }
     const an = $('#aiLobby');
     if (an) an.textContent = { loading: 'Frische Fragen werden schon jetzt erstellt …', waiting: 'Warte auf die frischen Fragen …', ready: '✓ Frische Fragen sind fertig, ihr könnt starten.', failed: 'Mehrere Anläufe ohne Erfolg, gespielt wird mit dem festen Pool.', off: 'Gespielt wird mit dem festen Fragenpool.', idle: 'Fragen werden gleich angefordert …' }[S.aiStatus] || '';
     $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
@@ -1484,7 +1509,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -1500,7 +1525,6 @@ function bind() {
   const vs = $('#volume'); if (vs) { vs.oninput = () => { vol = vs.value / 100; setVol(); try { localStorage.setItem('sz_vol', String(vol)); } catch (e) {} }; vs.onchange = () => sfx('reveal'); }
   const af = $('#avaFile'); if (af) af.onchange = () => af.files[0] && uploadAvatar(af.files[0]);
   const pf = $('#pwForm'); if (pf) pf.onsubmit = (e) => { e.preventDefault(); const v = $('#pwInput').value.trim(); if (!v) return toast('Gib ein Passwort ein oder stelle auf Öffentlich.'); socket.emit('settings', { password: v }); $('#pwInput').blur(); toast('Passwort gespeichert'); };
-  const jf = $('#joinForm'); if (jf) jf.onsubmit = (e) => { e.preventDefault(); const c = $('#joinCode').value.trim(); if (c.length === 4) socket.emit('join', c); else toast('Der Code hat 4 Buchstaben.'); };
   const gf = $('#guessForm');
   if (gf) { const inp = $('#guess'); setTimeout(() => inp.focus(), 50);
     inp.oninput = () => { const v = parseNum(inp.value); $('#send').disabled = !Number.isFinite(v); $('#preview').textContent = Number.isFinite(v) ? `Wird gewertet als ${fmt(v, S.question.unit)} ${S.question.unit === 'Jahr' ? '' : S.question.unit}` : inp.value ? 'Bitte nur eine Zahl eingeben.' : ''; };
@@ -1567,6 +1591,8 @@ document.addEventListener('click', (e) => {
   if (t.dataset.addfriend) return api('/api/friends/add', { name: t.dataset.addfriend }).then((r) => { toast(r.status === 'ok' ? r.name + ' ist jetzt dein Freund' : 'Anfrage an ' + r.name + ' gesendet'); t.remove(); loadFriends(); }).catch((er) => toast(er.message));
   if (t.dataset.fr) return api('/api/friends/' + t.dataset.fr, { id: Number(t.dataset.id) }).then(() => { closeModal(); loadFriends(); }).catch((er) => toast(er.message));
   if (t.dataset.tab) { authTab = t.dataset.tab; render(); }
+  else if (t.dataset.bet !== undefined) { socket.emit('bet', Number(t.dataset.bet)); setTimeout(loadHome, 700); setTimeout(loadHome, 1600); }
+  else if (t.dataset.watch) socket.emit('watch', t.dataset.watch);
   else if (t.dataset.join) socket.emit('join', t.dataset.join);
   else if (t.dataset.set) socket.emit('settings', { [t.dataset.set]: Number(t.dataset.v) });
   else if (t.dataset.mode) socket.emit('settings', { ranked: t.dataset.mode === 'ranked' });
@@ -1613,6 +1639,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.tdec) api('/api/tcg/trade/decline', { id: t.dataset.tdec }).then(() => loadTrades()).catch((e) => toast(e.message));
   else if (t.dataset.card) showCard(t.dataset.card);
   else if (t.dataset.cf) { cfilter = t.dataset.cf; renderCards(); }
+  else if (t.id === 'stopWatch') socket.emit('unwatch');
   else if (t.id === 'closeCard') { $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); }
   else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
