@@ -1119,7 +1119,7 @@ async function modLoad(q) {
     const r = await api('/api/admin/users' + (q ? '?q=' + encodeURIComponent(q) : ''));
     modUsers = r.users; modRoles = r.roles;
     if (!$('#modList')) return;
-    $('#modList').innerHTML = `<p class="sub">${r.users.length} von ${r.total} Spielern</p>` + r.users.map((u) => `<div class="pl" data-mod="${u.id}" style="--c:var(--line)">${avatar(u, 36)}<span class="nm">${withTag(u)}${u.role ? ` <span class="tag">${esc(u.role)}</span>` : ''}<br><span class="lv">Lv ${u.level} · P${u.prestige} · ${fmt(u.rankPoints)} WP · ${u.wins}/${u.matches} · ${esc(seenText(u))}</span></span><span class="mini">ändern</span></div>`).join('');
+    $('#modList').innerHTML = `<p class="sub">${r.users.length} von ${r.total} Spielern</p>` + r.users.map((u) => `<div class="pl" data-mod="${u.id}" style="--c:var(--line)">${avatar(u, 36)}<span class="nm">${withTag(u)}${u.role ? ` <span class="tag">${esc(u.role)}</span>` : ''}<br><span class="lv">Lv ${u.level} · P${u.prestige} · ${fmt(u.rankPoints)} WP · ${u.wins}/${u.matches} · 💎 ${fmt(u.diamonds || 0)} · ${esc(seenText(u))}</span></span><span class="mini">ändern</span></div>`).join('');
   } catch (e) { toast(e.message); }
 }
 let modOpen = null;
@@ -1136,6 +1136,7 @@ function modEdit(id, page) {
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
        <div class="modgrid">${f('level', 'Level (1-30)', u.level)}${f('prestige', 'Prestige (0-10)', u.prestige)}${f('rank_points', 'Weltranglistenpunkte', u.rankPoints)}${f('wins', 'Siege', u.wins)}${f('matches', 'Matches', u.matches)}${f('exact', 'Punktlandungen', u.exact)}${f('streak', 'Serie aktuell', u.streak)}${f('best_streak', 'Beste Serie', u.bestStreak)}</div>
+       <label>Diamanten</label><div class="row"><input class="field grow" id="modDia" inputmode="numeric" value="${u.diamonds || 0}"><button type="button" class="chipbtn" data-dia="set">Setzen</button><button type="button" class="chipbtn" data-dia="add">+500</button><button type="button" class="chipbtn" data-dia="sub">−500</button></div>
        <p class="sub">Level und Prestige lassen sich getrennt setzen. Leere Felder bleiben unverändert.</p>
        ${home.me.admin ? `<label>Rolle</label><div class="row" id="modRole">${modRoles.map((r) => `<button type="button" class="chipbtn ${(u.role || '') === r ? 'on' : ''}" data-role="${r}">${r || 'normal'}</button>`).join('')}</div>` : ''}
        <button class="btn small" style="width:100%">Speichern</button></form>
@@ -1419,6 +1420,12 @@ document.addEventListener('click', (e) => {
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message)); return; }
     const u = e.target.closest('[data-user]'); if (u) showUser(u.dataset.user); const m = e.target.closest('[data-mod]'); if (m) modEdit(m.dataset.mod, ''); return; }
   if (t.closest('[data-mod]')) return modEdit(t.closest('[data-mod]').dataset.mod, '');
+  if (t.dataset.dia) {
+    const cur = Number($('#modDia').value) || 0;
+    const v = t.dataset.dia === 'add' ? cur + 500 : t.dataset.dia === 'sub' ? Math.max(0, cur - 500) : cur;
+    $('#modDia').value = v;
+    return api('/api/admin/diamonds', { id: modOpen, diamonds: v }).then(() => { toast('Diamanten: ' + v); modLoad($('#modQ') ? $('#modQ').value : ''); }).catch((er) => toast(er.message));
+  }
   if (t.dataset.role !== undefined) { document.querySelectorAll('#modRole .chipbtn').forEach((b) => b.classList.toggle('on', b === t)); return; }
   if (t.dataset.mu !== undefined) {
     const uid = modOpen; const on = t.dataset.on !== undefined ? t.dataset.on === '1' : !t.classList.contains('on');

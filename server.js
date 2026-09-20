@@ -394,7 +394,7 @@ const modAuth = async (req, res) => {
   if (!isMod(u)) { res.status(403).json({ error: 'Kein Zugriff.' }); return null; }
   return u;
 };
-const modView = (t) => ({ ...publicStats(t), xp: t.xp, emblem: t.emblem || '', titleId: t.title || '', unlocks: String(t.unlocks || '').split(',').filter(Boolean), codes: String(t.codes || '').split(',').filter(Boolean) });
+const modView = (t) => ({ ...publicStats(t), xp: t.xp, diamonds: Number(t.diamonds) || 0, emblem: t.emblem || '', titleId: t.title || '', unlocks: String(t.unlocks || '').split(',').filter(Boolean), codes: String(t.codes || '').split(',').filter(Boolean) });
 
 app.get('/api/admin/users', async (req, res) => {
   try {
