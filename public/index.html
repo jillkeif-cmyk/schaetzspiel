@@ -1425,7 +1425,7 @@ function update() {
     const tkey = S.ranked ? 'ranked' : S.themes.join(',');
     if ($('#themeBox').dataset.k !== tkey) {
       $('#themeBox').dataset.k = tkey;
-      const graceOn = S.themes.includes('grace');
+      const graceOn = S.themes.length === 1 && S.themes[0] === 'grace';
       $('#themeBox').innerHTML = S.ranked
         ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
         : `<label>Themen (${graceOn ? '1 von 1' : S.themes.length + ' von ' + S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>${graceOn ? '<p class="sub">GRACE läuft allein: andere Themen und neue KI-Fragen sind in dieser Runde aus.</p>' : ''}`;
@@ -1434,7 +1434,7 @@ function update() {
     const quick = S.settings.answerTime <= 8;
     $('#quickOff').classList.toggle('on', !quick); $('#quickOn').classList.toggle('on', quick);
     $('#quickNote').textContent = quick ? 'Nur 8 Sekunden pro Schätzfrage. Wer zögert, verliert.' : 'Normale Bedenkzeit, änderbar unten bei „Zeit pro Schätzfrage“.';
-    const gr = S.themes.includes('grace');
+    const gr = S.themes.length === 1 && S.themes[0] === 'grace';
     document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
     $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Fast alle Fragen sind dann frisch. Es wird bis zu drei Mal versucht und notfalls mehrere Minuten gewartet.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
