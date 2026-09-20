@@ -1139,13 +1139,15 @@ function update() {
     const tkey = S.ranked ? 'ranked' : S.themes.join(',');
     if ($('#themeBox').dataset.k !== tkey) {
       $('#themeBox').dataset.k = tkey;
+      const graceOn = S.themes.includes('grace');
       $('#themeBox').innerHTML = S.ranked
         ? '<p class="sub">Im Ranglisten-Modus kommen Fragen aus allen Themen. Am Ende gibt es Weltranglistenpunkte nach Platzierung.</p>'
-        : `<label>Themen (${S.themes.length} von ${S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>`;
+        : `<label>Themen (${graceOn ? '1 von 1' : S.themes.length + ' von ' + S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>${graceOn ? '<p class="sub">GRACE läuft allein: andere Themen und neue KI-Fragen sind in dieser Runde aus.</p>' : ''}`;
       themeSel = [...S.themes];
     }
-    $('#waitOff').classList.toggle('on', !S.waitAi); $('#waitOn').classList.toggle('on', !!S.waitAi);
-    $('#waitNote2').textContent = S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens eine Minute länger.' : 'Sind die neuen Fragen nicht rechtzeitig fertig, wird mit dem festen Pool gespielt.';
+    const gr = S.themes.includes('grace') && !S.ranked;
+    document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
+    $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens eine Minute länger.' : 'Sind die neuen Fragen nicht rechtzeitig fertig, wird mit dem festen Pool gespielt.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
     return;
@@ -1260,9 +1262,12 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.mode) socket.emit('settings', { ranked: t.dataset.mode === 'ranked' });
   else if (t.dataset.theme) {
     if (!themeSel) themeSel = [...S.themes];
+    if (t.dataset.theme === 'grace') { themeSel = ['grace']; return socket.emit('settings', { themes: ['grace'] }); }
+    if (themeSel.includes('grace')) themeSel = [];
     const has = themeSel.includes(t.dataset.theme);
     if (!has && themeSel.length >= S.maxThemes) return toast(`Höchstens ${S.maxThemes} Themen.`);
     if (has && themeSel.length === 1) return toast('Mindestens ein Thema muss aktiv bleiben.');
+    if (!has && themeSel.length === 0) { themeSel = [t.dataset.theme]; return socket.emit('settings', { themes: themeSel }); }
     themeSel = has ? themeSel.filter((x) => x !== t.dataset.theme) : [...themeSel, t.dataset.theme];
     t.classList.toggle('on', !has);
     socket.emit('settings', { themes: themeSel });
