@@ -26,9 +26,10 @@ Dann http://localhost:3000 öffnen.
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
 ## Sammelkarten
-- Diamanten gibt es für Matches (bis 200 pro Sieg, abhängig vom Punktestand), Admin kann sie über `/api/admin/diamonds` setzen
+- Diamanten gibt es für Matches (bis 200 pro Sieg, 30 bis 80 bei Niederlagen), Admin kann sie über `/api/admin/diamonds` setzen
+- Booster kosten 300 (Standard), 550 (Premium) und 800 (Geister), also etwa 2, 3 bis 4 und 5 Siege
 - 110 Karten in `lib/tcg.js`: je 50 im Standard- und Premium-Booster, dazu 10 eigene Ghost-Rare-Karten
-- Der Geister-Booster (5.200 Diamanten) enthält alle Karten beider Sets, aber kein Extended Art; dafür als einziger die Ghost-Rare-Karten (0,6 %)
+- Der Geister-Booster (800 Diamanten) enthält alle Karten beider Sets, aber kein Extended Art; dafür als einziger die Ghost-Rare-Karten (0,6 %)
 - Häufige Karten gibt es nur einstufig, seltene und legendäre je in drei Stufen (Selten/Holo/Ultra bzw. Legendär/Ultra/Extended Art)
 - Kartenseite über die Startseite: Sammlung, Booster-Inventar, Shop, Börse und Tausch
 - Sammlung: eigene Karten zuerst, Filter nach Besitz und Seltenheit, Seltenheits-Symbol auf jeder Kachel
