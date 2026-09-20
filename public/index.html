@@ -587,6 +587,28 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #opener .cta{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
 .sold{opacity:.55}
 .mini.sent{background:rgba(79,196,106,.2);color:#8BE28B;box-shadow:inset 0 0 0 1.5px rgba(79,196,106,.6)}
+
+.cbadge{position:absolute;left:6px;top:6px;display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:99px;font:800 12px/1 Archivo;background:rgba(5,26,29,.9);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
+.cbadge.holo{background:linear-gradient(120deg,#7CE8FF,#B98CFF,#FF9AD5);color:#08231A;box-shadow:0 0 10px rgba(150,200,255,.7);animation:pulsef 2.4s ease-in-out infinite}
+.cbadge.ultra{background:linear-gradient(120deg,#FFE88A,#E8A91C);color:var(--ink);box-shadow:0 0 10px rgba(255,210,63,.8)}
+.cbadge.ext{background:conic-gradient(#FF6B6B,#FFD23F,#8BE28B,#5AA9FF,#C4A5FF,#FF6B6B);color:#06181B;box-shadow:0 0 14px rgba(255,255,255,.55);animation:spin 6s linear infinite}
+.cfilter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.cfilter button{padding:7px 11px;border-radius:99px;background:var(--bg-deep);font-weight:700;font-size:13px;color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
+.cfilter button.on{background:var(--tape);color:var(--ink);box-shadow:none}
+#cardview{position:fixed;inset:0;z-index:13;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(20,70,80,.6),rgba(3,12,14,.95) 65%);padding:20px;overflow:auto}
+#cardview.on{display:grid}
+#cardview .stage{perspective:1100px;display:flex;flex-direction:column;align-items:center;gap:14px}
+#cardview .tilt{position:relative;width:min(78vw,340px);transform-style:preserve-3d;transition:transform .12s ease-out;border-radius:16px}
+#cardview .tilt img{width:100%;height:auto;display:block;border-radius:16px;box-shadow:0 26px 50px rgba(0,0,0,.65)}
+#cardview .sheen{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:screen;opacity:.85;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,rgba(140,220,255,.5) 50%,rgba(255,160,230,.4) 55%,transparent 70%);
+  background-size:260% 260%;background-position:var(--sx,50%) var(--sy,50%)}
+#cardview .rain{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:color-dodge;opacity:.45;
+  background:repeating-linear-gradient(115deg,rgba(255,0,120,.22) 0 8px,rgba(0,220,255,.22) 8px 16px,rgba(255,220,0,.2) 16px 24px);
+  background-size:220% 220%;background-position:var(--sx,50%) var(--sy,50%)}
+#cardview .meta{max-width:min(90vw,420px);text-align:center;color:var(--muted);font-size:14.5px}
+#cardview .meta b{display:block;color:var(--paper);font:800 20px/1.2 Archivo;font-stretch:82%;margin-bottom:4px}
+#cardview .miss2{margin-top:6px;color:#FFB3AC;font-weight:700}
 </style>
 </head>
 <body>
@@ -597,6 +619,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <button id="sound" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
 <button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
 <div id="emotes"></div>
+<div id="cardview"></div>
 <div id="opener"></div>
 <div id="bullsfx"></div>
 <div id="unlock"></div>
@@ -808,7 +831,9 @@ function pushUI() {
 }
 
 // ---------- Sammelkarten ----------
-let tcg = null, ctab = 'sammlung', market = null, trades = null;
+let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
+const BADGE = { holo: ['holo', '✨'], ultra: ['ultra', '💎'], ext: ['ext', '🌈'], selten: ['', '★'], legend: ['ultra', '👑'] };
+const badge = (v) => { const b = BADGE[v]; return b ? `<span class="cbadge ${b[0]}">${b[1]}</span>` : ''; };
 const cardImg = (id, v) => `/tcg/${id}_${v}.webp?v=${AVER}`;
 const varName = (v) => (tcg && tcg.def.names[v]) || v;
 const cardDef = (id) => (tcg ? tcg.def.cards.find((c) => c.id === id) : null);
@@ -825,10 +850,17 @@ function renderCards() {
   if (ctab === 'sammlung') {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
-    const havе = all.filter((x) => x.n).length;
-    box.innerHTML = `<p class="sub" style="margin-bottom:10px">${havе} von ${all.length} Varianten gesammelt</p>
-      <div class="cgrid">${all.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img src="${cardImg(x.c.id, x.v)}" alt="">${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
-        <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')}</div>`;
+    const have = all.filter((x) => x.n).length;
+    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended']];
+    let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : x.v === cfilter));
+    // Besitz zuerst, dann nach Seltenheit
+    const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
+    list.sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || rank(b.v) - rank(a.v) || a.c.name.localeCompare(b.c.name));
+    box.innerHTML = `<p class="sub" style="margin-bottom:8px">${have} von ${all.length} Varianten gesammelt</p>
+      <div class="cfilter">${F.map(([k, n]) => `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
+        <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')
+      || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
     box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar</span></span>
@@ -842,7 +874,7 @@ function renderCards() {
       + `<p class="sub">Diamanten bekommst du für gewonnene Matches, bis zu 200 pro Sieg.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img src="${cardImg(l.cardId, l.variant)}" alt="">
+    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
@@ -861,7 +893,7 @@ async function openPack(pid) {
     tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
     sfx('exact');
     const el = $('#opener');
-    el.innerHTML = `<div class="wrap">${r.pulled.map((c) => `<img class="rev" src="${cardImg(c.id, c.variant)}" alt="">`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
+    el.innerHTML = `<div class="wrap">${r.pulled.map((c) => `<img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
     el.classList.add('on');
   } catch (e) { toast(e.message); }
 }
@@ -893,6 +925,35 @@ function tradeDialog() {
     api('/api/tcg/trade', { to: Number($('#trTo').value), give: { card: gc, variant: gv }, want: { card: wc, variant: wv } })
       .then(() => { closeModal(); loadTrades(); toast('Angebot gesendet'); }).catch((er) => toast(er.message));
   };
+}
+function showCard(key) {
+  const [cid, v] = key.split(':');
+  const c = cardDef(cid); if (!c) return;
+  const n = owned(cid, v);
+  const el = $('#cardview');
+  el.innerHTML = `<div class="stage"><div class="tilt" id="tiltc"><img src="${cardImg(cid, v)}" alt="">
+      ${['holo', 'ultra', 'ext', 'legend'].includes(v) ? '<span class="sheen"></span><span class="rain"></span>' : ''}</div>
+    <div class="meta"><b>${esc(c.name)}</b>${esc(varName(v))} · ${esc(c.theme)} · ${c.lvl} Sterne · ATK ${fmt(c.atk)} / DEF ${fmt(c.def)}
+      <br>${esc(c.effect)}${n ? `<br><span style="color:var(--ok);font-weight:700">Du hast sie ${n}×</span>` : '<div class="miss2">Fehlt dir noch</div>'}</div>
+    <button class="btn ghost" id="closeCard" style="min-width:200px">Schließen</button></div>`;
+  el.classList.add('on');
+  const t = $('#tiltc');
+  const set = (px, py) => {
+    const rx = (0.5 - py) * 18, ry = (px - 0.5) * 22;
+    t.style.transform = `rotateX(${rx.toFixed(1)}deg) rotateY(${ry.toFixed(1)}deg) scale(1.02)`;
+    t.style.setProperty('--sx', (px * 100).toFixed(0) + '%');
+    t.style.setProperty('--sy', (py * 100).toFixed(0) + '%');
+  };
+  t.onpointermove = (e) => { const r = t.getBoundingClientRect(); set((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
+  t.onpointerleave = () => { t.style.transform = ''; };
+  const gyro = (e) => { if (e.gamma == null) return; set(Math.min(1, Math.max(0, (e.gamma + 35) / 70)), Math.min(1, Math.max(0, (e.beta - 10) / 70))); };
+  const startGyro = () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+      DeviceOrientationEvent.requestPermission().then((r) => { if (r === 'granted') window.addEventListener('deviceorientation', gyro); }).catch(() => {});
+    } else window.addEventListener('deviceorientation', gyro);
+  };
+  startGyro();
+  showCard.stop = () => window.removeEventListener('deviceorientation', gyro);
 }
 async function loadHome() { try { home = await api('/api/home'); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
@@ -1422,6 +1483,7 @@ document.addEventListener('toggle', (e) => {
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message)); return; }
+    const cd = e.target.closest('[data-card]'); if (cd) return showCard(cd.dataset.card);
     const u = e.target.closest('[data-user]'); if (u) showUser(u.dataset.user); const m = e.target.closest('[data-mod]'); if (m) modEdit(m.dataset.mod, ''); return; }
   if (t.closest('[data-mod]')) return modEdit(t.closest('[data-mod]').dataset.mod, '');
   if (t.dataset.dia) {
@@ -1482,6 +1544,9 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.mcancel) api('/api/tcg/cancel', { id: t.dataset.mcancel }).then((st) => { tcg = st; loadMarket(); }).catch((e) => toast(e.message));
   else if (t.dataset.tacc) api('/api/tcg/trade/accept', { id: t.dataset.tacc }).then(() => { loadTrades(); loadTcg(); toast('Getauscht'); }).catch((e) => toast(e.message));
   else if (t.dataset.tdec) api('/api/tcg/trade/decline', { id: t.dataset.tdec }).then(() => loadTrades()).catch((e) => toast(e.message));
+  else if (t.dataset.card) showCard(t.dataset.card);
+  else if (t.dataset.cf) { cfilter = t.dataset.cf; renderCards(); }
+  else if (t.id === 'closeCard') { $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); }
   else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }

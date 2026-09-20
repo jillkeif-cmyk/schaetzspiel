@@ -30,6 +30,8 @@ Dann http://localhost:3000 öffnen.
 - 100 Karten in `lib/tcg.js` (je 50 pro Booster), Bilder unter `public/tcg/`
 - Häufige Karten gibt es nur einstufig, seltene und legendäre je in drei Stufen (Selten/Holo/Ultra bzw. Legendär/Ultra/Extended Art)
 - Kartenseite über die Startseite: Sammlung, Booster-Inventar, Shop, Börse und Tausch
+- Sammlung: eigene Karten zuerst, Filter nach Besitz und Seltenheit, Seltenheits-Symbol auf jeder Kachel
+- Tippen auf eine Karte öffnet die Großansicht: Neigen per Maus oder Gyroskop, Holo-Schimmer, Werte und Effekt darunter
 - Börse: Karte gegen Diamanten anbieten, kaufen, Angebot zurückziehen. Tausch: Karte gegen Karte mit Freunden, mit Push-Nachricht
 - Die Duell-Logik fehlt noch, der Knopf im Kartenbereich ist ausgegraut
 
