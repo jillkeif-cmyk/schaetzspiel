@@ -66,7 +66,7 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   assert.ok(err && /Matches/.test(err), 'Match-Limit greift nicht');
   for (const sx of extra) sx.close();
   await sleep(200);
-  assert.ok(home.me.level >= 1 && home.progress.challenges.length === 8 && states[0].summary.gained > 0, 'XP-Zusammenfassung fehlt');
+  assert.ok(home.me.level >= 1 && home.progress.challenges.length >= 8 && states[0].summary.gained > 0, 'XP-Zusammenfassung fehlt');
   // Passwortschutz
   socks[1].emit('settings', { password: 'geheim' }); await sleep(100);
   let need = null; socks[0].on('needpw', (d) => { need = d; });

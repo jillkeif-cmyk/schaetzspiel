@@ -488,7 +488,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .framegrid button{padding:8px 4px 6px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);line-height:1.15;text-align:center}
 .framegrid button.on{box-shadow:inset 0 0 0 2.5px var(--tape);color:var(--paper)}
 .framegrid button.lock{opacity:.45}
-.framegrid button.lock .ava .frm{filter:grayscale(1) brightness(.6)}
+.framegrid button.lock .ava .frm{filter:grayscale(.55) brightness(.78)}
+.cardgrid button.lock img{filter:grayscale(.5) brightness(.8)}
+.tlist button.lock .titleimg{filter:grayscale(.5) brightness(.8)}
 
 /* Siegestreppe */
 .stairs{display:flex;flex-direction:column-reverse;gap:8px;margin-top:10px}
@@ -630,6 +632,14 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 
 /* Glücksspiel */
 .wheelwrap{position:relative;width:min(74vw,290px);margin:6px auto 14px;aspect-ratio:1}
+.wheel img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.wnum{position:absolute;left:50%;top:50%;width:0;height:0;transform:rotate(var(--a));z-index:2}
+.wnum::before{content:attr(data-n);display:block}
+.wheel .wnum{font:800 11px/1 Archivo;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.wheel .wnum b{width:20px;height:20px;border-radius:50%;display:grid!important;place-items:center;box-shadow:0 0 0 1.5px rgba(255,255,255,.35)}
+.wheel .wnum.r b{background:#C0342F}.wheel .wnum.s b{background:#141B1C}.wheel .wnum.g b{background:#1D7A4A}
+.wheel .wnum{transform:rotate(var(--a)) translate(-50%,-50%) translateY(-118px);transform-origin:center}
+@media (max-width:420px){.wheel .wnum{transform:rotate(var(--a)) translate(-50%,-50%) translateY(-31vw)}}
 .wheel{position:absolute;inset:0;border-radius:50%;transition:transform 4.6s cubic-bezier(.12,.62,.12,1);
   background:conic-gradient(#1D7A4A 0 2.7deg,#C0342F 2.7deg 5.4deg,#141B1C 5.4deg 8.1deg,#C0342F 8.1deg 10.8deg,#141B1C 10.8deg 13.5deg,#C0342F 13.5deg 16.2deg,#141B1C 16.2deg 18.9deg,#C0342F 18.9deg 21.6deg,#141B1C 21.6deg 24.3deg,#C0342F 24.3deg 27deg,#141B1C 27deg 29.7deg,#C0342F 29.7deg 32.4deg,#141B1C 32.4deg 35.1deg,#C0342F 35.1deg 37.8deg,#141B1C 37.8deg 40.5deg,#C0342F 40.5deg 43.2deg,#141B1C 43.2deg 45.9deg,#C0342F 45.9deg 48.6deg,#141B1C 48.6deg 51.3deg,#C0342F 51.3deg 54deg,#141B1C 54deg 56.7deg,#C0342F 56.7deg 59.4deg,#141B1C 59.4deg 62.1deg,#C0342F 62.1deg 64.8deg,#141B1C 64.8deg 67.5deg,#C0342F 67.5deg 70.2deg,#141B1C 70.2deg 72.9deg,#C0342F 72.9deg 75.6deg,#141B1C 75.6deg 78.3deg,#C0342F 78.3deg 81deg,#141B1C 81deg 83.7deg,#C0342F 83.7deg 86.4deg,#141B1C 86.4deg 89.1deg,#C0342F 89.1deg 91.8deg,#141B1C 91.8deg 94.5deg,#C0342F 94.5deg 97.2deg,#141B1C 97.2deg 100deg,#C0342F 100deg 180deg,#141B1C 180deg 260deg,#C0342F 260deg 340deg,#141B1C 340deg 360deg);
   box-shadow:inset 0 0 0 10px #C89A3C,inset 0 0 0 13px #1a2426,0 14px 34px rgba(0,0,0,.55)}
@@ -648,6 +658,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pcard2{width:58px;height:82px;border-radius:9px;background:linear-gradient(180deg,#FBF7EA,#E4DCC6);color:#16202A;display:grid;place-items:center;font:800 19px/1 Archivo;box-shadow:0 5px 12px rgba(0,0,0,.45);animation:flip .35s ease-out both}
 .pcard2.red{color:#B22B26}
 .pcard2.back{background:repeating-linear-gradient(45deg,#17505A 0 7px,#0E3A42 7px 14px);color:transparent;box-shadow:inset 0 0 0 2px rgba(255,210,63,.4),0 5px 12px rgba(0,0,0,.45)}
+
+/* Spielerzeilen: alles auf einer Höhe */
+.pl{align-items:center}
+.pl .ava{align-self:center;flex:none}
+.pl .nm{display:flex;flex-direction:column;gap:5px;justify-content:center}
+.pl .nm .titleimg{margin:0}
+.pcemb.lineup{align-self:center;flex:none;margin-left:2px}
 </style>
 </head>
 <body>
@@ -695,13 +712,14 @@ function playerCard(p, extra) {
   return `<div class="pcard">
     <div class="mid"><div class="who">${tagHtml(p)}<b>${esc(p.name)}</b></div>
       <div class="trow">${avatar(p, 56)}${p.title ? titleHtml(p) : '<span class="sub grow" style="font-size:13px">Kein Titel</span>'}
-        ${p.emblem ? `<img class="pcemb" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
+        ${p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
       <div class="lvrow"><span class="num" style="font-size:16px;color:var(--paper)">Lv ${p.level}</span><span class="bar"><i style="width:${Math.round(lv * 100)}%"></i></span><span>${p.max ? 'max' : p.into + '/' + p.next}</span></div>
       ${extra || ''}</div>
     ${streakHtml(p)}</div>`;
 }
-const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
-const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
+const animOf = (id) => { const c = home && home.cards; if (!c || !id) return ''; const x = [...c.emblems, ...c.titles].find((y) => y.id === id); return x && x.anim ? ' a-' + x.anim : ''; };
+const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
+const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}${animOf(p.title.id)}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
 function seenText(u) {
@@ -877,7 +895,12 @@ const RBETS = [['rot', 'Rot', 'rot'], ['schwarz', 'Schwarz', 'schwarz'], ['gruen
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
   if (cgame === 'roulette') {
-    box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span><div class="wheel" id="wheel"></div><div class="ballnum" id="ballnum">–</div></div>
+    const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+    const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+    const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
+    box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}</div>
+        <div class="ballnum" id="ballnum">–</div></div>
       <div class="betgrid">${RBETS.filter((b) => b[1]).map(([k, n, c]) => `<button data-pick="${k}" class="${c} ${cpick === k ? 'on' : ''}">${n}</button>`).join('')}
         <button data-pick="zahl" class="${cpick === 'zahl' ? 'on' : ''}">Zahl ×36</button></div>
       ${cpick === 'zahl' ? '<input class="field" id="cbNumber" inputmode="numeric" placeholder="Zahl 0 bis 36" value="7" style="margin-bottom:10px">' : ''}
@@ -1079,6 +1102,28 @@ function packInfo(pid) {
     api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Booster gekauft'); }).catch((e) => toast(e.message));
   };
 }
+// Gesperrtes ansehen: echtes Bild, Animation und die Bedingung
+function showLocked(kind, id) {
+  const C = home.cards || { emblems: [], titles: [] };
+  const item = kind === 'frame' ? (home.frames || []).find((x) => x.id === id)
+    : kind === 'emblem' ? C.emblems.find((x) => x.id === id) : C.titles.find((x) => x.id === id);
+  if (!item) return;
+  const anim = item.anim ? ' a-' + item.anim : '';
+  const name = kind === 'title' ? item.text : item.name;
+  const pic = kind === 'frame'
+    ? `<div style="display:grid;place-items:center;padding:6px">${avatar({ id: home.me.id, name: home.me.name, av: home.me.av, color: '#4FD1C5', frame: item.id, frameAnim: item.anim }, 108, false)}</div>`
+    : kind === 'emblem'
+      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:120px" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
+      : `<img class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${AVER}" alt="">`;
+  $('#modal').innerHTML = `<div class="panel" style="gap:12px">
+    <h2>${esc(item.secret && !item.unlocked ? 'Geheim' : name)}</h2>
+    ${pic}
+    <div class="unlocks" style="background:rgba(255,210,63,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)">
+      <b style="color:var(--tape)">So bekommst du es</b><span class="uitem" style="font-weight:600">${esc(item.need || 'Geheim')}</span></div>
+    <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
+
 function tradeDialog() {
   const mine = tcg.cards.filter((c) => c.count > 0);
   if (!mine.length) return toast('Du hast noch keine Karten zum Tauschen.');
@@ -1231,6 +1276,7 @@ function build() {
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
     <div id="nextUp"></div>
+    <div id="casinoTop"></div>
     <div><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
@@ -1356,7 +1402,7 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 40)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb" style="--s:${p.title ? 44 : 30}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
@@ -1387,6 +1433,8 @@ function modEdit(id, page) {
     ? `<p class="sub">Frei = grün. Freigeschaltet gilt zusätzlich zu dem, was er selbst geschafft hat.</p>
        <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.name)}</button>`).join('')}</div>
        <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
+       <label style="margin-top:8px">Rahmen</label>
+       <div class="framegrid">${(home.frames || []).map((fr) => `<button data-mu="${fr.id}" class="${u.unlocks.includes(fr.id) ? 'on' : ''}">${avatar({ id: u.id, name: u.name, av: u.av, color: '#4FD1C5', frame: fr.id, frameAnim: fr.anim }, 50, false)}${esc(fr.name)}</button>`).join('')}</div>
        <div class="row"><button class="chipbtn" data-mu="*" data-on="1">Alles freischalten</button><button class="chipbtn" data-mu="*" data-on="0">Alles zurücksetzen</button></div>
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
@@ -1395,7 +1443,7 @@ function modEdit(id, page) {
        <p class="sub">Level und Prestige lassen sich getrennt setzen. Leere Felder bleiben unverändert.</p>
        ${home.me.admin ? `<label>Rolle</label><div class="row" id="modRole">${modRoles.map((r) => `<button type="button" class="chipbtn ${(u.role || '') === r ? 'on' : ''}" data-role="${r}">${r || 'normal'}</button>`).join('')}</div>` : ''}
        <button class="btn small" style="width:100%">Speichern</button></form>
-       <button class="btn ghost small" id="modCards" style="width:100%">Embleme und Titel freischalten</button>`;
+       <button class="btn ghost small" id="modCards" style="width:100%">Embleme, Titel und Rahmen freischalten</button>`;
   $('#modal').innerHTML = `<div class="panel" style="gap:14px">${playerCard({ ...u, title: u.title })}${body}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   if ($('#modCards')) $('#modCards').onclick = () => modEdit(id, 'cards');
@@ -1532,6 +1580,13 @@ function update() {
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
+    const ct = $('#casinoTop');
+    if (ct) {
+      const list = (home && home.casinoTop) || [];
+      const me2 = home && home.me;
+      ct.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Casino-Rangliste</h2>
+        <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
+    }
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 3);
@@ -1784,11 +1839,11 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
   else if (t.dataset.frame !== undefined) {
-    if (t.classList.contains('lock')) return toast(t.title || 'Noch nicht freigeschaltet.');
+    if (t.classList.contains('lock')) return showLocked('frame', t.dataset.frame);
     api('/api/frame', { frame: t.dataset.frame }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
   }
   else if (t.dataset.emb !== undefined || t.dataset.title !== undefined) {
-    if (t.classList.contains('lock')) return toast(t.title || 'Noch nicht freigeschaltet.');
+    if (t.classList.contains('lock')) return showLocked(t.dataset.emb !== undefined ? 'emblem' : 'title', t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
     const me = home.me, cur = t.dataset.emb !== undefined ? me.emblem : (me.title || '');
     const val = (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title) === cur ? '' : (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
     const body = t.dataset.emb !== undefined ? { emblem: val, title: me.title || '' } : { emblem: me.emblem || '', title: val };

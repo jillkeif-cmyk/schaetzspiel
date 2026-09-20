@@ -51,7 +51,8 @@ const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
 const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
-  id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
+  casinoXp: Number(u.casino_xp) || 0, casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -87,18 +88,34 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler beim Anmelden.' }); }
 });
 
+const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
+const TOP = new Set(['ext', 'ghost']);
+async function cardStats(uid) {
+  const rows = await store.cardsOf(uid).catch(() => []);
+  let total = 0, rare = 0, ext = 0;
+  for (const r of rows) {
+    const n = Number(r.count) || 0;
+    total += n;
+    if (RARE.has(r.variant)) rare += n;
+    if (TOP.has(r.variant)) ext += n;
+  }
+  return { cards_total: total, cards_rare: rare, cards_ext: ext };
+}
+
 app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
+    const u2 = { ...u, ...(await cardStats(u.id)) };
     res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
-      cards: cards.view(u),
-      frames: frames.view(u, isMod(u)),
-      progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
+      cards: cards.view(u2),
+      frames: frames.view(u2, isMod(u)),
+      casinoTop: (await store.casinoRanking().catch(() => [])).map(publicStats),
+      progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u2) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -166,6 +183,18 @@ const takeBet = async (u, amount) => {
   await store.save(u.id, { diamonds: have - amount });
   return { ok: true, left: have - amount };
 };
+// Casino-Statistik: Runden, Gewinne, bester Gewinn, Bilanz und eigene XP
+const casinoStat = async (uid, stake, won) => {
+  const u = await store.userById(uid); if (!u) return;
+  const net = won - stake;
+  await store.save(uid, {
+    casino_rounds: (Number(u.casino_rounds) || 0) + 1,
+    casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
+    casino_best: Math.max(Number(u.casino_best) || 0, won),
+    casino_net: (Number(u.casino_net) || 0) + net,
+    casino_xp: (Number(u.casino_xp) || 0) + Math.max(5, Math.round(stake / 20) + (won > stake ? Math.round(won / 40) : 0)),
+  });
+};
 const payOut = async (uid, n) => {
   if (n <= 0) return null;
   const u = await store.userById(uid);
@@ -186,6 +215,7 @@ app.post('/api/casino/roulette', async (req, res) => {
     const r = casino.spin(kind, number);
     const won = Math.round(amount * r.pay);
     const after = won ? await payOut(u.id, won) : t.left;
+    await casinoStat(u.id, amount, won);
     res.json({ ...r, amount, won, diamonds: after });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -208,6 +238,7 @@ app.post('/api/casino/bj/deal', async (req, res) => {
       const r = casino.result(g); bjGames.delete(u.id);
       const won = Math.round(amount * r.pay);
       const after = won ? await payOut(u.id, won) : t.left;
+      await casinoStat(u.id, amount, won);
       return res.json({ ...bjView(g, true), result: r.text, won, diamonds: after });
     }
     res.json({ ...bjView(g), diamonds: t.left });
@@ -221,6 +252,7 @@ app.post('/api/casino/bj/hit', async (req, res) => {
     if (casino.score(g.player) > 21) {
       bjGames.delete(u.id);
       const cur = await store.userById(u.id);
+      await casinoStat(u.id, g.amount, 0);
       return res.json({ ...bjView(g, true), result: 'Überkauft', won: 0, diamonds: Number(cur.diamonds) || 0 });
     }
     res.json(bjView(g));
@@ -235,6 +267,7 @@ app.post('/api/casino/bj/stand', async (req, res) => {
     bjGames.delete(u.id);
     const won = Math.round(g.amount * r.pay);
     const after = won ? await payOut(u.id, won) : Number((await store.userById(u.id)).diamonds) || 0;
+    await casinoStat(u.id, g.amount, won);
     res.json({ ...bjView(g, true), result: r.text, won, diamonds: after });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

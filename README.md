@@ -88,6 +88,14 @@ Dann http://localhost:3000 öffnen.
 - Zeit pro Schätzfrage 8, 20, 30 oder 45 s; der Schnellmodus setzt 8 s
 - „Auf frische Fragen warten“ hält den Start bis zu 2 Minuten an, der feste Pool sichert immer ab
 
+## Casino-Fortschritt
+- Eigene Statistik: Runden, Siege, bester Gewinn, Bilanz und Casino-XP
+- Casino-Rangliste auf der Startseite, sortiert nach Casino-XP
+- Herausforderungen: Stammspieler, Glückssträhne, Großer Wurf
+- Sammler-Herausforderungen: Sammler, Rarität, Vitrine (zählen den Kartenbestand)
+- Dazu 4 Embleme, 4 Titel und 2 Rahmen für Casino und Sammeln
+- Fünf legendäre, animierte Sätze für sehr harte Ziele: Höllenkessel, Teufelsblatt, Prismatresor, Münzdrache, Kronarchiv (Emblem, Titel und Rahmen je animiert)
+
 ## Glücksspiel
 - Im Kartenbereich unter „Gambling“: Roulette und Blackjack, Einsatz in Diamanten (50 bis 20.000)
 - Roulette: einfache Chancen zahlen doppelt, Drittel dreifach, eine einzelne Zahl 36-fach
@@ -118,7 +126,7 @@ Der Chat läuft in Pre-Lobby, Countdown und am Endstand. Er lebt nur solange das
 ## Modi
 - **Rangliste**: Fragen aus allen Themen, am Ende Weltranglistenpunkte nach Platzierung (Werte in `lib/progress.js`)
 - **Freies Spiel**: bis zu 8 Themen wählbar, keine Weltranglistenpunkte. Es kommen ausschließlich Fragen aus den gewählten Themen, auch die live erzeugten. Reicht der Themenpool nicht für die eingestellte Fragenzahl, wird die Runde kürzer statt themenfremd
-- 13 Themen, ihre Kategorien stehen in `lib/themes.js`; ein Thema kann dort einen `hint` haben, der der KI mitgegeben wird (BookTok: nur Bücher ab 2000)
+- 15 Themen, ihre Kategorien stehen in `lib/themes.js`; ein Thema kann dort einen `hint` haben, der der KI mitgegeben wird (BookTok: nur Bücher ab 2000)
 - Innerhalb eines Matches wiederholt sich keine Frage, auch nicht nach „Nochmal spielen“. Geht der Themenpool zur Neige, wird die Runde kürzer; erst wenn alles durch ist, beginnt der Pool von vorn
 
 ## Fortschritt
