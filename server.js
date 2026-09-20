@@ -151,7 +151,7 @@ app.get('/api/friends', async (req, res) => {
       const o = await store.userById(f.id); if (!o) continue;
       const m = game.matches.get(game.userMatch.get(o.id));
       out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished',
-        joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 6 ? m.code : null });
+        joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 8 ? m.code : null });
     }
     res.json({ friends: out });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }

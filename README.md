@@ -1,6 +1,6 @@
 # PUNKTLANDUNG
 
-Multiplayer-Schätzspiel für bis zu 6 Spieler pro Match, maximal 2 Matches gleichzeitig.
+Multiplayer-Schätzspiel für bis zu 8 Spieler pro Match, maximal 2 Matches gleichzeitig.
 
 ## Start lokal
     npm install
@@ -47,6 +47,12 @@ Dann http://localhost:3000 öffnen.
 ## Clan-Tags
 - 2 bis 5 Zeichen vor dem Namen, Farbe wählbar
 - `DEV`, `ADMIN`, `MOD` und der Regenbogen-Verlauf sind dem Admin (`ADMIN_NAME`) vorbehalten
+
+## Auflösung
+- Zielscheibe: der richtige Wert ist das Bullseye, jede Schätzung schlägt als farbiger Dart ein
+- Die Darts fliegen nacheinander von außen nach innen, der Rundensieger zuletzt
+- Danach erscheint der Sieger im goldenen Banner, bei einer Punktlandung zusätzlich das Bullseye-Abzeichen
+- Darunter steht weiterhin die vollständige Liste mit Abweichung und Punkten
 
 ## Ablauf
 1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.

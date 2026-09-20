@@ -449,6 +449,29 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .fold[open]>summary{background:rgba(255,255,255,.05)}
 .fold>.cardgrid,.fold>.tlist{padding:12px 12px 14px}
 .fold .sub{font-size:13px;font-weight:600}
+
+/* Auflösung: Zielscheibe mit einschlagenden Darts */
+.board{position:relative;width:min(88vw,340px);aspect-ratio:1;margin:6px auto 0}
+.board>img.tgt{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
+.hit{position:absolute;left:var(--x);top:var(--y);width:0;height:0}
+.hit .dart{position:absolute;left:-14px;bottom:-4px;width:64px;height:64px;transform-origin:8% 92%;animation:throw .5s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--d)}
+.hit .who{position:absolute;left:44px;bottom:30px;display:flex;align-items:center;gap:5px;padding:3px 8px 3px 3px;border-radius:99px;background:rgba(5,26,29,.92);box-shadow:0 0 0 1.5px var(--c);white-space:nowrap;font:800 12px/1 Archivo;animation:pop .3s both;animation-delay:calc(var(--d) + .22s)}
+.hit .who b{font-stretch:70%}
+.hit .who.mini2{padding:2px 6px 2px 2px;font-size:11px;opacity:.92}
+.hit .who.mini2 .ava{--s:16px!important}
+.hit.flip .who{left:auto;right:16px;flex-direction:row-reverse}
+.hit .ring{position:absolute;left:0;top:0;width:14px;height:14px;margin:-7px;border-radius:50%;border:3px solid var(--c);animation:hitring .6s ease-out both;animation-delay:var(--d)}
+.hit.best .who{background:linear-gradient(180deg,#FFE88A,#E8A91C);color:var(--ink);box-shadow:0 0 0 2px #fff,0 0 16px rgba(255,210,63,.7)}
+@keyframes throw{0%{transform:translate(-90px,-150px) rotate(-38deg) scale(1.7);opacity:0}55%{opacity:1}72%{transform:rotate(7deg) scale(1)}86%{transform:rotate(-4deg)}100%{transform:none;opacity:1}}
+@keyframes hitring{from{transform:scale(.4);opacity:.95}to{transform:scale(7);opacity:0}}
+.board .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.board .center .num{font-size:30px;line-height:1;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+.winbox{position:relative;margin:10px auto 6px;max-width:400px;animation:pop .5s both}
+.winbox img.frame{width:100%;display:block}
+.winbox .in{position:absolute;inset:18% 16% 20%;display:flex;align-items:center;justify-content:center;gap:10px}
+.winbox .in b{font:800 19px/1.1 Archivo;font-stretch:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.winbox .in .pts{color:var(--ok);font:800 20px/1 Archivo;font-stretch:70%}
+.bulls{position:absolute;right:-4px;top:-10px;width:64px;height:64px;animation:pop .5s both;animation-delay:.3s;filter:drop-shadow(0 0 12px rgba(255,200,60,.8))}
 </style>
 </head>
 <body>
@@ -733,21 +756,35 @@ function buildReveal() {
   const vals = [...given.map((r) => r.value), R.answer];
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const log = lo > 0 && hi / lo > 30, f = (v) => (log ? Math.log10(v) : v);
-  const pos = (v) => (hi === lo ? 50 : 6 + 88 * (f(v) - f(lo)) / (f(hi) - f(lo)));
-  const delay = (given.length * 0.12 + 0.35).toFixed(2) + 's';
-  const exact = given.filter((r) => r.exact);
-  const order = [...given].sort((a, b) => a.value - b.value);
   const U = R.unit === 'Jahr' ? '' : ' ' + R.unit;
   const diffText = (r) => r.value === null ? 'keine Schätzung' : r.exact ? 'genau richtig' : `${fmt(Math.abs(r.value - R.answer), R.unit)}${U} ${r.value > R.answer ? 'zu hoch' : 'zu niedrig'}`;
+  // Abstand zur Mitte: 0 = Bullseye, 1 = Rand
+  const span = Math.max(...given.map((r) => Math.abs(f(r.value) - f(R.answer))), 1e-9);
+  const worst = [...given].sort((a, b) => Math.abs(b.value - R.answer) - Math.abs(a.value - R.answer));
+  const spot = (r, k) => {
+    const rel = Math.min(1, Math.abs(f(r.value) - f(R.answer)) / span);
+    const rad = 5 + rel * 32;                       // Prozent vom Mittelpunkt
+    const ang = (k * 137.5 + (r.value > R.answer ? 0 : 180)) * Math.PI / 180;
+    return { x: (50 + rad * Math.cos(ang)).toFixed(1), y: (50 + rad * Math.sin(ang)).toFixed(1) };
+  };
+  const best = given.find((r) => r.closest);
+  const P2 = P;
+  const winner = best && P2[best.id];
   return head + `
-    <div class="answer" style="--d:${delay}"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
-    ${exact.length ? `<div class="banner" style="--d:${delay}"><img src="/emblems/c_exact.webp?v=${AVER}" alt="">Punktlandung! ${esc(exact.map((r) => P[r.id]?.name).join(' & '))} ×5</div>` : ''}
-    <div class="ruler"><div class="band"></div>
-      ${order.map((r, i) => `<div class="pin${me(r.id)}${r.closest ? ' best' : ''}" style="left:${pos(r.value)}%;--c:${P[r.id]?.color};--i:${i};--h:${10 + (i % 3) * 22}px"><b>${esc(r.id === S.you ? 'DU' : initials(P[r.id]?.name || '?'))}</b></div>`).join('')}
-      <div class="truth" style="left:${pos(R.answer)}%;--d:${delay}"></div>
-      <div class="truthlab" style="left:${pos(R.answer)}%">${fmt(R.answer, R.unit)}${U}</div>
-      <div class="ends"><span>${fmt(lo, R.unit)}</span><span>${log ? 'logarithmisch' : ''}</span><span>${fmt(hi, R.unit)}</span></div></div></div><div class="col side">
-    <div class="plist">${R.results.map((r, i) => `<div class="res${me(r.id)}" data-pid="${r.id}" style="--c:${P[r.id]?.color}"><span class="pos">${r.value === null ? '–' : i + 1}</span>${avatar(P[r.id] || { name: '?' }, 34, false)}<span class="nm">${P[r.id] ? withTag(P[r.id]) : '?'}${r.id === S.you ? ' <small>(du)</small>' : ''}${r.exact ? ' <span class="tag hit">×5</span>' : r.close ? ' <span class="tag">×2</span>' : ''}${r.closest && !r.exact ? ' <span class="tag">★</span>' : ''}<br><span class="diff">${diffText(r)}</span></span><span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span><span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
+    <div class="answer" style="--d:.15s"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
+    <div class="board">
+      <img class="tgt" src="/emblems/target.webp?v=${AVER}" alt="">
+      ${worst.map((r, k) => { const s2 = spot(r, k); const d = (0.35 + k * 0.45).toFixed(2) + 's'; const c = P2[r.id]?.color || '#fff';
+        return `<div class="hit ${r.closest ? 'best' : ''} ${k % 2 ? 'flip' : ''}" style="--x:${s2.x}%;--y:${s2.y}%;--c:${c};--d:${d}">
+          <span class="ring"></span>
+          <img class="dart" src="/emblems/dart${(S.players.findIndex((p2) => p2.id === r.id) % 8) + 1}.webp?v=${AVER}" alt="">
+          <span class="who ${r.closest || r.id === S.you ? '' : 'mini2'}">${avatar(P2[r.id] || { name: '?' }, 18, false)}${r.closest || r.id === S.you ? `<b>${esc(P2[r.id]?.name || '?')}</b> ` : ''}${fmt(r.value, R.unit)}</span></div>`; }).join('')}
+    </div>
+    ${winner ? `<div class="winbox" style="animation-delay:${(0.35 + worst.length * 0.45).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
+      <div class="in">${avatar(winner, 38)}<b>${esc(winner.name)}</b><span class="pts">+${best.points}</span></div>
+      ${best.exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
+    </div><div class="col side">
+    <div class="plist">${R.results.map((r, i2) => `<div class="res${r.id === S.you ? ' me' : ''}" data-pid="${r.id}" style="--c:${P2[r.id]?.color}"><span class="pos">${r.value === null ? '–' : i2 + 1}</span>${avatar(P2[r.id] || { name: '?' }, 34, false)}<span class="nm">${P2[r.id] ? withTag(P2[r.id]) : '?'}${r.id === S.you ? ' <small>(du)</small>' : ''}${r.exact ? ' <span class="tag hit">×5</span>' : r.close ? ' <span class="tag">×2</span>' : ''}${r.closest && !r.exact ? ' <span class="tag">★</span>' : ''}<br><span class="diff">${diffText(r)}</span></span><span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span><span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
 }
 
 // ---------- Dynamische Teile ----------
@@ -900,7 +937,7 @@ function update() {
     $('#create').disabled = full;
     $('#onlineText').textContent = L.online ? `${L.online} Spieler online: ${(L.onlineNames || []).join(', ')}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
-    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von 6` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${6 - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < 6 ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
+    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
@@ -944,7 +981,7 @@ function update() {
     return;
   }
   if (S.phase === 'lobby') {
-    $('#pcount').textContent = `${S.players.length} von 6`;
+    $('#pcount').textContent = `${S.players.length} von ${S.maxPlayers || 8}`;
     const tn = S.themeList.filter((x) => S.themes.includes(x.key)).map((x) => x.name);
     $('#rules').innerHTML = `<div class="row"><b class="grow">${S.ranked ? 'Rangliste' : 'Freies Spiel'}</b>${S.locked ? '<span class="tag">🔒 Passwort</span>' : ''}</div>
       <p class="sub">${S.ranked ? 'Alle Themen · Weltranglistenpunkte nach Platzierung' : 'Themen: ' + tn.map(esc).join(', ')}</p>
