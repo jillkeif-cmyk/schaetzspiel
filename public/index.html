@@ -559,6 +559,33 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .unlocks b{color:#8BE28B;font-size:14px}
 .uitem{font-size:14.5px;font-weight:700}
 .uitem small{color:var(--muted);font-weight:600}
+
+/* Sammelkarten */
+.dia{display:inline-flex;align-items:center;gap:5px;font:800 16px/1 Archivo;font-stretch:75%;color:#9FE8FF}
+.dia img{width:20px;height:20px}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs2 button{padding:9px 13px;border-radius:99px;background:var(--bg-deep);font-weight:700;font-size:14px;color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
+.tabs2 button.on{background:var(--tape);color:var(--ink);box-shadow:none}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.cgrid figure{display:flex;flex-direction:column;gap:6px;position:relative}
+.cgrid img{width:100%;height:auto;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,.45)}
+.cgrid .miss img{filter:grayscale(1) brightness(.35)}
+.cgrid figcaption{font-size:12.5px;color:var(--muted);line-height:1.25}
+.cgrid b{display:block;color:var(--paper);font-size:13.5px}
+.cnt{position:absolute;right:6px;top:6px;background:rgba(5,26,29,.9);border-radius:99px;padding:3px 8px;font:800 12px/1 Archivo;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2)}
+.packcard{display:flex;gap:14px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(180deg,#19535D,#113E46);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.packcard img{width:92px;height:auto;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5))}
+.packcard .t{flex:1;min-width:0}
+.odds{font-size:12.5px;color:var(--muted);line-height:1.35}
+#opener{position:fixed;inset:0;z-index:11;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(255,210,63,.18),rgba(3,15,17,.92) 60%)}
+#opener.on{display:grid}
+#opener .wrap{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:20px}
+#opener .rev{width:min(42vw,190px);border-radius:12px;box-shadow:0 18px 36px rgba(0,0,0,.6);cursor:pointer;
+  animation:flip .6s cubic-bezier(.2,.9,.3,1) both}
+#opener .rev:nth-child(2){animation-delay:.25s}#opener .rev:nth-child(3){animation-delay:.5s}
+@keyframes flip{0%{transform:rotateY(90deg) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
+#opener .cta{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
+.sold{opacity:.55}
 </style>
 </head>
 <body>
@@ -569,6 +596,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <button id="sound" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
 <button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
 <div id="emotes"></div>
+<div id="opener"></div>
 <div id="bullsfx"></div>
 <div id="unlock"></div>
 <div id="modal"></div>
@@ -778,6 +806,93 @@ function pushUI() {
     : `<span style="font-size:24px">🔔</span><span class="grow"><b>Einladungen aufs Handy</b>Lass dich benachrichtigen, wenn dich jemand herausfordert.</span><button class="btn small" id="pushOn">Aktivieren</button>`;
 }
 
+// ---------- Sammelkarten ----------
+let tcg = null, ctab = 'sammlung', market = null, trades = null;
+const cardImg = (id, v) => `/tcg/${id}_${v}.webp?v=${AVER}`;
+const varName = (v) => (tcg && tcg.def.names[v]) || v;
+const cardDef = (id) => (tcg ? tcg.def.cards.find((c) => c.id === id) : null);
+const owned = (id, v) => { const e = tcg && tcg.cards.find((x) => x.card_id === id && x.variant === v); return e ? e.count : 0; };
+
+async function loadTcg() { try { tcg = await api('/api/tcg'); if (home) home.me.diamonds = tcg.diamonds; renderCards(); } catch (e) { toast(e.message); } }
+async function loadMarket() { try { market = await api('/api/tcg/market'); renderCards(); } catch (e) { toast(e.message); } }
+async function loadTrades() { try { trades = await api('/api/tcg/trades'); renderCards(); } catch (e) { toast(e.message); } }
+
+function renderCards() {
+  const box = $('#cbody'); if (!box || !tcg) return;
+  document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
+  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  if (ctab === 'sammlung') {
+    const all = [];
+    for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
+    const havе = all.filter((x) => x.n).length;
+    box.innerHTML = `<p class="sub" style="margin-bottom:10px">${havе} von ${all.length} Varianten gesammelt</p>
+      <div class="cgrid">${all.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img src="${cardImg(x.c.id, x.v)}" alt="">${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
+        <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')}</div>`;
+  } else if (ctab === 'inventar') {
+    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+      <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar</span></span>
+      <button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button></div>`).join('')
+      : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>';
+  } else if (ctab === 'shop') {
+    box.innerHTML = tcg.def.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+      <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
+      <p class="odds">${p.cards} Karten · ${Object.entries(p.odds).map(([k, o]) => `${varName(k)} ${(o * 100).toFixed(1).replace('.', ',')} %`).join(' · ')}<br>Die letzte Karte ist mindestens selten.</p></span>
+      <button class="btn small" data-buy="${esc(p.id)}">Kaufen</button></div>`).join('')
+      + `<p class="sub">Diamanten bekommst du für gewonnene Matches, bis zu 200 pro Sieg.</p>`;
+  } else if (ctab === 'boerse') {
+    if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
+    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img src="${cardImg(l.cardId, l.variant)}" alt="">
+      <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
+      ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
+      : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
+  } else {
+    if (!trades) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
+    const one = (t2, mine) => `<div class="pl" style="--c:var(--line)"><span class="nm"><b>${esc(t2.fromName)}</b><br><span class="lv">gibt ${esc(cardDef(t2.give.card).name)} (${esc(varName(t2.give.variant))}) · will ${esc(cardDef(t2.want.card).name)} (${esc(varName(t2.want.variant))})</span></span>
+      ${mine ? '<span class="sub">offen</span>' : `<button class="mini go" data-tacc="${t2.id}">Annehmen</button><button class="mini" data-tdec="${t2.id}">Nein</button>`}</div>`;
+    box.innerHTML = `<h2 style="margin-bottom:8px">Angebote an dich</h2><div class="plist">${trades.incoming.length ? trades.incoming.map((t2) => one(t2, false)).join('') : '<p class="sub">Keine offenen Angebote.</p>'}</div>
+      <h2 style="margin:16px 0 8px">Deine Angebote</h2><div class="plist">${trades.outgoing.length ? trades.outgoing.map((t2) => one(t2, true)).join('') : '<p class="sub">Du hast nichts angeboten.</p>'}</div>
+      <button class="btn ghost" id="newTrade" style="margin-top:12px">Tausch anbieten</button>`;
+  }
+}
+async function openPack(pid) {
+  try {
+    const r = await api('/api/tcg/open', { pack: pid });
+    tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
+    sfx('exact');
+    const el = $('#opener');
+    el.innerHTML = `<div class="wrap">${r.pulled.map((c) => `<img class="rev" src="${cardImg(c.id, c.variant)}" alt="">`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
+    el.classList.add('on');
+  } catch (e) { toast(e.message); }
+}
+function sellCard(key) {
+  const [cid, v] = key.split(':');
+  const p = prompt('Für wie viele Diamanten verkaufen?', '500');
+  if (!p) return;
+  api('/api/tcg/sell', { card: cid, variant: v, price: Number(p) }).then((st) => { tcg = st; renderCards(); toast('Angebot steht in der Börse'); }).catch((e) => toast(e.message));
+}
+
+function tradeDialog() {
+  const mine = tcg.cards.filter((c) => c.count > 0);
+  if (!mine.length) return toast('Du hast noch keine Karten zum Tauschen.');
+  const opts = [];
+  for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) opts.push(`<option value="${c.id}:${v}">${esc(c.name)} · ${esc(varName(v))}</option>`);
+  const fl = friends.filter((f) => f.status === 'ok');
+  $('#modal').innerHTML = `<form class="panel" id="tradeForm" style="gap:12px">
+    <h2>Tausch anbieten</h2>
+    ${fl.length ? `<label>An wen</label><select class="field" id="trTo">${fl.map((f) => `<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select>`
+      : '<p class="sub">Du brauchst zuerst Freunde, dann kannst du ihnen etwas anbieten.</p>'}
+    <label>Du gibst</label><select class="field" id="trGive">${mine.map((m) => `<option value="${m.card_id}:${m.variant}">${esc(cardDef(m.card_id).name)} · ${esc(varName(m.variant))} (${m.count}×)</option>`).join('')}</select>
+    <label>Du willst</label><select class="field" id="trWant">${opts.join('')}</select>
+    <button class="btn small" ${fl.length ? '' : 'disabled'}>Angebot senden</button>
+    <button type="button" class="btn ghost" id="pwCancel">Abbrechen</button></form>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+  $('#tradeForm').onsubmit = (e) => {
+    e.preventDefault();
+    const [gc, gv] = $('#trGive').value.split(':'), [wc, wv] = $('#trWant').value.split(':');
+    api('/api/tcg/trade', { to: Number($('#trTo').value), give: { card: gc, variant: gv }, want: { card: wc, variant: wv } })
+      .then(() => { closeModal(); loadTrades(); toast('Angebot gesendet'); }).catch((er) => toast(er.message));
+  };
+}
 async function loadHome() { try { home = await api('/api/home'); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
@@ -807,7 +922,7 @@ function connect() {
 
 // ---------- Ansichten ----------
 function render() {
-  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
+  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   if (key !== viewKey) { viewKey = key; app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind(); window.scrollTo(0, 0); }
   update();
 }
@@ -823,6 +938,14 @@ function build() {
       <div class="err" id="authErr"></div>
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
+
+  if (!S && page === 'cards') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <h1 style="font-size:30px">Karten</h1>
+    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button></div>
+    <div id="cbody"></div>
+    <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
+    </div>`;
 
   if (!S && page === 'profile') return `<div class="col">
     <div class="row"><button class="link" id="back" style="padding-left:0">← Zurück</button><span class="grow"></span><button class="link" id="logout">Abmelden</button></div>
@@ -842,6 +965,7 @@ function build() {
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b><br><span class="sub">Sammeln, kaufen, tauschen</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -1077,6 +1201,7 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
+  if (!S && page === 'cards') { renderCards(); return; }
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
     if ($('#cardBox') && home && home.cards) {
@@ -1227,7 +1352,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -1332,6 +1457,17 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'invite') showInvite();
   else if (t.id === 'pushOn') pushOn();
   else if (t.id === 'pushOff') pushOff();
+  else if (t.id === 'newTrade') tradeDialog();
+  else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
+  else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
+  else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));
+  else if (t.dataset.open) openPack(t.dataset.open);
+  else if (t.dataset.sell) sellCard(t.dataset.sell);
+  else if (t.dataset.mbuy) api('/api/tcg/market/buy', { id: t.dataset.mbuy }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; loadMarket(); toast('Gekauft'); }).catch((e) => toast(e.message));
+  else if (t.dataset.mcancel) api('/api/tcg/cancel', { id: t.dataset.mcancel }).then((st) => { tcg = st; loadMarket(); }).catch((e) => toast(e.message));
+  else if (t.dataset.tacc) api('/api/tcg/trade/accept', { id: t.dataset.tacc }).then(() => { loadTrades(); loadTcg(); toast('Getauscht'); }).catch((e) => toast(e.message));
+  else if (t.dataset.tdec) api('/api/tcg/trade/decline', { id: t.dataset.tdec }).then(() => loadTrades()).catch((e) => toast(e.message));
+  else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();

@@ -10,6 +10,7 @@ const progress = require('./lib/progress');
 const cards = require('./lib/cards');
 const frames = require('./lib/frames');
 const push = require('./lib/push');
+const tcg = require('./lib/tcg');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -49,7 +50,7 @@ const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
 const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
-  id: u.id, name: u.name, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -150,6 +151,155 @@ app.post('/api/seen', async (req, res) => {
     add.forEach((x) => list.add(x));
     await store.save(u.id, { seen_items: [...list].join(',') });
     res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// ---------- Sammelkarten ----------
+const tcgState = async (u) => ({
+  diamonds: Number(u.diamonds) || 0,
+  cards: await store.cardsOf(u.id),
+  packs: await store.packsOf(u.id),
+  def: tcg.view(),
+});
+app.get('/api/tcg', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    res.json(await tcgState(u));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Booster kaufen
+app.post('/api/tcg/buy', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const p = tcg.PACKS[String(req.body.pack || '')];
+    const n = Math.max(1, Math.min(10, Math.round(Number(req.body.n) || 1)));
+    if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    const cost = p.price * n, have = Number(u.diamonds) || 0;
+    if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
+    await store.save(u.id, { diamonds: have - cost });
+    await store.packAdd(u.id, p.id, n);
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Booster öffnen
+app.post('/api/tcg/open', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const pid = String(req.body.pack || '');
+    if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    const mine = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
+    if (!mine || mine.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
+    await store.packAdd(u.id, pid, -1);
+    const pulled = tcg.openPack(pid);
+    for (const c of pulled) await store.cardAdd(u.id, c.id, c.variant, 1);
+    res.json({ pulled, state: await tcgState(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Börse
+app.get('/api/tcg/market', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const rows = await store.marketList();
+    const out = [];
+    for (const r of rows) {
+      const s = await store.userById(r.seller);
+      out.push({ id: r.id, cardId: r.card_id, variant: r.variant, price: Number(r.price), seller: s ? s.name : '?', sellerId: r.seller, mine: r.seller === u.id });
+    }
+    res.json({ listings: out, diamonds: Number(u.diamonds) || 0 });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tcg/sell', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const cid = String(req.body.card || ''), v = String(req.body.variant || '');
+    const price = Math.max(10, Math.min(1000000, Math.round(Number(req.body.price) || 0)));
+    if (!tcg.has(cid, v)) return res.status(400).json({ error: 'Diese Karte gibt es nicht.' });
+    if (await store.cardCount(u.id, cid, v) < 1) return res.status(400).json({ error: 'Du besitzt diese Karte nicht.' });
+    await store.cardAdd(u.id, cid, v, -1);
+    await store.marketAdd({ seller: u.id, card_id: cid, variant: v, price });
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tcg/cancel', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const row = await store.marketGet(req.body.id);
+    if (!row || row.seller !== u.id) return res.status(403).json({ error: 'Das ist nicht dein Angebot.' });
+    await store.marketDrop(row.id);
+    await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tcg/market/buy', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const row = await store.marketGet(req.body.id);
+    if (!row) return res.status(404).json({ error: 'Dieses Angebot gibt es nicht mehr.' });
+    if (row.seller === u.id) return res.status(400).json({ error: 'Das ist dein eigenes Angebot.' });
+    const have = Number(u.diamonds) || 0, price = Number(row.price);
+    if (have < price) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
+    const seller = await store.userById(row.seller);
+    await store.marketDrop(row.id);
+    await store.save(u.id, { diamonds: have - price });
+    if (seller) await store.save(seller.id, { diamonds: (Number(seller.diamonds) || 0) + price });
+    await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    push.toUser(row.seller, { title: '💎 Verkauft', body: `${u.name} hat deine Karte für ${price} Diamanten gekauft.`, tag: 'market', url: '/' }).catch(() => {});
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Tausch: Angebot, Annahme, Ablehnung
+const trades = new Map(); let tradeId = 0;
+app.post('/api/tcg/trade', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const to = await store.userById(Number(req.body.to));
+    const give = req.body.give || {}, want = req.body.want || {};
+    if (!to || to.id === u.id) return res.status(400).json({ error: 'Wähle einen anderen Spieler.' });
+    if (!tcg.has(give.card, give.variant) || !tcg.has(want.card, want.variant)) return res.status(400).json({ error: 'Karte unbekannt.' });
+    if (await store.cardCount(u.id, give.card, give.variant) < 1) return res.status(400).json({ error: 'Du besitzt diese Karte nicht.' });
+    const id = ++tradeId;
+    trades.set(id, { id, from: u.id, fromName: u.name, to: to.id, give, want, t: Date.now() });
+    push.toUser(to.id, { title: '🔄 Tauschangebot', body: `${u.name} bietet dir einen Tausch an.`, tag: 'trade', url: '/' }).catch(() => {});
+    res.json({ ok: true, id });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/tcg/trades', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    res.json({ incoming: [...trades.values()].filter((t) => t.to === u.id), outgoing: [...trades.values()].filter((t) => t.from === u.id) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tcg/trade/:act', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const t = trades.get(Number(req.body.id));
+    if (!t || t.to !== u.id) return res.status(404).json({ error: 'Dieses Angebot gibt es nicht.' });
+    if (req.params.act === 'decline') { trades.delete(t.id); return res.json({ ok: true }); }
+    if (await store.cardCount(u.id, t.want.card, t.want.variant) < 1) return res.status(400).json({ error: 'Du besitzt die gewünschte Karte nicht.' });
+    if (await store.cardCount(t.from, t.give.card, t.give.variant) < 1) { trades.delete(t.id); return res.status(400).json({ error: 'Der andere besitzt seine Karte nicht mehr.' }); }
+    await store.cardAdd(u.id, t.want.card, t.want.variant, -1);
+    await store.cardAdd(t.from, t.give.card, t.give.variant, -1);
+    await store.cardAdd(u.id, t.give.card, t.give.variant, 1);
+    await store.cardAdd(t.from, t.want.card, t.want.variant, 1);
+    trades.delete(t.id);
+    push.toUser(t.from, { title: '🔄 Tausch angenommen', body: `${u.name} hat den Tausch angenommen.`, tag: 'trade', url: '/' }).catch(() => {});
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Admin: Diamanten setzen
+app.post('/api/admin/diamonds', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const t = await store.userById(Number(req.body.id)); if (!t) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
+    const v = Math.max(0, Math.round(Number(req.body.diamonds)));
+    if (!Number.isFinite(v)) return res.status(400).json({ error: 'Zahl fehlt.' });
+    await store.save(t.id, { diamonds: v });
+    res.json({ ok: true, diamonds: v });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

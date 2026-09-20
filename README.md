@@ -25,6 +25,13 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Sammelkarten
+- Diamanten gibt es für Matches (bis 200 pro Sieg, abhängig vom Punktestand), Admin kann sie über `/api/admin/diamonds` setzen
+- Karten, Varianten und Booster stehen in `lib/tcg.js`, Bilder unter `public/tcg/`
+- Kartenseite über die Startseite: Sammlung, Booster-Inventar, Shop, Börse und Tausch
+- Börse: Karte gegen Diamanten anbieten, kaufen, Angebot zurückziehen. Tausch: Karte gegen Karte mit Freunden, mit Push-Nachricht
+- Die Duell-Logik fehlt noch, der Knopf im Kartenbereich ist ausgegraut
+
 ## Benachrichtigungen
 - Web-Push über eigenen Service Worker (`public/sw.js`), Schlüssel werden beim ersten Start erzeugt und in der Tabelle `settings` abgelegt
 - Auf dem iPhone nur, wenn die Seite auf dem Homescreen liegt (iOS 16.4+); Hinweis dazu steht auf der Startseite
