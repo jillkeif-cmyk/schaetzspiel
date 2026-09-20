@@ -244,7 +244,7 @@ const tcgState = async (u) => ({
   diamonds: Number(u.diamonds) || 0,
   cards: await store.cardsOf(u.id),
   packs: await store.packsOf(u.id),
-  def: tcg.view(),
+  def: { ...tcg.view(), melt: MELT },
 });
 app.get('/api/tcg', async (req, res) => {
   try {
@@ -280,6 +280,30 @@ app.post('/api/tcg/open', async (req, res) => {
     const pulled = tcg.openPack(pid);
     for (const c of pulled) await store.cardAdd(u.id, c.id, c.variant, 1);
     res.json({ pulled, state: await tcgState(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Doppelte Karten umwandeln
+const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500 };
+app.post('/api/tcg/melt', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const items = Array.isArray(req.body.items) ? req.body.items.slice(0, 60) : [];
+    let sum = 0, n = 0;
+    for (const it of items) {
+      const cid = String(it.card || ''), v = String(it.variant || '');
+      const want = Math.max(0, Math.round(Number(it.n) || 0));
+      if (!tcg.has(cid, v) || !want) continue;
+      const have = await store.cardCount(u.id, cid, v);
+      const take = Math.min(want, Math.max(0, have - 1)); // die letzte Karte bleibt immer erhalten
+      if (take <= 0) continue;
+      await store.cardAdd(u.id, cid, v, -take);
+      sum += (MELT[v] || 40) * take; n += take;
+    }
+    if (!n) return res.status(400).json({ error: 'Nichts zum Umwandeln. Die letzte Karte einer Art bleibt immer erhalten.' });
+    const cur = await store.userById(u.id);
+    await store.save(u.id, { diamonds: (Number(cur.diamonds) || 0) + sum });
+    res.json({ ...(await tcgState(await store.userById(u.id))), melted: n, gained: sum });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

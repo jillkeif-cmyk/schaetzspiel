@@ -991,6 +991,17 @@ function renderCards() {
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
+  } else if (ctab === 'melt') {
+    const dupes = [];
+    for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) { const n = owned(c.id, v); if (n > 1) dupes.push({ c, v, extra: n - 1 }); }
+    const melt = (tcg.def.melt) || {};
+    const total = dupes.reduce((s2, d) => s2 + d.extra * (melt[d.v] || 40), 0);
+    box.innerHTML = dupes.length ? `<p class="sub" style="margin-bottom:8px">Doppelte Karten werden zu Diamanten. Von jeder Karte bleibt immer eine erhalten.</p>
+      <div class="cgrid">${dupes.map((d) => `<figure><img src="${cardImg(d.c.id, d.v)}" data-card="${d.c.id}:${d.v}" alt="">${badge(d.v)}<span class="cnt">×${d.extra + 1}</span>
+        <figcaption><b>${esc(d.c.name)}</b>${esc(varName(d.v))} · ${fmt(melt[d.v] || 40)} 💎 je Stück
+        <br><label style="display:flex;align-items:center;gap:6px;margin-top:4px"><input class="field" style="padding:6px;width:56px" type="number" min="0" max="${d.extra}" value="${d.extra}" data-melt="${d.c.id}:${d.v}"> von ${d.extra}</label></figcaption></figure>`).join('')}</div>
+      <button class="btn" id="meltGo" style="width:100%;margin-top:12px">Alles Ausgewählte umwandeln (bis ${fmt(total)} 💎)</button>`
+      : '<p class="sub">Du hast keine doppelten Karten.</p>';
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button></div>
@@ -1008,7 +1019,9 @@ function renderCards() {
       <button class="btn ghost" id="newTrade" style="margin-top:12px">Tausch anbieten</button>`;
   }
 }
+let pid_last = 'standard';
 async function openPack(pid) {
+  pid_last = pid;
   try {
     const r = await api('/api/tcg/open', { pack: pid });
     tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
@@ -1019,7 +1032,9 @@ async function openPack(pid) {
       if (top) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e2) {}
     }, i * 650 + 350));
     const el = $('#opener');
-    el.innerHTML = `<div class="wrap">${r.pulled.map((c, i) => `<span class="slot r-${esc(c.variant)}" style="--d:${(i * 0.65).toFixed(2)}s"><img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}</span>`).join('')}</div><button class="btn" id="closeOpener" style="position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-width:220px">Weiter</button>`;
+    el.innerHTML = `<div class="wrap">${r.pulled.map((c, i) => `<span class="slot r-${esc(c.variant)}" style="--d:${(i * 0.65).toFixed(2)}s"><img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}</span>`).join('')}</div><div style="position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      ${(tcg.packs.find((x) => x.pack_id === pid) || {}).count ? `<button class="btn" id="openNext">Nächsten öffnen (${(tcg.packs.find((x) => x.pack_id === pid) || {}).count})</button>` : ''}
+      <button class="btn ghost" id="closeOpener" style="min-width:150px">Weiter</button></div>`;
     el.classList.add('on');
   } catch (e) { toast(e.message); }
 }
@@ -1052,10 +1067,17 @@ function packInfo(pid) {
     <div class="cgrid">${top.map((x) => `<figure><img src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}</figcaption></figure>`).join('')}</div>
     <b>Chancen pro Karte</b>
     <div class="parts">${Object.entries(p.odds).map(([k, o]) => `<div><span>${esc(varName(k))}</span><span>${(o * 100).toFixed(1).replace('.', ',')} %</span></div>`).join('')}</div>
-    <button class="btn" data-buy="${esc(p.id)}" id="packBuy">Kaufen</button>
+    <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" max="20" value="1" aria-label="Anzahl">
+      <button class="chipbtn" id="packMax">Max</button></div>
+    <button class="btn" id="packBuy">Kaufen</button>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
-  $('#packBuy').addEventListener('click', () => setTimeout(closeModal, 400));
+  const maxN = Math.max(1, Math.min(20, Math.floor(((tcg && tcg.diamonds) || 0) / p.price)));
+  $('#packMax').onclick = () => { $('#packN').value = maxN; };
+  $('#packBuy').onclick = () => {
+    const n = Math.max(1, Math.min(20, Math.round(Number($('#packN').value) || 1)));
+    api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Booster gekauft'); }).catch((e) => toast(e.message));
+  };
 }
 function tradeDialog() {
   const mine = tcg.cards.filter((c) => c.count > 0);
@@ -1170,7 +1192,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="casino">Gambling 🎲</button></div>
+    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button><button data-ct="casino">Gambling 🎲</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
@@ -1741,6 +1763,11 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.tacc) api('/api/tcg/trade/accept', { id: t.dataset.tacc }).then(() => { loadTrades(); loadTcg(); toast('Getauscht'); }).catch((e) => toast(e.message));
   else if (t.dataset.tdec) api('/api/tcg/trade/decline', { id: t.dataset.tdec }).then(() => loadTrades()).catch((e) => toast(e.message));
   else if (t.dataset.card) showCard(t.dataset.card);
+  else if (t.id === 'meltGo') {
+    const items = [...document.querySelectorAll('[data-melt]')].map((el) => { const [card, variant] = el.dataset.melt.split(':'); return { card, variant, n: Number(el.value) || 0 }; }).filter((x) => x.n > 0);
+    if (!items.length) return toast('Nichts ausgewählt.');
+    api('/api/tcg/melt', { items }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; renderCards(); sfx('exact'); toast(`${st.melted} Karten umgewandelt, +${fmt(st.gained)} Diamanten`); }).catch((e) => toast(e.message));
+  }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); }
   else if (t.dataset.cbet) { cbet = Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; }
   else if (t.id === 'spinBtn') doSpin();
@@ -1751,6 +1778,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.cf) { cfilter = t.dataset.cf; renderCards(); }
   else if (t.id === 'stopWatch') socket.emit('unwatch');
   else if (t.id === 'closeCard') { $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); }
+  else if (t.id === 'openNext') openPack(pid_last);
   else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
