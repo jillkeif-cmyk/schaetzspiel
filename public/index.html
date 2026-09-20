@@ -462,6 +462,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .hit.flip .who{left:auto;right:16px;flex-direction:row-reverse}
 .hit .ring{position:absolute;left:0;top:0;width:14px;height:14px;margin:-7px;border-radius:50%;border:3px solid var(--c);animation:hitring .6s ease-out both;animation-delay:var(--d)}
 .hit.best .who{background:linear-gradient(180deg,#FFE88A,#E8A91C);color:var(--ink);box-shadow:0 0 0 2px #fff,0 0 16px rgba(255,210,63,.7)}
+.hit .who.mine2{box-shadow:0 0 0 2px #fff,0 0 14px rgba(255,255,255,.45)}
+.hit .who b:empty{display:none}
+.hit .who.mine2 b{color:#fff}
+.hit.best .who.mine2 b{color:var(--ink)}
 @keyframes throw{0%{transform:translate(-90px,-150px) rotate(-38deg) scale(1.7);opacity:0}55%{opacity:1}72%{transform:rotate(7deg) scale(1)}86%{transform:rotate(-4deg)}100%{transform:none;opacity:1}}
 @keyframes hitring{from{transform:scale(.4);opacity:.95}to{transform:scale(7);opacity:0}}
 .board .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
@@ -810,7 +814,7 @@ function buildReveal() {
         return `<div class="hit ${r.closest ? 'best' : ''} ${k % 2 ? 'flip' : ''}" style="--x:${s2.x}%;--y:${s2.y}%;--c:${c};--d:${d}">
           <span class="ring"></span>
           <img class="dart" src="/emblems/dart${(S.players.findIndex((p2) => p2.id === r.id) % 8) + 1}.webp?v=${AVER}" alt="">
-          <span class="who ${r.closest || r.id === S.you ? '' : 'mini2'}">${avatar(P2[r.id] || { name: '?' }, 18, false)}${r.closest || r.id === S.you ? `<b>${esc(P2[r.id]?.name || '?')}</b> ` : ''}${fmt(r.value, R.unit)}</span></div>`; }).join('')}
+          <span class="who ${r.id === S.you ? 'mine2' : ''} ${r.closest || r.id === S.you ? '' : 'mini2'}">${avatar(P2[r.id] || { name: '?' }, 18, false)}<b>${r.id === S.you ? 'DU' : r.closest ? esc(P2[r.id]?.name || '?') : ''}</b> ${fmt(r.value, R.unit)}</span></div>`; }).join('')}
     </div>
     ${winner ? `<div class="winbox" style="animation-delay:${(0.35 + worst.length * 0.45).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
       <div class="in">${avatar(winner, 38)}<b>${esc(winner.name)}</b><span class="pts">+${best.points}</span></div>
