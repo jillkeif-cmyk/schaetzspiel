@@ -885,7 +885,7 @@ function renderCards() {
     box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.cards} Karten · Chancen ansehen ›</p></span></button>`).join('')
-      + `<p class="sub">Diamanten gibt es für jedes Match: rund 150 bis 200 für einen Sieg, etwa 30 bis 80 für eine Niederlage. Zwei Siege reichen für einen Standard-Booster.</p>`;
+      + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
