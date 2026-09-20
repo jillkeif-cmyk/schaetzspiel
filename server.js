@@ -450,7 +450,8 @@ app.post('/api/frame', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const id = String(req.body.frame || '');
-    if (!frames.canUse(u, id, isMod(u))) return res.status(403).json({ error: 'Diesen Rahmen hast du noch nicht.' });
+    const uf = { ...u, ...(await cardStats(u.id)) };
+    if (!frames.canUse(uf, id, isMod(u))) return res.status(403).json({ error: 'Diesen Rahmen hast du noch nicht.' });
     await store.save(u.id, { frame: id });
     res.json({ frame: id });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -461,7 +462,8 @@ app.post('/api/card', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const emblem = String(req.body.emblem || ''), title = String(req.body.title || '');
-    if (!cards.canUse(u, emblem, title)) return res.status(403).json({ error: 'Das hast du noch nicht freigeschaltet.' });
+    const uc = { ...u, ...(await cardStats(u.id)) };
+    if (!cards.canUse(uc, emblem, title)) return res.status(403).json({ error: 'Das hast du noch nicht freigeschaltet.' });
     await store.save(u.id, { emblem, title });
     res.json({ emblem, title });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
