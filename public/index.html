@@ -534,6 +534,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   .answer .num{font-size:44px}
   .winbox{max-width:320px;margin-top:6px}
 }
+
+#pushbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);background:linear-gradient(180deg,#19535D,#113E46);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35)}
+#pushbar .grow{font-size:14px;line-height:1.3}
+#pushbar b{display:block;font-size:15px}
 </style>
 </head>
 <body>
@@ -700,6 +704,56 @@ async function api(path, body) {
 }
 function logout() { token = null; try { localStorage.removeItem('sz_token'); } catch (e) {} if (socket) socket.disconnect(); socket = null; S = null; home = null; page = 'home'; viewKey = ''; render(); }
 async function loadFriends() { try { friends = (await api('/api/friends')).friends; if (!S) update(); } catch (e) {} }
+// ---------- Benachrichtigungen ----------
+let swReg = null, pushState = 'unknown';
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+async function pushInit() {
+  if (!pushOk()) { pushState = 'nosupport'; return; }
+  try {
+    swReg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await swReg.pushManager.getSubscription();
+    pushState = sub ? 'on' : Notification.permission === 'denied' ? 'denied' : 'off';
+    if (sub) api('/api/push/subscribe', { sub: sub.toJSON() }).catch(() => {});
+  } catch (e) { pushState = 'nosupport'; }
+  pushUI();
+}
+const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const r = (s + p).replace(/-/g, '+').replace(/_/g, '/'); const raw = atob(r); return Uint8Array.from([...raw].map((c) => c.charCodeAt(0))); };
+async function pushOn() {
+  try {
+    if (!swReg) await pushInit();
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { pushState = 'denied'; pushUI(); return toast('Benachrichtigungen wurden abgelehnt.'); }
+    const { key } = await api('/api/push/key');
+    if (!key) return toast('Der Server hat gerade keinen Schlüssel.');
+    const sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+    await api('/api/push/subscribe', { sub: sub.toJSON() });
+    pushState = 'on'; pushUI(); toast('Benachrichtigungen sind an.');
+  } catch (e) { toast('Hat nicht geklappt: ' + (e.message || 'unbekannt')); }
+}
+async function pushOff() {
+  try {
+    const sub = swReg && (await swReg.pushManager.getSubscription());
+    if (sub) { await api('/api/push/unsubscribe', { endpoint: sub.endpoint }); await sub.unsubscribe(); }
+    pushState = 'off'; pushUI(); toast('Benachrichtigungen sind aus.');
+  } catch (e) { toast(e.message); }
+}
+function pushUI() {
+  const el = $('#pushbar'); if (!el) return;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (pushState === 'on') { el.hidden = true; return; }
+  if (!pushOk() || (ios && !standalone())) {
+    el.hidden = !ios;
+    if (ios) el.innerHTML = `<span style="font-size:24px">🔔</span><span class="grow"><b>Einladungen aufs Handy</b>Tippe in Safari auf Teilen, dann „Zum Home-Bildschirm“. Danach kannst du Benachrichtigungen erlauben.</span>`;
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = pushState === 'denied'
+    ? `<span style="font-size:24px">🔕</span><span class="grow"><b>Benachrichtigungen blockiert</b>Erlaube sie in den Einstellungen deines Geräts für diese App.</span>`
+    : `<span style="font-size:24px">🔔</span><span class="grow"><b>Einladungen aufs Handy</b>Lass dich benachrichtigen, wenn dich jemand herausfordert.</span><button class="btn small" id="pushOn">Aktivieren</button>`;
+}
+
 async function loadHome() { try { home = await api('/api/home'); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
@@ -718,7 +772,7 @@ function connect() {
   socket.on('needpw', (d) => askPassword(d.code, d.wrong));
   socket.on('challenged', (d) => {
     sfx('exact');
-    $('#modal').innerHTML = `<div class="panel" style="gap:14px;text-align:center"><h2>⚔ Herausforderung</h2><p>${esc(d.from)} fordert dich heraus.</p><p class="sub">Match ${esc(d.code)}</p><button class="btn" id="fightYes">Annehmen</button><button class="btn ghost" id="pwCancel">Später</button></div>`;
+    $('#modal').innerHTML = `<div class="panel" style="gap:14px;text-align:center"><h2>⚔ Herausforderung</h2><p>${esc(d.from)} fordert dich heraus.</p><p class="sub">Match ${esc(d.code)}</p><button class="btn" id="fightYes">Annehmen</button><button class="btn ghost" id="pwCancel">Ablehnen</button></div>`;
     $('#modal').classList.add('on');
     $('#fightYes').onclick = () => { socket.emit('join', { code: d.code }); closeModal(); };
     $('#pwCancel').onclick = closeModal;
@@ -751,6 +805,7 @@ function build() {
     <div id="profHead"></div>
     <div><input type="file" id="avaFile" accept="image/*" hidden><button class="btn ghost" id="avaBtn">Profilbild ändern</button></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
+    <div class="panel" id="notifBox" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
     <div class="panel" id="tagBox" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="modBox"></div>
@@ -762,6 +817,7 @@ function build() {
 
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
+    <div id="pushbar" hidden></div>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -1020,10 +1076,12 @@ function update() {
       $('#tagIn').oninput = prev; prev();
       $('#tagForm').onsubmit = (e) => { e.preventDefault(); api('/api/tag', { tag: $('#tagIn').value, color: tagColor }).then(async () => { toast('Clan-Tag gespeichert'); await loadHome(); }).catch((er) => toast(er.message)); };
     }
+    if ($('#notifBox')) $('#notifBox').innerHTML = `<div class="row"><b class="grow">Benachrichtigungen</b><button class="btn small" id="${pushState === 'on' ? 'pushOff' : 'pushOn'}" style="min-width:104px">${pushState === 'on' ? 'Ausschalten' : 'Einschalten'}</button></div><p class="sub">${pushState === 'on' ? 'Dieses Gerät bekommt Einladungen und Neuigkeiten.' : 'Auf dem iPhone nur möglich, wenn die App auf dem Homescreen liegt.'}</p>`;
     if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
       $('#modBox').innerHTML = `<div class="panel mod" id="modPanel" style="display:flex;flex-direction:column;gap:12px"><b>Mod-Menü</b>
         <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
-        <div id="modList" class="plist"></div></div>`;
+        <div id="modList" class="plist"></div>
+        <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div>`;
       modLoad('');
     }
     if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>Admin: Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off"><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
@@ -1050,6 +1108,7 @@ function update() {
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
     $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
+    pushUI();
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
@@ -1142,7 +1201,7 @@ function bind() {
   if (form) form.onsubmit = async (e) => {
     e.preventDefault(); $('#authErr').textContent = '';
     try { const r = await api('/api/' + authTab, { name: $('#fName').value, password: $('#fPass').value, code: $('#fCode') ? $('#fCode').value : undefined });
-      token = r.token; try { localStorage.setItem('sz_token', token); } catch (e2) {} viewKey = ''; render(); loadHome(); connect();
+      token = r.token; try { localStorage.setItem('sz_token', token); } catch (e2) {} viewKey = ''; render(); loadHome(); connect(); pushInit();
     } catch (err) { $('#authErr').textContent = err.message; }
   };
   const vs = $('#volume'); if (vs) { vs.oninput = () => { vol = vs.value / 100; setVol(); try { localStorage.setItem('sz_vol', String(vol)); } catch (e) {} }; vs.onchange = () => sfx('reveal'); }
@@ -1155,6 +1214,11 @@ function bind() {
     gf.onsubmit = (e) => { e.preventDefault(); const v = parseNum(inp.value); if (Number.isFinite(v)) { socket.emit('answer', v); sfx('sent'); } };
   }
 }
+document.addEventListener('submit', (e) => {
+  if (e.target.id !== 'castForm') return; e.preventDefault();
+  api('/api/admin/broadcast', { title: $('#castTitle').value || 'PUNKTLANDUNG', body: $('#castBody').value })
+    .then((r) => { toast('An ' + r.sent + ' Geräte geschickt'); $('#castBody').value = ''; }).catch((er) => toast(er.message));
+});
 document.addEventListener('submit', (e) => {
   if (e.target.id !== 'modSearch') return; e.preventDefault(); modLoad($('#modQ').value);
 });
@@ -1215,6 +1279,8 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.board) { boardMode = t.dataset.board; update(); }
   else if (t.dataset.fight) socket.emit('challenge', Number(t.dataset.fight));
   else if (t.id === 'invite') showInvite();
+  else if (t.id === 'pushOn') pushOn();
+  else if (t.id === 'pushOff') pushOff();
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
@@ -1261,7 +1327,7 @@ document.addEventListener('visibilitychange', async () => { if (document.visibil
 window.addEventListener('pageshow', () => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); });
 setTimeout(() => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); }, 0);
 render(); tick();
-if (token) { loadHome(); connect(); }
+if (token) { loadHome(); connect(); pushInit(); }
 </script>
 </body>
 </html>

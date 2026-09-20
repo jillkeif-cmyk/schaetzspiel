@@ -9,6 +9,7 @@ const ai = require('./lib/ai');
 const progress = require('./lib/progress');
 const cards = require('./lib/cards');
 const frames = require('./lib/frames');
+const push = require('./lib/push');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -57,6 +58,7 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '120kb' }));
 app.get('/healthz', (_, res) => res.send('ok'));
+app.get('/api/push/key', (_, res) => res.json({ key: push.publicKey() }));
 
 app.post('/api/register', async (req, res) => {
   try {
@@ -103,6 +105,36 @@ app.post('/api/prestige-icon', async (req, res) => {
     if (!Number.isFinite(n) || n < -1 || n > u.prestige) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
     await store.save(u.id, { pres_shown: n });
     res.json({ presShown: n === -1 ? 0 : n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Push: Gerät anmelden oder abmelden
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const sub = req.body.sub;
+    if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Ungültige Anmeldung.' });
+    await store.pushSave(u.id, sub);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (req.body.endpoint) await store.pushDrop(String(req.body.endpoint));
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Rundruf an alle Geräte, nur Admin und Co-Admins
+app.post('/api/admin/broadcast', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const title = String(req.body.title || 'PUNKTLANDUNG').slice(0, 60);
+    const body = String(req.body.body || '').slice(0, 160);
+    if (!body) return res.status(400).json({ error: 'Schreib eine Nachricht.' });
+    const n = await push.toAll({ title, body, tag: 'news', url: '/' });
+    res.json({ sent: n });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -304,6 +336,7 @@ io.use(async (socket, next) => {
 });
 const game = attachGame(io, store);
 
-store.init().then(() => {
+store.init().then(() => push.init(store)).then((k) => {
+  console.log('Push bereit, Schlüssel endet auf …' + k.slice(-6));
   server.listen(PORT, () => console.log(`Schätzspiel läuft auf Port ${PORT} | Speicher: ${store.kind} | KI-Fragen: ${ai.enabled() ? 'an' : 'aus'}`));
 }).catch((e) => { console.error('Datenbank nicht erreichbar:', e.message); process.exit(1); });

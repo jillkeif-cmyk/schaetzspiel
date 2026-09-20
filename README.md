@@ -25,6 +25,12 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Benachrichtigungen
+- Web-Push über eigenen Service Worker (`public/sw.js`), Schlüssel werden beim ersten Start erzeugt und in der Tabelle `settings` abgelegt
+- Auf dem iPhone nur, wenn die Seite auf dem Homescreen liegt (iOS 16.4+); Hinweis dazu steht auf der Startseite
+- Push bei Herausforderung, dazu Rundruf an alle über das Mod-Menü
+- Ein- und ausschalten im Profil unter „Benachrichtigungen“
+
 ## Aktion GRACE
 - Eigenes Fragenthema `GRACE` (Kategorie `GRACE` in `lib/questions.js`, dort eintragen)
 - Läuft bis zum Zeitpunkt in `lib/event.js` bzw. der Variable `GRACE_END`
