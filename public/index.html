@@ -621,7 +621,7 @@ async function uploadAvatar(file) {
 }
 
 // Kleine Synth-Sounds, kein Download nötig
-let tagColor = 'cyan', themeSel = null, boardMode = 'points', openFold = '';
+let tagColor = 'cyan', themeSel = null, boardMode = 'points', openFold = '', needCode = false;
 let actx = null, master = null, muted = false, vol = 0.7; try { muted = localStorage.getItem('sz_mute') === '1'; const v = parseFloat(localStorage.getItem('sz_vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
 function setVol() { if (master) master.gain.value = vol * 1.6; }
 function noise(dur, vol, cut) {
@@ -783,7 +783,7 @@ function connect() {
 
 // ---------- Ansichten ----------
 function render() {
-  const key = !token ? 'auth:' + authTab : !S ? page : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
+  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   if (key !== viewKey) { viewKey = key; app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind(); window.scrollTo(0, 0); }
   update();
 }
@@ -795,7 +795,7 @@ function build() {
     <form id="authForm" class="panel" style="display:flex;flex-direction:column;gap:14px">
       <div><label for="fName">Spielername</label><input class="field" id="fName" autocomplete="username" maxlength="16" required></div>
       <div><label for="fPass">Passwort</label><input class="field" id="fPass" type="password" autocomplete="${authTab === 'login' ? 'current-password' : 'new-password'}" required></div>
-      ${authTab === 'register' ? '<div><label for="fCode">Einladungscode</label><input class="field" id="fCode" autocapitalize="off" autocomplete="off" required></div>' : ''}
+      ${authTab === 'register' && needCode ? '<div><label for="fCode">Einladungscode</label><input class="field" id="fCode" autocapitalize="off" autocomplete="off" required></div>' : ''}
       <div class="err" id="authErr"></div>
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
@@ -1331,6 +1331,7 @@ document.addEventListener('visibilitychange', async () => { if (document.visibil
 // Beim Laden darf kein Feld den Fokus haben, sonst springt die Tastatur auf
 window.addEventListener('pageshow', () => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); });
 setTimeout(() => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); }, 0);
+fetch('/api/config').then((r) => r.json()).then((c) => { if (c.needCode !== needCode) { needCode = c.needCode; if (!token) { viewKey = ''; render(); } } }).catch(() => {});
 render(); tick();
 if (token) { loadHome(); connect(); pushInit(); }
 </script>

@@ -14,9 +14,10 @@ const push = require('./lib/push');
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
 const ADMIN_NAME = (process.env.ADMIN_NAME || '').trim().toLowerCase();
-const INVITE_CODE = (process.env.INVITE_CODE || 'schaetzen').trim().toLowerCase();
+// Leerer INVITE_CODE bedeutet: Registrierung ohne Code
+const INVITE_CODE = (process.env.INVITE_CODE || '').trim().toLowerCase();
 if (!process.env.SECRET) console.warn('SECRET fehlt: Logins gelten nur bis zum nächsten Neustart.');
-if (!process.env.INVITE_CODE) console.warn('INVITE_CODE fehlt: Standardcode "schaetzen" ist aktiv.');
+if (!INVITE_CODE) console.warn('INVITE_CODE ist leer: jeder kann sich ohne Code registrieren.');
 
 // --- Passwort & Token ---
 const hashPass = (pw, salt = crypto.randomBytes(16).toString('hex')) => salt + ':' + crypto.scryptSync(pw, salt, 32).toString('hex');
@@ -59,13 +60,14 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: '120kb' }));
 app.get('/healthz', (_, res) => res.send('ok'));
 app.get('/api/push/key', (_, res) => res.json({ key: push.publicKey() }));
+app.get('/api/config', (_, res) => res.json({ needCode: !!INVITE_CODE }));
 
 app.post('/api/register', async (req, res) => {
   try {
     if (limited(req.ip)) return res.status(429).json({ error: 'Zu viele Versuche. Warte ein paar Minuten.' });
     const name = String(req.body.name || '').trim().replace(/\s+/g, ' ');
     const pw = String(req.body.password || '');
-    if (String(req.body.code || '').trim().toLowerCase() !== INVITE_CODE) return res.status(403).json({ error: 'Der Einladungscode stimmt nicht.' });
+    if (INVITE_CODE && String(req.body.code || '').trim().toLowerCase() !== INVITE_CODE) return res.status(403).json({ error: 'Der Einladungscode stimmt nicht.' });
     if (!/^[\p{L}\p{N} _.-]{2,16}$/u.test(name)) return res.status(400).json({ error: 'Name: 2 bis 16 Zeichen, Buchstaben und Zahlen.' });
     if (pw.length < 6 || pw.length > 100) return res.status(400).json({ error: 'Passwort: mindestens 6 Zeichen.' });
     const u = await store.createUser(name, hashPass(pw));

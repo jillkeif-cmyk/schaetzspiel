@@ -10,7 +10,7 @@ Dann http://localhost:3000 öffnen.
 ## Umgebungsvariablen
 | Variable | Zweck |
 |---|---|
-| `INVITE_CODE` | Code, den neue Spieler bei der Registrierung brauchen (Standard: `schaetzen`) |
+| `INVITE_CODE` | Optionaler Code für die Registrierung. Leer oder nicht gesetzt: jeder kann sich ohne Code anmelden |
 | `MAX_MATCHES` | Wie viele Matches gleichzeitig laufen dürfen (Standard 2) |
 | `ADMIN_NAME` | Spielername, der im Profil Passwörter anderer Spieler neu setzen darf |
 | `SECRET` | Schlüssel für Login-Tokens. Fest setzen, sonst fliegen alle nach jedem Neustart raus |
