@@ -351,13 +351,16 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .cardgrid button.lock{opacity:.45}
 .cardgrid button.lock .pcemb{filter:grayscale(1) brightness(.5)}
 .tlist{display:flex;flex-direction:column;gap:8px}
-.tlist button{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}
+.tlist button{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}
+.tlist button .titleimg{width:100%;max-width:none}
+.tlist .why{display:flex;align-items:baseline;gap:8px;flex:none}
+.tlist .why b{font-size:15px!important;display:inline!important}
 .tlist button.on{box-shadow:inset 0 0 0 2.5px var(--tape)}
 .tlist button.lock{opacity:.5}
 .tlist button.lock .title{filter:grayscale(1) brightness(.65)}
-.tlist .why{flex:1;min-width:0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere;line-height:1.25}
-.tlist button .titleimg{max-width:190px}
-@media (max-width:420px){.tlist button .titleimg{max-width:150px}}
+.tlist .why{font-size:12.5px;color:var(--muted);line-height:1.3}
+.tlist button .titleimg{max-width:none}
+
 .secret{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 8px,transparent 8px 16px),var(--bg-deep)!important}
 #openProfile{padding:0;background:none;box-shadow:none;width:100%;display:block;text-align:left}
 #openProfile .pcard{width:100%}
@@ -436,6 +439,16 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tabs.small button{padding:9px;font-size:14px}
 .rank.pick{cursor:pointer}
 .rank.pick.sel{box-shadow:inset 0 0 0 2.5px var(--tape);color:var(--paper)}
+
+.fold{border-radius:var(--r);background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);overflow:hidden}
+.fold+.fold{margin-top:8px}
+.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 15px;font:800 17px/1 Archivo;font-stretch:85%}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"▾";color:var(--muted);font-size:15px;transition:transform .2s}
+.fold[open]>summary::after{transform:rotate(180deg)}
+.fold[open]>summary{background:rgba(255,255,255,.05)}
+.fold>.cardgrid,.fold>.tlist{padding:12px 12px 14px}
+.fold .sub{font-size:13px;font-weight:600}
 </style>
 </head>
 <body>
@@ -516,7 +529,7 @@ async function uploadAvatar(file) {
 }
 
 // Kleine Synth-Sounds, kein Download nötig
-let tagColor = 'cyan', themeSel = null, boardMode = 'points';
+let tagColor = 'cyan', themeSel = null, boardMode = 'points', openFold = '';
 let actx = null, master = null, muted = false, vol = 0.7; try { muted = localStorage.getItem('sz_mute') === '1'; const v = parseFloat(localStorage.getItem('sz_vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
 function setVol() { if (master) master.gain.value = vol * 1.6; }
 function tone(f, t0, dur, type = 'triangle', vol = 0.12) {
@@ -839,11 +852,13 @@ function update() {
     if ($('#cardBox') && home && home.cards) {
       const C = home.cards, me = home.me;
       const lockNote = (i) => i.secret ? 'GEHEIM' : i.need;
+      const curEmb = C.emblems.find((e) => e.id === me.emblem);
+      const curTit = C.titles.find((t) => t.id === me.title);
       $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
-        <label>Embleme (${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length})</label>
-        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div>
-        <label style="margin-top:6px">Titel (${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length})</label>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="display:block;color:var(--paper);font-size:14.5px">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div>
+        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span><span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span><span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
     }
@@ -872,7 +887,7 @@ function update() {
       <button class="btn" id="doPrestige" ${st.can ? '' : 'disabled'}>Prestige aktivieren</button><p class="sub">Level und XP starten wieder bei 1. Statistik, Herausforderungen und Rahmen bleiben.</p>`
       : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
     const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
-    $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}Rang ${i + 1}</div>`).join('')
+    $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
     $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/c_${c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`).join('');
@@ -992,6 +1007,12 @@ document.addEventListener('submit', (e) => {
   api('/api/friends/add', { name: inp.value }).then((r) => { toast(r.status === 'ok' ? r.name + ' ist jetzt dein Freund' : 'Anfrage an ' + r.name + ' gesendet'); inp.value = ''; loadFriends(); }).catch((er) => toast(er.message));
 });
 document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') return; e.preventDefault(); api('/api/admin/reset', { name: $('#adName').value, password: $('#adPass').value }).then((r) => { toast('Neues Passwort für ' + r.name + ' gesetzt'); e.target.reset(); }).catch((er) => toast(er.message)); });
+document.addEventListener('toggle', (e) => {
+  const d = e.target.closest && e.target.closest('.fold');
+  if (!d) return;
+  if (d.open) { openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; }); setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60); }
+  else if (openFold === d.dataset.fold) openFold = '';
+}, true);
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message)); return; }
