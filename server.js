@@ -93,6 +93,7 @@ app.get('/api/home', async (req, res) => {
     res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
+      seen: String(u.seen_items || '').split(',').filter(Boolean),
       cards: cards.view(u),
       frames: frames.view(u, isMod(u)),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
@@ -137,6 +138,18 @@ app.post('/api/admin/broadcast', async (req, res) => {
     if (!body) return res.status(400).json({ error: 'Schreib eine Nachricht.' });
     const n = await push.toAll({ title, body, tag: 'news', url: '/' });
     res.json({ sent: n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Freischaltungen als gesehen markieren
+app.post('/api/seen', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const add = (Array.isArray(req.body.ids) ? req.body.ids : []).map(String).slice(0, 200);
+    const list = new Set(String(u.seen_items || '').split(',').filter(Boolean));
+    add.forEach((x) => list.add(x));
+    await store.save(u.id, { seen_items: [...list].join(',') });
+    res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

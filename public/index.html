@@ -242,7 +242,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .emo-name{position:fixed;z-index:9;pointer-events:none;font:800 13px/1 Archivo;padding:4px 8px;border-radius:8px;background:var(--c,#FFD23F);color:var(--ink);animation:boom 1.9s cubic-bezier(.2,.9,.3,1) forwards}
 @keyframes boom{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}12%{transform:translate(-50%,-50%) scale(1.7) rotate(-8deg);opacity:1}24%{transform:translate(-50%,-50%) scale(1.15) rotate(5deg)}70%{opacity:1}100%{transform:translate(-50%,-260%) scale(1);opacity:0}}
 @keyframes ring{to{width:170px;height:170px;margin:-85px;opacity:0;border-width:1px}}
-.v-reveal,.v-finished,.v-question{padding-bottom:92px}
+.v-reveal,.v-question{padding-bottom:92px}
+.v-finished{padding-bottom:150px}
+#emotes{transition:opacity .2s}
+#emotes.dim{opacity:.32}
 
 /* ---------- Desktop: Vollbild-Layout ---------- */
 @media (min-width:1000px){
@@ -538,6 +541,24 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #pushbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--r);background:linear-gradient(180deg,#19535D,#113E46);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35)}
 #pushbar .grow{font-size:14px;line-height:1.3}
 #pushbar b{display:block;font-size:15px}
+
+.badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#4FC46A;color:#08231A;font:800 13px/1 Archivo;box-shadow:0 0 10px rgba(79,196,106,.6)}
+.cardgrid button.fresh,.framegrid button.fresh,.tlist button.fresh{box-shadow:inset 0 0 0 2px #4FC46A}
+.cardgrid button.fresh::after,.framegrid button.fresh::after{content:"";position:absolute;right:6px;top:6px;width:9px;height:9px;border-radius:50%;background:#4FC46A;box-shadow:0 0 8px #4FC46A}
+.cardgrid button,.framegrid button{position:relative}
+.tlist button.fresh .why b::after{content:" NEU";color:#4FC46A;font-size:11px}
+.chalhint{display:flex;flex-direction:column;gap:8px}
+.chalhint .ch{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.07)}
+.chalhint img{width:34px;height:34px;flex:none;object-fit:contain}
+.chalhint .t{flex:1;min-width:0;font-size:13.5px}
+.chalhint .t b{display:block;font-size:14.5px}
+.chalhint .bar{height:6px;border-radius:99px;background:rgba(0,0,0,.45);overflow:hidden;margin-top:4px}
+.chalhint .bar i{display:block;height:100%;background:linear-gradient(90deg,#E8A91C,#FFE88A)}
+
+.unlocks{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding:12px;border-radius:12px;background:rgba(79,196,106,.12);box-shadow:inset 0 0 0 1.5px rgba(79,196,106,.5)}
+.unlocks b{color:#8BE28B;font-size:14px}
+.uitem{font-size:14.5px;font-weight:700}
+.uitem small{color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -622,6 +643,9 @@ async function uploadAvatar(file) {
 
 // Kleine Synth-Sounds, kein Download nötig
 let tagColor = 'cyan', themeSel = null, boardMode = 'points', openFold = '', needCode = false;
+const seenSet = () => new Set((home && home.seen) || []);
+const freshOf = (list, kind) => { const s2 = seenSet(); return list.filter((x) => x.unlocked && !s2.has(kind + ':' + x.id)); };
+function markSeen(ids) { if (!ids.length) return; api('/api/seen', { ids }).then(() => { if (home) home.seen = [...new Set([...(home.seen || []), ...ids])]; }).catch(() => {}); }
 let actx = null, master = null, muted = false, vol = 0.7; try { muted = localStorage.getItem('sz_mute') === '1'; const v = parseFloat(localStorage.getItem('sz_vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
 function setVol() { if (master) master.gain.value = vol * 1.6; }
 function noise(dur, vol, cut) {
@@ -832,6 +856,7 @@ function build() {
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
+    <div id="nextUp"></div>
     <div><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
@@ -869,7 +894,7 @@ function build() {
     <div id="players" class="plist"></div>
     <div id="cdAct"></div>
     <div id="chatBox"></div>
-    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung fünffach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
+    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung dreifach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
 
   if (S.phase === 'question') { const q = S.question; return `
     <div id="chips" class="chips mobonly"></div><div class="col">
@@ -936,7 +961,7 @@ function buildReveal() {
       return `<div class="step ${r.id === S.you ? 'me' : ''} ${i2 === 0 && r.value !== null ? 'first' : ''}" style="--c:${p2.color || 'var(--line)'};--d:${d};--in:${Math.min(i2, 4) * 8}px">
         <span class="rk">${r.value === null ? '–' : (medal[i2] || i2 + 1)}</span>
         ${avatar(p2, 40)}
-        <span class="nm"><span class="ln1">${withTag(p2)}${r.id === S.you ? '<small>(du)</small>' : ''}${r.exact ? '<span class="tag hit">×5</span>' : r.close ? '<span class="tag">×2</span>' : ''}</span>
+        <span class="nm"><span class="ln1">${withTag(p2)}${r.id === S.you ? '<small>(du)</small>' : ''}${r.exact ? '<span class="tag hit">×3</span>' : r.close ? '<span class="tag">×2</span>' : ''}</span>
           <span class="bar"><i style="width:${Math.max(0, acc(r))}%"></i></span>
           <span class="diff">${diffText(r)}</span></span>
         <span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span>
@@ -952,7 +977,7 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${embHtml(p, 30)}${avatar(p, 40)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 40)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb" style="--s:${p.title ? 44 : 30}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
@@ -1047,6 +1072,10 @@ function update() {
   const tray = $('#emotes'), showTray = !!(token && S && (S.phase === 'reveal' || S.phase === 'finished' || (S.phase === 'question' && S.myAnswer !== null)));
   if (showTray && !tray.innerHTML) tray.innerHTML = EMOJIS.map((e, i) => `<button data-emote="${i}" style="--i:${i}" aria-label="Emote ${e}">${e}</button>`).join('');
   tray.classList.toggle('on', showTray);
+  if (showTray && S.phase === 'finished') {
+    const near = window.innerHeight + window.scrollY > document.body.scrollHeight - 140;
+    tray.classList.toggle('dim', near);
+  } else tray.classList.remove('dim');
   if (!token) return;
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
@@ -1056,12 +1085,12 @@ function update() {
       const curEmb = C.emblems.find((e) => e.id === me.emblem);
       const curTit = C.titles.find((t) => t.id === me.title);
       $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
-        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span><span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
-        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span><span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
-        <details class="fold" ${openFold === 'frm' ? 'open' : ''} data-fold="frm"><summary><span class="grow">Rahmen</span><span class="sub">${(home.frames || []).filter((f) => f.unlocked).length} von ${(home.frames || []).length}</span>${me.frame ? `<span style="width:30px;height:30px;display:inline-block">${avatar({ ...me, av: 0, name: ' ' }, 26, false)}</span>` : ''}</summary>
-        <div class="framegrid">${(home.frames || []).map((f) => `<button data-frame="${f.id}" class="${me.frame === f.id ? 'on' : ''} ${f.unlocked ? '' : 'lock'}" title="${esc(f.unlocked ? f.name : f.need)}">${avatar({ id: me.id, name: me.name, av: me.av, color: '#4FD1C5', frame: f.id, frameAnim: f.unlocked ? f.anim : '' }, 54, false)}${esc(f.unlocked ? f.name : f.secret ? 'GEHEIM' : f.dev ? 'DEV' : '🔒 ' + f.name)}</button>`).join('')}
+        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span>${freshOf(C.emblems, 'e').length ? `<span class="badge">${freshOf(C.emblems, 'e').length}</span>` : ''}<span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.unlocked && !seenSet().has('e:' + e.id) ? 'fresh' : ''} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span>${freshOf(C.titles, 't').length ? `<span class="badge">${freshOf(C.titles, 't').length}</span>` : ''}<span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.unlocked && !seenSet().has('t:' + t.id) ? 'fresh' : ''} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'frm' ? 'open' : ''} data-fold="frm"><summary><span class="grow">Rahmen</span>${freshOf(home.frames || [], 'f').length ? `<span class="badge">${freshOf(home.frames || [], 'f').length}</span>` : ''}<span class="sub">${(home.frames || []).filter((f) => f.unlocked).length} von ${(home.frames || []).length}</span>${me.frame ? `<span style="width:30px;height:30px;display:inline-block">${avatar({ ...me, av: 0, name: ' ' }, 26, false)}</span>` : ''}</summary>
+        <div class="framegrid">${(home.frames || []).map((f) => `<button data-frame="${f.id}" class="${me.frame === f.id ? 'on' : ''} ${f.unlocked ? '' : 'lock'} ${f.unlocked && !seenSet().has('f:' + f.id) ? 'fresh' : ''}" title="${esc(f.unlocked ? f.name : f.need)}">${avatar({ id: me.id, name: me.name, av: me.av, color: '#4FD1C5', frame: f.id, frameAnim: f.unlocked ? f.anim : '' }, 54, false)}${esc(f.unlocked ? f.name : f.secret ? 'GEHEIM' : f.dev ? 'DEV' : '🔒 ' + f.name)}</button>`).join('')}
         <button class="chipbtn" data-frame="" style="grid-column:1/-1">Rahmen abwählen</button></div></details>
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
@@ -1112,6 +1141,11 @@ function update() {
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
+    const pr2 = home && home.progress;
+    if ($('#nextUp') && pr2 && pr2.challenges) {
+      const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 3);
+      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/c_${esc(c.key)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+    }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
     const blist = boardMode === 'points' ? (home && home.points) || [] : (home && home.leaderboard) || [];
@@ -1145,7 +1179,7 @@ function update() {
         : `<label>Themen (${graceOn ? '1 von 1' : S.themes.length + ' von ' + S.maxThemes})</label><div class="themes">${S.themeList.map((t) => `<button data-theme="${t.key}" class="${S.themes.includes(t.key) ? 'on' : ''} ${t.event ? 'evt' : ''}">${esc(t.name)}${t.event ? ' ✨' : ''}</button>`).join('')}</div>${graceOn ? '<p class="sub">GRACE läuft allein: andere Themen und neue KI-Fragen sind in dieser Runde aus.</p>' : ''}`;
       themeSel = [...S.themes];
     }
-    const gr = S.themes.includes('grace') && !S.ranked;
+    const gr = S.themes.includes('grace');
     document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
     $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Das Match startet erst, wenn die frischen Fragen fertig sind, höchstens eine Minute länger.' : 'Sind die neuen Fragen nicht rechtzeitig fertig, wird mit dem festen Pool gespielt.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
@@ -1193,7 +1227,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -1240,7 +1274,19 @@ document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') re
 document.addEventListener('toggle', (e) => {
   const d = e.target.closest && e.target.closest('.fold');
   if (!d) return;
-  if (d.open) { openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; }); setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60); }
+  if (d.open) {
+    openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; });
+    const C2 = home && home.cards;
+    if (C2) {
+      const ids = d.dataset.fold === 'emb' ? freshOf(C2.emblems, 'e').map((x) => 'e:' + x.id)
+        : d.dataset.fold === 'tit' ? freshOf(C2.titles, 't').map((x) => 't:' + x.id)
+        : freshOf(home.frames || [], 'f').map((x) => 'f:' + x.id);
+      markSeen(ids);
+      d.querySelectorAll('.fresh').forEach((x) => x.classList.remove('fresh'));
+      const b = d.querySelector('summary .badge'); if (b) b.remove();
+    }
+    setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
+  }
   else if (openFold === d.dataset.fold) openFold = '';
 }, true);
 document.addEventListener('click', (e) => {
