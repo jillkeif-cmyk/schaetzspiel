@@ -645,6 +645,11 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   box-shadow:inset 0 0 0 10px #C89A3C,inset 0 0 0 13px #1a2426,0 14px 34px rgba(0,0,0,.55)}
 .wheel::after{content:"";position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2A6B72,#0B2F35 70%);box-shadow:inset 0 0 0 4px #C89A3C,0 0 24px rgba(0,0,0,.6)}
 .pointer{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid var(--tape);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));z-index:2}
+.balltrack{position:absolute;inset:0;transition:transform 4.6s cubic-bezier(.1,.55,.15,1);z-index:4;pointer-events:none}
+.ball{position:absolute;left:50%;top:6%;width:14px;height:14px;margin-left:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#cfd8dc 60%,#8fa0a3);box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 10px rgba(255,255,255,.5);
+  transition:top 4.6s cubic-bezier(.2,.6,.2,1)}
+.balltrack.settled .ball{top:26%}
 .ballnum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;display:grid;place-items:center;width:78px;height:78px;border-radius:50%;font:900 30px/1 Archivo;font-stretch:70%;color:#fff;background:rgba(6,22,26,.9);box-shadow:inset 0 0 0 3px rgba(255,255,255,.25)}
 .ballnum.rot{background:#C0342F}.ballnum.schwarz{background:#141B1C}.ballnum.gruen{background:#1D7A4A}
 .betgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
@@ -900,6 +905,7 @@ function renderCasino() {
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
         <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}</div>
+        <div class="balltrack" id="balltrack"><span class="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="betgrid">${RBETS.filter((b) => b[1]).map(([k, n, c]) => `<button data-pick="${k}" class="${c} ${cpick === k ? 'on' : ''}">${n}</button>`).join('')}
         <button data-pick="zahl" class="${cpick === 'zahl' ? 'on' : ''}">Zahl ×36</button></div>
@@ -937,9 +943,18 @@ async function doSpin() {
   spinning = true;
   try {
     const d = await api('/api/casino/roulette', { amount, kind: cpick, number });
-    const wheel = $('#wheel'), ball = $('#ballnum');
+    const wheel = $('#wheel'), ball = $('#ballnum'), track = $('#balltrack');
     const deg = 360 * 6 + (360 - (d.index * (360 / 37)));
     wheel.style.transform = `rotate(${deg}deg)`;
+    // Kugel läuft gegenläufig und fällt am Ende ins Fach der gezogenen Zahl
+    if (track) {
+      track.classList.remove('settled');
+      track.style.transition = 'none'; track.style.transform = 'rotate(0deg)';
+      void track.offsetWidth;
+      track.style.transition = '';
+      track.style.transform = `rotate(${-(360 * 9) + deg}deg)`;
+      setTimeout(() => track.classList.add('settled'), 2600);
+    }
     ball.textContent = '…'; ball.className = 'ballnum';
     sfx('dart');
     setTimeout(() => {
@@ -1031,7 +1046,13 @@ function renderCards() {
       <div class="row" style="margin-bottom:10px"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
       <div class="row" style="gap:8px;margin-bottom:10px"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
-      <div id="cgame"></div>`;
+      <div id="cgame"></div>
+      <div id="cChals" style="margin-top:16px"></div>`;
+    const cc = $('#cChals'), prc = home && home.progress;
+    if (cc && prc) {
+      const list = prc.challenges.filter((c) => c.key.startsWith('casino_'));
+      cc.innerHTML = `<h2 style="margin-bottom:8px">Casino-Herausforderungen</h2><div class="chalhint">${list.map((c) => `<div class="ch"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>`;
+    }
     renderCasino();
   } else {
     if (!trades) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
@@ -1563,7 +1584,8 @@ function update() {
     const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
     $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
-    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/c_${c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+    const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34' };
+    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`).join('');
     return;
   }
@@ -1587,10 +1609,11 @@ function update() {
       ct.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Casino-Rangliste</h2>
         <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
     }
+    const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34' };
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 3);
-      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/c_${esc(c.key)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
     }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
