@@ -88,6 +88,12 @@ Dann http://localhost:3000 öffnen.
 - Zeit pro Schätzfrage 8, 20, 30 oder 45 s; der Schnellmodus setzt 8 s
 - „Auf frische Fragen warten“ hält den Start bis zu 2 Minuten an, der feste Pool sichert immer ab
 
+## Glücksspiel
+- Im Kartenbereich unter „Gambling“: Roulette und Blackjack, Einsatz in Diamanten (50 bis 20.000)
+- Roulette: einfache Chancen zahlen doppelt, Drittel dreifach, eine einzelne Zahl 36-fach
+- Blackjack: Blackjack zahlt 2,5-fach, Sieg doppelt, Unentschieden gibt den Einsatz zurück
+- Alle Ziehungen und Karten entscheidet der Server, der Client zeigt nur an
+
 ## Wetten
 - In der Pre-Lobby kann jeder Diamanten auf den eigenen Sieg setzen (mindestens 50)
 - Der Einsatz wird sofort gesperrt, bei Rücknahme oder Verlassen der Lobby gibt es ihn zurück
