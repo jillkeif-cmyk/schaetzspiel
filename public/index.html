@@ -454,26 +454,6 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .fold>.cardgrid,.fold>.tlist{padding:12px 12px 14px}
 .fold .sub{font-size:13px;font-weight:600}
 
-/* Auflösung: Zielscheibe mit einschlagenden Darts */
-.board{position:relative;width:min(88vw,340px);aspect-ratio:1;margin:6px auto 0}
-.board>img.tgt{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
-.hit{position:absolute;left:var(--x);top:var(--y);width:0;height:0}
-.hit .dart{position:absolute;left:-14px;bottom:-4px;width:64px;height:64px;transform-origin:8% 92%;animation:throw .5s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--d)}
-.hit .who{position:absolute;left:44px;bottom:30px;display:flex;align-items:center;gap:5px;padding:3px 8px 3px 3px;border-radius:99px;background:rgba(5,26,29,.92);box-shadow:0 0 0 1.5px var(--c);white-space:nowrap;font:800 12px/1 Archivo;animation:pop .3s both;animation-delay:calc(var(--d) + .22s)}
-.hit .who b{font-stretch:70%}
-.hit .who.mini2{padding:2px 6px 2px 2px;font-size:11px;opacity:.92}
-.hit .who.mini2 .ava{--s:16px!important}
-.hit.flip .who{left:auto;right:16px;flex-direction:row-reverse}
-.hit .ring{position:absolute;left:0;top:0;width:14px;height:14px;margin:-7px;border-radius:50%;border:3px solid var(--c);animation:hitring .6s ease-out both;animation-delay:var(--d)}
-.hit.best .who{background:linear-gradient(180deg,#FFE88A,#E8A91C);color:var(--ink);box-shadow:0 0 0 2px #fff,0 0 16px rgba(255,210,63,.7)}
-.hit .who.mine2{box-shadow:0 0 0 2px #fff,0 0 14px rgba(255,255,255,.45)}
-.hit .who b:empty{display:none}
-.hit .who.mine2 b{color:#fff}
-.hit.best .who.mine2 b{color:var(--ink)}
-@keyframes throw{0%{transform:translate(-90px,-150px) rotate(-38deg) scale(1.7);opacity:0}55%{opacity:1}72%{transform:rotate(7deg) scale(1)}86%{transform:rotate(-4deg)}100%{transform:none;opacity:1}}
-@keyframes hitring{from{transform:scale(.4);opacity:.95}to{transform:scale(7);opacity:0}}
-.board .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
-.board .center .num{font-size:30px;line-height:1;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.9)}
 .winbox{position:relative;margin:10px auto 6px;max-width:400px;animation:pop .5s both}
 .winbox img.frame{width:100%;display:block}
 .winbox .in{position:absolute;inset:18% 16% 20%;display:flex;align-items:center;justify-content:center;gap:10px}
@@ -486,6 +466,48 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .mcsum.bad{box-shadow:inset 0 0 0 2px var(--hit),0 0 22px rgba(255,90,78,.2)}
 .mcsum .big2{font:800 26px/1.1 Archivo;font-stretch:80%}
 .mcsum.good .big2{color:var(--ok)}.mcsum.bad .big2{color:#FFB3AC}
+
+.ava .frm{position:absolute;inset:-17%;width:134%;height:134%;object-fit:contain;pointer-events:none;border-radius:0;background:none}
+.ava.hasfrm{box-shadow:none!important}
+.frm.fire{animation:flick 2.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(255,140,40,.8))}
+.frm.spark{animation:sparkf 1.6s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(90,169,255,.85))}
+.frm.pulse{animation:pulsef 2.4s ease-in-out infinite}
+.frm.spin{animation:spin 14s linear infinite}
+.frm.lava{animation:lavaf 2.6s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px rgba(255,150,40,.8))}
+.frm.dev{animation:spin 8s linear infinite, devglow 1.6s ease-in-out infinite alternate}
+@keyframes sparkf{0%,100%{opacity:.85;filter:drop-shadow(0 0 4px rgba(90,169,255,.6))}45%{opacity:1;filter:drop-shadow(0 0 16px rgba(160,220,255,1))}}
+@keyframes pulsef{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.05);opacity:1}}
+@keyframes lavaf{from{filter:drop-shadow(0 0 5px rgba(255,120,20,.55))}to{filter:drop-shadow(0 0 18px rgba(255,190,60,.95))}}
+@keyframes devglow{from{filter:drop-shadow(0 0 6px rgba(90,169,255,.7))}to{filter:drop-shadow(0 0 18px rgba(255,150,40,.95))}}
+.framegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;padding:12px}
+.framegrid button{padding:8px 4px 6px;border-radius:12px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);line-height:1.15;text-align:center}
+.framegrid button.on{box-shadow:inset 0 0 0 2.5px var(--tape);color:var(--paper)}
+.framegrid button.lock{opacity:.45}
+.framegrid button.lock .ava .frm{filter:grayscale(1) brightness(.6)}
+
+/* Siegestreppe */
+.stairs{display:flex;flex-direction:column-reverse;gap:8px;margin-top:10px}
+.step{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;margin-left:var(--in);
+  background:linear-gradient(180deg,#0E3138,#081F23);border-left:5px solid var(--c);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 6px 14px rgba(0,0,0,.35);
+  animation:stepin .4s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--d)}
+.step.me{box-shadow:inset 0 0 0 2px var(--tape),0 6px 14px rgba(0,0,0,.35)}
+.step.first{background:linear-gradient(180deg,#1C4A2E,#0B2B22);border-left-color:var(--tape)}
+.step .rk{width:28px;text-align:center;font:800 19px/1 Archivo;font-stretch:70%;color:var(--muted)}
+.step.first .rk{font-size:22px}
+.step .nm{flex:1;min-width:0;font-weight:700;display:flex;flex-direction:column;gap:5px}
+.step .ln1{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step .ln1 small{color:var(--muted);font-weight:600}
+.step .ln1 .tag{flex:none}
+.step .bar{height:7px;border-radius:99px;background:rgba(0,0,0,.45);overflow:hidden}
+.step .bar i{display:block;height:100%;background:linear-gradient(90deg,#E8A91C,#FFE88A);border-radius:99px;animation:grow2 .6s ease-out both;animation-delay:calc(var(--d) + .1s);transform-origin:left}
+.step.first .bar i{background:linear-gradient(90deg,#4FC46A,#B9F5B9)}
+.step .diff{font-size:12.5px;color:var(--muted);font-weight:500}
+.step .val{font:800 18px/1 Archivo;font-stretch:66%;text-align:right}
+.step .pts{min-width:62px;text-align:right;font:800 19px/1 Archivo;font-stretch:70%;color:var(--ok)}
+.step .pts.zero{color:var(--muted)}
+@keyframes stepin{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes grow2{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 </style>
 </head>
 <body>
@@ -501,7 +523,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '8';
+const AVER = '9';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -516,7 +538,8 @@ const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23
 function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = (p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0;
-  return `<span class="ava t${t}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
+  const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
+  return `<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
 }
 const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
 function streakHtml(p) {
@@ -786,7 +809,8 @@ function build() {
 function buildReveal() {
   const q = S.question, R = S.reveal, P = Object.fromEntries(S.players.map((p) => [p.id, p]));
   const head = `<div id="chips" class="chips mobonly"></div><div class="col"><div class="cat"><span>${esc(q.cat)}</span><span>Frage ${S.qIndex} von ${S.qTotal}</span></div><div class="qtext" style="font-size:20px">${esc(q.text)}</div>`;
-  const foot = `<button class="link" id="report" style="align-self:center"></button><div class="deskonly" style="flex-direction:column;gap:10px;margin-top:8px"><h2>Punktestand</h2><div class="plist" id="sideboard"></div></div></div>`;
+  const foot = `<button class="link" id="report" style="align-self:center"></button><div class="deskonly" style="flex-direction:column;gap:10px;margin-top:8px"><h2>Punktestand</h2><div class="plist" id="sideboard2"></div></div></div>`;
+  const footOnly = () => `<button class="link" id="report" style="align-self:center;margin-top:10px"></button></div>`;
   const me = (id) => (id === S.you ? ' me' : '');
 
   if (q.type === 'mc') {
@@ -807,40 +831,31 @@ function buildReveal() {
   }
 
   const given = R.results.filter((r) => r.value !== null);
-  const vals = [...given.map((r) => r.value), R.answer];
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const log = lo > 0 && hi / lo > 30, f = (v) => (log ? Math.log10(v) : v);
   const U = R.unit === 'Jahr' ? '' : ' ' + R.unit;
   const diffText = (r) => r.value === null ? 'keine Schätzung' : r.exact ? 'genau richtig' : `${fmt(Math.abs(r.value - R.answer), R.unit)}${U} ${r.value > R.answer ? 'zu hoch' : 'zu niedrig'}`;
-  // Abstand zur Mitte: 0 = Bullseye, 1 = Rand
-  const span = Math.max(...given.map((r) => Math.abs(f(r.value) - f(R.answer))), 1e-9);
-  const worst = [...given].sort((a, b) => Math.abs(b.value - R.answer) - Math.abs(a.value - R.answer));
-  const spot = (r, k) => {
-    const rel = Math.min(1, Math.abs(f(r.value) - f(R.answer)) / span);
-    const rad = r.exact ? 0 : 6 + rel * 26;                       // Prozent vom Mittelpunkt
-    if (r.exact) return { x: '50.0', y: '50.0' };
-    const ang = (k * 137.5 + (r.value > R.answer ? 0 : 180)) * Math.PI / 180;
-    const cl = (v) => Math.max(18, Math.min(78, v)).toFixed(1);
-    return { x: cl(50 + rad * Math.cos(ang)), y: cl(50 + rad * Math.sin(ang)) };
-  };
-  const best = given.find((r) => r.closest);
-  const P2 = P;
-  const winner = best && P2[best.id];
+  // Treffergenauigkeit als Balken: 100 % = exakt
+  const worstDev = Math.max(...given.map((r) => Math.abs(r.value - R.answer)), 1e-9);
+  const acc = (r) => (r.value === null ? 0 : Math.round(100 * (1 - Math.abs(r.value - R.answer) / (worstDev * 1.15))));
+  const rows = [...R.results];
+  const medal = ['🥇', '🥈', '🥉'];
+  const steps = rows.length;
   return head + `
-    <div class="answer" style="--d:.15s"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
-    <div class="board">
-      <img class="tgt" src="/emblems/target.webp?v=${AVER}" alt="">
-      ${worst.map((r, k) => { const s2 = spot(r, k); const d = (0.35 + k * 0.45).toFixed(2) + 's'; const c = P2[r.id]?.color || '#fff';
-        return `<div class="hit ${r.closest ? 'best' : ''} ${k % 2 ? 'flip' : ''}" style="--x:${s2.x}%;--y:${s2.y}%;--c:${c};--d:${d}">
-          <span class="ring"></span>
-          <img class="dart" src="/emblems/dart${(S.players.findIndex((p2) => p2.id === r.id) % 8) + 1}.webp?v=${AVER}" alt="">
-          <span class="who ${r.id === S.you ? 'mine2' : ''} ${r.closest || r.id === S.you ? '' : 'mini2'}">${avatar(P2[r.id] || { name: '?' }, 18, false)}<b>${r.id === S.you ? 'DU' : r.closest ? esc(P2[r.id]?.name || '?') : ''}</b> ${fmt(r.value, R.unit)}</span></div>`; }).join('')}
-    </div>
-    ${winner ? `<div class="winbox" style="animation-delay:${(0.35 + worst.length * 0.45).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
-      <div class="in">${avatar(winner, 38)}<b>${esc(winner.name)}</b><span class="pts">+${best.points}</span></div>
-      ${best.exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
-    </div><div class="col side">
-    <div class="plist">${R.results.map((r, i2) => `<div class="res${r.id === S.you ? ' me' : ''}" data-pid="${r.id}" style="--c:${P2[r.id]?.color}"><span class="pos">${r.value === null ? '–' : i2 + 1}</span>${avatar(P2[r.id] || { name: '?' }, 34, false)}<span class="nm">${P2[r.id] ? withTag(P2[r.id]) : '?'}${r.id === S.you ? ' <small>(du)</small>' : ''}${r.exact ? ' <span class="tag hit">×5</span>' : r.close ? ' <span class="tag">×2</span>' : ''}${r.closest && !r.exact ? ' <span class="tag">★</span>' : ''}<br><span class="diff">${diffText(r)}</span></span><span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span><span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`).join('')}</div>` + foot;
+    <div class="answer" style="--d:.1s"><p class="sub">Richtig ist</p><div class="num">${fmt(R.answer, R.unit)} <small>${esc(R.unit === 'Jahr' ? '' : R.unit)}</small></div></div>
+    <div class="stairs">${rows.map((r, i2) => {
+      const p2 = P[r.id] || { name: '?' };
+      const d = ((steps - 1 - i2) * 0.35).toFixed(2) + 's';
+      return `<div class="step ${r.id === S.you ? 'me' : ''} ${i2 === 0 && r.value !== null ? 'first' : ''}" style="--c:${p2.color || 'var(--line)'};--d:${d};--in:${Math.min(i2, 4) * 8}px">
+        <span class="rk">${r.value === null ? '–' : (medal[i2] || i2 + 1)}</span>
+        ${avatar(p2, 40)}
+        <span class="nm"><span class="ln1">${withTag(p2)}${r.id === S.you ? '<small>(du)</small>' : ''}${r.exact ? '<span class="tag hit">×5</span>' : r.close ? '<span class="tag">×2</span>' : ''}</span>
+          <span class="bar"><i style="width:${Math.max(0, acc(r))}%"></i></span>
+          <span class="diff">${diffText(r)}</span></span>
+        <span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span>
+        <span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`; }).join('')}</div>
+    ${given.length ? `<div class="winbox" style="animation-delay:${((steps - 1) * 0.35 + 0.25).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
+      <div class="in">${avatar(P[rows[0].id] || { name: '?' }, 38)}<b>${esc(P[rows[0].id]?.name || '?')}</b><span class="pts">+${rows[0].points}</span></div>
+      ${rows[0].exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
+    </div><div class="col side deskonly"><h2>Punktestand</h2><div class="plist" id="sideboard"></div></div>` + footOnly();
 }
 
 // ---------- Dynamische Teile ----------
@@ -956,6 +971,9 @@ function update() {
         <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
         <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span><span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
         <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'frm' ? 'open' : ''} data-fold="frm"><summary><span class="grow">Rahmen</span><span class="sub">${(home.frames || []).filter((f) => f.unlocked).length} von ${(home.frames || []).length}</span>${me.frame ? `<span style="width:30px;height:30px;display:inline-block">${avatar({ ...me, av: 0, name: ' ' }, 26, false)}</span>` : ''}</summary>
+        <div class="framegrid">${(home.frames || []).map((f) => `<button data-frame="${f.id}" class="${me.frame === f.id ? 'on' : ''} ${f.unlocked ? '' : 'lock'}" title="${esc(f.unlocked ? f.name : f.need)}">${avatar({ id: me.id, name: me.name, av: me.av, color: '#4FD1C5', frame: f.id, frameAnim: f.unlocked ? f.anim : '' }, 54, false)}${esc(f.unlocked ? f.name : f.secret ? 'GEHEIM' : f.dev ? 'DEV' : '🔒 ' + f.name)}</button>`).join('')}
+        <button class="chipbtn" data-frame="" style="grid-column:1/-1">Rahmen abwählen</button></div></details>
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
     }
@@ -1065,10 +1083,10 @@ function update() {
     const given = S.reveal.results.filter((r) => r.value !== null);
     if (S.question.type === 'est' && given.length) {
       // je Dart ein Einschlag, im Takt der Animation
-      const order = [...given].sort((a, b) => Math.abs(b.value - S.reveal.answer) - Math.abs(a.value - S.reveal.answer));
-      order.forEach((r, k) => setTimeout(() => sfx(r.exact ? 'dartexact' : r.closest ? 'dartbest' : 'dart'), 350 + k * 450));
+      const n = S.reveal.results.length;
+      S.reveal.results.forEach((r, k) => setTimeout(() => sfx(r.exact ? 'dartexact' : k === 0 ? 'dartbest' : 'dart'), (n - 1 - k) * 350));
       const ex = given.some((r) => r.exact);
-      setTimeout(() => { if (ex) { sfx('exact'); try { navigator.vibrate && navigator.vibrate([60, 40, 200]); } catch (e) {} } else sfx('reveal'); }, 350 + order.length * 450);
+      setTimeout(() => { if (ex) { sfx('exact'); try { navigator.vibrate && navigator.vibrate([60, 40, 200]); } catch (e) {} } else sfx('reveal'); }, (n - 1) * 350 + 300);
     } else sfx(S.reveal.results.some((r) => r.right && r.id === S.you) ? 'reveal' : 'sent');
   }
   if (S.phase === 'finished' && lastVibe !== 'f' + S.code) { lastVibe = 'f' + S.code; if (S.winners.includes(S.you)) sfx('win'); }
@@ -1161,6 +1179,10 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
   else if (t.id === 'back') { page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
+  else if (t.dataset.frame !== undefined) {
+    if (t.classList.contains('lock')) return toast(t.title || 'Noch nicht freigeschaltet.');
+    api('/api/frame', { frame: t.dataset.frame }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
+  }
   else if (t.dataset.emb !== undefined || t.dataset.title !== undefined) {
     if (t.classList.contains('lock')) return toast(t.title || 'Noch nicht freigeschaltet.');
     const me = home.me, cur = t.dataset.emb !== undefined ? me.emblem : (me.title || '');

@@ -8,6 +8,7 @@ const attachGame = require('./lib/game');
 const ai = require('./lib/ai');
 const progress = require('./lib/progress');
 const cards = require('./lib/cards');
+const frames = require('./lib/frames');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -46,7 +47,7 @@ const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
 const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
-  id: u.id, name: u.name, role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  id: u.id, name: u.name, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: (cards.titleById(u.title) && cards.has(cards.titleById(u.title), u)) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -85,10 +86,11 @@ app.get('/api/home', async (req, res) => {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       cards: cards.view(u),
+      frames: frames.view(u, isMod(u)),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -101,6 +103,17 @@ app.post('/api/prestige-icon', async (req, res) => {
     if (!Number.isFinite(n) || n < -1 || n > u.prestige) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
     await store.save(u.id, { pres_shown: n });
     res.json({ presShown: n === -1 ? 0 : n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Profilrahmen wählen
+app.post('/api/frame', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const id = String(req.body.frame || '');
+    if (!frames.canUse(u, id, isMod(u))) return res.status(403).json({ error: 'Diesen Rahmen hast du noch nicht.' });
+    await store.save(u.id, { frame: id });
+    res.json({ frame: id });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

@@ -25,6 +25,11 @@ Dann http://localhost:3000 öffnen.
 - Am nächsten dran: +25
 - Auswahlfrage: 100 Punkte, kein Multiplikator
 
+## Profilrahmen
+- 22 runde Rahmen ums Profilbild (`lib/frames.js`), 20 über Herausforderungen, „Pink Pages“ über den Code `GRACE`, „DEV“ nur für Admin und Co-Admins
+- Fünf davon sind animiert (Flamme, Blitz, Gift, Sternenstaub, Lavagold), der DEV-Rahmen rotiert und wechselt die Farbe
+- Auswahl im Profil unter „Rahmen“, abwählbar
+
 ## Spielerkarten
 - 30 Embleme und 31 Titel, jeweils an eine Bedingung geknüpft (siehe `lib/cards.js`)
 - Titel sind eigene Banner-Grafiken (`public/emblems/title_*.webp`), Embleme eigene Icons (`pc_*.webp`)
@@ -49,10 +54,10 @@ Dann http://localhost:3000 öffnen.
 - `DEV`, `ADMIN`, `MOD` und der Regenbogen-Verlauf sind dem Admin (`ADMIN_NAME`) vorbehalten
 
 ## Auflösung
-- Zielscheibe: der richtige Wert ist das Bullseye, jede Schätzung schlägt als farbiger Dart ein
-- Die Darts fliegen nacheinander von außen nach innen, der Rundensieger zuletzt
+- Siegestreppe: die Zeilen bauen sich von unten nach oben auf, der schlechteste zuerst, der Sieger zuletzt
+- Jede Zeile zeigt Platz, Profilbild, Name, Genauigkeitsbalken, Abweichung im Klartext, Wert und Punkte
 - Danach erscheint der Sieger im goldenen Banner, bei einer Punktlandung zusätzlich das Bullseye-Abzeichen
-- Darunter steht weiterhin die vollständige Liste mit Abweichung und Punkten
+- Jede einrastende Zeile hat einen eigenen Einschlagsound
 
 ## Ablauf
 1. **Einrichten** — Host wählt Modus, Themen, Zugang und Regeln. Das Match taucht noch nirgends auf.
