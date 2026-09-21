@@ -747,6 +747,20 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .fold2[open] summary::after{transform:rotate(180deg)}
 .row:has(> #back){position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:8}
 #back{background:rgba(5,26,29,.85);backdrop-filter:blur(8px);padding:8px 14px!important;border-radius:99px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);text-decoration:none;font-weight:800}
+.cr{max-height:92vh;overflow-y:auto;padding:10px 6px}
+.cr-code{font:400 54px/1 Anton,Impact,sans-serif;letter-spacing:2px;background:linear-gradient(180deg,#FFF1B0,#FFD23F 45%,#C8860F);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 14px rgba(255,190,60,.55));margin:4px 0 10px}
+.cr-dia{display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:99px;background:rgba(10,40,46,.9);box-shadow:inset 0 0 0 2px var(--tape),0 0 24px rgba(125,225,255,.35);margin-bottom:14px;animation:crpop .6s cubic-bezier(.2,1.4,.4,1) both}
+.cr-dia img{width:34px;height:34px}.cr-dia b{font:400 34px/1 Anton,Impact,sans-serif;color:#7DE1FF}.cr-dia span{font-weight:800}
+.cr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 18px}
+.cr-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:16px;background:rgba(5,26,29,.78);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35);animation:crpop .55s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(.25s + var(--d,0) * .12s)}
+.cr-item.cr-wide{grid-column:1 / -1}.cr-item .titleimg{max-width:100%}
+.cr-item b{font-size:13px}.cr-item small{color:var(--muted);font-size:11px}
+@keyframes crpop{0%{transform:scale(.4) translateY(20px);opacity:0}100%{transform:none;opacity:1}}
+/* Tagesbelohnung noch offen: Knopf leuchtet */
+#openDaily.ready{box-shadow:0 0 0 2px var(--tape),0 0 26px rgba(255,210,63,.45);animation:dailyglow 1.8s ease-in-out infinite alternate}
+#openDaily.ready img{animation:dailybob 1.2s ease-in-out infinite alternate}
+@keyframes dailyglow{to{box-shadow:0 0 0 2px var(--tape),0 0 40px rgba(255,210,63,.75)}}
+@keyframes dailybob{to{transform:translateY(-4px) rotate(-4deg)}}
 </style>
 </head>
 <body>
@@ -897,6 +911,23 @@ function showBulls(names) {
 function showUnlock(rank, name) {
   const u = $('#unlock');
   u.innerHTML = `<div class="rays"></div><div class="in"><p class="sub">Neuer Rang freigeschaltet</p><div class="big-emb">${emblem(rank)}</div><h1>Prestige ${rank}</h1><p style="font-size:20px;font-weight:700">${esc(name)}</p><p class="sub">Der neue Rahmen ist jetzt an deinem Profilbild.</p><button class="btn" id="unlockOk" style="margin-top:10px">Weiter</button></div>`;
+  u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
+  $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
+}
+
+function showCodeReveal(r) {
+  const u = $('#unlock'); const it = r.items || { emblems: [], titles: [], frames: [] };
+  const me = (home && home.me) || {};
+  const tiles = [
+    ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
+    ...it.emblems.map((e) => `<div class="cr-item"><img class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
+    ...it.frames.map((f) => `<div class="cr-item">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 74, false)}<b>${esc(f.name)}</b><small>Rahmen</small></div>`),
+  ];
+  u.innerHTML = `<div class="rays"></div><div class="in cr">
+    <p class="sub">Code eingelöst</p><h1 class="cr-code">${esc(r.code || '')}</h1>
+    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    <div class="cr-grid">${tiles.map((h, i) => h.replace('class="cr-item', `style="--d:${i}" class="cr-item`)).join('')}</div>
+    <button class="btn" id="unlockOk" style="min-width:220px">Stark!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
   $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
@@ -1930,7 +1961,11 @@ function update() {
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
-    api('/api/daily').then((v) => { const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed; }).catch(() => {});
+    api('/api/daily').then((v) => {
+      const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed;
+      const b = document.getElementById('openDaily');
+      if (b) { b.classList.toggle('ready', !v.claimed); const sb = b.querySelector('.sub'); if (sb) sb.textContent = v.claimed ? 'Heute schon abgeholt' : 'Jetzt abholen: ' + fmt(v.loginDia) + ' Diamanten warten'; }
+    }).catch(() => {});
     const ct = $('#casinoTop');
     if (ct) {
       const list = (home && home.casinoTop) || [];
@@ -2073,7 +2108,7 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('submit', (e) => {
   if (e.target.id !== 'codeForm') return; e.preventDefault();
-  api('/api/redeem', { code: $('#codeIn').value }).then(async (r) => { toast('Freigeschaltet: ' + r.reward); $('#codeIn').value = ''; await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message));
+  api('/api/redeem', { code: $('#codeIn').value }).then(async (r) => { showCodeReveal(r); $('#codeIn').value = ''; await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message));
 });
 document.addEventListener('submit', (e) => {
   if (e.target.id !== 'chatForm') return; e.preventDefault();

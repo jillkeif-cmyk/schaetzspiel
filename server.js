@@ -546,7 +546,14 @@ app.post('/api/redeem', async (req, res) => {
     const save = { codes: r.codes };
     if (r.diamonds) save.diamonds = (Number(u.diamonds) || 0) + r.diamonds; // Aktionscode mit Diamanten
     await store.save(u.id, save);
-    res.json({ reward: r.reward, diamonds: r.diamonds || 0 });
+    // Alles, was dieser Code freischaltet, für die große Einblendung
+    const code = String(req.body.code || '').trim().toUpperCase();
+    const items = {
+      emblems: cards.EMBLEMS.filter((i) => i.code === code).map((i) => ({ id: i.id === 'secret' ? 'secret' : i.id, name: i.name, anim: i.anim || '' })),
+      titles: cards.TITLES.filter((i) => i.code === code).map((i) => ({ id: i.id === 'secret' ? 'tsecret' : i.id, text: i.text, anim: i.anim || '' })),
+      frames: frames.FRAMES.filter((f) => f.code === code).map((f) => ({ id: f.id, name: f.name, anim: f.anim || '' })),
+    };
+    res.json({ reward: r.reward, diamonds: r.diamonds || 0, code, items });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
