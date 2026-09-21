@@ -2051,11 +2051,6 @@ function build() {
     <div id="pushbar" hidden></div>
     <div id="newsCard"></div>
     <button class="panel pcard" id="openProfile"></button>
-    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
-    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span></button>
-    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
-    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
-    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -2068,6 +2063,11 @@ function build() {
     </div>
     <div id="openList"></div>
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
+    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
+    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span></button>
+    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
+    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
 
