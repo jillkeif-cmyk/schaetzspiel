@@ -1050,6 +1050,33 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .goalbox{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
 .pk-botmark{position:absolute;left:-6px;top:-6px;font-size:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
 .pk-solo{font:800 11px/1 Archivo;vertical-align:4px;padding:4px 8px;border-radius:99px;background:rgba(142,107,255,.25);color:#D8C8FF;box-shadow:inset 0 0 0 1px rgba(142,107,255,.6)}
+#app.pk-on .col > h1, #app.pk-on #cbody > .tabs2, #app.pk-on #ctabs, #app.pk-on #vipHead, #app.pk-on #cbody .tabs2:first-child{display:none}
+#app.pk-on .pk-table{aspect-ratio:auto;height:min(calc(100vw * 1.2), calc(100dvh - 400px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));min-height:330px}
+#app.pk-on .col{gap:8px}
+#app.pk-on .pk-dock .pkc.big{width:46px;height:64px}#app.pk-on .pk-dock .pkc.big b{font-size:19px}#app.pk-on .pk-dock .pkc.big i{font-size:17px}
+#app.pk-on .pk-dock .pk-me{gap:8px}#app.pk-on .pk-dock .pk-me b{font-size:14px;white-space:nowrap}#app.pk-on .pk-dock .pk-me small{white-space:nowrap}
+#app.pk-on .pk-dock .pk-emotes button{width:32px;height:32px;font-size:16px}
+#app.pk-on .pk-actions{min-height:96px;gap:6px;margin-top:6px}#app.pk-on .pk-actions .btn{padding:12px}
+#app.pk-on .pk-raise{padding:8px;gap:6px}
+.pk-pile{display:inline-flex;align-items:flex-end;gap:1px;height:auto;width:auto;vertical-align:middle}
+.pk-col{position:relative;display:inline-block;width:20px;height:calc(8px + var(--h) * 3px)}
+.pk-pile.big .pk-col{width:24px;height:calc(9px + var(--h) * 3.5px)}
+.pk-col i{position:absolute;left:0;bottom:calc(var(--k) * 3px);width:100%;height:7px;border-radius:50%;background:var(--c);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 0 0 1.5px rgba(255,255,255,.7),0 1px 2px rgba(0,0,0,.6)}
+.pk-pile.big .pk-col i{bottom:calc(var(--k) * 3.5px);height:8px}
+.pk-col i.dk{box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 0 0 1.5px #E6B640,0 1px 2px rgba(0,0,0,.6)}
+.pk-plate{position:relative}
+.pk-own{position:absolute;left:calc(100% + 4px);bottom:2px}.pk-own.l{left:auto;right:calc(100% + 4px)}
+.pk-ann{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);z-index:7;padding:10px 16px;border-radius:14px;background:rgba(5,15,18,.9);font-weight:900;font-size:15px;text-align:center;white-space:nowrap;box-shadow:0 0 0 2px #3DDC97,0 8px 20px rgba(0,0,0,.5);animation:pkann .25s ease-out both;pointer-events:none}
+.pk-ann.f{box-shadow:0 0 0 2px #8E9AA0,0 8px 20px rgba(0,0,0,.5)}.pk-ann.r{box-shadow:0 0 0 2px #FFB24A,0 8px 20px rgba(0,0,0,.5)}
+.pk-ann.w{box-shadow:0 0 0 2px var(--tape),0 0 26px rgba(255,210,63,.5);white-space:normal;max-width:86%;font-size:15.5px}
+@keyframes pkann{from{opacity:0;transform:translate(-50%,-30%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.titleimg{aspect-ratio:560/127;height:auto}
+.pk-head b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pk-head small{color:var(--muted);font-weight:700}
+.pk-head .btn.small{padding:8px 10px}
+.pk-emopop{display:flex;justify-content:space-between;gap:4px;margin:-2px 0 8px;padding:6px;border-radius:14px;background:var(--bg-deep)}
+.pk-emopop[hidden]{display:none}.pk-emopop button{font-size:22px;width:42px;height:42px;border-radius:50%}
+.pk-dock .pk-me b{font-size:16px}
+.pk-actions{min-height:96px}
 </style>
 </head>
 <body>
@@ -1555,11 +1582,19 @@ const pkCard = (c, big, key) => {
   return c.hidden ? `<span class="${cls} back"></span>` : `<span class="${cls} ${['♥', '♦'].includes(c.s) ? 'red' : ''}"><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>`;
 };
 // Chipstapel: mehr Chips für mehr Diamanten, Farbe nach Größe
-const CHIP_COL = ['#E6E6E6', '#D63A3A', '#2E7BD6', '#1FA35A', '#141414', '#8E4BD6', '#E0A21E'];
-function chipPile(amount) {
+// Chips nach Wert wie im echten Casino: jede Farbe eine Säule, mehr Geld = mehr und höhere Säulen
+const CHIP_DEN = [[5000, '#E0A21E'], [1000, '#141414'], [500, '#8E4BD6'], [100, '#1F1F1F'], [25, '#1FA35A'], [5, '#D63A3A'], [1, '#E6E6E6']];
+function chipPile(amount, big) {
   if (!amount) return '';
-  const n = Math.max(1, Math.min(7, Math.round(Math.log10(amount + 1) * 2)));
-  return `<span class="pk-pile">${Array.from({ length: n }, (_, k) => `<i style="--c:${CHIP_COL[(k + Math.floor(Math.log10(amount + 1))) % CHIP_COL.length]};--k:${k}"></i>`).join('')}</span>`;
+  let rest = amount; const cols = [];
+  for (const [v, c] of CHIP_DEN) { const n = Math.floor(rest / v); if (n) { cols.push([c, n, v]); rest -= n * v; } }
+  const show = cols.slice(0, big ? 5 : 3);
+  return `<span class="pk-pile ${big ? 'big' : ''}">${show.map(([c, n, v]) => `<span class="pk-col" style="--h:${Math.min(big ? 12 : 8, n)}">${Array.from({ length: Math.min(big ? 12 : 8, n) }, (_, k) => `<i style="--c:${c};--k:${k}" class="${v === 1000 || v === 100 ? 'dk' : ''}"></i>`).join('')}</span>`).join('')}</span>`;
+}
+function pkAnnounce(tb, html, kind, ms = 1800) {
+  const old = tb.querySelector('.pk-ann'); if (old) old.remove();
+  const e = document.createElement('div'); e.className = 'pk-ann ' + (kind || ''); e.innerHTML = html;
+  tb.appendChild(e); setTimeout(() => e.remove(), ms);
 }
 function renderPoker(box) {
   if (!pkState || pkState.me < 0) {
@@ -1588,7 +1623,7 @@ function renderPoker(box) {
     const act = t.toAct === i;
     return `<div class="pk-seat ${act ? 'act' : ''} ${s.folded ? 'folded' : ''} ${s.away ? 'away' : ''}" style="left:${x}%;top:${y}%">
       <div class="pk-av" ${s.bot ? '' : `data-user="${s.id}"`}>${avatar(s, 46, false)}${s.bot ? '<span class="pk-botmark">🤖</span>' : ''}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
-      <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span></div>
+      <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span>${s.stack ? `<span class="pk-own ${x > 60 ? 'l' : ''}">${chipPile(s.stack)}</span>` : ''}</div>
       ${s.last ? `<span class="pk-last ${/Fold/.test(s.last) ? 'f' : /All/.test(s.last) ? 'a' : /Raise/.test(s.last) ? 'r' : ''}">${esc(s.last)}</span>` : ''}
       ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c, k) => pkCard(c, false, `s${i}:${k}:${c.hidden ? 'h' : c.r + c.s}`)).join('')}</div>` : ''}
       ${s.handName && rot(i) !== 0 ? `<small class="pk-hn">${esc(s.handName)}</small>` : ''}
@@ -1600,22 +1635,21 @@ function renderPoker(box) {
     if (!s) return '';
     const sp = lerp(pos(i), PK_C, 0.2), bp = lerp(pos(i), PK_C, 0.45);
     const grew = s.bet > (prevBets[i] || 0);
-    return `<span class="pk-stackchips" style="left:${sp[0]}%;top:${sp[1]}%">${chipPile(s.stack)}</span>
-      ${s.bet ? `<span class="pk-betchips ${grew ? 'slide' : ''}" style="left:${bp[0]}%;top:${bp[1]}%;--sx:${sp[0]}%;--sy:${sp[1]}%;--ex:${bp[0]}%;--ey:${bp[1]}%">${chipPile(s.bet)}<em>${fmt(s.bet)}</em></span>` : ''}`;
+    return `${s.bet ? `<span class="pk-betchips ${grew ? 'slide' : ''}" style="left:${bp[0]}%;top:${bp[1]}%;--sx:${sp[0]}%;--sy:${sp[1]}%;--ex:${bp[0]}%;--ey:${bp[1]}%">${chipPile(s.bet)}<em>${fmt(s.bet)}</em></span>` : ''}`;
   }).join('');
-  const win = t.winners && t.winners.length ? `<div class="pk-win">🏆 ${t.winners.map((w) => `<b>${esc(w.name)}</b> +${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>')}</div>` : '';
+  const win = '';
   const potOnTable = t.pot - t.seats.reduce((x, s) => x + (s ? s.bet : 0), 0);
   box.innerHTML = `
-    <div class="row" style="margin-bottom:8px;gap:8px"><b class="grow">${esc(t.name)} · Blinds ${t.sb}/${t.bb}</b>${me ? '<button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
+    <div class="row pk-head" style="margin-bottom:8px;gap:6px"><b class="grow">${esc(t.name)}<small> · Blinds ${t.sb}/${t.bb}</small></b>${me ? '<button class="btn small ghost pk-emobtn" id="pkEmoBtn">😀</button><button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
+    ${me ? `<div class="pk-emopop" id="pkEmoPop" hidden>${EMOJIS.map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div>` : ''}
     <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
       ${chipsHtml}
       <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => pkCard(c, false, `b${k}:${c.r}${c.s}`)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
-        <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
+        <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable, true)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
       ${t.seats.map(seatHtml).join('')}
     </div>
     ${me ? `<div class="pk-dock">
-      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' && !t.nextIn ? 'Warte auf Mitspieler' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div>
-        <div class="pk-emotes">${EMOJIS.slice(0, 4).map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div></div>
+      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' && !t.nextIn ? 'Warte auf Mitspieler' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
       <div class="pk-actions ${myTurn ? '' : 'wait'}">${myTurn ? `
         <button class="btn ghost" data-pka="fold">Fold</button>
         ${need > 0 ? `<button class="btn" data-pka="call">Call ${fmt(Math.min(need, me.stack))}</button>` : '<button class="btn" data-pka="check">Check</button>'}
@@ -1632,7 +1666,17 @@ function renderPoker(box) {
     pkPrev.bets.forEach((b, i) => { if (b > 0 && !(t.seats[i] && t.seats[i].bet)) fly(lerp(pos(i), PK_C, 0.45), PK_C, b); });
     if (t.winners && !pkPrev.winners) t.winners.forEach((w) => { const i = t.seats.findIndex((s) => s && s.id === w.id); if (i >= 0) setTimeout(() => fly(PK_C, lerp(pos(i), PK_C, 0.2), w.amount), 350); });
   }
-  pkPrev = { handNo: t.handNo, bets: t.seats.map((s) => (s ? s.bet : 0)), winners: !!(t.winners && t.winners.length) };
+  // Was hat wer gemacht? Ansage in der Mitte, auch für Bots
+  const lastNow = t.seats.map((s) => (s ? s.id + ':' + s.last : ''));
+  if (pkPrev && pkPrev.handNo === t.handNo && tb) {
+    t.seats.forEach((s, i) => {
+      if (!s || !s.last || lastNow[i] === (pkPrev.last || [])[i] || /Blind/.test(s.last)) return;
+      const verb = /Fold/.test(s.last) ? 'foldet' : /All/.test(s.last) ? 'geht All-in' : /Raise/.test(s.last) ? `erhöht auf ${fmt(s.bet)}` : /Call/.test(s.last) ? `geht mit ${fmt(s.bet)}` : /Check/.test(s.last) ? 'checkt' : s.last;
+      pkAnnounce(tb, `${i === meIdx ? 'Du' : esc(s.name)} ${i === meIdx ? verb.replace('foldet', 'foldest').replace('geht', 'gehst').replace('erhöht', 'erhöhst').replace('checkt', 'checkst') : verb}`, /Fold/.test(s.last) ? 'f' : /All|Raise/.test(s.last) ? 'r' : '');
+    });
+  }
+  if (t.winners && t.winners.length && tb && !(pkPrev && pkPrev.winners)) pkAnnounce(tb, t.winners.map((w) => `🏆 ${esc(w.name)} gewinnt ${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>'), 'w', 3800);
+  pkPrev = { handNo: t.handNo, bets: t.seats.map((s) => (s ? s.bet : 0)), winners: !!(t.winners && t.winners.length), last: lastNow };
   box.querySelectorAll('[data-pkseat]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: t.id, seat: Number(b.dataset.pkseat) }); });
   box.querySelectorAll('[data-pka]').forEach((b) => { b.onclick = () => { const a = b.dataset.pka; socket.emit('pk:act', a === 'raise' ? { action: 'raise', to: pkRaise } : { action: a }); pkRaise = 0; sfx('dart'); }; });
   box.querySelectorAll('[data-pkto]').forEach((b) => { b.onclick = () => { pkRaise = Number(b.dataset.pkto); const r = $('#pkRange'); if (r) r.value = pkRaise; $('#pkRaiseBtn').textContent = 'Raise ' + fmt(pkRaise); }; });
@@ -1640,7 +1684,8 @@ function renderPoker(box) {
   if ($('#pkLeave')) $('#pkLeave').onclick = () => { socket.emit('pk:leave'); pkState = null; setTimeout(() => socket.emit('pk:list'), 400); };
   if ($('#pkBack')) $('#pkBack').onclick = () => { pkState = null; socket.emit('pk:list'); renderCasino(); };
   if ($('#pkRebuy')) $('#pkRebuy').onclick = () => socket.emit('pk:rebuy');
-  box.querySelectorAll('[data-pkemo]').forEach((b) => { b.onclick = () => socket.emit('pk:emote', Number(b.dataset.pkemo)); });
+  box.querySelectorAll('[data-pkemo]').forEach((b) => { b.onclick = () => { socket.emit('pk:emote', Number(b.dataset.pkemo)); const pp = $('#pkEmoPop'); if (pp) pp.hidden = true; }; });
+  if ($('#pkEmoBtn')) $('#pkEmoBtn').onclick = () => { const pp = $('#pkEmoPop'); if (pp) pp.hidden = !pp.hidden; };
   if ($('#pkInvite')) $('#pkInvite').onclick = () => {
     const fl = friends.filter((f) => f.status === 'ok' && !t.seats.some((x) => x && x.id === f.id));
     $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>An den Pokertisch einladen</h2>
@@ -1669,6 +1714,7 @@ function renderPoker(box) {
 
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  app.classList.toggle('pk-on', cgame === 'poker' && !!pkState && pkState.me >= 0); // Tischmodus: alles passt auf den Bildschirm
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
   renderVipHead();
   if (!vipD) loadVip();
@@ -2394,11 +2440,18 @@ function reportPresence() {
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
 }
+let builtKey = '';
 function render() {
   setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
-  if (key !== viewKey) { viewKey = key; app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind(); window.scrollTo(0, 0); }
+  const keepY = window.scrollY;
+  if (key !== viewKey) {
+    const same = key === builtKey; viewKey = key; builtKey = key;
+    app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind();
+    window.scrollTo(0, same ? keepY : 0); // gleiche Seite neu gezeichnet: Position bleiben
+  }
   update();
+  if (key === builtKey && Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY);
 }
 
 function build() {
@@ -2641,7 +2694,7 @@ function sideHtml() {
 }
 function friendsHtml() {
   if (!friends.length) return '<p class="sub">Noch keine Freunde. Füge jemanden per Spielername hinzu oder tippe nach einem Match auf „+ Freund“.</p>';
-  const row = (f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? 'spielt gerade' : onlineText(f))}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`;
+  const row = (f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? onlineText(f) : onlineText(f))}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : f.watchCode ? `<button class="mini" data-watch="${esc(f.watchCode)}">Zuschauen</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`;
   const order = { in: 0, ok: 1, out: 2 };
   const sorted = [...friends].sort((a, b) => order[a.status] - order[b.status] || b.online - a.online || a.name.localeCompare(b.name));
   // Anfragen und Online-Freunde direkt, Offline-Freunde zum Aufklappen
@@ -2826,7 +2879,7 @@ function update() {
     const ppl = L.onlinePeople || [];
     $('#onlineText').innerHTML = L.online ? `<b>${L.online} Spieler online</b>${ppl.length ? `<span class="olist">${ppl.map((o) => `<span class="oppl" data-user="${o.id}"><b>${esc(o.name)}</b> ${esc(o.act)}</span>`).join('')}</span>` : ''}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
-    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : !m.setup && m.phase !== 'finished' ? `<button class="btn small ghost" data-watch="${esc(m.code)}">Zuschauen</button>` : ''}</div>`).join('')}</div>` : '';
+    $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s ${m.solo ? 'Solo-Match' : 'Match'} ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}${m.solo ? '<span class="tag">Solo</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.solo && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : !m.setup && m.phase !== 'finished' ? `<button class="btn small ghost" data-watch="${esc(m.code)}">Zuschauen</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
     pushUI();
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span></div><span class="editbtn big">✏️ Profil & Spielerkarte bearbeiten</span>`) : '<span class="sub">Lädt …</span>';

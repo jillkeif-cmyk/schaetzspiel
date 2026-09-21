@@ -788,7 +788,7 @@ app.get('/api/friends', async (req, res) => {
     for (const f of await store.friendList(u.id)) {
       const o = await store.userById(f.id); if (!o) continue;
       const m = game.matches.get(game.userMatch.get(o.id));
-      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished',
+      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished', watchCode: m && m.phase !== 'lobby' && m.phase !== 'finished' ? m.code : '',
         joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 8 ? m.code : null });
     }
     res.json({ friends: out });
