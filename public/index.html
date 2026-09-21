@@ -680,6 +680,37 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .daybox.now b{color:#10201F}
 .daybox.d7{grid-column:span 4;flex-direction:row;justify-content:center;gap:10px}
 .daybox.d7 img{width:54px;height:54px}
+
+/* Blackjack-Tisch in Draufsicht */
+.bjfelt{position:relative;border-radius:50% 50% 22px 22px / 26% 26% 22px 22px;padding:18px 14px 20px;
+  background:radial-gradient(ellipse at 50% 30%,#1F7A55,#0F5238 60%,#0A3A28);
+  box-shadow:inset 0 0 0 10px #6B3A1E,inset 0 0 0 13px #C89A3C,inset 0 0 40px rgba(0,0,0,.45),0 16px 34px rgba(0,0,0,.5);min-height:360px}
+.bjfelt::before{content:"BLACKJACK ZAHLT 3 ZU 2 · BANK ZIEHT BIS 17";position:absolute;left:0;right:0;top:44%;text-align:center;font:800 10px/1 Archivo;letter-spacing:1.5px;color:rgba(255,230,160,.45)}
+.shoe{position:absolute;right:22px;top:20px;width:40px;height:30px;border-radius:6px;background:linear-gradient(180deg,#2a2a2a,#111);box-shadow:inset 0 0 0 2px #C89A3C}
+.bjrow{display:flex;flex-direction:column;align-items:center;gap:6px}
+.bjlab{font:800 12px/1 Archivo;color:rgba(255,240,200,.8);letter-spacing:.5px}
+.bjhand{display:flex;justify-content:center;min-height:92px;padding:4px}
+.bjhand .pc{width:60px;height:86px;border-radius:9px;margin-left:-22px;background:linear-gradient(180deg,#FBF7EA,#E4DCC6);color:#16202A;
+  display:flex;flex-direction:column;justify-content:space-between;padding:5px 6px;font:800 16px/1 Archivo;box-shadow:0 6px 14px rgba(0,0,0,.5);
+  animation:dealin .5s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--dl,0s)}
+.bjhand .pc:first-child{margin-left:0}
+.bjhand .pc.red{color:#B22B26}
+.bjhand .pc .suit{font-size:24px;align-self:center}
+.bjhand .pc .bot{align-self:flex-end;transform:rotate(180deg)}
+.bjhand .pc.back{background:repeating-linear-gradient(45deg,#8B1E24 0 6px,#6A151A 6px 12px);box-shadow:inset 0 0 0 3px #F3E3B0,0 6px 14px rgba(0,0,0,.5)}
+.bjhand .pc.back *{visibility:hidden}
+@keyframes dealin{0%{transform:translate(140px,-180px) rotate(-25deg) scale(.7);opacity:0}70%{opacity:1}100%{transform:none;opacity:1}}
+.bjhands{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:26px}
+.bjh{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 8px;border-radius:14px}
+.bjh.act{box-shadow:0 0 0 2px var(--tape),0 0 18px rgba(255,210,63,.45)}
+.bjscore{display:inline-grid;place-items:center;min-width:34px;height:24px;padding:0 8px;border-radius:99px;background:rgba(0,0,0,.55);color:#fff;font:800 13px/1 Archivo}
+.bjres{font:800 13px/1 Archivo;color:var(--tape)}
+.bjchip{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#F3D36B 0 45%,#B8861C 46% 60%,#F3D36B 61%);color:#3a2600;font:900 9px/1 Archivo;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.bjacts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.bjacts button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:var(--bg-deep);font-weight:800;font-size:12.5px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
+.bjacts button .ic{font-size:22px}
+.bjacts button:disabled{opacity:.3}
+.bjacts button.go{background:linear-gradient(180deg,#F0C233,#E8A91C);color:var(--ink);box-shadow:none}
 </style>
 </head>
 <body>
@@ -923,20 +954,34 @@ function renderCasino() {
       <button class="btn" id="spinBtn" style="width:100%">Drehen</button>
       <p class="sub" id="cResult" style="text-align:center;margin-top:10px"></p>`;
   } else {
-    box.innerHTML = `<div class="bjtable">
-      <div><p class="sub">Bank${bj && bj.dealerScore != null ? ' · ' + bj.dealerScore : ''}</p><div class="hand" id="bjD">${bj ? bj.dealer.map(cardHtml).join('') : ''}</div></div>
-      <div><p class="sub">Du${bj ? ' · ' + bj.playerScore : ''}</p><div class="hand" id="bjP">${bj ? bj.player.map(cardHtml).join('') : ''}</div></div>
-      ${bj && !bj.done ? '<div class="row" style="gap:8px"><button class="btn grow" id="bjHit">Karte</button><button class="btn ghost grow" id="bjStand">Halten</button></div>'
-        : '<button class="btn" id="bjDeal" style="width:100%">Austeilen</button>'}
-      <p class="sub" id="cResult" style="text-align:center">${bj && bj.result ? esc(bj.result) + (bj.won ? ` · +${fmt(bj.won)} 💎` : '') : ''}</p></div>`;
+    const card = (c, k) => (c && c.hidden ? `<span class="pc back" style="--dl:${k * 0.18}s"><b>?</b></span>`
+      : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="--dl:${k * 0.18}s"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
+    const can = (bj && bj.can) || {};
+    box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
+        <div class="bjrow"><span class="bjlab">BANK${bj ? ' · ' + (bj.over ? bj.dealerScore : bj.dealerScore + ' offen') : ''}</span>
+          <div class="bjhand">${bj ? bj.dealer.map(card).join('') : ''}</div></div>
+        <div class="bjhands">${bj ? bj.hands.map((h, hi) => `<div class="bjh ${h.active ? 'act' : ''}">
+            <div class="bjhand">${h.cards.map((c, k) => card(c, k + hi)).join('')}</div>
+            <div class="row" style="gap:6px"><span class="bjscore">${h.score}</span><span class="bjchip">${fmt(h.bet)}</span></div>
+            ${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
+          : '<p class="bjlab" style="margin-top:40px">Einsatz wählen und austeilen</p>'}</div>
+      </div>
+      ${bj && !bj.over ? `<div class="bjacts">
+          <button class="go" data-bj="hit"><span class="ic">🂠</span>Karte</button>
+          <button data-bj="stand"><span class="ic">✋</span>Halten</button>
+          <button data-bj="double" ${can.double ? '' : 'disabled'}><span class="ic">×2</span>Verdoppeln</button>
+          <button data-bj="split" ${can.split ? '' : 'disabled'}><span class="ic">✂</span>Teilen</button>
+          <button data-bj="insurance" ${can.insurance ? '' : 'disabled'}><span class="ic">🛡</span>Versichern</button>
+          <button data-bj="surrender" ${can.surrender ? '' : 'disabled'}><span class="ic">🏳</span>Aufgeben</button></div>`
+        : '<button class="btn" id="bjDeal" style="width:100%;margin-top:12px">Austeilen</button>'}
+      <p class="sub" id="cResult" style="text-align:center;margin-top:8px">${bj && bj.over ? (bj.won ? `<b style="color:var(--ok);font-size:18px">+${fmt(bj.won)} Diamanten</b>` : '<b style="color:#FFB3AC">Verloren</b>') : ''}</p>`;
   }
 
   // Knöpfe direkt verdrahten, damit nichts von der Klick-Weiterleitung abhängt
   const on = (id, fn) => { const el = $(id); if (el) el.onclick = (e) => { e.preventDefault(); fn(); }; };
   on('#spinBtn', doSpin);
   on('#bjDeal', () => bjAction('deal'));
-  on('#bjHit', () => bjAction('hit'));
-  on('#bjStand', () => bjAction('stand'));
+  document.querySelectorAll('[data-bj]').forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) bjAction(b.dataset.bj); }; });
   document.querySelectorAll('[data-pick]').forEach((b) => { b.onclick = () => { cpick = b.dataset.pick; renderCasino(); }; });
 }
 const cardHtml = (c) => (c && c.hidden ? '<span class="pcard2 back">?</span>' : `<span class="pcard2 ${['♥', '♦'].includes(c.s) ? 'red' : ''}">${esc(c.r)}${esc(c.s)}</span>`);
@@ -976,13 +1021,11 @@ async function bjAction(path) {
   bjBusy = true;
   try {
     const amount = Math.round(Number($('#cbAmount').value) || 0);
-    bj = await api('/api/casino/bj/' + path, { amount });
+    bj = path === 'deal' ? await api('/api/casino/bj/deal', { amount }) : await api('/api/casino/bj/act', { action: path });
+    sfx('dart');
     renderCasino();
-    // Karten nachzeichnen, falls der Kasten neu gebaut wurde
-    const pd = $('#bjP'), dd = $('#bjD');
-    if (pd) pd.innerHTML = bj.player.map(cardHtml).join('');
-    if (dd) dd.innerHTML = bj.dealer.map(cardHtml).join('');
-    if (bj.done) casinoDone(bj);
+
+    if (bj.over) casinoDone(bj);
     const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
   } catch (e) { toast(e.message); }
   finally { bjBusy = false; }
@@ -1910,8 +1953,6 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.cbet) { cbet = Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
-  else if (t.id === 'bjHit') bjAction('hit');
-  else if (t.id === 'bjStand') bjAction('stand');
   else if (t.dataset.pick) { cpick = t.dataset.pick; renderCasino(); }
   else if (t.dataset.cf) { cfilter = t.dataset.cf; renderCards(); }
   else if (t.id === 'stopWatch') socket.emit('unwatch');

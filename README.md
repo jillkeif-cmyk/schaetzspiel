@@ -99,7 +99,8 @@ Dann http://localhost:3000 öffnen.
 ## Glücksspiel
 - Im Kartenbereich unter „Gambling“: Roulette und Blackjack, Einsatz in Diamanten (50 bis 20.000)
 - Roulette: einfache Chancen zahlen doppelt, Drittel dreifach, eine einzelne Zahl 36-fach
-- Blackjack: Blackjack zahlt 2,5-fach, Sieg doppelt, Unentschieden gibt den Einsatz zurück
+- Blackjack mit vollen Regeln: Teilen (bis 4 Hände, Asse nur eine Karte), Verdoppeln, Versicherung bei Ass der Bank (zahlt 2:1), Aufgeben (halber Einsatz zurück), Blackjack zahlt 3:2, Bank zieht bis 17
+- Tisch in Draufsicht, Karten rutschen aus dem Schlitten auf den Tisch
 - Alle Ziehungen und Karten entscheidet der Server, der Client zeigt nur an
 
 ## Wetten

@@ -273,55 +273,48 @@ app.post('/api/casino/roulette', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
-const bjView = (g, done = false) => ({
-  player: g.player, dealer: done ? g.dealer : [g.dealer[0], { hidden: true }],
-  playerScore: casino.score(g.player), dealerScore: done ? casino.score(g.dealer) : null,
-  amount: g.amount, done,
-});
+// Blackjack mit vollen Regeln: Teilen, Verdoppeln, Versicherung, Aufgeben
+const BJ = casino.bj;
+const bjSend = async (res, uid, g, left) => {
+  const v = BJ.view(g);
+  if (g.over) {
+    bjGames.delete(uid);
+    const after = g.payout ? await payOut(uid, g.payout) : Number((await store.userById(uid)).diamonds) || 0;
+    await casinoStat(uid, g.staked, g.payout);
+    return res.json({ ...v, won: g.payout, diamonds: after });
+  }
+  res.json({ ...v, diamonds: left != null ? left : Number((await store.userById(uid)).diamonds) || 0 });
+};
 app.post('/api/casino/bj/deal', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    if (bjGames.has(u.id)) return res.status(400).json({ error: 'Du hast noch eine Runde offen.' });
+    if (bjGames.has(u.id)) return bjSend(res, u.id, bjGames.get(u.id)); // offene Runde weiterführen
     const amount = Math.round(Number(req.body.amount) || 0);
     const t = await takeBet(u, amount); if (t.error) return res.status(400).json({ error: t.error });
-    const d = casino.deck();
-    const g = { deck: d, player: [d.pop(), d.pop()], dealer: [d.pop(), d.pop()], amount };
+    const g = BJ.newRound(amount);
     bjGames.set(u.id, g);
-    if (casino.isBJ(g.player) || casino.isBJ(g.dealer)) {
-      const r = casino.result(g); bjGames.delete(u.id);
-      const won = Math.round(amount * r.pay);
-      const after = won ? await payOut(u.id, won) : t.left;
-      await casinoStat(u.id, amount, won);
-      return res.json({ ...bjView(g, true), result: r.text, won, diamonds: after });
-    }
-    res.json({ ...bjView(g), diamonds: t.left });
+    if (BJ.isBJ(g.hands[0].cards) || (BJ.isBJ(g.dealer) && g.dealer[0].r !== 'A')) BJ.finish(g);
+    await bjSend(res, u.id, g, t.left);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
-app.post('/api/casino/bj/hit', async (req, res) => {
+app.post('/api/casino/bj/act', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const g = bjGames.get(u.id); if (!g) return res.status(400).json({ error: 'Keine offene Runde.' });
-    g.player.push(g.deck.pop());
-    if (casino.score(g.player) > 21) {
-      bjGames.delete(u.id);
+    const a = String(req.body.action || '');
+    // Zusatzeinsatz vorab prüfen
+    const needs = { double: () => g.hands[g.active].bet, split: () => g.hands[g.active].bet, insurance: () => Math.floor(g.amount / 2) };
+    if (needs[a]) {
       const cur = await store.userById(u.id);
-      await casinoStat(u.id, g.amount, 0);
-      return res.json({ ...bjView(g, true), result: 'Überkauft', won: 0, diamonds: Number(cur.diamonds) || 0 });
+      if ((Number(cur.diamonds) || 0) < needs[a]()) return res.status(400).json({ error: 'Dafür reichen deine Diamanten nicht.' });
     }
-    res.json(bjView(g));
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
-});
-app.post('/api/casino/bj/stand', async (req, res) => {
-  try {
-    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    const g = bjGames.get(u.id); if (!g) return res.status(400).json({ error: 'Keine offene Runde.' });
-    casino.dealerPlay(g);
-    const r = casino.result(g);
-    bjGames.delete(u.id);
-    const won = Math.round(g.amount * r.pay);
-    const after = won ? await payOut(u.id, won) : Number((await store.userById(u.id)).diamonds) || 0;
-    await casinoStat(u.id, g.amount, won);
-    res.json({ ...bjView(g, true), result: r.text, won, diamonds: after });
+    const r = BJ.act(g, a);
+    if (r.error) return res.status(400).json({ error: r.error });
+    let left = null;
+    if (r.extra) { const cur = await store.userById(u.id); left = (Number(cur.diamonds) || 0) - r.extra; await store.save(u.id, { diamonds: left }); }
+    // Nach der Versicherungsfrage: Hat die Bank Blackjack, ist die Runde vorbei
+    if ((a === 'insurance' || a === 'noinsurance') && BJ.isBJ(g.dealer)) BJ.finish(g);
+    await bjSend(res, u.id, g, left);
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
