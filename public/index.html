@@ -784,6 +784,47 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pl .nm{overflow:visible;padding:4px 8px 6px 6px}
 .pl .nm > span:first-child{display:block;overflow:hidden;text-overflow:ellipsis}
 .pl .nm .titleimg{margin-left:0;margin-right:0}
+.daybox .pk{font-size:10.5px;font-weight:800;color:var(--tape);line-height:1.15}
+.daybox.now .pk{color:#3a2600}
+.daybox.haspack{box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)}
+/* ===== Höhepunkt ===== */
+#hl{position:fixed;inset:0;z-index:20;display:none;place-items:center;overflow:hidden;background:rgba(2,8,10,0);transition:background .4s}
+#hl.on{display:grid;background:rgba(2,8,10,.9)}
+#hl .rays{position:absolute;left:50%;top:46%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;opacity:0;
+  background:repeating-conic-gradient(from 0deg,var(--c1) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0 8%,rgba(0,0,0,.6) 22%,transparent 48%);mask:radial-gradient(circle,#000 0 8%,rgba(0,0,0,.6) 22%,transparent 48%);
+  animation:raysin .7s .15s ease-out forwards, raysspin 14s linear infinite}
+@keyframes raysin{to{opacity:.55}}
+@keyframes raysspin{to{transform:rotate(360deg)}}
+#hl .burst{position:absolute;left:50%;top:46%;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--c2);box-shadow:0 0 80px 40px var(--c2);opacity:0;animation:burst .9s .1s ease-out}
+@keyframes burst{0%{opacity:1;transform:scale(.2)}60%{opacity:.9}100%{opacity:0;transform:scale(9)}}
+#hl .stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px}
+#hl .banner{font:400 clamp(38px,11vw,72px)/1 Anton,Impact,sans-serif;letter-spacing:2px;color:transparent;background:var(--txt);-webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 0 18px var(--c2)) drop-shadow(0 6px 0 rgba(0,0,0,.55));opacity:0;transform:scale(2.4);animation:slam .5s .95s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes slam{to{opacity:1;transform:scale(1)}}
+#hl .sub{font:800 14px Archivo;letter-spacing:3px;color:var(--c2);opacity:0;animation:fadein .4s 1.35s forwards;text-transform:uppercase}
+@keyframes fadein{to{opacity:1}}
+#hl .big{position:relative;width:min(70vw,330px);opacity:0;transform:translateY(40vh) scale(.35) rotate(-14deg);animation:rise 1s .2s cubic-bezier(.16,1.1,.3,1) forwards}
+@keyframes rise{60%{opacity:1}100%{opacity:1;transform:none}}
+#hl .big img{display:block;width:100%;border-radius:18px;box-shadow:0 0 0 4px var(--c1),0 0 60px 8px var(--c2),0 30px 60px rgba(0,0,0,.6)}
+#hl .big .float{animation:hover 3.2s 1.3s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-10px) rotate(1deg)}}
+#hl .shine{position:absolute;inset:0;border-radius:18px;overflow:hidden;pointer-events:none}
+#hl .shine::before{content:"";position:absolute;top:-20%;bottom:-20%;width:38%;left:-60%;transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:sweep 1.1s 1.2s ease-in-out, sweep 1.1s 3.6s ease-in-out}
+@keyframes sweep{to{left:130%}}
+#hl .sp{position:absolute;left:50%;top:46%;width:8px;height:8px;border-radius:50%;background:var(--c2);box-shadow:0 0 10px var(--c2);opacity:0;animation:spark 1.6s var(--dl) ease-out forwards}
+@keyframes spark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.3)}}
+#hl .tap{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom,0px));left:0;right:0;font:700 14px Archivo;color:var(--muted);opacity:0;animation:fadein .4s 2s forwards}
+#hl.ext{--c1:#FFB547;--c2:#FF9A2E;--txt:linear-gradient(180deg,#FFF6C8,#FFD23F 45%,#E0831A)}
+#hl.ghost{--c1:#FFFFFF;--c2:#A9E6FF;--txt:linear-gradient(180deg,#FFFFFF,#D9F3FF 45%,#8FD3F5)}
+#hl.ghost .big img{filter:drop-shadow(0 0 0 transparent)}
+#hl.ghost .big{animation:rise 1s .2s cubic-bezier(.16,1.1,.3,1) forwards, ghostfl 2.4s 1.2s ease-in-out infinite}
+@keyframes ghostfl{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25) saturate(1.2)}}
+
+#hl .stage{animation:hlshake .5s .95s ease-out}
+@keyframes hlshake{0%,100%{transform:none}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+#hl .tap{color:#9FB8B6}
 </style>
 </head>
 <body>
@@ -1403,6 +1444,21 @@ function renderCards() {
   }
 }
 let pid_last = 'standard';
+// Großer Auftritt für Extended Art und Ghost Rare
+function packHighlight(kind, img) {
+  let hl = document.getElementById('hl');
+  if (!hl) { hl = document.createElement('div'); hl.id = 'hl'; document.body.appendChild(hl); }
+  const sparks = Array.from({ length: 26 }, () => { const a = Math.random() * Math.PI * 2, r = 140 + Math.random() * 260; return `<span class="sp" style="--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--dl:${(0.2 + Math.random() * 0.6).toFixed(2)}s"></span>`; }).join('');
+  hl.className = kind + ' on';
+  hl.innerHTML = `<div class="rays"></div><div class="burst"></div>${sparks}
+    <div class="stage"><div class="big"><div class="float"><img src="${img}" alt=""><div class="shine"></div></div></div>
+    <div class="banner">${kind === 'ext' ? 'EXTENDED ART' : 'GHOST RARE'}</div>
+    <div class="sub">${kind === 'ext' ? 'Seltene Sonderform gezogen' : 'Die seltenste Karte im Spiel'}</div></div>
+    <div class="tap">Tippen zum Weitermachen</div>`;
+  sfx('prestige'); try { navigator.vibrate && navigator.vibrate([60, 40, 60, 40, 260]); } catch (e) {}
+  hl.onclick = () => { hl.className = ''; hl.innerHTML = ''; };
+}
+
 async function openPack(pid) {
   pid_last = pid;
   try {
@@ -1424,6 +1480,9 @@ async function openPack(pid) {
       ${(tcg.packs.find((x) => x.pack_id === pid) || {}).count ? `<button class="btn" id="openNext">Nächsten öffnen (${(tcg.packs.find((x) => x.pack_id === pid) || {}).count})</button>` : ''}
       <button class="btn ghost" id="closeOpener" style="min-width:150px">Weiter</button></div>`;
     el.classList.add('on');
+    // Besondere Karte? Nach ihrem Aufdecken kommt der große Auftritt (Ghost geht vor Extended)
+    const idx = r.pulled.findIndex((c) => c.variant === 'ghost') >= 0 ? r.pulled.findIndex((c) => c.variant === 'ghost') : r.pulled.findIndex((c) => c.variant === 'ext');
+    if (idx >= 0) { const c = r.pulled[idx]; setTimeout(() => { if ($('#opener').classList.contains('on')) packHighlight(c.variant, cardImg(c.id, c.variant)); }, idx * 650 + 900); }
   } catch (e) { toast(e.message); }
 }
 function sellCard(key) {
@@ -1506,16 +1565,18 @@ async function dailyDialog() {
   try {
     const v = await api('/api/daily');
     const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
-    const boxes = v.days.map((dia, i) => {
+    const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
+    const boxes = (v.rewards || v.days.map((d) => ({ dia: d }))).map((rw, i) => {
       const day = i + 1;
       const state = day < v.day || (day === v.day && v.claimed) ? 'done' : day === v.day && !v.claimed ? 'now' : '';
+      const pic = rw.pack ? `/tcg/pack_${rw.pack}.webp?v=${AVER}` : `/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${AVER}`;
       return day === 7
-        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><span><b>Tag 7</b><br>${fmt(dia)} ${D} und der Titel „Siebenfach“</span></div>`
-        : `<div class="daybox ${state}"><img src="/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${AVER}" alt=""><b>Tag ${day}</b>${fmt(dia)} ${D}</div>`;
+        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><img src="${pic}" alt="" style="width:46px;height:auto"><span><b>Tag 7</b><br>${fmt(rw.dia)} ${D} + ${PN[rw.pack] || ''}<br>und der Titel „Siebenfach“</span></div>`
+        : `<div class="daybox ${state} ${rw.pack ? 'haspack' : ''}"><img src="${pic}" alt="" ${rw.pack ? 'style="width:34px;height:auto"' : ''}><b>Tag ${day}</b>${fmt(rw.dia)} ${D}${rw.pack ? `<small class="pk">+ ${PN[rw.pack]}</small>` : ''}</div>`;
     }).join('');
     $('#modal').innerHTML = `<div class="panel" style="gap:12px">
       <h2>Willkommen zurück</h2>
-      <p class="sub">Hol dir jeden Tag deine Belohnung. Sieben Tage in Folge bringen den Titel „Siebenfach“.</p>
+      <p class="sub">Hol dir jeden Tag deine Belohnung, sie wird von Tag zu Tag besser. Lässt du einen Tag aus, beginnt die Serie wieder bei Tag 1.</p>
       <div class="daygrid">${boxes}</div>
       <div class="unlocks" style="background:rgba(255,210,63,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)">
         <b style="color:var(--tape)">Heutige Aufgabe</b>
@@ -1527,7 +1588,8 @@ async function dailyDialog() {
     if ($('#dailyGo')) $('#dailyGo').onclick = () => {
       api('/api/daily/claim', {}).then((r) => {
         sfx('exact'); closeModal(); loadHome();
-        toast(r.weekDone ? `+${fmt(r.gain)} Diamanten und der Titel „Siebenfach“!` : `+${fmt(r.gain)} Diamanten`);
+        const PN2 = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
+        toast(`+${fmt(r.gain)} Diamanten${r.pack ? ' und ein ' + PN2[r.pack] : ''}${r.weekDone ? ' und der Titel „Siebenfach“!' : ''}`);
       }).catch((e) => toast(e.message));
     };
   } catch (e) { toast(e.message); }

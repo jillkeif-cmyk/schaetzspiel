@@ -200,7 +200,9 @@ app.post('/api/daily/claim', async (req, res) => {
       save.daily_streak = 0;
     }
     await store.save(u.id, save);
-    res.json({ ok: true, gain, weekDone: v.day >= 7, diamonds: save.diamonds, next: daily.view(await store.userById(u.id)) });
+    const reward = daily.DAYS[v.day - 1] || {};
+    if (reward.pack) await store.packAdd(u.id, reward.pack, 1); // Booster des Tages
+    res.json({ ok: true, gain, pack: reward.pack || null, weekDone: v.day >= 7, diamonds: save.diamonds, next: daily.view(await store.userById(u.id)) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
