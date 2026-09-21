@@ -761,8 +761,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #openDaily.ready img{animation:dailybob 1.2s ease-in-out infinite alternate}
 @keyframes dailyglow{to{box-shadow:0 0 0 2px var(--tape),0 0 40px rgba(255,210,63,.75)}}
 @keyframes dailybob{to{transform:translateY(-4px) rotate(-4deg)}}
-.titleimg.a-dev{animation:devglow 3s linear infinite}
-@keyframes devglow{
+.titleimg.a-dev{animation:devtitle 3s linear infinite}
+@keyframes devtitle{
   0%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,77,109,.85)}
   25%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,210,63,.85)}
   50%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(61,220,151,.85)}
@@ -781,6 +781,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .rw-item.lk img,.rw-cell.lk .pcemb,.rw-cell.lk .frm{filter:grayscale(.5) brightness(.8)}
 .rw-ok{color:var(--ok);font-weight:800;font-size:12.5px}.rw-code{color:var(--tape);font-weight:800;font-size:12.5px}.rw-need{font-weight:700;font-size:12.5px}
 .rw-cell .bar,.rw-t .bar{width:100%}
+.pl .nm{overflow:visible;padding:4px 8px 6px 6px}
+.pl .nm > span:first-child{display:block;overflow:hidden;text-overflow:ellipsis}
+.pl .nm .titleimg{margin-left:0;margin-right:0}
 </style>
 </head>
 <body>
@@ -800,7 +803,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '12';
+const AVER = '13';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
