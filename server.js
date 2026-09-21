@@ -299,8 +299,8 @@ setTimeout(async () => {
 // Einmalig nach dem Update: Pool auf 200 Fragen pro Kategorie befüllen (im Admin-Bereich anhaltbar)
 setTimeout(async () => {
   try {
-    if (await store.setting('pool_fill_started_v1')) return;
-    await store.setting('pool_fill_started_v1', '1');
+    if (await store.setting('pool_fill_started_v2')) return;
+    await store.setting('pool_fill_started_v2', '1');
     game.qpool.setTarget(200); game.qpool.start();
   } catch (e) { console.error('Pool-Start:', e.message); }
 }, 20000);
