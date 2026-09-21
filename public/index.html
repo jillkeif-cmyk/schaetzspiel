@@ -956,6 +956,21 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .adm-t small{display:block;color:var(--muted);font-size:12px}.adm-t .bar{grid-column:1 / -1}.adm-t.skip{opacity:.5}
 .adm-n{font:400 15px/1 Anton,Impact,sans-serif}
 .adm-log{max-height:220px;overflow:auto;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.qready{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);text-align:left}
+.qready b{display:block;font-size:14.5px}.qready small{display:block;color:var(--muted);font-size:12.5px}
+.qdot{flex:none;width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,210,63,.25);border-top-color:var(--tape);animation:spin .9s linear infinite;display:grid;place-items:center;font-weight:900}
+.qready.ok{box-shadow:inset 0 0 0 1.5px rgba(61,220,151,.7),0 0 16px rgba(61,220,151,.2)}
+.qready.ok .qdot{animation:none;border:0;background:#3DDC97;color:#063;}
+.chal[data-chal]{cursor:pointer}.chal[data-chal]:active{transform:scale(.99)}
+.ch-tiers{display:flex;flex-direction:column;gap:6px}
+.ch-tier{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--bg-deep)}
+.ch-tier.done{opacity:.7}.ch-tier.next{box-shadow:inset 0 0 0 2px var(--tape)}
+.ch-n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,210,63,.18);font-weight:900;font-size:12px}
+.ch-rw{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ch-it{display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--bg-deep)}
+.ch-it.wide{grid-column:1 / -1;flex-direction:column;align-items:stretch}
+.ch-it b{display:block;font-size:13.5px}.ch-it small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3}
+.ch-it.lk img,.ch-it.lk .frm{filter:grayscale(.55) brightness(.8)}
 </style>
 </head>
 <body>
@@ -1832,10 +1847,28 @@ function renderNews() {
       <div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>
       <p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`).join('');
 }
+// Detailfenster: alle Stufen mit XP und die Belohnungen, die an dieser Herausforderung hängen
+function showChallenge(key) {
+  const c = home && home.progress.challenges.find((x) => x.key === key); if (!c) return;
+  const C = home.cards, F = home.frames || [];
+  const find = (r) => { const [k, id] = r.split(':'); const it = k === 'e' ? C.emblems.find((x) => x.id === id) : k === 't' ? C.titles.find((x) => x.id === id) : F.find((x) => x.id === id); return it ? { k, it } : null; };
+  const rw = (c.rewards || []).map(find).filter(Boolean);
+  const img = ({ k, it }) => k === 'e' ? `<img class="pcemb${it.anim ? ' a-' + it.anim : ''}" style="--s:56px" src="/emblems/pc_${esc(it.id)}.webp?v=${AVER}" alt="">`
+    : k === 't' ? `<img class="titleimg${it.anim ? ' a-' + it.anim : ''}" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt="" style="max-width:100%">`
+    : avatar({ ...home.me, frame: it.id, frameAnim: it.anim }, 56, false);
+  const kindName = { e: 'Emblem', t: 'Titel', f: 'Rahmen' };
+  $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:86vh;overflow:auto">
+    <h2>${esc(c.name)}</h2><p class="sub" style="margin-top:-6px">${esc(c.desc)} · aktuell ${fmt(c.cur)}</p>
+    <b>Stufen</b>
+    <div class="ch-tiers">${c.tiers.map((t, i) => `<div class="ch-tier ${i < c.done ? 'done' : i === c.done ? 'next' : ''}"><span class="ch-n">${i + 1}</span><span class="grow">${fmt(t)}</span><span class="wp">+${fmt(c.xps[i])} XP</span>${i < c.done ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>
+    ${rw.length ? `<b>Das kannst du damit freischalten</b><div class="ch-rw">${rw.map((x) => `<div class="ch-it ${x.it.unlocked ? '' : 'lk'} ${x.k === 't' ? 'wide' : ''}">${img(x)}<div><small>${kindName[x.k]}${x.it.unlocked ? ' · <span class="rw-ok">frei</span>' : ''}</small><b>${esc(x.it.name || x.it.text)}</b><small>${esc(x.it.need)}</small></div></div>`).join('')}</div>` : '<p class="sub">An dieser Herausforderung hängen nur XP.</p>'}
+    <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
 function renderChallenges() {
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
   const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
-  const row = (c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+  const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
     const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
     const pr2 = home && home.progress;
@@ -1844,6 +1877,7 @@ function renderChallenges() {
       $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
     }
   const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
+  setTimeout(() => document.querySelectorAll('[data-chal]').forEach((el) => { el.onclick = () => showChallenge(el.dataset.chal); }), 0);
   $('#chals').innerHTML = G.map(([g, n]) => {
     const list = pr.challenges.filter((c) => c.group === g); if (!list.length) return '';
     const done = list.reduce((x, c) => x + c.done, 0), tot = list.reduce((x, c) => x + c.total, 0);
@@ -1890,9 +1924,13 @@ function renderAdmin() {
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
         <label class="row" style="gap:6px;margin:0"><span class="sub">Ziel je Kategorie</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
       </div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Modus</span><div class="seg"><button data-admmode="batch" class="${d.mode === 'batch' ? 'on' : ''}">📦 Sammelauftrag · halber Preis</button><button data-admmode="direct" class="${d.mode === 'direct' ? 'on' : ''}">⚡ Direkt</button></div></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Nachdenken</span><div class="seg"><button data-admeff="low" class="${d.effort === 'low' ? 'on' : ''}">wenig · günstig</button><button data-admeff="medium" class="${d.effort === 'medium' ? 'on' : ''}">mittel</button><button data-admeff="high" class="${d.effort === 'high' ? 'on' : ''}">viel · teuer</button></div></div>
+      ${d.batchStatus ? `<p class="sub">📦 Sammelauftrag läuft: ${esc(d.batchStatus)}. Ergebnisse kommen meist nach einigen Minuten, spätestens nach 24 Stunden.</p>` : ''}
       <label class="row" style="gap:8px;margin:0"><input type="checkbox" id="admAuto" ${d.auto ? 'checked' : ''}> <span>Automatisch nachfüllen, wenn die aktivsten Spieler 80 % einer Kategorie gesehen haben</span></label>
       <div class="adm-kpi"><div><b>${fmt(tot)}</b><small>Fragen im Pool</small></div><div><b>${fmt(d.made)}</b><small>seit Start erstellt</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Ausgabe-Tokens</small></div></div>
       <p class="sub">Tokens dieser Befüllung: ${fmt(tk.input)} Eingabe, ${fmt(tk.output)} Ausgabe in ${fmt(tk.calls)} Anfragen${d.made ? ` · etwa ${fmt(Math.round(tk.output / Math.max(1, d.made)))} Ausgabe-Tokens pro Frage` : ''}.</p>
+      <p class="sub">Kosten dieser Befüllung: etwa <b>$${(tk.input * 2e-6 + tk.output * 10e-6).toFixed(2)}</b>${d.made ? ` · ${(100 * (tk.input * 2e-6 + tk.output * 10e-6) / Math.max(1, d.made)).toFixed(2)} Cent pro Frage` : ''} · seit Serverstart gesamt etwa $${(tk.totalInput * 2e-6 + tk.totalOutput * 10e-6).toFixed(2)} (Sonnet 5: $2 je Mio. Eingabe, $10 je Mio. Ausgabe, Sammelauftrag zur Hälfte)</p>
     </div>
     <div class="panel adm">
       <b>Kategorien</b>
@@ -1903,6 +1941,8 @@ function renderAdmin() {
   $('#admStop').onclick = () => adminAct('stop');
   $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
   $('#admAuto').onchange = (e) => adminAct('auto', e.target.checked);
+  document.querySelectorAll('[data-admmode]').forEach((x) => { x.onclick = () => adminAct('mode', x.dataset.admmode); });
+  document.querySelectorAll('[data-admeff]').forEach((x) => { x.onclick = () => adminAct('effort', x.dataset.admeff); });
 }
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
@@ -2571,7 +2611,13 @@ function update() {
         ${others.length ? `<p class="sub">${others.map((b) => `${esc(b.name)}: ${fmt(b.amount)} 💎`).join(' · ')}</p>` : ''}`;
     }
     const an = $('#aiLobby');
-    if (an) an.textContent = S.fromPool && S.aiStatus === 'ready' ? '📚 Fragen aus dem Pool sind bereit, keiner von euch hatte sie schon. Ihr könnt sofort starten.' : { loading: 'Frische Fragen werden schon jetzt erstellt …', waiting: 'Warte auf die frischen Fragen …', ready: '✓ Frische Fragen sind fertig, ihr könnt starten.', failed: 'Mehrere Anläufe ohne Erfolg, gespielt wird mit dem festen Pool.', off: 'Gespielt wird mit dem festen Fragenpool.', idle: 'Fragen werden gleich angefordert …' }[S.aiStatus] || '';
+    if (an) {
+      const ready = S.aiStatus === 'ready' || S.aiStatus === 'off' || S.aiStatus === 'failed';
+      const txt = S.fromPool && S.aiStatus === 'ready' ? 'Fragen aus dem Pool sind bereit · keiner von euch hatte sie schon'
+        : S.aiStatus === 'ready' ? 'Frische Fragen sind fertig' : S.aiStatus === 'off' ? 'Fragen sind bereit' : S.aiStatus === 'failed' ? 'Fragen sind bereit (Notlösung)'
+        : S.aiStatus === 'idle' ? 'Fragen werden gleich vorbereitet …' : 'Fragen werden vorbereitet …';
+      an.innerHTML = `<span class="qready ${ready ? 'ok' : ''}"><span class="qdot">${ready ? '✓' : ''}</span><span><b>${ready ? 'Fertig, es kann losgehen' : 'Einen Moment bitte'}</b><small>${esc(txt)}</small></span></span>`;
+    }
     $('#lobbyAct').innerHTML = '<button class="btn ghost" id="invite">Freunde einladen</button>' + (host ? `<button class="btn" id="start">Match starten</button>${S.players.length < 2 ? '<p class="sub center">Allein spielen geht, zählt aber nicht als Sieg.</p>' : ''}` : '<p class="sub center">Der Host startet das Match.</p>') + '<button class="btn ghost" id="leave">Match verlassen</button>';
   }
   if (S.phase === 'countdown') {

@@ -92,6 +92,14 @@ app.post('/api/login', async (req, res) => {
 });
 
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
+// Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
+const CHALLENGE_REWARDS = (() => {
+  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp']) base[k] = 0;
+  const items = [...cards.EMBLEMS.map((i) => ['e', i]), ...cards.TITLES.map((i) => ['t', i]), ...frames.FRAMES.map((i) => ['f', i])].filter(([, i]) => i.cond && !i.secret && !i.dev && !i.event);
+  const out = {};
+  for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
+  return out;
+})();
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
 const TOP = new Set(['ext', 'ghost']);
 async function cardStats(uid) {
@@ -121,7 +129,7 @@ app.get('/api/home', async (req, res) => {
       cards: cards.view(u2),
       frames: frames.view(u2, isMod(u)),
       casinoTop: (await store.casinoRanking().catch(() => [])).map(publicStats),
-      progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u2) } });
+      progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u2).map((c) => ({ ...c, rewards: CHALLENGE_REWARDS[c.key] || [] })) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -805,6 +813,8 @@ app.post('/api/admin/pool', async (req, res) => {
     else if (a === 'stop') game.qpool.stop();
     else if (a === 'target') game.qpool.setTarget(req.body.value);
     else if (a === 'auto') game.qpool.setAuto(!!req.body.value);
+    else if (a === 'mode') game.qpool.setMode(String(req.body.value));
+    else if (a === 'effort') game.qpool.setEffort(String(req.body.value));
     else return res.status(400).json({ error: 'Unbekannte Aktion.' });
     const seen = await store.seenCounts(u.id).catch(() => new Set());
     res.json({ source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
