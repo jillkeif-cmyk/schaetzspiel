@@ -657,7 +657,7 @@ app.get('/api/friends', async (req, res) => {
     for (const f of await store.friendList(u.id)) {
       const o = await store.userById(f.id); if (!o) continue;
       const m = game.matches.get(game.userMatch.get(o.id));
-      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished',
+      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished',
         joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 8 ? m.code : null });
     }
     res.json({ friends: out });
@@ -800,6 +800,7 @@ const game = attachGame(io, store);
 // Mehrspieler-Blackjack: eigene Socket-Events, gleiche Anmeldung wie das Schätzspiel
 const bjTables = require('./lib/bjtables')(io, store, casinoStat, push);
 io.on('connection', (socket) => { if (socket.data.user) bjTables.attach(socket, socket.data.user); });
+game.hooks.table = (id) => bjTables.isSeated(id);
 
 store.init().then(() => push.init(store)).then((k) => {
   console.log('Push bereit, Schlüssel endet auf …' + k.slice(-6));

@@ -888,6 +888,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 @keyframes vipspark{0%,100%{filter:drop-shadow(0 0 4px rgba(150,225,255,.6)) brightness(1)}50%{filter:drop-shadow(0 0 14px rgba(170,235,255,1)) brightness(1.25) saturate(1.2)}}
 .vipb.t5{animation:vipblack 2.4s ease-in-out infinite}
 @keyframes vipblack{0%,100%{filter:drop-shadow(0 0 6px rgba(217,169,46,.7)) brightness(1);transform:translateY(0) scale(1)}50%{filter:drop-shadow(0 0 18px rgba(255,200,70,1)) drop-shadow(0 0 30px rgba(255,170,40,.6)) brightness(1.2);transform:translateY(-2px) scale(1.06)}}
+.olist{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.oppl{font-size:13px;color:var(--muted)}.oppl b{color:var(--paper);font-weight:800}
 </style>
 </head>
 <body>
@@ -955,7 +957,7 @@ function seenText(u) {
   const d = Math.round(h / 24);
   return d === 1 ? 'gestern' : 'vor ' + d + ' Tagen';
 }
-const onlineText = (u) => (u.online ? 'online' : 'zuletzt ' + seenText(u));
+const onlineText = (u) => (u.online ? (u.act && u.act !== 'online' ? u.act : 'online') : 'zuletzt ' + seenText(u));
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
 function closeModal() { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; }
 function askPassword(code, wrong) {
@@ -1819,6 +1821,7 @@ function connect() {
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
+  socket.on('connect', () => { lastPresence = ''; reportPresence(); });
   socket.on('bj:invited', (d) => {
     $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>🃏 Blackjack-Einladung</h2><p>${esc(d.from)} lädt dich an den Tisch ein.</p>
       <button class="btn" id="bjAccept">Hinsetzen</button><button class="btn ghost" id="pwCancel">Später</button></div>`;
@@ -1846,7 +1849,15 @@ function connect() {
 }
 
 // ---------- Ansichten ----------
+let lastPresence = '';
+function reportPresence() {
+  if (!socket || !socket.connected || S) return;
+  const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
+  if (pg === lastPresence) return;
+  lastPresence = pg; socket.emit('presence', pg);
+}
 function render() {
+  setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   if (key !== viewKey) { viewKey = key; app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind(); window.scrollTo(0, 0); }
   update();
@@ -2232,7 +2243,8 @@ function update() {
     const full = L.running >= L.max;
     document.querySelectorAll('.frList').forEach((e) => { e.innerHTML = friendsHtml(); });
     $('#create').disabled = full;
-    $('#onlineText').textContent = L.online ? `${L.online} Spieler online: ${(L.onlineNames || []).join(', ')}` : 'Verbinde …';
+    const ppl = L.onlinePeople || [];
+    $('#onlineText').innerHTML = L.online ? `<b>${L.online} Spieler online</b>${ppl.length ? `<span class="olist">${ppl.map((o) => `<span class="oppl"><b>${esc(o.name)}</b> ${esc(o.act)}</span>`).join('')}</span>` : ''}` : 'Verbinde …';
     $('#slots').textContent = full ? `Beide Match-Plätze sind belegt. Tritt einem offenen Match bei oder warte, bis eines endet.` : `${L.running} von ${L.max} Matches laufen gerade.`;
     $('#openList').innerHTML = L.open.length ? `<h2 style="margin-bottom:10px">Matches</h2><div class="plist">${L.open.map((m) => `<div class="pl" style="--c:${m.phase === 'lobby' ? 'var(--tape)' : 'var(--line)'}"><span class="nm">${m.locked ? '🔒 ' : ''}${esc(m.host)}s Match ${m.ranked ? '<span class="tag">Rangliste</span>' : ''}<br><small>${m.setup ? 'wird gerade eingerichtet' : m.phase === 'lobby' ? `wartet in der Lobby · ${m.players} von ${L.maxPlayers || 8}` : m.phase === 'finished' ? `beendet · ${m.players} Spieler` : m.phase === 'countdown' ? `startet gleich · noch ${(L.maxPlayers || 8) - m.players} Plätze frei` : `läuft · Frage ${m.qIndex} von ${m.qTotal} · ${m.players} Spieler`}</small></span>${!m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players < (L.maxPlayers || 8) ? `<button class="btn small" data-join="${esc(m.code)}">Beitreten</button>` : !m.setup && m.phase !== 'finished' ? `<button class="btn small ghost" data-watch="${esc(m.code)}">Zuschauen</button>` : ''}</div>`).join('')}</div>` : '';
     const me = home && home.me;
@@ -2489,7 +2501,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.tacc) api('/api/tcg/trade/accept', { id: t.dataset.tacc }).then(() => { loadTrades(); loadTcg(); toast('Getauscht'); }).catch((e) => toast(e.message));
   else if (t.dataset.tdec) api('/api/tcg/trade/decline', { id: t.dataset.tdec }).then(() => loadTrades()).catch((e) => toast(e.message));
   else if (t.dataset.card) showCard(t.dataset.card);
-  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); }
+  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); }
   else if (t.dataset.cbet) { cbet = Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
