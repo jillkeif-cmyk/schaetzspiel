@@ -12,6 +12,7 @@ const frames = require('./lib/frames');
 const push = require('./lib/push');
 const tcg = require('./lib/tcg');
 const casino = require('./lib/casino');
+const daily = require('./lib/daily');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -172,6 +173,58 @@ app.post('/api/seen', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// ---------- Tagesbelohnungen ----------
+app.get('/api/daily', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    res.json(daily.view({ ...u, ...(await cardStats(u.id)) }));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/daily/claim', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const v = daily.view(u);
+    if (v.claimed) return res.status(400).json({ error: 'Heute schon abgeholt. Komm morgen wieder.' });
+    const t = daily.taskFor(v.day);
+    let gain = v.loginDia;
+    if (v.task.done) gain += t.dia;
+    const save = {
+      diamonds: (Number(u.diamonds) || 0) + gain,
+      daily_day: v.today,
+      daily_streak: v.day,
+      daily_base: Number(u[t.stat]) || 0,
+    };
+    if (v.day >= 7) { // Woche voll: Titel freischalten und Serie neu starten
+      const un = new Set(String(u.unlocks || '').split(',').filter(Boolean));
+      un.add('TD7'); save.unlocks = [...un].join(',');
+      save.daily_streak = 0;
+    }
+    await store.save(u.id, save);
+    res.json({ ok: true, gain, weekDone: v.day >= 7, diamonds: save.diamonds, next: daily.view(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Erinnerung an die Tagesbelohnung, jeden Tag um 11 Uhr deutscher Zeit
+let lastReminder = '';
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const berlin = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+    if (berlin.getHours() !== 11 || berlin.getMinutes() > 4) return;
+    const today = daily.dayKey();
+    if (lastReminder === today) return;
+    lastReminder = today;
+    const all = await store.allUsers().catch(() => []);
+    let n = 0;
+    for (const u of all) {
+      if (u.daily_day === today) continue; // schon abgeholt
+      await push.toUser(u.id, { title: '🎁 Deine Tagesbelohnung wartet', body: 'Hol dir heute deine Diamanten ab, bevor die Serie reißt.', tag: 'daily', url: '/' }).catch(() => {});
+      n++;
+    }
+    console.log('Tages-Erinnerung verschickt an', n, 'Spieler');
+  } catch (e) { console.error('Erinnerung:', e.message); }
+}, 60 * 1000);
+
 // ---------- Glücksspiel ----------
 const MIN_BET = 50, MAX_BET = 20000;
 const bjGames = new Map(); // userId -> laufendes Blackjack-Spiel
@@ -312,6 +365,7 @@ app.post('/api/tcg/open', async (req, res) => {
     await store.packAdd(u.id, pid, -1);
     const pulled = tcg.openPack(pid);
     for (const c of pulled) await store.cardAdd(u.id, c.id, c.variant, 1);
+    await store.save(u.id, { packs_opened: (Number(u.packs_opened) || 0) + 1 });
     res.json({ pulled, state: await tcgState(await store.userById(u.id)) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -335,7 +389,7 @@ app.post('/api/tcg/melt', async (req, res) => {
     }
     if (!n) return res.status(400).json({ error: 'Nichts zum Umwandeln. Die letzte Karte einer Art bleibt immer erhalten.' });
     const cur = await store.userById(u.id);
-    await store.save(u.id, { diamonds: (Number(cur.diamonds) || 0) + sum });
+    await store.save(u.id, { diamonds: (Number(cur.diamonds) || 0) + sum, melted: (Number(cur.melted) || 0) + n });
     res.json({ ...(await tcgState(await store.userById(u.id))), melted: n, gained: sum });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

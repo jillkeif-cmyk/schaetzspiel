@@ -645,11 +645,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   box-shadow:inset 0 0 0 10px #C89A3C,inset 0 0 0 13px #1a2426,0 14px 34px rgba(0,0,0,.55)}
 .wheel::after{content:"";position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2A6B72,#0B2F35 70%);box-shadow:inset 0 0 0 4px #C89A3C,0 0 24px rgba(0,0,0,.6)}
 .pointer{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid var(--tape);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));z-index:2}
-.balltrack{position:absolute;inset:0;transition:transform 4.6s cubic-bezier(.1,.55,.15,1);z-index:4;pointer-events:none}
-.ball{position:absolute;left:50%;top:6%;width:14px;height:14px;margin-left:-7px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff,#cfd8dc 60%,#8fa0a3);box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 10px rgba(255,255,255,.5);
-  transition:top 4.6s cubic-bezier(.2,.6,.2,1)}
-.balltrack.settled .ball{top:26%}
+.ball{position:absolute;left:50%;top:50%;width:15px;height:15px;z-index:5;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#cfd8dc 60%,#8fa0a3);box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 12px rgba(255,255,255,.6);
+  transform:rotate(var(--a)) translate(-50%,-50%) translateY(-118px)}
+@media (max-width:420px){.ball{transform:rotate(var(--a)) translate(-50%,-50%) translateY(-31vw)}}
 .ballnum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;display:grid;place-items:center;width:78px;height:78px;border-radius:50%;font:900 30px/1 Archivo;font-stretch:70%;color:#fff;background:rgba(6,22,26,.9);box-shadow:inset 0 0 0 3px rgba(255,255,255,.25)}
 .ballnum.rot{background:#C0342F}.ballnum.schwarz{background:#141B1C}.ballnum.gruen{background:#1D7A4A}
 .betgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
@@ -667,9 +666,20 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 /* Spielerzeilen: alles auf einer Höhe */
 .pl{align-items:center}
 .pl .ava{align-self:center;flex:none}
-.pl .nm{display:flex;flex-direction:column;gap:5px;justify-content:center}
+.pl .nm{display:block;line-height:1.25}
+.pl .nm .titleimg{display:block;margin-top:6px}
 .pl .nm .titleimg{margin:0}
 .pcemb.lineup{align-self:center;flex:none;margin-left:2px}
+
+.daygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.daybox{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);font-size:12px;color:var(--muted)}
+.daybox img{width:38px;height:38px}
+.daybox b{color:var(--paper);font-size:13px}
+.daybox.done{background:rgba(79,196,106,.16);box-shadow:inset 0 0 0 1.5px rgba(79,196,106,.6)}
+.daybox.now{background:linear-gradient(180deg,#F0C233,#E8A91C);color:#10201F;box-shadow:0 0 18px rgba(255,210,63,.5)}
+.daybox.now b{color:#10201F}
+.daybox.d7{grid-column:span 4;flex-direction:row;justify-content:center;gap:10px}
+.daybox.d7 img{width:54px;height:54px}
 </style>
 </head>
 <body>
@@ -894,6 +904,7 @@ function pushUI() {
 }
 
 // ---------- Sammelkarten ----------
+let rtab = 'world';
 let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
 let cgame = 'roulette', cbet = 100, cpick = 'rot', spinning = false, bj = null;
 const RBETS = [['rot', 'Rot', 'rot'], ['schwarz', 'Schwarz', 'schwarz'], ['gruen0', '', ''], ['gerade', 'Gerade', ''], ['ungerade', 'Ungerade', ''], ['klein', '1–18', ''], ['gross', '19–36', ''], ['drittel1', '1–12', ''], ['drittel2', '13–24', ''], ['drittel3', '25–36', '']];
@@ -904,8 +915,7 @@ function renderCasino() {
     const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}</div>
-        <div class="balltrack" id="balltrack"><span class="ball"></span></div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}<span class="ball" id="ball" hidden></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="betgrid">${RBETS.filter((b) => b[1]).map(([k, n, c]) => `<button data-pick="${k}" class="${c} ${cpick === k ? 'on' : ''}">${n}</button>`).join('')}
         <button data-pick="zahl" class="${cpick === 'zahl' ? 'on' : ''}">Zahl ×36</button></div>
@@ -943,18 +953,11 @@ async function doSpin() {
   spinning = true;
   try {
     const d = await api('/api/casino/roulette', { amount, kind: cpick, number });
-    const wheel = $('#wheel'), ball = $('#ballnum'), track = $('#balltrack');
+    const wheel = $('#wheel'), ball = $('#ballnum'), kugel = $('#ball');
     const deg = 360 * 6 + (360 - (d.index * (360 / 37)));
     wheel.style.transform = `rotate(${deg}deg)`;
-    // Kugel läuft gegenläufig und fällt am Ende ins Fach der gezogenen Zahl
-    if (track) {
-      track.classList.remove('settled');
-      track.style.transition = 'none'; track.style.transform = 'rotate(0deg)';
-      void track.offsetWidth;
-      track.style.transition = '';
-      track.style.transform = `rotate(${-(360 * 9) + deg}deg)`;
-      setTimeout(() => track.classList.add('settled'), 2600);
-    }
+    // Die Kugel sitzt im Fach der gezogenen Zahl und dreht mit dem Rad mit
+    if (kugel) { kugel.hidden = false; kugel.style.setProperty('--a', (d.index * (360 / 37)).toFixed(2) + 'deg'); }
     ball.textContent = '…'; ball.className = 'ballnum';
     sfx('dart');
     setTimeout(() => {
@@ -1145,6 +1148,50 @@ function showLocked(kind, id) {
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
 
+function renderRanks() {
+  const box = $('#rbody'); if (!box || !home) return;
+  document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
+  const me2 = home.me;
+  const rows = rtab === 'casino' ? (home.casinoTop || []) : rtab === 'points' ? (home.points || []) : (home.world || []);
+  const line = (u, i) => {
+    const right = rtab === 'casino' ? `${fmt(u.casinoXp || 0)} XP` : rtab === 'points' ? `${fmt(u.points || 0)} Pkt` : `${fmt(u.rankPoints || 0)} WP`;
+    const sub = rtab === 'casino' ? `${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester ${fmt(u.casinoBest || 0)} 💎` : rankText(u);
+    return `<div class="pl ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${sub}</span></span><span class="wp">${right}</span></div>`;
+  };
+  box.innerHTML = rows.length ? `<div class="plist">${rows.map(line).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>';
+}
+
+async function dailyDialog() {
+  try {
+    const v = await api('/api/daily');
+    const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
+    const boxes = v.days.map((dia, i) => {
+      const day = i + 1;
+      const state = day < v.day || (day === v.day && v.claimed) ? 'done' : day === v.day && !v.claimed ? 'now' : '';
+      return day === 7
+        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><span><b>Tag 7</b><br>${fmt(dia)} ${D} und der Titel „Siebenfach“</span></div>`
+        : `<div class="daybox ${state}"><img src="/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${AVER}" alt=""><b>Tag ${day}</b>${fmt(dia)} ${D}</div>`;
+    }).join('');
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px">
+      <h2>Willkommen zurück</h2>
+      <p class="sub">Hol dir jeden Tag deine Belohnung. Sieben Tage in Folge bringen den Titel „Siebenfach“.</p>
+      <div class="daygrid">${boxes}</div>
+      <div class="unlocks" style="background:rgba(255,210,63,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)">
+        <b style="color:var(--tape)">Heutige Aufgabe</b>
+        <span class="uitem" style="font-weight:600">${esc(v.task.text)} · ${fmt(v.task.cur)} von ${fmt(v.task.need)}${v.task.done ? ' ✓' : ''} · +${fmt(v.task.dia)} ${D}</span></div>
+      ${v.claimed ? '<p class="sub center">Heute schon abgeholt. Komm morgen wieder.</p>'
+        : `<button class="btn" id="dailyGo">Abholen: ${fmt(v.loginDia + (v.task.done ? v.task.dia : 0))} Diamanten</button>`}
+      <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    if ($('#dailyGo')) $('#dailyGo').onclick = () => {
+      api('/api/daily/claim', {}).then((r) => {
+        sfx('exact'); closeModal(); loadHome();
+        toast(r.weekDone ? `+${fmt(r.gain)} Diamanten und der Titel „Siebenfach“!` : `+${fmt(r.gain)} Diamanten`);
+      }).catch((e) => toast(e.message));
+    };
+  } catch (e) { toast(e.message); }
+}
+
 function tradeDialog() {
   const mine = tcg.cards.filter((c) => c.count > 0);
   if (!mine.length) return toast('Du hast noch keine Karten zum Tauschen.');
@@ -1238,7 +1285,7 @@ function connect() {
 
 // ---------- Ansichten ----------
 function render() {
-  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
+  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   if (key !== viewKey) { viewKey = key; app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind(); window.scrollTo(0, 0); }
   update();
 }
@@ -1254,6 +1301,12 @@ function build() {
       <div class="err" id="authErr"></div>
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
+
+  if (!S && page === 'ranks') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <h1 style="font-size:30px">Ranglisten</h1>
+    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button></div>
+    <div id="rbody"></div></div>`;
 
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
@@ -1281,6 +1334,8 @@ function build() {
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
+    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
+    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
     <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
@@ -1297,8 +1352,8 @@ function build() {
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
     <div id="nextUp"></div>
-    <div id="casinoTop"></div>
-    <div><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
+
+    <div hidden><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
       <div id="board" class="plist" style="margin-top:10px"></div></div></div>`;
@@ -1423,7 +1478,7 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}<br>${p.title ? titleHtml(p) : `<span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm"><span style="white-space:nowrap">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}</span>${p.title ? titleHtml(p) : `<br><span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
@@ -1536,6 +1591,7 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
+  if (!S && page === 'ranks') { renderRanks(); return; }
   if (!S && page === 'cards') { renderCards(); return; }
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
@@ -1602,6 +1658,7 @@ function update() {
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span class="editbtn">Spielerkarte bearbeiten ›</span></div>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
+    api('/api/daily').then((v) => { const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed; }).catch(() => {});
     const ct = $('#casinoTop');
     if (ct) {
       const list = (home && home.casinoTop) || [];
@@ -1830,6 +1887,9 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'pushOn') pushOn();
   else if (t.id === 'pushOff') pushOff();
   else if (t.id === 'newTrade') tradeDialog();
+  else if (t.id === 'openRanks') { page = 'ranks'; render(); }
+  else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
+  else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
   else if (t.dataset.pack) packInfo(t.dataset.pack);
