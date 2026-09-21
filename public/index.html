@@ -937,10 +937,53 @@ function pushUI() {
 // ---------- Sammelkarten ----------
 let rtab = 'world';
 let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
+let bjList = [], bjT = null;
 let cgame = 'roulette', cbet = 100, cpick = 'rot', spinning = false, bj = null;
 const RBETS = [['rot', 'Rot', 'rot'], ['schwarz', 'Schwarz', 'schwarz'], ['gruen0', '', ''], ['gerade', 'Gerade', ''], ['ungerade', 'Ungerade', ''], ['klein', '1–18', ''], ['gross', '19–36', ''], ['drittel1', '1–12', ''], ['drittel2', '13–24', ''], ['drittel3', '25–36', '']];
+function renderTables(box) {
+  const meId = home && home.me && home.me.id;
+  if (!bjT) {
+    box.innerHTML = `<button class="btn" id="bjCreate" style="width:100%;margin-bottom:12px">Tisch eröffnen</button>
+      ${bjList.length ? `<div class="plist">${bjList.map((t) => `<div class="pl" style="--c:var(--line)"><span class="nm"><b>Tisch von ${esc(t.host)}</b><br><span class="lv">${t.seats} von ${t.max} Plätzen · ${t.phase === 'betting' ? 'Einsätze offen' : t.phase === 'playing' ? 'Runde läuft' : 'Auswertung'}</span></span>${t.seats < t.max ? `<button class="mini go" data-bjjoin="${esc(t.id)}">Hinsetzen</button>` : ''}</div>`).join('')}</div>`
+        : '<p class="sub">Gerade ist kein Tisch offen. Eröffne einen und lade Freunde ein.</p>'}`;
+    return;
+  }
+  const t = bjT, me = t.seats.find((x) => x.id === meId), myTurn = t.turn === meId;
+  const card = (c, k) => (c && c.hidden ? `<span class="pc back" style="--dl:${k * 0.15}s"><b>?</b></span>`
+    : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="--dl:${k * 0.15}s"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
+  const can = (me && me.can) || {};
+  box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
+      <div class="bjrow"><span class="bjlab">BANK${t.dealerScore != null ? ' · ' + t.dealerScore : ''}</span><div class="bjhand">${(t.dealer || []).map(card).join('')}</div></div>
+      <div class="bjhands">${t.seats.map((st) => `<div class="bjh ${t.turn === st.id ? 'act' : ''}">
+          <span class="bjlab">${esc(st.name)}${st.id === meId ? ' (du)' : ''}</span>
+          ${st.hands.length ? st.hands.map((h) => `<div class="bjhand">${h.cards.map(card).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
+            : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
+          ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
+    </div>
+    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px">${[100, 250, 500, 1000].map((v) => `<button class="chipbtn" data-bjbet="${v}">${v}</button>`).join('')}</div>
+        <p class="sub" style="margin-top:6px">${me && me.bet ? `Dein Einsatz: ${fmt(me.bet)} 💎` : 'Setz deinen Einsatz'}</p>
+        ${t.hostId === meId ? '<button class="btn" id="bjStart" style="width:100%;margin-top:8px">Austeilen</button>' : '<p class="sub center">Der Gastgeber teilt aus, sobald alle gesetzt haben.</p>'}`
+      : t.phase === 'playing' ? (myTurn ? `<div class="bjacts">
+          <button class="go" data-bja="hit"><span class="ic">🂠</span>Karte</button>
+          <button data-bja="stand"><span class="ic">✋</span>Halten</button>
+          <button data-bja="double" ${can.double ? '' : 'disabled'}><span class="ic">×2</span>Verdoppeln</button>
+          <button data-bja="split" ${can.split ? '' : 'disabled'}><span class="ic">✂</span>Teilen</button>
+          <button data-bja="surrender" ${can.surrender ? '' : 'disabled'}><span class="ic">🏳</span>Aufgeben</button></div>`
+        : `<p class="sub center" style="margin-top:10px">${esc((t.seats.find((x) => x.id === t.turn) || {}).name || 'Die Bank')} ist am Zug …</p>`)
+      : '<p class="sub center" style="margin-top:10px">Auswertung … gleich geht die nächste Runde los.</p>'}
+    <button class="btn ghost" id="bjLeave" style="width:100%;margin-top:10px">Tisch verlassen</button>`;
+  const on = (sel, fn) => document.querySelectorAll(sel).forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) fn(b); }; });
+  on('#bjCreate', () => socket.emit('bj:create'));
+  on('[data-bjjoin]', (b) => socket.emit('bj:join', b.dataset.bjjoin));
+  on('[data-bjbet]', (b) => socket.emit('bj:bet', Number(b.dataset.bjbet)));
+  on('#bjStart', () => socket.emit('bj:start'));
+  on('[data-bja]', (b) => { sfx('dart'); socket.emit('bj:act', b.dataset.bja); });
+  on('#bjLeave', () => { socket.emit('bj:leave'); bjT = null; renderCasino(); });
+}
+
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  if (cgame === 'tables') return renderTables(box);
   if (cgame === 'roulette') {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -1088,9 +1131,9 @@ function renderCards() {
       : '<p class="sub">Du hast keine doppelten Karten.</p>';
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button></div>
-      <div class="row" style="margin-bottom:10px"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button></div>
+      <div class="row" style="margin-bottom:10px;${cgame === 'tables' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
       <div id="cgame"></div>
       <div id="cChals" style="margin-top:16px"></div>`;
@@ -1312,6 +1355,12 @@ function connect() {
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
+  socket.on('bj:list', (l) => { bjList = l || []; if (page === 'cards' && ctab === 'casino' && cgame === 'tables') renderCasino(); });
+  socket.on('bj:state', (t) => {
+    const prev = bjT; bjT = t;
+    if (t && prev && prev.phase !== 'done' && t.phase === 'done') { const me = t.seats.find((x) => x.id === home.me.id); if (me && me.payout) { sfx('exact'); toast(`+${fmt(me.payout)} Diamanten`); } }
+    if (page === 'cards' && ctab === 'casino' && cgame === 'tables') renderCasino();
+  });
   socket.on('note', (m) => { toast(m); sfx('sent'); });
   socket.on('diamonds', (n) => { if (home && home.me) { home.me.diamonds = n; if (tcg) tcg.diamonds = n; viewKey = ''; update(); } });
   socket.on('needpw', (d) => askPassword(d.code, d.wrong));

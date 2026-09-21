@@ -691,6 +691,9 @@ io.use(async (socket, next) => {
   } catch (e) { next(new Error('auth')); }
 });
 const game = attachGame(io, store);
+// Mehrspieler-Blackjack: eigene Socket-Events, gleiche Anmeldung wie das Schätzspiel
+const bjTables = require('./lib/bjtables')(io, store, casinoStat);
+io.on('connection', (socket) => { if (socket.data.user) bjTables.attach(socket, socket.data.user); });
 
 store.init().then(() => push.init(store)).then((k) => {
   console.log('Push bereit, Schlüssel endet auf …' + k.slice(-6));

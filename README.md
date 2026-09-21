@@ -101,6 +101,7 @@ Dann http://localhost:3000 öffnen.
 - Roulette: einfache Chancen zahlen doppelt, Drittel dreifach, eine einzelne Zahl 36-fach
 - Blackjack mit vollen Regeln: Teilen (bis 4 Hände, Asse nur eine Karte), Verdoppeln, Versicherung bei Ass der Bank (zahlt 2:1), Aufgeben (halber Einsatz zurück), Blackjack zahlt 3:2, Bank zieht bis 17
 - Tisch in Draufsicht, Karten rutschen aus dem Schlitten auf den Tisch
+- Mehrspieler-Tische (`lib/bjtables.js`): bis zu 6 Tische mit je 5 Plätzen, gemeinsame Bank, der Gastgeber teilt aus, alle spielen nacheinander, nach 7 Sekunden beginnt die nächste Runde
 - Alle Ziehungen und Karten entscheidet der Server, der Client zeigt nur an
 
 ## Wetten
