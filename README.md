@@ -88,6 +88,12 @@ Dann http://localhost:3000 öffnen.
 - Zeit pro Schätzfrage 8, 20, 30 oder 45 s; der Schnellmodus setzt 8 s
 - „Auf frische Fragen warten“ hält den Start bis zu 2 Minuten an, der feste Pool sichert immer ab
 
+## Toon-Welt-Set
+- 30 Karten, 3 davon zusätzlich als Extended Art, eigener Booster (2.000 Diamanten, 2 Karten)
+- Der Booster ist vorerst gesperrt (`locked: true` in lib/tcg.js); Admin und Co-Admins können ihn zum Testen kaufen
+- Belohnungen fürs Sammeln: Titel Toon-Leser (5), Toon-Zauberer (15), Herrscher der Toon-Welt (alle 30, animiert);
+  Embleme Toon-Grimoire (10), Arcane-Siegel (20), Herr der Toon-Welt (alle 30, animiert)
+
 ## Casino-Fortschritt
 - Eigene Statistik: Runden, Siege, bester Gewinn, Bilanz und Casino-XP
 - Casino-Rangliste auf der Startseite, sortiert nach Casino-XP

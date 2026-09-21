@@ -91,17 +91,20 @@ app.post('/api/login', async (req, res) => {
 });
 
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
+const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
 const TOP = new Set(['ext', 'ghost']);
 async function cardStats(uid) {
   const rows = await store.cardsOf(uid).catch(() => []);
   let total = 0, rare = 0, ext = 0;
+  const toon = new Set();
   for (const r of rows) {
     const n = Number(r.count) || 0;
+    if (n > 0 && TOON_IDS.has(r.card_id)) toon.add(r.card_id);
     total += n;
     if (RARE.has(r.variant)) rare += n;
     if (TOP.has(r.variant)) ext += n;
   }
-  return { cards_total: total, cards_rare: rare, cards_ext: ext };
+  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size };
 }
 
 app.get('/api/home', async (req, res) => {
@@ -436,6 +439,7 @@ app.post('/api/tcg/buy', async (req, res) => {
     const p = tcg.PACKS[String(req.body.pack || '')];
     const n = Math.max(1, Math.min(20, Math.round(Number(req.body.n) || 1))); // passt zum Max-Knopf im Shop
     if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    if (p.locked && !isMod(u)) return res.status(403).json({ error: 'Dieser Booster ist noch gesperrt. Bald geht es los!' });
     const cost = p.price * n, have = Number(u.diamonds) || 0;
     if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
     await store.save(u.id, { diamonds: have - cost });
