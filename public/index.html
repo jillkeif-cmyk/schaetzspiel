@@ -645,10 +645,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   box-shadow:inset 0 0 0 10px #C89A3C,inset 0 0 0 13px #1a2426,0 14px 34px rgba(0,0,0,.55)}
 .wheel::after{content:"";position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2A6B72,#0B2F35 70%);box-shadow:inset 0 0 0 4px #C89A3C,0 0 24px rgba(0,0,0,.6)}
 .pointer{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid var(--tape);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));z-index:2}
-.ball{position:absolute;left:50%;top:50%;width:15px;height:15px;z-index:5;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff,#cfd8dc 60%,#8fa0a3);box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 12px rgba(255,255,255,.6);
-  transform:rotate(var(--a)) translate(-50%,-50%) translateY(-118px)}
-@media (max-width:420px){.ball{transform:rotate(var(--a)) translate(-50%,-50%) translateY(-31vw)}}
+.wheelwrap{--W:min(74vw,290px)}
+.balltrack{position:absolute;inset:0;z-index:6;pointer-events:none;transition:transform 4.6s cubic-bezier(.12,.62,.12,1)}
+.balltrack[hidden]{display:none}
+.ball{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#d7e0e2 55%,#8fa0a3);box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 10px rgba(255,255,255,.55);
+  transform:translateY(calc(var(--W) * -0.43));transition:transform 1.1s cubic-bezier(.3,1.4,.5,1) 3.3s}
+.balltrack.drop .ball{transform:translateY(calc(var(--W) * -0.315))}
 .ballnum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;display:grid;place-items:center;width:78px;height:78px;border-radius:50%;font:900 30px/1 Archivo;font-stretch:70%;color:#fff;background:rgba(6,22,26,.9);box-shadow:inset 0 0 0 3px rgba(255,255,255,.25)}
 .ballnum.rot{background:#C0342F}.ballnum.schwarz{background:#141B1C}.ballnum.gruen{background:#1D7A4A}
 .betgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
@@ -667,7 +670,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pl{align-items:center}
 .pl .ava{align-self:center;flex:none}
 .pl .nm{display:block;line-height:1.25}
-.pl .nm .titleimg{display:block;margin-top:6px}
+.pl .nm .titleimg{display:block;margin-top:10px;max-width:100%}
+.pl .nm{padding:4px 0}
 .pl .nm .titleimg{margin:0}
 .pcemb.lineup{align-self:center;flex:none;margin-left:2px}
 
@@ -1058,7 +1062,8 @@ function renderCasino() {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}<span class="ball" id="ball" hidden></span></div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}</div>
+        <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
       <div class="modes">${[['zahl', 'Zahl ×36'], ['split', 'Split ×18'], ['street', 'Reihe ×12'], ['ecke', 'Ecke ×9'], ['sechs', '6er ×6']].map(([k, n]) => `<button data-rmode="${k}" class="${rmode === k ? 'on' : ''}">${n}</button>`).join('')}</div>
@@ -1126,8 +1131,17 @@ async function doSpin() {
     const wheel = $('#wheel'), ball = $('#ballnum'), kugel = $('#ball');
     const deg = 360 * 6 + (360 - (d.index * (360 / 37)));
     wheel.style.transform = `rotate(${deg}deg)`;
-    // Die Kugel sitzt im Fach der gezogenen Zahl und dreht mit dem Rad mit
-    if (kugel) { kugel.hidden = false; kugel.style.setProperty('--a', (d.index * (360 / 37)).toFixed(2) + 'deg'); }
+    // Kugel kreist gegenläufig am Rand und fällt am Ende oben ins Fach unter dem Zeiger,
+    // genau dort, wo das Rad die gezogene Zahl hindreht
+    const track = $('#balltrack');
+    if (track) {
+      track.hidden = false; track.classList.remove('drop');
+      track.style.transition = 'none'; track.style.transform = 'rotate(0deg)';
+      void track.offsetWidth;
+      track.style.transition = '';
+      track.style.transform = 'rotate(-2880deg)';
+      requestAnimationFrame(() => track.classList.add('drop'));
+    }
     ball.textContent = '…'; ball.className = 'ballnum';
     sfx('dart');
     setTimeout(() => {
