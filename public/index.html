@@ -896,6 +896,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .chips{flex-wrap:wrap}
 .chips button.allchip{color:#2A1600;font-size:10px;line-height:1.05}
 .chipbtn.allin{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;font-weight:900}
+.cgrid figure,.cardgrid button,.framegrid button,.rw-cell{content-visibility:auto;contain-intrinsic-size:auto 220px}
 </style>
 </head>
 <body>
@@ -927,30 +928,30 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img loading="lazy" decoding="async" class="embimg" src="/emblems/p${t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(11, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
-  const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
-  return `<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
+  const fr = p.frame ? `<img loading="lazy" decoding="async" class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
+  return `<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img loading="lazy" decoding="async" src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
 }
-const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
+const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img loading="lazy" decoding="async" src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
 function streakHtml(p) {
   const n = Math.min(5, p.streak || 0);
-  return n ? `<div class="streak"><img src="/emblems/streak${n}.webp?v=${AVER}" alt=""><b>${n}</b></div>` : '';
+  return n ? `<div class="streak"><img loading="lazy" decoding="async" src="/emblems/streak${n}.webp?v=${AVER}" alt=""><b>${n}</b></div>` : '';
 }
 function playerCard(p, extra) {
   const lv = p.max ? 1 : (p.next ? p.into / p.next : 0);
   return `<div class="pcard">
     <div class="mid"><div class="who">${tagHtml(p)}<b>${esc(p.name)}</b></div>
       <div class="trow">${avatar(p, 56)}${p.title ? titleHtml(p) : '<span class="sub grow" style="font-size:13px">Kein Titel</span>'}
-        ${p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
+        ${p.emblem ? `<img loading="lazy" decoding="async" class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
       <div class="lvrow"><span class="num" style="font-size:16px;color:var(--paper)">Lv ${p.level}</span><span class="bar"><i style="width:${Math.round(lv * 100)}%"></i></span><span>${p.max ? 'max' : p.into + '/' + p.next}</span></div>
       ${extra || ''}</div>
     ${streakHtml(p)}</div>`;
 }
 const animOf = (id) => { const c = home && home.cards; if (!c || !id) return ''; const x = [...c.emblems, ...c.titles].find((y) => y.id === id); return x && x.anim ? ' a-' + x.anim : ''; };
-const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
-const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}${animOf(p.title.id)}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
+const embHtml = (p, size) => (p && p.emblem ? `<img loading="lazy" decoding="async" class="pcemb${animOf(p.emblem)}" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
+const titleHtml = (p, big) => (p && p.title ? `<img loading="lazy" decoding="async" class="titleimg${big ? ' big' : ''}${animOf(p.title.id)}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
 function seenText(u) {
@@ -1039,7 +1040,7 @@ document.addEventListener('pointerdown', unlockAudio, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') unlockAudio(); });
 function showBulls(names) {
   const el = $('#bullsfx');
-  el.innerHTML = `<div class="rays"></div><div class="in"><img src="/emblems/bullseye.webp?v=${AVER}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
+  el.innerHTML = `<div class="rays"></div><div class="in"><img loading="lazy" decoding="async" src="/emblems/bullseye.webp?v=${AVER}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(showBulls.t); showBulls.t = setTimeout(() => el.classList.remove('on'), 2500);
 }
@@ -1054,13 +1055,13 @@ function showCodeReveal(r) {
   const u = $('#unlock'); const it = r.items || { emblems: [], titles: [], frames: [] };
   const me = (home && home.me) || {};
   const tiles = [
-    ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
-    ...it.emblems.map((e) => `<div class="cr-item"><img class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
+    ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img loading="lazy" decoding="async" class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
+    ...it.emblems.map((e) => `<div class="cr-item"><img loading="lazy" decoding="async" class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
     ...it.frames.map((f) => `<div class="cr-item">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 74, false)}<b>${esc(f.name)}</b><small>Rahmen</small></div>`),
   ];
   u.innerHTML = `<div class="rays"></div><div class="in cr">
     <p class="sub">Code eingelöst</p><h1 class="cr-code">${esc(r.code || '')}</h1>
-    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.diamonds ? `<div class="cr-dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
     <div class="cr-grid">${tiles.map((h, i) => h.replace('class="cr-item', `style="--d:${i}" class="cr-item`)).join('')}</div>
     <button class="btn" id="unlockOk" style="min-width:220px">Stark!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
@@ -1293,17 +1294,17 @@ function renderRewards(box) {
   box.innerHTML = `
     <div class="rw-stats"><div><b>${fmt(cur.rounds)}</b><small>Runden</small></div><div><b>${fmt(cur.wins)}</b><small>Siege</small></div><div><b>${fmt(cur.best)}</b><small>bester Gewinn</small></div><div><b>${fmt(me.casinoXp || 0)}</b><small>Casino-XP</small></div></div>
     <h2 class="rw-h">Herausforderungen</h2>
-    <div class="chalhint">${chals.map((c) => `<div class="ch"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
+    <div class="chalhint">${chals.map((c) => `<div class="ch"><img loading="lazy" decoding="async" src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
     <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
-    <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
+    <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img loading="lazy" decoding="async" class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
     <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
-    <div class="rw-grid">${embs.map((e) => `<button class="rw-cell ${e.unlocked ? '' : 'lk'}" data-rwk="emblem" data-rwid="${e.id}"><img class="pcemb${e.anim ? ' a-' + e.anim : ''}" style="--s:78px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>${esc(needTxt(e))}</small>${prog(e.id, e.unlocked)}</button>`).join('')}</div>
+    <div class="rw-grid">${embs.map((e) => `<button class="rw-cell ${e.unlocked ? '' : 'lk'}" data-rwk="emblem" data-rwid="${e.id}"><img loading="lazy" decoding="async" class="pcemb${e.anim ? ' a-' + e.anim : ''}" style="--s:78px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>${esc(needTxt(e))}</small>${prog(e.id, e.unlocked)}</button>`).join('')}</div>
     <h2 class="rw-h">Rahmen <span class="sub">${frs.filter((f) => f.unlocked).length} / ${frs.length}</span></h2>
     <div class="rw-grid">${frs.map((f) => `<button class="rw-cell ${f.unlocked ? '' : 'lk'}" data-rwk="frame" data-rwid="${f.id}">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 78, false)}<b>${esc(f.name)}</b><small>${esc(needTxt(f))}</small>${prog(f.id, f.unlocked)}</button>`).join('')}</div>`;
   box.querySelectorAll('[data-rwid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.rwk, b.dataset.rwid); });
 }
 
-const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(5, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(5, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
+const vipBadge = (t, size) => `<img loading="lazy" decoding="async" class="vipb t${Math.max(0, Math.min(5, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(5, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
 function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
 function renderVipHead() {
   const h = $('#vipHead'); if (!h || !vipD) return;
@@ -1325,7 +1326,7 @@ function renderVip(box) {
   const FILL = ['#5B0E1B', '#101214', '#0E4733', '#101214', '#5B0E1B', '#0E4733', '#101214', '#5B0E1B', '#0E4733'];
   const conic = v.wheel.map((l, i) => `${l === 'JACKPOT' ? '#C8922A' : FILL[i % FILL.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
   const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost' };
-  const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
+  const icon = (l) => (PK[l] ? `<img loading="lazy" decoding="async" src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img loading="lazy" decoding="async" class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
     <div class="lwrap">
@@ -1333,9 +1334,9 @@ function renderVip(box) {
         <div class="lsheen"></div>
         ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '5.000' : l)}</b>`}</span></span>`).join('')}
       </div>
-      <img class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
-      <img class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
-      <img class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
+      <img loading="lazy" decoding="async" class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
+      <img loading="lazy" decoding="async" class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
+      <img loading="lazy" decoding="async" class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
     </div>
     <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} von ${v.spinsTotal} heute` : 'Morgen wieder drehen'}</button>
     <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
@@ -1385,7 +1386,7 @@ function renderCasino() {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
+        <div class="wheel" id="wheel"><img loading="lazy" decoding="async" src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
         <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
@@ -1473,7 +1474,7 @@ async function doSpin() {
       if (d.win) $('.wheelwrap').classList.add('winflash');
       setTimeout(() => $('.wheelwrap') && $('.wheelwrap').classList.remove('winflash'), 1300);
       casinoDone(d); rbets = []; setTimeout(renderCasino, 1400);
-      const head = $('#cbody .dia'); if (head) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
+      const head = $('#cbody .dia'); if (head) head.innerHTML = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
       spinning = false;
     }, 4700);
   } catch (e) { spinning = false; toast(e.message); }
@@ -1491,7 +1492,7 @@ async function bjAction(path) {
     bjMark('d', bj.dealer.filter((c) => !c.hidden).length); bjMark('dh', 2); // verdeckte Karte nicht erneut animieren
     bj.hands.forEach((h, i) => bjMark('h' + i, h.cards.length));
     if (bj.over) casinoDone(bj);
-    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
+    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
   } catch (e) { toast(e.message); }
   finally { bjBusy = false; }
 }
@@ -1511,7 +1512,7 @@ function renderCards() {
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
-  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
@@ -1523,22 +1524,22 @@ function renderCards() {
     list.sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || rank(b.v) - rank(a.v) || a.c.name.localeCompare(b.c.name));
     box.innerHTML = `<p class="sub" style="margin-bottom:8px">${have} von ${all.length} Varianten gesammelt</p>
       <div class="cfilter">${F.map(([k, n]) => `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>
-      <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
+      <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img loading="lazy" decoding="async" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
         <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
-    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar</span></span>
       <button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button></div>`).join('')
       : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>';
   } else if (ctab === 'shop') {
-    box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.cards} Karten · Chancen ansehen ›</p></span></button>`).join('')
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
+    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img loading="lazy" decoding="async" src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
@@ -1555,7 +1556,7 @@ function renderCards() {
       <div class="row" style="gap:8px;margin-bottom:10px"><button class="chipbtn" id="meltAll">Alle Doppelten wählen</button><button class="chipbtn" id="meltNone">Auswahl leeren</button></div>
       ${groups.map(([v, list]) => `<h2 style="margin:14px 0 8px;font-size:18px">${esc(varName(v))} <span class="sub">· ${fmt(melt[v] || 40)} 💎 je Karte</span></h2>
         <div class="cgrid">${list.map((d) => { const n = Math.min(meltSel[d.key] || 0, d.extra); return `<figure class="${n ? 'meltsel' : ''}">
-          <img src="${cardImg(d.c.id, d.v)}" data-meltpick="${d.key}" alt="">${badge(d.v)}<span class="cnt">${d.extra}× doppelt</span>
+          <img loading="lazy" decoding="async" src="${cardImg(d.c.id, d.v)}" data-meltpick="${d.key}" alt="">${badge(d.v)}<span class="cnt">${d.extra}× doppelt</span>
           ${n ? `<span class="meltn">${n}</span>` : ''}
           <figcaption><b>${esc(d.c.name)}</b>
             <span class="row" style="gap:4px;margin-top:4px"><button class="mini" data-meltdec="${d.key}">−</button>
@@ -1581,7 +1582,7 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">VIP 👑</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
@@ -1604,7 +1605,7 @@ function packHighlight(kind, img) {
   const sparks = Array.from({ length: 26 }, () => { const a = Math.random() * Math.PI * 2, r = 140 + Math.random() * 260; return `<span class="sp" style="--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--dl:${(0.2 + Math.random() * 0.6).toFixed(2)}s"></span>`; }).join('');
   hl.className = kind + ' on';
   hl.innerHTML = `<div class="rays"></div><div class="burst"></div>${sparks}
-    <div class="stage"><div class="big"><div class="float"><img src="${img}" alt=""><div class="shine"></div></div></div>
+    <div class="stage"><div class="big"><div class="float"><img loading="lazy" decoding="async" src="${img}" alt=""><div class="shine"></div></div></div>
     <div class="banner">${kind === 'ext' ? 'EXTENDED ART' : 'GHOST RARE'}</div>
     <div class="sub">${kind === 'ext' ? 'Seltene Sonderform gezogen' : 'Die seltenste Karte im Spiel'}</div></div>
     <div class="tap">Tippen zum Weitermachen</div>`;
@@ -1629,7 +1630,7 @@ async function openPack(pid) {
       if (top) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e2) {}
     }, i * 650 + 350));
     const el = $('#opener');
-    el.innerHTML = `<div class="wrap">${r.pulled.map((c, i) => `<span class="slot r-${esc(c.variant)}" style="--d:${(i * 0.65).toFixed(2)}s"><img class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}</span>`).join('')}</div><div style="position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    el.innerHTML = `<div class="wrap">${r.pulled.map((c, i) => `<span class="slot r-${esc(c.variant)}" style="--d:${(i * 0.65).toFixed(2)}s"><img loading="lazy" decoding="async" class="rev" src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}</span>`).join('')}</div><div style="position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
       ${(tcg.packs.find((x) => x.pack_id === pid) || {}).count ? `<button class="btn" id="openNext">Nächsten öffnen (${(tcg.packs.find((x) => x.pack_id === pid) || {}).count})</button>` : ''}
       <button class="btn ghost" id="closeOpener" style="min-width:150px">Weiter</button></div>`;
     el.classList.add('on');
@@ -1647,7 +1648,7 @@ function sellCard(key) {
 
 function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
-  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   // die drei stärksten Karten, die aus diesem Booster kommen können
   const rank = tcg.def.order || [];
   const pool = [];
@@ -1661,10 +1662,10 @@ function packInfo(pid) {
   pool.sort((a, b) => b.r - a.r);
   const top = pool.slice(0, 3);
   $('#modal').innerHTML = `<div class="panel" style="gap:12px">
-    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt="">
+    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt="">
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span></span></div>
     <b>Beste Karten, die drin sein können</b>
-    <div class="cgrid">${top.map((x) => `<figure><img src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}</figcaption></figure>`).join('')}</div>
+    <div class="cgrid">${top.map((x) => `<figure><img loading="lazy" decoding="async" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}</figcaption></figure>`).join('')}</div>
     <b>Chancen pro Karte</b>
     <div class="parts">${Object.entries(p.odds).map(([k, o]) => `<div><span>${esc(varName(k))}</span><span>${(o * 100).toFixed(1).replace('.', ',')} %</span></div>`).join('')}</div>
     <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" max="20" value="1" aria-label="Anzahl">
@@ -1690,8 +1691,8 @@ function showLocked(kind, id) {
   const pic = kind === 'frame'
     ? `<div style="display:grid;place-items:center;padding:6px">${avatar({ id: home.me.id, name: home.me.name, av: home.me.av, color: '#4FD1C5', frame: item.id, frameAnim: item.anim }, 108, false)}</div>`
     : kind === 'emblem'
-      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:120px" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
-      : `<img class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${AVER}" alt="">`;
+      ? `<div style="display:grid;place-items:center"><img loading="lazy" decoding="async" class="pcemb${anim}" style="--s:120px" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
+      : `<img loading="lazy" decoding="async" class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${AVER}" alt="">`;
   $('#modal').innerHTML = `<div class="panel" style="gap:12px">
     <h2>${esc(item.secret && !item.unlocked ? 'Geheim' : name)}</h2>
     ${pic}
@@ -1727,15 +1728,15 @@ function renderRanks() {
 async function dailyDialog() {
   try {
     const v = await api('/api/daily');
-    const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
+    const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
     const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
     const boxes = (v.rewards || v.days.map((d) => ({ dia: d }))).map((rw, i) => {
       const day = i + 1;
       const state = day < v.day || (day === v.day && v.claimed) ? 'done' : day === v.day && !v.claimed ? 'now' : '';
       const pic = rw.pack ? `/tcg/pack_${rw.pack}.webp?v=${AVER}` : `/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${AVER}`;
       return day === 7
-        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><img src="${pic}" alt="" style="width:46px;height:auto"><span><b>Tag 7</b><br>${fmt(rw.dia)} ${D} + ${PN[rw.pack] || ''}<br>und der Titel „Siebenfach“</span></div>`
-        : `<div class="daybox ${state} ${rw.pack ? 'haspack' : ''}"><img src="${pic}" alt="" ${rw.pack ? 'style="width:34px;height:auto"' : ''}><b>Tag ${day}</b>${fmt(rw.dia)} ${D}${rw.pack ? `<small class="pk">+ ${PN[rw.pack]}</small>` : ''}</div>`;
+        ? `<div class="daybox d7 ${state}"><img loading="lazy" decoding="async" src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><img loading="lazy" decoding="async" src="${pic}" alt="" style="width:46px;height:auto"><span><b>Tag 7</b><br>${fmt(rw.dia)} ${D} + ${PN[rw.pack] || ''}<br>und der Titel „Siebenfach“</span></div>`
+        : `<div class="daybox ${state} ${rw.pack ? 'haspack' : ''}"><img loading="lazy" decoding="async" src="${pic}" alt="" ${rw.pack ? 'style="width:34px;height:auto"' : ''}><b>Tag ${day}</b>${fmt(rw.dia)} ${D}${rw.pack ? `<small class="pk">+ ${PN[rw.pack]}</small>` : ''}</div>`;
     }).join('');
     $('#modal').innerHTML = `<div class="panel" style="gap:12px">
       <h2>Willkommen zurück</h2>
@@ -1785,7 +1786,7 @@ function showCard(key) {
   const c = cardDef(cid); if (!c) return;
   const n = owned(cid, v);
   const el = $('#cardview');
-  el.innerHTML = `<div class="stage"><div class="tilt" id="tiltc"><img src="${cardImg(cid, v)}" alt="">
+  el.innerHTML = `<div class="stage"><div class="tilt" id="tiltc"><img loading="lazy" decoding="async" src="${cardImg(cid, v)}" alt="">
       ${['holo', 'ultra', 'ext', 'legend'].includes(v) ? '<span class="sheen"></span><span class="rain"></span>' : ''}</div>
     <div class="meta"><b>${esc(c.name)}</b>${esc(varName(v))} · ${esc(c.theme)} · ${c.lvl} Sterne · ATK ${fmt(c.atk)} / DEF ${fmt(c.def)}
       <br>${esc(c.effect)}${n ? `<br><span style="color:var(--ok);font-weight:700">Du hast sie ${n}×</span>` : '<div class="miss2">Fehlt dir noch</div>'}</div>
@@ -1879,7 +1880,7 @@ function render() {
 
 function build() {
   if (!token) return `
-    <div style="padding-top:3vh" class="center"><img class="logo" src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark big" style="margin-top:14px">PUNKTLANDUNG</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
+    <div style="padding-top:3vh" class="center"><img loading="lazy" decoding="async" class="logo" src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark big" style="margin-top:14px">PUNKTLANDUNG</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
     <div class="tabs"><button data-tab="login" class="${authTab === 'login' ? 'on' : ''}">Anmelden</button><button data-tab="register" class="${authTab === 'register' ? 'on' : ''}">Neu hier</button></div>
     <form id="authForm" class="panel" style="display:flex;flex-direction:column;gap:14px">
       <div><label for="fName">Spielername</label><input class="field" id="fName" autocomplete="username" maxlength="16" required></div>
@@ -1896,12 +1897,12 @@ function build() {
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Casino</h1>
     <div id="cbody"></div></div>`;
 
   if (!S && page === 'cards') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Karten</h1>
     <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
@@ -1923,12 +1924,12 @@ function build() {
     <div><h2 style="margin-bottom:10px">Herausforderungen</h2><div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div></div>`;
 
   if (!S) return `<div class="col">
-    <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
+    <div class="brand"><img loading="lazy" decoding="async" src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
-    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
-    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
-    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
-    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
+    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
+    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
+    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -2007,7 +2008,7 @@ function build() {
 
   if (S.phase === 'finished') { const ps = [...S.players].sort((a, b) => b.score - a.score); const w = ps.filter((p) => S.winners.includes(p.id));
     return `<div class="col">
-    <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp?v=${AVER}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
+    <div class="center" style="padding-top:1vh">${w.length ? '<img loading="lazy" decoding="async" class="trophy" src="/emblems/trophy.webp?v=${AVER}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
     <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${embHtml(p, 30)}${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
     </div><div class="col"><div id="xpSum"></div>
     <div id="chatBox"></div>
@@ -2061,9 +2062,9 @@ function buildReveal() {
           <span class="diff">${diffText(r)}</span></span>
         <span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span>
         <span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`; }).join('')}</div>
-    ${given.length ? `<div class="winbox" style="animation-delay:${((steps - 1) * 0.35 + 0.25).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
+    ${given.length ? `<div class="winbox" style="animation-delay:${((steps - 1) * 0.35 + 0.25).toFixed(2)}s"><img loading="lazy" decoding="async" class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
       <div class="in">${avatar(P[rows[0].id] || { name: '?' }, 38)}<b>${esc(P[rows[0].id]?.name || '?')}</b><span class="pts">+${rows[0].points}</span></div>
-      ${rows[0].exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
+      ${rows[0].exact ? `<img loading="lazy" decoding="async" class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
     </div><div class="col side deskonly"><h2>Punktestand</h2><div class="plist" id="sideboard"></div></div>` + footOnly();
 }
 
@@ -2072,7 +2073,7 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" data-user="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm"><span style="white-space:nowrap">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}</span>${p.title ? titleHtml(p) : `<br><span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" data-user="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm"><span style="white-space:nowrap">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}</span>${p.title ? titleHtml(p) : `<br><span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img loading="lazy" decoding="async" class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
@@ -2108,8 +2109,8 @@ function modEdit(id, page) {
   const f = (k, label, v) => `<div><label>${label}</label><input class="field" data-f="${k}" inputmode="numeric" value="${v}"></div>`;
   const body = page === 'cards'
     ? `<p class="sub">Frei = grün. Freigeschaltet gilt zusätzlich zu dem, was er selbst geschafft hat.</p>
-       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.name)}</button>`).join('')}</div>
-       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
+       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img loading="lazy" decoding="async" class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.name)}</button>`).join('')}</div>
+       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img loading="lazy" decoding="async" class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
        <label style="margin-top:8px">Rahmen</label>
        <div class="framegrid">${(home.frames || []).map((fr) => `<button data-mu="${fr.id}" class="${u.unlocks.includes(fr.id) ? 'on' : ''}">${avatar({ id: u.id, name: u.name, av: u.av, color: '#4FD1C5', frame: fr.id, frameAnim: fr.anim }, 50, false)}${esc(fr.name)}</button>`).join('')}</div>
        <div class="row"><button class="chipbtn" data-mu="*" data-on="1">Alles freischalten</button><button class="chipbtn" data-mu="*" data-on="0">Alles zurücksetzen</button></div>
@@ -2207,10 +2208,10 @@ function update() {
       const curEmb = C.emblems.find((e) => e.id === me.emblem);
       const curTit = C.titles.find((t) => t.id === me.title);
       $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
-        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span>${freshOf(C.emblems, 'e').length ? `<span class="badge">${freshOf(C.emblems, 'e').length}</span>` : ''}<span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.unlocked && !seenSet().has('e:' + e.id) ? 'fresh' : ''} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
-        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span>${freshOf(C.titles, 't').length ? `<span class="badge">${freshOf(C.titles, 't').length}</span>` : ''}<span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.unlocked && !seenSet().has('t:' + t.id) ? 'fresh' : ''} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span>${freshOf(C.emblems, 'e').length ? `<span class="badge">${freshOf(C.emblems, 'e').length}</span>` : ''}<span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img loading="lazy" decoding="async" class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.unlocked && !seenSet().has('e:' + e.id) ? 'fresh' : ''} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img loading="lazy" decoding="async" class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span>${freshOf(C.titles, 't').length ? `<span class="badge">${freshOf(C.titles, 't').length}</span>` : ''}<span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img loading="lazy" decoding="async" class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.unlocked && !seenSet().has('t:' + t.id) ? 'fresh' : ''} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img loading="lazy" decoding="async" class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
         <details class="fold" ${openFold === 'frm' ? 'open' : ''} data-fold="frm"><summary><span class="grow">Rahmen</span>${freshOf(home.frames || [], 'f').length ? `<span class="badge">${freshOf(home.frames || [], 'f').length}</span>` : ''}<span class="sub">${(home.frames || []).filter((f) => f.unlocked).length} von ${(home.frames || []).length}</span>${me.frame ? `<span style="width:30px;height:30px;display:inline-block">${avatar({ ...me, av: 0, name: ' ' }, 26, false)}</span>` : ''}</summary>
         <div class="framegrid">${(home.frames || []).map((f) => `<button data-frame="${f.id}" class="${me.frame === f.id ? 'on' : ''} ${f.unlocked ? '' : 'lock'} ${f.unlocked && !seenSet().has('f:' + f.id) ? 'fresh' : ''}" title="${esc(f.unlocked ? f.name : f.need)}">${avatar({ id: me.id, name: me.name, av: me.av, color: '#4FD1C5', frame: f.id, frameAnim: f.unlocked ? f.anim : '' }, 54, false)}${esc(f.unlocked ? f.name : f.secret ? 'GEHEIM' : f.dev ? 'DEV' : '🔒 ' + f.name)}</button>`).join('')}
         <button class="chipbtn" data-frame="" style="grid-column:1/-1">Rahmen abwählen</button></div></details>
@@ -2251,7 +2252,7 @@ function update() {
     $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
     const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34' };
-    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img loading="lazy" decoding="async" class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`).join('');
     return;
   }
@@ -2292,7 +2293,7 @@ function update() {
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 3);
-      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img loading="lazy" decoding="async" src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
     }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
@@ -2349,7 +2350,7 @@ function update() {
       const mine2 = (S.bets || []).find((b) => b.id === S.you);
       const others = (S.bets || []).filter((b) => b.id !== S.you);
       const dia = (home && home.me && home.me.diamonds) || 0;
-      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
         <p class="sub">Setze darauf, dass du gewinnst. Gewinnst du, bekommst du das Doppelte. Verlierst du, geht dein Einsatz an die Sieger.</p>
         ${mine2 ? `<div class="row"><b class="grow">Dein Einsatz: ${fmt(mine2.amount)} 💎</b><button class="btn small ghost" data-bet="0">Zurücknehmen</button></div>`
           : `<div class="row" style="flex-wrap:wrap;gap:6px">${[50, 100, 250, 500].map((v) => `<button class="chipbtn" data-bet="${v}" ${dia < v ? 'disabled style="opacity:.4"' : ''}>${v} 💎</button>`).join('')}</div>`}
@@ -2391,7 +2392,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -2582,7 +2583,8 @@ function tick() {
     if (S.phase === 'question' && sec <= 5 && sec > 0 && tick.last !== S.qIndex + ':' + sec) { tick.last = S.qIndex + ':' + sec; if (S.myAnswer === null) sfx('tick'); }
     const big = $('#bigSec'); if (big) big.textContent = sec;
   }
-  requestAnimationFrame(tick);
+  // Nur während eines laufenden Countdowns flüssig aktualisieren, sonst selten nachsehen
+  if (on || (S && S.phase === 'countdown')) requestAnimationFrame(tick); else setTimeout(tick, 400);
 }
 
 let wake = null;
