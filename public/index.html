@@ -897,7 +897,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .fbonus{margin-top:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(90deg,rgba(255,210,63,.22),rgba(255,210,63,.06));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);font-weight:800;font-size:13.5px;text-align:center}
 .chips{flex-wrap:wrap}
 .chips button.allchip{color:#2A1600;font-size:10px;line-height:1.05}
-.chipbtn.allin{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;font-weight:900}
+.chipbtn.allin{color:#FFD23F;font-weight:900;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6)}
+.chipbtn.picked{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;box-shadow:0 0 0 2px #FFD23F,0 0 14px rgba(255,210,63,.55);transform:translateY(-1px)}
 #rres{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:15;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;background:rgba(5,26,29,.95);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1.5px rgba(255,255,255,.12);font-size:15px;white-space:nowrap;transition:transform .35s cubic-bezier(.2,1.2,.4,1);pointer-events:none}
 #rres.on{transform:translate(-50%,0)}
 #rres.win{box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 2px #3DDC97}#rres.win .rr-net{color:#3DDC97}
@@ -939,6 +940,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 @keyframes crpop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
 .waitbtn{animation:waitpulse 1.4s ease-in-out infinite}
 @keyframes waitpulse{0%,100%{opacity:.75}50%{opacity:1}}
+.hotbar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,140,40,.35)}
+.hotbar b{display:block;font-size:14.5px}.hotbar small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+.hotbar .flame{font-size:24px;filter:grayscale(.6);opacity:.7}
+.hotbar.on{background:linear-gradient(135deg,rgba(255,90,20,.28),rgba(255,200,40,.14));box-shadow:inset 0 0 0 1.5px rgba(255,140,40,.8),0 0 18px rgba(255,110,20,.3)}
+.hotbar.on .flame{filter:none;opacity:1;animation:flick 1.2s ease-in-out infinite alternate}
+.hotclock{font:400 18px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFB24A;flex:none}
+.btn.hotbtn{position:relative}.btn.hotbtn::after{content:"🔥 ×2";position:absolute;right:10px;top:50%;transform:translateY(-50%);font:900 12px/1 Archivo;padding:4px 7px;border-radius:99px;background:linear-gradient(135deg,#FF6A1A,#FFB33A);color:#2A1000;box-shadow:0 0 12px rgba(255,120,30,.7)}
 </style>
 </head>
 <body>
@@ -1201,7 +1209,7 @@ const bjDrawn = {}; // wie viele Karten je Hand schon auf dem Tisch lagen
 const bjNew = (key, k) => k >= (bjDrawn[key] || 0);
 const bjMark = (key, n) => { bjDrawn[key] = n; };
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
-let vipD = null, soloIntent = false;
+let vipD = null, soloIntent = false, cbetPick = '';
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const MAX_CBET = 250000;
@@ -1277,7 +1285,7 @@ function renderTables(box) {
             : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
           ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
     </div>
-    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-bjbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-bjbet="all">All in</button></div>
+    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${me && me.bet === v ? 'picked' : ''}" data-bjbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-bjbet="all">All in</button></div>
         <p class="sub" style="margin-top:6px">${me && me.bet ? `Dein Einsatz: ${fmt(me.bet)} 💎` : 'Setz deinen Einsatz'}</p>
         <p class="sub center" style="margin-top:6px">${t.autoIn != null ? `Es wird automatisch ausgeteilt in <b id="bjAuto">${t.autoIn}</b> s` : 'Sobald jemand setzt, startet die Runde nach 15 Sekunden, oder sofort, wenn alle gesetzt haben.'}</p>
         ${t.hostId === meId && t.seats.some((x) => x.bet) ? '<button class="btn ghost" id="bjStart" style="width:100%;margin-top:6px">Sofort austeilen</button>' : ''}`
@@ -1659,7 +1667,7 @@ function renderCards() {
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
-        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-cbet="all">All in</button></div>
+        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -1834,6 +1842,20 @@ function renderChallenges() {
     return `<div class="chgroup ${neu ? 'isnew' : ''}"><div class="chg-h"><b>${n}</b>${neu ? '<span class="nw-badge">NEU</span>' : ''}<span class="grow"></span><small>${done} / ${tot} Stufen</small></div>${list.map(row).join('')}</div>`;
   }).join('');
 }
+// Hot Time: 20 bis 24 Uhr doppelte XP und Diamanten, mit laufender Uhr
+let hotBase = null;
+const hms = (x) => { x = Math.max(0, Math.floor(x)); const h = Math.floor(x / 3600), m = Math.floor((x % 3600) / 60), sec = x % 60; return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; };
+function renderHot() {
+  const el = $('#hotInfo'), hv = home && home.me && home.me.hot; if (!el || !hv) return;
+  if (!hotBase || hotBase.src !== hv) hotBase = { src: hv, at: Date.now() };
+  const left = hv.seconds - (Date.now() - hotBase.at) / 1000;
+  if (left <= 0) { loadHome(); return; }
+  el.innerHTML = hv.active
+    ? `<div class="hotbar on"><span class="flame">🔥</span><span class="grow"><b>Hot Time läuft</b><small>Doppelte XP und doppelte Diamanten, auch solo · Casino-XP doppelt</small></span><b class="hotclock">${hms(left)}</b></div>`
+    : `<div class="hotbar"><span class="flame">🔥</span><span class="grow"><b>Hot Time ab ${hv.start} Uhr</b><small>Jeden Abend bis 24 Uhr doppelte XP und Diamanten</small></span><b class="hotclock">in ${hms(left)}</b></div>`;
+  ['create', 'createSolo'].forEach((id) => { const b = document.getElementById(id); if (b) b.classList.toggle('hotbtn', !!hv.active); });
+}
+setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
   document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
@@ -2065,6 +2087,7 @@ function build() {
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div id="hotInfo"></div>
       <button class="btn" id="create">Match eröffnen</button>
       <button class="btn ghost" id="createSolo">🎯 Solo spielen</button>
       <div id="firstBonus"></div>
@@ -2098,9 +2121,9 @@ function build() {
       <label style="margin:6px 0 0">Tempo</label>
       <div class="seg"><button id="quickOff">Normal</button><button id="quickOn">Schnellmodus ⚡</button></div>
       <p class="sub" id="quickNote"></p>
-      <label style="margin:6px 0 0">Neue Fragen</label>
-      <div class="seg"><button id="waitOff">Pünktlich starten</button><button id="waitOn">Auf frische Fragen warten</button></div>
-      <p class="sub" id="waitNote2"></p></div>
+      <label style="margin:6px 0 0">Fragen</label>
+      <p class="sub">✨ Gespielt wird immer mit frischen Fragen, die gerade erst erstellt werden. Das Match startet, sobald sie da sind.</p>
+      <div hidden><button id="waitOff"></button><button id="waitOn"></button><p id="waitNote2"></p></div></div>
     <div class="panel" style="display:${soloIntent ? 'none' : 'flex'};flex-direction:column;gap:10px"><label style="margin:0">Zugang</label>
       <div class="seg"><button id="accPub">Öffentlich</button><button id="accPriv">Mit Passwort</button></div>
       <form id="pwForm" class="row" hidden><input class="field grow" id="pwInput" maxlength="20" autocomplete="off" placeholder="Passwort festlegen"><button class="btn small">Speichern</button></form>
@@ -2411,6 +2434,7 @@ function update() {
       const b = document.getElementById('openDaily');
       if (b) { b.classList.toggle('ready', !v.claimed); const sb = b.querySelector('.sub'); if (sb) sb.textContent = v.claimed ? 'Heute schon abgeholt' : 'Jetzt abholen: ' + fmt(v.loginDia) + ' Diamanten warten'; }
     }).catch(() => {});
+    renderHot();
     const fb = $('#firstBonus');
     if (fb) fb.innerHTML = home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '';
     api('/api/newplayers').then((r) => {
@@ -2587,6 +2611,11 @@ document.addEventListener('submit', (e) => {
   api('/api/friends/add', { name: inp.value }).then((r) => { toast(r.status === 'ok' ? r.name + ' ist jetzt dein Freund' : 'Anfrage an ' + r.name + ' gesendet'); inp.value = ''; loadFriends(); }).catch((er) => toast(er.message));
 });
 document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') return; e.preventDefault(); api('/api/admin/reset', { name: $('#adName').value, password: $('#adPass').value }).then((r) => { toast('Neues Passwort für ' + r.name + ' gesetzt'); e.target.reset(); }).catch((er) => toast(er.message)); });
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'cbAmount') return;
+  cbetPick = String(Number(e.target.value) || '');
+  document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x.dataset.cbet === cbetPick));
+});
 document.addEventListener('toggle', (e) => {
   const d = e.target.closest && e.target.closest('.fold');
   if (!d) return;
@@ -2689,7 +2718,7 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
-  else if (t.dataset.cbet) { cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
+  else if (t.dataset.cbet) { cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
   else if (t.dataset.pick) { cpick = t.dataset.pick; renderCasino(); }

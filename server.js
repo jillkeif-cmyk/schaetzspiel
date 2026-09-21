@@ -14,6 +14,7 @@ const tcg = require('./lib/tcg');
 const casino = require('./lib/casino');
 const daily = require('./lib/daily');
 const vip = require('./lib/vip');
+const hot = require('./lib/hottime');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -113,7 +114,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), hot: hot.view(), firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -281,6 +282,20 @@ setTimeout(async () => {
   } catch (e) { console.error('Glücksrad-Reset:', e.message); }
 }, 3000);
 
+// Hot Time: um 19:59 Uhr deutscher Zeit alle per Push benachrichtigen
+let lastHotPush = '';
+setInterval(async () => {
+  try {
+    const b = hot.berlinNow();
+    if (b.getHours() !== 19 || b.getMinutes() !== 59) return;
+    const today = daily.dayKey();
+    if (lastHotPush === today) return;
+    lastHotPush = today;
+    await push.toAll({ title: 'Hot Time 🔥', body: 'Jetzt Doppel XP bis 24 Uhr 🤩', tag: 'hottime', url: '/' });
+    console.log('Hot-Time-Push verschickt');
+  } catch (e) { console.error('Hot-Time-Push:', e.message); }
+}, 20 * 1000);
+
 // Erinnerung an die Tagesbelohnung, jeden Tag um 11 Uhr deutscher Zeit
 let lastReminder = '';
 setInterval(async () => {
@@ -326,7 +341,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
-    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake),
+    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1),
   });
 };
 const payOut = async (uid, n) => {
