@@ -768,6 +768,19 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   50%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(61,220,151,.85)}
   75%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(176,77,255,.9)}
   100%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,77,109,.85)}}
+.rw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.rw-stats div{background:var(--bg-deep);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.25)}
+.rw-stats b{display:block;font:400 22px/1 Anton,Impact,sans-serif;color:var(--tape)}.rw-stats small{color:var(--muted);font-size:11px}
+.rw-h{margin:18px 0 8px;font-size:20px}
+.rw-list{display:flex;flex-direction:column;gap:10px}
+.rw-item{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--bg-deep);text-align:left;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08)}
+.rw-item .titleimg{max-width:100%}
+.rw-t{display:flex;flex-direction:column;gap:4px}.rw-t small,.rw-cell small{color:var(--muted);font-size:12px;line-height:1.3}
+.rw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.rw-cell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;border-radius:16px;background:var(--bg-deep);text-align:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08)}
+.rw-item.lk img,.rw-cell.lk .pcemb,.rw-cell.lk .frm{filter:grayscale(.5) brightness(.8)}
+.rw-ok{color:var(--ok);font-weight:800;font-size:12.5px}.rw-code{color:var(--tape);font-weight:800;font-size:12.5px}.rw-need{font-weight:700;font-size:12.5px}
+.rw-cell .bar,.rw-t .bar{width:100%}
 </style>
 </head>
 <body>
@@ -1127,9 +1140,47 @@ function pocketRing(W, RED) {
   });
   return `conic-gradient(from 0deg, ${parts.join(', ')})`;
 }
+// Alle Casino-Belohnungen mit Ziel: [Kennzahl, Zielwert] oder 'code'
+const CASINO_GOALS = {
+  e31: ['rounds', 150], e32: ['wins', 75], L1: ['best', 50000], L2: ['wins', 500], L4: ['rounds', 2500],
+  t31: ['best', 5000], t32: ['rounds', 400], TL1: ['best', 50000], TL2: ['wins', 500], TL4: ['rounds', 2500], THR: ['best', 100000],
+  f21: ['wins', 25], fL1: ['best', 100000], fL3: ['rounds', 5000], fL5: ['wins', 1200],
+  EC1: 'code', EC2: 'code', EC3: 'code', TC1: 'code', TC2: 'code', TC3: 'code', fC1: 'code', fC2: 'code', fC3: 'code',
+};
+const STAT_TXT = { rounds: 'Runden gespielt', wins: 'Runden gewonnen', best: 'Diamanten auf einmal' };
+function renderRewards(box) {
+  const me = home.me, C = home.cards;
+  const cur = { rounds: me.casinoRounds || 0, wins: me.casinoWins || 0, best: me.casinoBest || 0 };
+  const prog = (id, unlocked) => {
+    const g = CASINO_GOALS[id];
+    if (unlocked) return '<span class="rw-ok">✓ Freigeschaltet</span>';
+    if (g === 'code') return '<span class="rw-code">🔑 Nur mit Aktionscode</span>';
+    const [k, goal] = g, v = Math.min(cur[k], goal);
+    return `<span class="rw-need">${fmt(v)} / ${fmt(goal)} ${STAT_TXT[k]}</span><span class="bar"><i style="width:${Math.round(100 * v / goal)}%"></i></span>`;
+  };
+  const needTxt = (it) => (CASINO_GOALS[it.id] === 'code' ? 'Teil des Casino-Pakets, freigeschaltet mit dem Code GAMBLER' : it.need);
+  const order = (a, b) => (b.unlocked - a.unlocked) || 0;
+  const titles = C.titles.filter((t) => CASINO_GOALS[t.id]).sort(order);
+  const embs = C.emblems.filter((e) => CASINO_GOALS[e.id]).sort(order);
+  const frs = (home.frames || []).filter((f) => CASINO_GOALS[f.id]).sort(order);
+  const chals = home.progress.challenges.filter((c) => c.key.startsWith('casino_'));
+  box.innerHTML = `
+    <div class="rw-stats"><div><b>${fmt(cur.rounds)}</b><small>Runden</small></div><div><b>${fmt(cur.wins)}</b><small>Siege</small></div><div><b>${fmt(cur.best)}</b><small>bester Gewinn</small></div><div><b>${fmt(me.casinoXp || 0)}</b><small>Casino-XP</small></div></div>
+    <h2 class="rw-h">Herausforderungen</h2>
+    <div class="chalhint">${chals.map((c) => `<div class="ch"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
+    <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
+    <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
+    <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
+    <div class="rw-grid">${embs.map((e) => `<button class="rw-cell ${e.unlocked ? '' : 'lk'}" data-rwk="emblem" data-rwid="${e.id}"><img class="pcemb${e.anim ? ' a-' + e.anim : ''}" style="--s:78px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>${esc(needTxt(e))}</small>${prog(e.id, e.unlocked)}</button>`).join('')}</div>
+    <h2 class="rw-h">Rahmen <span class="sub">${frs.filter((f) => f.unlocked).length} / ${frs.length}</span></h2>
+    <div class="rw-grid">${frs.map((f) => `<button class="rw-cell ${f.unlocked ? '' : 'lk'}" data-rwk="frame" data-rwid="${f.id}">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 78, false)}<b>${esc(f.name)}</b><small>${esc(needTxt(f))}</small>${prog(f.id, f.unlocked)}</button>`).join('')}</div>`;
+  box.querySelectorAll('[data-rwid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.rwk, b.dataset.rwid); });
+}
+
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
   if (cgame === 'tables') return renderTables(box);
+  if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'roulette') {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
@@ -1327,9 +1378,9 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button></div>
-      <div class="row" style="margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button></div>
+      <div class="row" style="margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
       <div id="cgame"></div>
       <div id="cChals" style="margin-top:16px"></div>`;
