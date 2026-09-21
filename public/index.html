@@ -998,7 +998,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-table{position:relative;width:100%;aspect-ratio:3/4;background-size:cover;background-position:center;border-radius:22px;overflow:visible;box-shadow:0 14px 34px rgba(0,0,0,.5)}
 .pk-center{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;width:80%}
 .pk-board{display:flex;gap:4px}
-.pkc{width:38px;height:54px;border-radius:6px;background:linear-gradient(180deg,#FBF7EA,#E4DCC6);color:#16202A;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.5);animation:flip .35s ease-out both}
+.pkc{width:38px;height:54px;border-radius:6px;background:linear-gradient(180deg,#FBF7EA,#E4DCC6);color:#16202A;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.pkc.deal{animation:pkdeal .45s cubic-bezier(.2,.9,.3,1) both}
+@keyframes pkdeal{from{transform:translateY(-30px) rotateY(90deg) scale(.7);opacity:0}to{transform:none;opacity:1}}
 .pkc b{font:900 16px/1 Archivo}.pkc i{font-style:normal;font-size:15px}.pkc.red{color:#C0342F}
 .pkc.slot{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12);animation:none}
 .pkc.back{background:repeating-linear-gradient(45deg,#7A0F1F 0 6px,#5A0A16 6px 12px);box-shadow:inset 0 0 0 2px #E6B640,0 3px 8px rgba(0,0,0,.5)}
@@ -1031,6 +1033,20 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .nc-corner{position:absolute;top:-8px;right:-6px;padding:5px 10px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 12px/1 Archivo;letter-spacing:1px;box-shadow:0 4px 12px rgba(192,75,255,.6);animation:ncpulse 1.4s ease-in-out infinite}
 @keyframes ncpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 .newscard.unread{box-shadow:inset 0 0 0 2px #C04BFF,0 0 22px rgba(192,75,255,.45)}
+.pk-pile{display:inline-block;position:relative;width:22px;height:calc(6px + var(--n,6) * 1px);vertical-align:middle}
+.pk-pile i{position:absolute;left:0;bottom:calc(var(--k) * 3px);width:22px;height:7px;border-radius:50%;background:var(--c);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 0 0 1.5px rgba(255,255,255,.55),0 1px 2px rgba(0,0,0,.6)}
+.pk-pile{height:28px}
+.pk-stackchips,.pk-betchips,.pk-fly{position:absolute;transform:translate(-50%,-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:3px}
+.pk-stackchips{opacity:.95}
+.pk-betchips em{font-style:normal;font-weight:900;font-size:11px;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:99px}
+.pk-betchips.slide{animation:pkslide .5s cubic-bezier(.2,.9,.3,1) both}
+.pk-fly{animation:pkslide .8s cubic-bezier(.4,0,.2,1) both;z-index:6}
+@keyframes pkslide{from{left:var(--sx);top:var(--sy)}to{left:var(--ex);top:var(--ey)}}
+.pk-pot .pk-pile{margin-right:4px}
+.pk-dock{position:sticky;bottom:0;z-index:5;margin-top:10px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 78%,rgba(0,0,0,0))}
+.pk-dock .pk-me{margin-top:0}.pk-dock .pk-emotes{margin:0;gap:4px}.pk-dock .pk-emotes button{width:36px;height:36px;font-size:18px}
+.pk-actions{min-height:110px}.pk-actions.wait{display:flex;align-items:center;justify-content:center}
+.pk-raise input[type=range]{flex:1}
 </style>
 </head>
 <body>
@@ -1525,57 +1541,99 @@ function renderVip(box) {
 // ---------- Poker: Texas Hold'em ----------
 let pkState = null, pkList = null, pkRaise = 0, pkTick = null;
 const PK_POS = [[50, 86], [11, 66], [11, 30], [50, 9], [89, 30], [89, 66]]; // Plätze um den Tisch, 0 = unten
-const pkCard = (c, big) => (c && c.hidden ? `<span class="pkc back ${big ? 'big' : ''}"></span>` : c ? `<span class="pkc ${['♥', '♦'].includes(c.s) ? 'red' : ''} ${big ? 'big' : ''}"><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>` : '');
+const PK_C = [50, 47]; // Tischmitte
+const lerp = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+let pkSeen = new Set(), pkHand = -1, pkPrev = null;
+// Karte: nur neu ausgeteilte Karten bekommen die Austeil-Animation
+const pkCard = (c, big, key) => {
+  if (!c) return '';
+  const fresh = key && !pkSeen.has(key); if (key) pkSeen.add(key);
+  const cls = `pkc ${big ? 'big' : ''} ${fresh ? 'deal' : ''}`;
+  return c.hidden ? `<span class="${cls} back"></span>` : `<span class="${cls} ${['♥', '♦'].includes(c.s) ? 'red' : ''}"><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>`;
+};
+// Chipstapel: mehr Chips für mehr Diamanten, Farbe nach Größe
+const CHIP_COL = ['#E6E6E6', '#D63A3A', '#2E7BD6', '#1FA35A', '#141414', '#8E4BD6', '#E0A21E'];
+function chipPile(amount) {
+  if (!amount) return '';
+  const n = Math.max(1, Math.min(7, Math.round(Math.log10(amount + 1) * 2)));
+  return `<span class="pk-pile">${Array.from({ length: n }, (_, k) => `<i style="--c:${CHIP_COL[(k + Math.floor(Math.log10(amount + 1))) % CHIP_COL.length]};--k:${k}"></i>`).join('')}</span>`;
+}
 function renderPoker(box) {
   if (!pkState || pkState.me < 0) {
     if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Setz dich hin, sobald zwei Spieler da sind, geht es los. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
-      ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.running ? ' · Hand läuft' : ''}</small>
-        <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
-    box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
-    box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
-    if (!pkState) return;
+    if (!pkState) {
+      box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Setz dich hin, sobald zwei Spieler da sind, geht es los. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
+        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.running ? ' · Hand läuft' : ''}</small>
+          <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
+      box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
+      box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
+      return;
+    }
   }
   const t = pkState, meIdx = t.me, me = meIdx >= 0 ? t.seats[meIdx] : null;
+  if (t.handNo !== pkHand) { pkHand = t.handNo; pkSeen = new Set(); }
+  const scrollY = window.scrollY; // Position merken, damit nichts hochspringt
   const rot = (i) => (meIdx >= 0 ? (i - meIdx + t.max) % t.max : i); // eigener Platz immer unten
+  const pos = (i) => PK_POS[rot(i)];
   const myTurn = meIdx >= 0 && t.toAct === meIdx;
   const need = me ? Math.max(0, t.currentBet - me.bet) : 0;
   const minTo = t.currentBet + t.minRaise, maxTo = me ? me.bet + me.stack : 0;
   if (!pkRaise || pkRaise < minTo) pkRaise = Math.min(maxTo, minTo);
   const seatHtml = (s, i) => {
-    const [x, y] = PK_POS[rot(i)];
+    const [x, y] = pos(i);
     if (!s) return meIdx < 0 ? `<button class="pk-seat empty" style="left:${x}%;top:${y}%" data-pkseat="${i}">+</button>` : '';
     const act = t.toAct === i;
     return `<div class="pk-seat ${act ? 'act' : ''} ${s.folded ? 'folded' : ''} ${s.away ? 'away' : ''}" style="left:${x}%;top:${y}%">
       <div class="pk-av" data-user="${s.id}">${avatar(s, 46, false)}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
       <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span></div>
       ${s.last ? `<span class="pk-last ${/Fold/.test(s.last) ? 'f' : /All/.test(s.last) ? 'a' : /Raise/.test(s.last) ? 'r' : ''}">${esc(s.last)}</span>` : ''}
-      ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c) => pkCard(c)).join('')}</div>` : ''}
-      ${s.bet ? `<span class="pk-bet">🪙 ${fmt(s.bet)}</span>` : ''}
+      ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c, k) => pkCard(c, false, `s${i}:${k}:${c.hidden ? 'h' : c.r + c.s}`)).join('')}</div>` : ''}
       ${s.handName && rot(i) !== 0 ? `<small class="pk-hn">${esc(s.handName)}</small>` : ''}
     </div>`;
   };
+  // Chips auf dem Tisch: eigener Vorrat vor jedem Platz, Einsatz weiter zur Mitte
+  const prevBets = pkPrev && pkPrev.handNo === t.handNo ? pkPrev.bets : [];
+  const chipsHtml = t.seats.map((s, i) => {
+    if (!s) return '';
+    const sp = lerp(pos(i), PK_C, 0.2), bp = lerp(pos(i), PK_C, 0.45);
+    const grew = s.bet > (prevBets[i] || 0);
+    return `<span class="pk-stackchips" style="left:${sp[0]}%;top:${sp[1]}%">${chipPile(s.stack)}</span>
+      ${s.bet ? `<span class="pk-betchips ${grew ? 'slide' : ''}" style="left:${bp[0]}%;top:${bp[1]}%;--sx:${sp[0]}%;--sy:${sp[1]}%;--ex:${bp[0]}%;--ey:${bp[1]}%">${chipPile(s.bet)}<em>${fmt(s.bet)}</em></span>` : ''}`;
+  }).join('');
   const win = t.winners && t.winners.length ? `<div class="pk-win">🏆 ${t.winners.map((w) => `<b>${esc(w.name)}</b> +${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>')}</div>` : '';
+  const potOnTable = t.pot - t.seats.reduce((x, s) => x + (s ? s.bet : 0), 0);
   box.innerHTML = `
     <div class="row" style="margin-bottom:8px;gap:8px"><b class="grow">${esc(t.name)} · Blinds ${t.sb}/${t.bb}</b>${me ? '<button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
     <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
-      <div class="pk-center"><div class="pk-board">${t.board.map((c) => pkCard(c)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
-        <div class="pk-pot">${t.pot ? `Pot <b>${fmt(t.pot)}</b>` : t.street === 'waiting' ? 'Warte auf Mitspieler …' : ''}</div>${win}</div>
+      ${chipsHtml}
+      <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => pkCard(c, false, `b${k}:${c.r}${c.s}`)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
+        <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? 'Warte auf Mitspieler …' : ''}</div>${win}</div>
       ${t.seats.map(seatHtml).join('')}
     </div>
-    ${me ? `<div class="pk-emotes">${EMOJIS.map((e, i) => `<button data-pkemo="${i}">${e}</button>`).join('')}</div>` : ''}
-    ${me ? `<div class="pk-me"><div class="pk-mycards">${me.cards.map((c) => pkCard(c, true)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' ? 'Warte auf die nächste Hand' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
-      ${myTurn ? `<div class="pk-actions">
+    ${me ? `<div class="pk-dock">
+      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' ? 'Warte auf die nächste Hand' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div>
+        <div class="pk-emotes">${EMOJIS.slice(0, 4).map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div></div>
+      <div class="pk-actions ${myTurn ? '' : 'wait'}">${myTurn ? `
         <button class="btn ghost" data-pka="fold">Fold</button>
         ${need > 0 ? `<button class="btn" data-pka="call">Call ${fmt(Math.min(need, me.stack))}</button>` : '<button class="btn" data-pka="check">Check</button>'}
         ${maxTo > t.currentBet ? `<div class="pk-raise"><div class="row" style="gap:6px;flex-wrap:wrap">${[['Min', minTo], ['½ Pot', t.currentBet + Math.round(t.pot / 2)], ['Pot', t.currentBet + t.pot]].filter(([, v]) => v >= minTo && v < maxTo).map(([n, v]) => `<button class="chipbtn" data-pkto="${v}">${n}</button>`).join('')}<button class="chipbtn allin" data-pka="allin">All in ${fmt(maxTo)}</button></div>
-          <input type="range" id="pkRange" min="${Math.min(minTo, maxTo)}" max="${maxTo}" step="${t.bb}" value="${pkRaise}"><button class="btn" data-pka="raise" id="pkRaiseBtn">Raise auf ${fmt(pkRaise)}</button></div>` : ''}
-      </div>` : ''}
-      ${me.stack === 0 && t.street === 'showdown' || me.stack === 0 && t.street === 'waiting' ? `<button class="btn" id="pkRebuy" style="width:100%;margin-top:8px">Nachkaufen · ${fmt(t.buyIn)} 💎</button>` : ''}` : ''}`;
+          <div class="row" style="gap:8px"><input type="range" id="pkRange" min="${Math.min(minTo, maxTo)}" max="${maxTo}" step="${t.bb}" value="${pkRaise}"><button class="btn small" data-pka="raise" id="pkRaiseBtn">Raise ${fmt(pkRaise)}</button></div></div>` : ''}`
+        : `<p class="sub center">${t.street === 'waiting' ? 'Warte auf Mitspieler …' : t.street === 'showdown' ? 'Hand vorbei, gleich geht es weiter' : 'Warte, bis du dran bist …'}</p>`}</div>
+      ${me.stack === 0 && (t.street === 'showdown' || t.street === 'waiting') ? `<button class="btn" id="pkRebuy" style="width:100%;margin-top:8px">Nachkaufen · ${fmt(t.buyIn)} 💎</button>` : ''}
+    </div>` : ''}`;
+  window.scrollTo(0, scrollY);
+  // Chips fliegen: Einsätze in den Pot, wenn eine Setzrunde endet, und der Pot zum Gewinner
+  const tb = box.querySelector('.pk-table');
+  const fly = (from, to, amount) => { const e = document.createElement('span'); e.className = 'pk-fly'; e.innerHTML = chipPile(amount); e.style.setProperty('--sx', from[0] + '%'); e.style.setProperty('--sy', from[1] + '%'); e.style.setProperty('--ex', to[0] + '%'); e.style.setProperty('--ey', to[1] + '%'); tb.appendChild(e); setTimeout(() => e.remove(), 900); };
+  if (pkPrev && pkPrev.handNo === t.handNo && tb) {
+    pkPrev.bets.forEach((b, i) => { if (b > 0 && !(t.seats[i] && t.seats[i].bet)) fly(lerp(pos(i), PK_C, 0.45), PK_C, b); });
+    if (t.winners && !pkPrev.winners) t.winners.forEach((w) => { const i = t.seats.findIndex((s) => s && s.id === w.id); if (i >= 0) setTimeout(() => fly(PK_C, lerp(pos(i), PK_C, 0.2), w.amount), 350); });
+  }
+  pkPrev = { handNo: t.handNo, bets: t.seats.map((s) => (s ? s.bet : 0)), winners: !!(t.winners && t.winners.length) };
   box.querySelectorAll('[data-pkseat]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: t.id, seat: Number(b.dataset.pkseat) }); });
   box.querySelectorAll('[data-pka]').forEach((b) => { b.onclick = () => { const a = b.dataset.pka; socket.emit('pk:act', a === 'raise' ? { action: 'raise', to: pkRaise } : { action: a }); pkRaise = 0; sfx('dart'); }; });
-  box.querySelectorAll('[data-pkto]').forEach((b) => { b.onclick = () => { pkRaise = Number(b.dataset.pkto); const r = $('#pkRange'); if (r) r.value = pkRaise; $('#pkRaiseBtn').textContent = 'Raise auf ' + fmt(pkRaise); }; });
-  const rg = $('#pkRange'); if (rg) rg.oninput = () => { pkRaise = Number(rg.value); $('#pkRaiseBtn').textContent = (pkRaise >= maxTo ? 'All in ' : 'Raise auf ') + fmt(pkRaise); };
+  box.querySelectorAll('[data-pkto]').forEach((b) => { b.onclick = () => { pkRaise = Number(b.dataset.pkto); const r = $('#pkRange'); if (r) r.value = pkRaise; $('#pkRaiseBtn').textContent = 'Raise ' + fmt(pkRaise); }; });
+  const rg = $('#pkRange'); if (rg) rg.oninput = () => { pkRaise = Number(rg.value); $('#pkRaiseBtn').textContent = (pkRaise >= maxTo ? 'All in ' : 'Raise ') + fmt(pkRaise); };
   if ($('#pkLeave')) $('#pkLeave').onclick = () => { socket.emit('pk:leave'); pkState = null; setTimeout(() => socket.emit('pk:list'), 400); };
   if ($('#pkBack')) $('#pkBack').onclick = () => { pkState = null; socket.emit('pk:list'); renderCasino(); };
   if ($('#pkRebuy')) $('#pkRebuy').onclick = () => socket.emit('pk:rebuy');
