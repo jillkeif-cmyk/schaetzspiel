@@ -761,6 +761,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #openDaily.ready img{animation:dailybob 1.2s ease-in-out infinite alternate}
 @keyframes dailyglow{to{box-shadow:0 0 0 2px var(--tape),0 0 40px rgba(255,210,63,.75)}}
 @keyframes dailybob{to{transform:translateY(-4px) rotate(-4deg)}}
+.titleimg.a-dev{box-shadow:none!important;outline:3px solid transparent;border-radius:12px;position:relative;animation:devglow 2.4s linear infinite}
+@keyframes devglow{0%{filter:drop-shadow(0 0 6px #FF4D6D) drop-shadow(0 0 14px #FF4D6D)}25%{filter:drop-shadow(0 0 6px #FFD23F) drop-shadow(0 0 14px #FFD23F)}50%{filter:drop-shadow(0 0 6px #3DDC97) drop-shadow(0 0 14px #3DDC97)}75%{filter:drop-shadow(0 0 6px #5AA9FF) drop-shadow(0 0 14px #B04DFF)}100%{filter:drop-shadow(0 0 6px #FF4D6D) drop-shadow(0 0 14px #FF4D6D)}}
 </style>
 </head>
 <body>
@@ -780,7 +782,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '11';
+const AVER = '12';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');

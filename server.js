@@ -108,7 +108,7 @@ app.get('/api/home', async (req, res) => {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
-    const u2 = { ...u, ...(await cardStats(u.id)) };
+    const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
     res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
@@ -530,7 +530,7 @@ app.post('/api/card', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const emblem = String(req.body.emblem || ''), title = String(req.body.title || '');
-    const uc = { ...u, ...(await cardStats(u.id)) };
+    const uc = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
     if (!cards.canUse(uc, emblem, title)) return res.status(403).json({ error: 'Das hast du noch nicht freigeschaltet.' });
     await store.save(u.id, { emblem, title });
     res.json({ emblem, title });
