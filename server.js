@@ -263,6 +263,17 @@ app.post('/api/daily/claim', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// Einmalige Aktion: Glücksrad heute für alle wieder frei, damit jeder das neue Rad testen kann
+setTimeout(async () => {
+  try {
+    const KEY = 'wheel_reset_2026_09_21';
+    if (await store.setting(KEY)) return;
+    const n = await store.resetWheel();
+    await store.setting(KEY, '1');
+    console.log('Glücksrad für alle zurückgesetzt:', n, 'Spieler');
+  } catch (e) { console.error('Glücksrad-Reset:', e.message); }
+}, 3000);
+
 // Erinnerung an die Tagesbelohnung, jeden Tag um 11 Uhr deutscher Zeit
 let lastReminder = '';
 setInterval(async () => {
