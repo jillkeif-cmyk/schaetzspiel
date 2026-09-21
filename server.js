@@ -209,7 +209,7 @@ app.post('/api/casino/wheel', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const v = vipView(u);
     if (!v.spinsLeft) return res.status(400).json({ error: 'Für heute hast du keine Drehung mehr. Morgen geht es weiter.' });
-    const r = vip.spinWheel(v.tier);
+    const r = vip.spinWheel();
     const today = daily.dayKey();
     const save = { wheel_day: today, wheel_used: (u.wheel_day === today ? Number(u.wheel_used) || 0 : 0) + 1 };
     if (r.dia) save.diamonds = (Number(u.diamonds) || 0) + r.dia;
@@ -296,7 +296,7 @@ const takeBet = async (u, amount) => {
   return { ok: true, left: have - amount };
 };
 // Casino-Statistik: Runden, Gewinne, bester Gewinn, Bilanz und eigene XP
-const casinoStat = async (uid, stake, won) => {
+const casinoStat = async (uid, stake, won, risk = stake) => {
   const u = await store.userById(uid); if (!u) return;
   const net = won - stake;
   const today = daily.dayKey();
@@ -308,7 +308,7 @@ const casinoStat = async (uid, stake, won) => {
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
-    casino_xp: (Number(u.casino_xp) || 0) + Math.max(5, Math.round(stake / 20) + (won > stake ? Math.round(won / 40) : 0)),
+    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake),
   });
 };
 const payOut = async (uid, n) => {
@@ -351,7 +351,9 @@ app.post('/api/casino/board', async (req, res) => {
     if (r.error) return res.status(400).json({ error: r.error });
     const after = have - r.stake + r.won;
     await store.save(u.id, { diamonds: after });
-    await casinoStat(u.id, r.stake, r.won);
+    const pays = Array.from({ length: 37 }, (_, n) => bets.reduce((x, b) => x + (b.numbers.includes(n) ? Math.round(b.amount * 36 / b.numbers.length) : 0), 0)).sort((a, b) => a - b);
+    const risk = Math.max(0, r.stake - pays[18]); // Median der 37 möglichen Ergebnisse
+    await casinoStat(u.id, r.stake, r.won, risk);
     const h = [r.n, ...(rHistory.get(u.id) || [])].slice(0, 14); rHistory.set(u.id, h);
     res.json({ ...r, diamonds: after, history: h });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -678,7 +680,7 @@ const modAuth = async (req, res) => {
   if (!isMod(u)) { res.status(403).json({ error: 'Kein Zugriff.' }); return null; }
   return u;
 };
-const modView = (t) => ({ ...publicStats(t), xp: t.xp, diamonds: Number(t.diamonds) || 0, emblem: t.emblem || '', titleId: t.title || '', unlocks: String(t.unlocks || '').split(',').filter(Boolean), codes: String(t.codes || '').split(',').filter(Boolean) });
+const modView = (t) => ({ ...publicStats(t), xp: t.xp, dailyStreak: Number(t.daily_streak) || 0, wheelUsed: Number(t.wheel_used) || 0, answered: t.answered || 0, pointsTotal: t.points || 0, diamonds: Number(t.diamonds) || 0, emblem: t.emblem || '', titleId: t.title || '', unlocks: String(t.unlocks || '').split(',').filter(Boolean), codes: String(t.codes || '').split(',').filter(Boolean) });
 
 app.get('/api/admin/users', async (req, res) => {
   try {
@@ -689,7 +691,7 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 // Werte eines Spielers ändern. Level und Prestige lassen sich getrennt setzen.
-const NUM_FIELDS = { level: 1, xp: 1, prestige: 1, rank_points: 1, wins: 1, matches: 1, exact: 1, close: 1, answered: 1, mc_right: 1, mc_total: 1, points: 1, best_score: 1, streak: 1, best_streak: 1 };
+const NUM_FIELDS = { level: 1, xp: 1, prestige: 1, rank_points: 1, wins: 1, matches: 1, exact: 1, close: 1, answered: 1, mc_right: 1, mc_total: 1, points: 1, best_score: 1, streak: 1, best_streak: 1, casino_xp: 1, casino_rounds: 1, casino_wins: 1, casino_best: 1, daily_streak: 1, wheel_used: 1, packs_opened: 1 };
 app.post('/api/admin/user', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;

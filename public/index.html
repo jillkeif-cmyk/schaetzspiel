@@ -1181,7 +1181,8 @@ function renderTables(box) {
     </div>
     ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px">${[100, 250, 500, 1000].map((v) => `<button class="chipbtn" data-bjbet="${v}">${v}</button>`).join('')}</div>
         <p class="sub" style="margin-top:6px">${me && me.bet ? `Dein Einsatz: ${fmt(me.bet)} 💎` : 'Setz deinen Einsatz'}</p>
-        ${t.hostId === meId ? '<button class="btn" id="bjStart" style="width:100%;margin-top:8px">Austeilen</button>' : '<p class="sub center">Der Gastgeber teilt aus, sobald alle gesetzt haben.</p>'}`
+        <p class="sub center" style="margin-top:6px">${t.autoIn != null ? `Es wird automatisch ausgeteilt in <b id="bjAuto">${t.autoIn}</b> s` : 'Sobald jemand setzt, startet die Runde nach 15 Sekunden, oder sofort, wenn alle gesetzt haben.'}</p>
+        ${t.hostId === meId && t.seats.some((x) => x.bet) ? '<button class="btn ghost" id="bjStart" style="width:100%;margin-top:6px">Sofort austeilen</button>' : ''}`
       : t.phase === 'playing' ? (myTurn ? `<div class="bjacts">
           <button class="go" data-bja="hit"><span class="ic">🂠</span>Karte</button>
           <button data-bja="stand"><span class="ic">✋</span>Halten</button>
@@ -1193,6 +1194,8 @@ function renderTables(box) {
     <div class="row" style="gap:8px;margin-top:10px"><button class="btn ghost grow" id="bjInvite">Freunde einladen</button><button class="btn ghost grow" id="bjLeave">Verlassen</button></div>`;
   bjMark('td', (t.dealer || []).filter((c) => !c.hidden).length); bjMark('tdh', 2);
   t.seats.forEach((st) => st.hands.forEach((h, hi) => bjMark('t' + st.id + '_' + hi, h.cards.length)));
+  clearInterval(renderTables.tick);
+  if (t.autoIn != null) { let n = t.autoIn; renderTables.tick = setInterval(() => { n = Math.max(0, n - 1); const el = document.getElementById('bjAuto'); if (el) el.textContent = n; else clearInterval(renderTables.tick); }, 1000); }
   const on = (sel, fn) => document.querySelectorAll(sel).forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) fn(b); }; });
   on('#bjCreate', () => socket.emit('bj:create'));
   on('[data-bjjoin]', (b) => socket.emit('bj:join', b.dataset.bjjoin));
@@ -2037,7 +2040,11 @@ function modEdit(id, page) {
        <div class="row"><button class="chipbtn" data-mu="*" data-on="1">Alles freischalten</button><button class="chipbtn" data-mu="*" data-on="0">Alles zurücksetzen</button></div>
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
-       <div class="modgrid">${f('level', 'Level (1-30)', u.level)}${f('prestige', 'Prestige (0-10)', u.prestige)}${f('rank_points', 'Weltranglistenpunkte', u.rankPoints)}${f('wins', 'Siege', u.wins)}${f('matches', 'Matches', u.matches)}${f('exact', 'Punktlandungen', u.exact)}${f('streak', 'Serie aktuell', u.streak)}${f('best_streak', 'Beste Serie', u.bestStreak)}</div>
+       <div class="modgrid">${f('level', 'Level (1-30)', u.level)}${f('prestige', 'Prestige (0-10)', u.prestige)}${f('rank_points', 'Weltranglistenpunkte', u.rankPoints)}${f('wins', 'Siege', u.wins)}${f('matches', 'Matches', u.matches)}${f('exact', 'Punktlandungen', u.exact)}${f('streak', 'Serie aktuell', u.streak)}${f('best_streak', 'Beste Serie', u.bestStreak)}${f('answered', 'Beantwortete Fragen', u.answered)}${f('points', 'Punkte gesamt', u.pointsTotal)}</div>
+       <label style="margin-top:6px">Casino · VIP ${esc(['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'][u.casinoTier || 0])}</label>
+       <div class="modgrid">${f('casino_xp', 'Casino-XP (Silber 5.000 · Gold 15.000 · Platin 40.000 · Diamant 90.000 · Black 175.000)', u.casinoXp)}${f('casino_rounds', 'Casino-Runden', u.casinoRounds)}${f('casino_wins', 'Casino-Siege', u.casinoWins)}${f('casino_best', 'Bester Gewinn', u.casinoBest)}${f('wheel_used', 'Glücksrad heute gedreht (0 = alle frei)', u.wheelUsed)}</div>
+       <label style="margin-top:6px">Tagesbelohnung</label>
+       <div class="modgrid">${f('daily_streak', 'Tage in Folge (0 bis 6)', u.dailyStreak)}</div>
        <label>Diamanten</label><div class="row"><input class="field grow" id="modDia" inputmode="numeric" value="${u.diamonds || 0}"><button type="button" class="chipbtn" data-dia="set">Setzen</button><button type="button" class="chipbtn" data-dia="add">+500</button><button type="button" class="chipbtn" data-dia="sub">−500</button></div>
        <p class="sub">Level und Prestige lassen sich getrennt setzen. Leere Felder bleiben unverändert.</p>
        ${home.me.admin ? `<label>Rolle</label><div class="row" id="modRole">${modRoles.map((r) => `<button type="button" class="chipbtn ${(u.role || '') === r ? 'on' : ''}" data-role="${r}">${r || 'normal'}</button>`).join('')}</div>` : ''}
