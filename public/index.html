@@ -893,6 +893,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .addfr{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,210,63,.15);color:var(--tape);font:900 18px/1 Archivo;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);margin-left:6px}
 .oppl{cursor:pointer}
 .fbonus{margin-top:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(90deg,rgba(255,210,63,.22),rgba(255,210,63,.06));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);font-weight:800;font-size:13.5px;text-align:center}
+.chips{flex-wrap:wrap}
+.chips button.allchip{color:#2A1600;font-size:10px;line-height:1.05}
+.chipbtn.allin{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;font-weight:900}
 </style>
 </head>
 <body>
@@ -1145,7 +1148,8 @@ const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 
 let vipD = null;
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
-const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C']];
+const MAX_CBET = 20000;
+const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
 const numAt = (c, r) => 3 * c + (3 - r);
 function boardHtml() {
   const chipOn = (nums) => { const k = nums.slice().sort((a, b) => a - b).join(','); const b = rbets.find((x) => x.key === k); return b ? `<span class="rchip">${b.amount >= 1000 ? (b.amount / 1000).toFixed(1).replace('.0', '') + 'k' : b.amount}</span>` : ''; };
@@ -1166,7 +1170,12 @@ function boardHtml() {
 function placeBet(nums) {
   const k = nums.slice().sort((a, b) => a - b).join(',');
   const b = rbets.find((x) => x.key === k);
-  if (b) b.amount += rchip; else rbets.push({ key: k, numbers: nums, amount: rchip });
+  const total = rbets.reduce((x, y) => x + y.amount, 0), have = (tcg && tcg.diamonds) || 0;
+  const room = Math.max(0, Math.min(have, MAX_CBET) - total);
+  const amt = rchip === 'all' ? room : Math.min(rchip, room);
+  if (amt < 10) return toast(total >= MAX_CBET ? 'Höchstens 20.000 Diamanten pro Runde.' : 'Dafür reichen deine Diamanten nicht.');
+  if (b) b.amount += amt; else rbets.push({ key: k, numbers: nums, amount: amt });
+  if (rchip === 'all') toast(`All in: ${fmt(amt)} Diamanten gesetzt`);
   sfx('dart'); renderCasino();
 }
 function tapNumber(n) {
@@ -1211,7 +1220,7 @@ function renderTables(box) {
             : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
           ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
     </div>
-    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px">${[100, 250, 500, 1000].map((v) => `<button class="chipbtn" data-bjbet="${v}">${v}</button>`).join('')}</div>
+    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-bjbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-bjbet="all">All in</button></div>
         <p class="sub" style="margin-top:6px">${me && me.bet ? `Dein Einsatz: ${fmt(me.bet)} 💎` : 'Setz deinen Einsatz'}</p>
         <p class="sub center" style="margin-top:6px">${t.autoIn != null ? `Es wird automatisch ausgeteilt in <b id="bjAuto">${t.autoIn}</b> s` : 'Sobald jemand setzt, startet die Runde nach 15 Sekunden, oder sofort, wenn alle gesetzt haben.'}</p>
         ${t.hostId === meId && t.seats.some((x) => x.bet) ? '<button class="btn ghost" id="bjStart" style="width:100%;margin-top:6px">Sofort austeilen</button>' : ''}`
@@ -1231,7 +1240,7 @@ function renderTables(box) {
   const on = (sel, fn) => document.querySelectorAll(sel).forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) fn(b); }; });
   on('#bjCreate', () => socket.emit('bj:create'));
   on('[data-bjjoin]', (b) => socket.emit('bj:join', b.dataset.bjjoin));
-  on('[data-bjbet]', (b) => socket.emit('bj:bet', Number(b.dataset.bjbet)));
+  on('[data-bjbet]', (b) => { const all = b.dataset.bjbet === 'all'; const v = all ? Math.min(MAX_CBET, ((tcg && tcg.diamonds) || 0) + ((me && me.bet) || 0)) : Number(b.dataset.bjbet); socket.emit('bj:bet', v); if (all) toast(`All in: ${fmt(v)} Diamanten`); });
   on('#bjStart', () => socket.emit('bj:start'));
   on('[data-bja]', (b) => { sfx('dart'); socket.emit('bj:act', b.dataset.bja); });
   on('#bjLeave', () => { socket.emit('bj:leave'); bjT = null; renderCasino(); });
@@ -1382,7 +1391,7 @@ function renderCasino() {
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
       <div class="modes">${[['zahl', 'Zahl ×36'], ['split', 'Split ×18'], ['street', 'Reihe ×12'], ['ecke', 'Ecke ×9'], ['sechs', '6er ×6']].map(([k, n]) => `<button data-rmode="${k}" class="${rmode === k ? 'on' : ''}">${n}</button>`).join('')}</div>
       <div class="rboard th-${THEME_OF()}"><div class="rgrid">${boardHtml()}</div></div>
-      <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${rchip === v ? 'on' : ''}" style="background:${c}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}</div>
+      <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${String(rchip) === String(v) ? 'on' : ''} ${v === 'all' ? 'allchip' : ''}" style="background:${c}">${v === 'all' ? 'ALL<br>IN' : v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}</div>
       <div class="row" style="gap:8px"><button class="btn ghost small grow" id="rClear">Löschen</button><button class="btn ghost small grow" id="rRepeat" ${lastBets.length ? '' : 'disabled'}>Wiederholen</button></div>
       <p class="sub center" style="margin:8px 0">Einsatz: <b>${fmt(rbets.reduce((x, b) => x + b.amount, 0))}</b> 💎 auf ${rbets.length} ${rbets.length === 1 ? 'Feld' : 'Felder'}</p>
       <button class="btn" id="spinBtn" style="width:100%">Drehen</button>
@@ -1423,7 +1432,7 @@ function renderCasino() {
   document.querySelectorAll('[data-rn]').forEach((b) => { b.onclick = () => tapNumber(Number(b.dataset.rn)); });
   document.querySelectorAll('[data-rset]').forEach((b) => { b.onclick = () => placeBet(b.dataset.rset.split(',').map(Number)); });
   document.querySelectorAll('[data-rmode]').forEach((b) => { b.onclick = () => { rmode = b.dataset.rmode; rsplitFirst = null; renderCasino(); }; });
-  document.querySelectorAll('[data-chip]').forEach((b) => { b.onclick = () => { rchip = Number(b.dataset.chip); renderCasino(); }; });
+  document.querySelectorAll('[data-chip]').forEach((b) => { b.onclick = () => { rchip = b.dataset.chip === 'all' ? 'all' : Number(b.dataset.chip); renderCasino(); }; });
   on('#rClear', () => { rbets = []; rsplitFirst = null; renderCasino(); });
   on('#rRepeat', () => { rbets = lastBets.map((b) => ({ ...b })); renderCasino(); });
 }
@@ -1574,7 +1583,7 @@ function renderCards() {
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
-        ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
+        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -2525,7 +2534,7 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); }
-  else if (t.dataset.cbet) { cbet = Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; }
+  else if (t.dataset.cbet) { cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
   else if (t.dataset.pick) { cpick = t.dataset.pick; renderCasino(); }
