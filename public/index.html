@@ -645,7 +645,12 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
   box-shadow:inset 0 0 0 10px #C89A3C,inset 0 0 0 13px #1a2426,0 14px 34px rgba(0,0,0,.55)}
 .wheel::after{content:"";position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2A6B72,#0B2F35 70%);box-shadow:inset 0 0 0 4px #C89A3C,0 0 24px rgba(0,0,0,.6)}
 .pointer{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid var(--tape);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));z-index:2}
-.wheelwrap{--W:min(74vw,290px)}
+.wheelwrap{--W:min(74vw,290px);border-radius:50%}
+.pockets{position:absolute;inset:0;border-radius:50%;z-index:1;
+  -webkit-mask:radial-gradient(circle,transparent 0 calc(var(--W) * .27),#000 calc(var(--W) * .275) calc(var(--W) * .37),transparent calc(var(--W) * .375));
+  mask:radial-gradient(circle,transparent 0 calc(var(--W) * .27),#000 calc(var(--W) * .275) calc(var(--W) * .37),transparent calc(var(--W) * .375));
+  box-shadow:inset 0 0 0 1px rgba(200,154,60,.6)}
+.pockets::after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -4.865deg,rgba(200,154,60,.85) 0 .6deg,transparent .6deg 9.73deg)}
 .balltrack{position:absolute;inset:0;z-index:6;pointer-events:none;transition:transform 4.6s cubic-bezier(.12,.62,.12,1)}
 .balltrack[hidden]{display:none}
 .ball{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
@@ -1043,7 +1048,7 @@ function renderTables(box) {
           <button data-bja="surrender" ${can.surrender ? '' : 'disabled'}><span class="ic">🏳</span>Aufgeben</button></div>`
         : `<p class="sub center" style="margin-top:10px">${esc((t.seats.find((x) => x.id === t.turn) || {}).name || 'Die Bank')} ist am Zug …</p>`)
       : '<p class="sub center" style="margin-top:10px">Auswertung … gleich geht die nächste Runde los.</p>'}
-    <button class="btn ghost" id="bjLeave" style="width:100%;margin-top:10px">Tisch verlassen</button>`;
+    <div class="row" style="gap:8px;margin-top:10px"><button class="btn ghost grow" id="bjInvite">Freunde einladen</button><button class="btn ghost grow" id="bjLeave">Verlassen</button></div>`;
   bjMark('td', (t.dealer || []).filter((c) => !c.hidden).length); bjMark('tdh', 2);
   t.seats.forEach((st) => st.hands.forEach((h, hi) => bjMark('t' + st.id + '_' + hi, h.cards.length)));
   const on = (sel, fn) => document.querySelectorAll(sel).forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) fn(b); }; });
@@ -1053,8 +1058,28 @@ function renderTables(box) {
   on('#bjStart', () => socket.emit('bj:start'));
   on('[data-bja]', (b) => { sfx('dart'); socket.emit('bj:act', b.dataset.bja); });
   on('#bjLeave', () => { socket.emit('bj:leave'); bjT = null; renderCasino(); });
+  on('#bjInvite', () => {
+    const fl = friends.filter((f) => f.status === 'ok' && !t.seats.some((x) => x.id === f.id));
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>An den Tisch einladen</h2>
+      ${fl.length ? `<div class="plist">${fl.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 34)}<span class="nm">${withTag(f)}<br><span class="lv">${esc(onlineText(f))}</span></span><button class="mini go" data-bjinv="${f.id}">Einladen</button></div>`).join('')}</div>`
+        : '<p class="sub">Du hast noch keine Freunde zum Einladen.</p>'}
+      <p class="sub">Wer offline ist, bekommt eine Benachrichtigung aufs Handy.</p>
+      <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    document.querySelectorAll('[data-bjinv]').forEach((b) => { b.onclick = () => { socket.emit('bj:invite', Number(b.dataset.bjinv)); b.textContent = 'gesendet ✓'; b.disabled = true; b.classList.add('sent'); }; });
+  });
 }
 
+// Taschenring als Farbverlauf: jede Tasche sitzt genau unter ihrer Zahl
+function pocketRing(W, RED) {
+  const seg = 360 / 37, parts = [];
+  W.forEach((n, i) => {
+    const c = n === 0 ? '#1D7A4A' : RED.has(n) ? '#B8322D' : '#121819';
+    const a = i * seg - seg / 2;
+    parts.push(`${c} ${a.toFixed(3)}deg ${(a + seg).toFixed(3)}deg`);
+  });
+  return `conic-gradient(from 0deg, ${parts.join(', ')})`;
+}
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
   if (cgame === 'tables') return renderTables(box);
@@ -1062,7 +1087,7 @@ function renderCasino() {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}</div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
         <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
@@ -1184,6 +1209,8 @@ async function loadTrades() { try { trades = await api('/api/tcg/trades'); rende
 
 function renderCards() {
   const box = $('#cbody'); if (!box || !tcg) return;
+  if (page === 'casino') ctab = 'casino';
+  if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
@@ -1453,11 +1480,17 @@ function connect() {
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
-  socket.on('bj:list', (l) => { bjList = l || []; if (page === 'cards' && ctab === 'casino' && cgame === 'tables') renderCasino(); });
+  socket.on('bj:invited', (d) => {
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>🃏 Blackjack-Einladung</h2><p>${esc(d.from)} lädt dich an den Tisch ein.</p>
+      <button class="btn" id="bjAccept">Hinsetzen</button><button class="btn ghost" id="pwCancel">Später</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    $('#bjAccept').onclick = () => { closeModal(); page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', d.table); };
+  });
+  socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); });
   socket.on('bj:state', (t) => {
     const prev = bjT; bjT = t;
     if (t && prev && prev.phase !== 'done' && t.phase === 'done') { const me = t.seats.find((x) => x.id === home.me.id); if (me && me.payout) { sfx('exact'); toast(`+${fmt(me.payout)} Diamanten`); } }
-    if (page === 'cards' && ctab === 'casino' && cgame === 'tables') renderCasino();
+    if (page === 'casino' && cgame === 'tables') renderCasino();
   });
   socket.on('note', (m) => { toast(m); sfx('sent'); });
   socket.on('diamonds', (n) => { if (home && home.me) { home.me.diamonds = n; if (tcg) tcg.diamonds = n; viewKey = ''; update(); } });
@@ -1498,10 +1531,15 @@ function build() {
     <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button></div>
     <div id="rbody"></div></div>`;
 
+  if (!S && page === 'casino') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <h1 style="font-size:30px">Casino</h1>
+    <div id="cbody"></div></div>`;
+
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button><button data-ct="casino">Gambling 🎲</button></div>
+    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
@@ -1526,6 +1564,7 @@ function build() {
     <div id="pushbar" hidden></div>
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
+    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
     <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
@@ -1544,7 +1583,7 @@ function build() {
     <div id="nextUp"></div>
 
     <div hidden><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
-    <div><h2 style="margin-bottom:10px">Bestenliste</h2>
+    <div hidden><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
       <div id="board" class="plist" style="margin-top:10px"></div></div></div>`;
 
@@ -1677,8 +1716,15 @@ function sideHtml() {
 }
 function friendsHtml() {
   if (!friends.length) return '<p class="sub">Noch keine Freunde. Füge jemanden per Spielername hinzu oder tippe nach einem Match auf „+ Freund“.</p>';
+  const row = (f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? 'spielt gerade' : onlineText(f))}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`;
   const order = { in: 0, ok: 1, out: 2 };
-  return [...friends].sort((a, b) => order[a.status] - order[b.status] || b.online - a.online || a.name.localeCompare(b.name)).map((f) => `<div class="pl" style="--c:${f.status === 'in' ? 'var(--tape)' : 'var(--line)'}" ${f.status === 'ok' ? `data-user="${f.id}"` : ''}>${avatar(f, 38)}<span class="nm">${withTag(f)}<br><span class="lv">${f.status === 'in' ? 'möchte dein Freund sein' : f.status === 'out' ? 'Anfrage gesendet' : rankText(f) + ' · ' + (f.playing ? 'spielt gerade' : onlineText(f))}</span></span>${f.status === 'in' ? `<button class="mini go" data-fr="accept" data-id="${f.id}">Annehmen</button><button class="mini" data-fr="decline" data-id="${f.id}">Nein</button>` : f.status === 'out' ? `<button class="mini" data-fr="remove" data-id="${f.id}">Zurückziehen</button>` : (f.joinCode ? `<button class="mini go" data-join="${esc(f.joinCode)}">Beitreten</button>` : '') + `<span class="fr-dot ${f.playing ? 'play' : f.online ? 'on' : ''}"></span>`}</div>`).join('');
+  const sorted = [...friends].sort((a, b) => order[a.status] - order[b.status] || b.online - a.online || a.name.localeCompare(b.name));
+  // Anfragen und Online-Freunde direkt, Offline-Freunde zum Aufklappen
+  const top = sorted.filter((f) => f.status !== 'ok' || f.online);
+  const off = sorted.filter((f) => f.status === 'ok' && !f.online);
+  return top.map(row).join('')
+    + (off.length ? `<details class="fold offfold" ${openFold === 'off' ? 'open' : ''} data-fold="off"><summary><span class="grow">Offline</span><span class="sub">${off.length}</span></summary><div class="plist" style="margin-top:8px">${off.map(row).join('')}</div></details>` : '')
+    + (!top.length && off.length ? '' : '');
 }
 let modUsers = [], modRoles = [''];
 async function modLoad(q) {
@@ -1782,7 +1828,7 @@ function update() {
   } else tray.classList.remove('dim');
   if (!token) return;
   if (!S && page === 'ranks') { renderRanks(); return; }
-  if (!S && page === 'cards') { renderCards(); return; }
+  if (!S && (page === 'cards' || page === 'casino')) { renderCards(); return; }
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
     if ($('#cardBox') && home && home.cards) {
@@ -2005,6 +2051,7 @@ document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') re
 document.addEventListener('toggle', (e) => {
   const d = e.target.closest && e.target.closest('.fold');
   if (!d) return;
+  if (d.dataset.fold === 'off') { openFold = d.open ? 'off' : ''; return; } // Offline-Freunde: nur auf- und zuklappen
   if (d.open) {
     openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; });
     const C2 = home && home.cards;
@@ -2077,6 +2124,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'pushOn') pushOn();
   else if (t.id === 'pushOff') pushOff();
   else if (t.id === 'newTrade') tradeDialog();
+  else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; render(); loadTcg(); }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
@@ -2154,6 +2202,9 @@ document.addEventListener('visibilitychange', async () => { if (document.visibil
 window.addEventListener('pageshow', () => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); });
 setTimeout(() => { const a = document.activeElement; if (a && /INPUT|TEXTAREA/.test(a.tagName)) a.blur(); }, 0);
 fetch('/api/config').then((r) => r.json()).then((c) => { if (c.needCode !== needCode) { needCode = c.needCode; if (!token) { viewKey = ''; render(); } } }).catch(() => {});
+// Beitritt über den Link aus der Push-Nachricht
+const bjq = new URLSearchParams(location.search).get('bj');
+if (bjq && token) setTimeout(() => { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); if (socket) socket.emit('bj:join', bjq); history.replaceState(null, '', '/'); }, 1800);
 render(); tick();
 if (token) { loadHome(); connect(); pushInit(); }
 </script>
