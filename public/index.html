@@ -1609,18 +1609,18 @@ function renderPoker(box) {
     <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
       ${chipsHtml}
       <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => pkCard(c, false, `b${k}:${c.r}${c.s}`)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
-        <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? 'Warte auf Mitspieler …' : ''}</div>${win}</div>
+        <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
       ${t.seats.map(seatHtml).join('')}
     </div>
     ${me ? `<div class="pk-dock">
-      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' ? 'Warte auf die nächste Hand' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div>
+      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' && !t.nextIn ? 'Warte auf Mitspieler' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div>
         <div class="pk-emotes">${EMOJIS.slice(0, 4).map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div></div>
       <div class="pk-actions ${myTurn ? '' : 'wait'}">${myTurn ? `
         <button class="btn ghost" data-pka="fold">Fold</button>
         ${need > 0 ? `<button class="btn" data-pka="call">Call ${fmt(Math.min(need, me.stack))}</button>` : '<button class="btn" data-pka="check">Check</button>'}
         ${maxTo > t.currentBet ? `<div class="pk-raise"><div class="row" style="gap:6px;flex-wrap:wrap">${[['Min', minTo], ['½ Pot', t.currentBet + Math.round(t.pot / 2)], ['Pot', t.currentBet + t.pot]].filter(([, v]) => v >= minTo && v < maxTo).map(([n, v]) => `<button class="chipbtn" data-pkto="${v}">${n}</button>`).join('')}<button class="chipbtn allin" data-pka="allin">All in ${fmt(maxTo)}</button></div>
           <div class="row" style="gap:8px"><input type="range" id="pkRange" min="${Math.min(minTo, maxTo)}" max="${maxTo}" step="${t.bb}" value="${pkRaise}"><button class="btn small" data-pka="raise" id="pkRaiseBtn">Raise ${fmt(pkRaise)}</button></div></div>` : ''}`
-        : `<p class="sub center">${t.street === 'waiting' ? 'Warte auf Mitspieler …' : t.street === 'showdown' ? 'Hand vorbei, gleich geht es weiter' : 'Warte, bis du dran bist …'}</p>`}</div>
+        : `<p class="sub center">${t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : t.street === 'showdown' ? 'Hand vorbei, gleich geht es weiter' : 'Warte, bis du dran bist …'}</p>`}</div>
       ${me.stack === 0 && (t.street === 'showdown' || t.street === 'waiting') ? `<button class="btn" id="pkRebuy" style="width:100%;margin-top:8px">Nachkaufen · ${fmt(t.buyIn)} 💎</button>` : ''}
     </div>` : ''}`;
   window.scrollTo(0, scrollY);
