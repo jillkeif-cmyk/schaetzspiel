@@ -680,7 +680,19 @@ app.get('/api/user/:id', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const o = await store.userById(Number(req.params.id)); if (!o) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
     const m2 = game.matches.get(game.userMatch.get(o.id));
-    res.json({ user: { ...publicStats(o), online: game.online.has(o.id), playing: !!m2 && !['lobby', 'finished'].includes(m2.phase) } });
+    const rel = (await store.friendList(u.id)).find((f) => f.id === o.id);
+    res.json({ user: { ...publicStats(o), online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m2 && !['lobby', 'finished'].includes(m2.phase),
+      self: o.id === u.id, friend: rel ? rel.status : null } });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Neu registrierte Spieler, zum Kennenlernen und Hinzufügen
+app.get('/api/newplayers', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const rel = new Map((await store.friendList(u.id)).map((f) => [f.id, f.status]));
+    const list = (await store.recentUsers(12)).map((o) => ({ ...publicStats(o), online: game.online.has(o.id), friend: rel.get(o.id) || null, self: o.id === u.id, joined: Number(o.created_ms) || null }));
+    res.json({ players: list });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
