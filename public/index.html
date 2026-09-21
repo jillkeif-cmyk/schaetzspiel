@@ -1027,6 +1027,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-emotes button{font-size:22px;width:42px;height:42px;border-radius:50%;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
 .pk-emo{position:absolute;transform:translate(-50%,-50%);font-size:34px;z-index:5;animation:pkemo 2.6s ease-out forwards;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 @keyframes pkemo{0%{transform:translate(-50%,-30%) scale(.3);opacity:0}15%{transform:translate(-50%,-50%) scale(1.25);opacity:1}30%{transform:translate(-50%,-55%) scale(1)}85%{opacity:1}100%{transform:translate(-50%,-110%) scale(.9);opacity:0}}
+.newscard{position:relative}
+.nc-corner{position:absolute;top:-8px;right:-6px;padding:5px 10px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 12px/1 Archivo;letter-spacing:1px;box-shadow:0 4px 12px rgba(192,75,255,.6);animation:ncpulse 1.4s ease-in-out infinite}
+@keyframes ncpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.newscard.unread{box-shadow:inset 0 0 0 2px #C04BFF,0 0 22px rgba(192,75,255,.45)}
 </style>
 </head>
 <body>
@@ -1046,7 +1050,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '18';
+const AVER = '19';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1976,8 +1980,8 @@ function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts 
 function renderNewsCard() {
   const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
   const p = newsPosts[0]; let seen = ''; try { seen = localStorage.getItem('news_seen') || ''; } catch (e) {}
-  el.innerHTML = `<button class="newscard" id="openNews"><span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
-    <span class="nc-t"><span class="nc-tag">${esc(p.tag)}${seen !== p.id ? ' · <b class="nc-new">NEU</b>' : ''}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
+  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? '<span class="nc-corner">NEU</span>' : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
+    <span class="nc-t"><span class="nc-tag">${esc(p.tag)}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
 }
 function renderNews() {
   const box = $('#newsBody'); if (!box) return;
@@ -2640,12 +2644,14 @@ async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
     $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${esc(onlineText(u))}</span></div>`)}
-      <div class="stats">${[[u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
       ${u.self ? '' : u.friend === 'ok' ? '' : u.friend === 'out' ? '<button class="btn ghost" disabled>Anfrage gesendet</button>' : u.friend === 'in' ? `<button class="btn" data-fr="accept" data-id="${u.id}">Anfrage annehmen</button>` : `<button class="btn" data-addfr="${u.id}">+ Als Freund hinzufügen</button>`}
       <button class="btn ghost" id="pwCancel">Schließen</button>${u.friend === 'ok' ? `<button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button>` : ''}</div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   } catch (e) { toast(e.message); }
 }
+// Spielzeit lesbar: 45 min, 3 h 20 min, 12 h
+const playTime = (m) => { m = Number(m) || 0; if (m < 60) return m + ' min'; const h = Math.floor(m / 60), r = m % 60; return h >= 10 || !r ? h + ' h' : `${h} h ${r} min`; };
 const EMOJIS = ['😂', '👍', '👎', '😡', '🔥', '😱'];
 function showEmote(pid, i) {
   const els = [...document.querySelectorAll(`[data-pid="${pid}"]`)].filter((e) => e.offsetParent !== null);
@@ -2753,7 +2759,7 @@ function update() {
     const me = home && home.me;
     pushUI();
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span></div><span class="editbtn big">✏️ Profil & Spielerkarte bearbeiten</span>`) : '<span class="sub">Lädt …</span>';
-    $('#stats').innerHTML = me ? `<div class="stats">${[[me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
+    $('#stats').innerHTML = me ? `<div class="stats">${[[playTime(me.playMinutes), 'Spielzeit'], [me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
     api('/api/daily').then((v) => {
       const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed;

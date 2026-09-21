@@ -55,7 +55,7 @@ const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
   id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
-  casinoXp: Number(u.casino_xp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  playMinutes: Number(u.play_minutes) || 0, pokerMinutes: Number(u.poker_minutes) || 0, casinoXp: Number(u.casino_xp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp),
 });
@@ -95,7 +95,7 @@ app.post('/api/login', async (req, res) => {
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
-  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins']) base[k] = 0;
+  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
   const items = [...cards.EMBLEMS.map((i) => ['e', i]), ...cards.TITLES.map((i) => ['t', i]), ...frames.FRAMES.map((i) => ['f', i])].filter(([, i]) => i.cond && !i.secret && !i.dev && !i.event);
   const out = {};
   for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
@@ -123,7 +123,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: isMod(u) || (await store.setting('poker_open')) === '1', hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -313,6 +313,19 @@ setTimeout(async () => {
     game.qpool.setTarget(200); game.qpool.start();
   } catch (e) { console.error('Pool-Start:', e.message); }
 }, 20000);
+
+// Spielzeit: jede Minute für alle, die gerade online sind, eine Minute gutschreiben, am Pokertisch zusätzlich Pokerzeit
+setInterval(async () => {
+  try {
+    const atPoker = new Set(poker.seatedIds());
+    for (const id of [...game.online.keys()]) {
+      const u = await store.userById(id); if (!u) continue;
+      const f = { play_minutes: (Number(u.play_minutes) || 0) + 1 };
+      if (atPoker.has(id)) f.poker_minutes = (Number(u.poker_minutes) || 0) + 1;
+      await store.save(id, f);
+    }
+  } catch (e) { console.error('Spielzeit:', e.message); }
+}, 60 * 1000);
 
 // Hot Time: um 19:59 Uhr deutscher Zeit alle per Push benachrichtigen
 let lastHotPush = '';
@@ -969,7 +982,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
     poker_allin_wins: (Number(u.poker_allin_wins) || 0) + (info.allin && net > 0 ? 1 : 0),
   });
 };
-const poker = require('./lib/poker')(io, store, pokerStat, async (u) => isMod(u) || (await store.setting('poker_open')) === '1', push);
+const poker = require('./lib/poker')(io, store, pokerStat, async () => true, push); // Poker ist für alle offen
 io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); } });
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id));
 
