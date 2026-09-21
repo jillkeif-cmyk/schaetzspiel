@@ -1408,6 +1408,11 @@ async function openPack(pid) {
   try {
     const r = await api('/api/tcg/open', { pack: pid });
     tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
+    // Bilder erst laden, dann aufdecken: sonst dreht sich die Karte und das Bild ploppt danach nochmal auf
+    await Promise.race([
+      Promise.all(r.pulled.map((c) => new Promise((ok) => { const im = new Image(); im.onload = im.onerror = ok; im.src = cardImg(c.id, c.variant); }))),
+      new Promise((ok) => setTimeout(ok, 2500)),
+    ]);
     // ein Ton je Karte, gute Karten klingen anders
     r.pulled.forEach((c, i) => setTimeout(() => {
       const top = ['ultra', 'ext', 'legend'].includes(c.variant);
