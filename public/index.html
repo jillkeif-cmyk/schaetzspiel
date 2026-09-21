@@ -932,6 +932,11 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .nw-img{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:20px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.3)}
 .nw-img img{width:min(78%,300px);height:auto;align-self:center;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
 .nw-img b{font:400 20px/1.1 Anton,Impact,sans-serif;letter-spacing:.3px}.nw-img p{margin:6px 0 0;line-height:1.45;color:var(--paper);opacity:.92}
+.drops{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:18px;background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(142,107,255,.15));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);animation:crpop .5s cubic-bezier(.2,1.4,.4,1)}
+.dr-h{font:400 19px/1 Anton,Impact,sans-serif;letter-spacing:.3px;color:var(--tape)}
+.dr{display:flex;align-items:center;gap:10px;font-size:14.5px}.dr img{width:32px;height:32px;object-fit:contain;flex:none}
+.dr.jp{color:var(--tape);font-weight:800}
+@keyframes crpop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -1194,7 +1199,7 @@ const bjDrawn = {}; // wie viele Karten je Hand schon auf dem Tisch lagen
 const bjNew = (key, k) => k >= (bjDrawn[key] || 0);
 const bjMark = (key, n) => { bjDrawn[key] = n; };
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
-let vipD = null;
+let vipD = null, soloIntent = false;
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const MAX_CBET = 250000;
@@ -2059,6 +2064,7 @@ function build() {
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
       <button class="btn" id="create">Match eröffnen</button>
+      <button class="btn ghost" id="createSolo">🎯 Solo spielen</button>
       <div id="firstBonus"></div>
       <p class="sub">Offene Matches stehen unten in der Liste, ein Tipp auf „Beitreten“ reicht.</p>
       <div id="slots" class="sub"></div>
@@ -2085,7 +2091,7 @@ function build() {
     <div class="center" style="padding-top:2vh"><h1>Match einrichten</h1><p class="sub" style="margin-top:8px">Erst einstellen, dann eröffnen. Danach können Freunde beitreten.</p></div>
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
-      <div class="modepick" id="modepick"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
+      <div class="modepick" id="modepick" style="${soloIntent ? 'display:none' : ''}"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
       <div id="themeBox"></div>
       <label style="margin:6px 0 0">Tempo</label>
       <div class="seg"><button id="quickOff">Normal</button><button id="quickOn">Schnellmodus ⚡</button></div>
@@ -2093,12 +2099,13 @@ function build() {
       <label style="margin:6px 0 0">Neue Fragen</label>
       <div class="seg"><button id="waitOff">Pünktlich starten</button><button id="waitOn">Auf frische Fragen warten</button></div>
       <p class="sub" id="waitNote2"></p></div>
-    <div class="panel" style="display:flex;flex-direction:column;gap:10px"><label style="margin:0">Zugang</label>
+    <div class="panel" style="display:${soloIntent ? 'none' : 'flex'};flex-direction:column;gap:10px"><label style="margin:0">Zugang</label>
       <div class="seg"><button id="accPub">Öffentlich</button><button id="accPriv">Mit Passwort</button></div>
       <form id="pwForm" class="row" hidden><input class="field grow" id="pwInput" maxlength="20" autocomplete="off" placeholder="Passwort festlegen"><button class="btn small">Speichern</button></form>
       <p class="sub" id="accNote"></p></div>
     <div class="panel" id="settings" style="display:flex;flex-direction:column;gap:14px"></div>
-    <div style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="createDone">Match eröffnen</button><button class="btn ghost" id="leave">Abbrechen</button></div></div>`;
+    <div style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="createDone">${soloIntent ? '🎯 Solo starten' : 'Match eröffnen'}</button><button class="btn ghost" id="leave">Abbrechen</button>
+      ${soloIntent ? '<p class="sub">Solo zählt als freies Spiel: du sammelst XP und Diamanten, etwas weniger als mit anderen, aber keine Ranglistenpunkte.</p>' : ''}</div></div>`;
 
   if (S.phase === 'lobby') return `<div class="col">
     <div class="center"><p class="sub">Match-Code</p><div class="code">${esc(S.code)}</div>
@@ -2138,7 +2145,7 @@ function build() {
     return `<div class="col">
     <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp?v=${AVER}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
     <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${embHtml(p, 30)}${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
-    </div><div class="col"><div id="xpSum"></div>
+    </div><div class="col"><div id="dropBox"></div><div id="xpSum"></div>
     <div id="chatBox"></div>
     <div id="endAct" style="display:flex;flex-direction:column;gap:10px"></div></div>`; }
   return '';
@@ -2518,7 +2525,17 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>${v < 0 ? '−' + fmt(-v) : '+' + fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+  if (S.phase === 'finished' && $('#dropBox')) {
+    const dr = S.drops || [];
+    const key = S.code + ':' + dr.length;
+    if ($('#dropBox').dataset.k !== key) {
+      $('#dropBox').dataset.k = key;
+      $('#dropBox').innerHTML = dr.length ? `<div class="drops"><div class="dr-h">🎁 Zufallsfunde</div>${dr.map((d) => `<div class="dr ${d.jackpot ? 'jp' : ''}">${d.pack ? `<img src="/tcg/pack_${esc(d.pack)}.webp?v=${AVER}" alt="">` : `<img src="/tcg/diamond.webp?v=${AVER}" alt="">`}<span><b>${esc(d.id === S.you ? 'Du' : d.name)}</b> ${d.id === S.you ? 'hast' : 'hat'} ${esc(d.text)} gefunden!</span></div>`).join('')}</div>` : '';
+      const mine = dr.find((d) => d.id === S.you);
+      if (mine) { sfx('exact'); toast(`🎁 Zufallsfund: ${mine.text}!`); }
+    }
+  }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
@@ -2618,8 +2635,9 @@ document.addEventListener('click', (e) => {
     socket.emit('settings', { themes: themeSel });
   }
   else if (t.dataset.i !== undefined && S && S.phase === 'question') socket.emit('answer', Number(t.dataset.i));
-  else if (['create', 'start', 'skip', 'again', 'report'].includes(t.id)) socket.emit(t.id);
-  else if (t.id === 'createDone') socket.emit('create_done');
+  else if (['create', 'start', 'skip', 'again', 'report'].includes(t.id)) { if (t.id === 'create') soloIntent = false; socket.emit(t.id); }
+  else if (t.id === 'createDone') socket.emit(soloIntent ? 'create_solo' : 'create_done');
+  else if (t.id === 'createSolo') { soloIntent = true; socket.emit('create'); setTimeout(() => socket.emit('settings', { ranked: false }), 400); }
   else if (t.id === 'leave' || t.id === 'quit') {
     const midGame = S.phase === 'question' || S.phase === 'reveal';
     if (!midGame || confirm('Match wirklich verlassen? Du bekommst für dieses Match keine XP und keine Weltranglistenpunkte.')) socket.emit('leave');
