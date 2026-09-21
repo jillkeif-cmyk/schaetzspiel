@@ -70,6 +70,14 @@ für neue Karten neu generieren.
 Regeln: Häufige Karten nur einstufig. Seltene: selten, holo, ultra. Legendäre: legend, ultra, ext.
 Ghost-Karten sind 10 eigene Motive nur im Geister-Booster. Je 50 Karten pro Standard/Premium.
 
+## Toon-Welt-Set
+
+`tools/toon/render.py` baut die 30 Toon-Karten aus `tools/toon/cards.json` und den Motiven in
+`tools/toon/motifs/`. Rahmen: `frame_grimoire.png` (Häufig, Selten) und `frame_arcane.png` (Holo, Ultra,
+Legendär), jeweils mit magentafarbenen Flächen für Name, Bild, Text und die zwei Medaillons.
+Extended Art wird ohne Vorlage als Vollbild mit Glasflächen gebaut. Die Motive liegen diesmal im Repo,
+damit Karten jederzeit neu gerendert werden können.
+
 ## Bekannte Fallen
 
 - **KI: kein Vorfüllen der Antwort.** Sonnet 5 lehnt eine vorgefüllte Assistant-Nachricht mit

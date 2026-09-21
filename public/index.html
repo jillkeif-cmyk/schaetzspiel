@@ -921,7 +921,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '15';
+const AVER = '16';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1162,7 +1162,7 @@ const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 
 let vipD = null;
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
-const MAX_CBET = 20000;
+const MAX_CBET = 250000;
 const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
 const numAt = (c, r) => 3 * c + (3 - r);
 function boardHtml() {
@@ -1187,7 +1187,7 @@ function placeBet(nums) {
   const total = rbets.reduce((x, y) => x + y.amount, 0), have = (tcg && tcg.diamonds) || 0;
   const room = Math.max(0, Math.min(have, MAX_CBET) - total);
   const amt = rchip === 'all' ? room : Math.min(rchip, room);
-  if (amt < 10) return toast(total >= MAX_CBET ? 'Höchstens 20.000 Diamanten pro Runde.' : 'Dafür reichen deine Diamanten nicht.');
+  if (amt < 10) return toast(total >= MAX_CBET ? 'Höchstens 250.000 Diamanten pro Runde.' : 'Dafür reichen deine Diamanten nicht.');
   if (b) b.amount += amt; else rbets.push({ key: k, numbers: nums, amount: amt });
   if (rchip === 'all') toast(`All in: ${fmt(amt)} Diamanten gesetzt`);
   sfx('dart'); renderCasino();
@@ -1544,8 +1544,8 @@ function renderCards() {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
     const have = all.filter((x) => x.n).length;
-    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻']];
-    let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : x.v === cfilter));
+    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['toon', 'Toon-Welt 🎩']];
+    let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter === 'toon' ? x.c.set === 'toon' : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
     list.sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || rank(b.v) - rank(a.v) || a.c.name.localeCompare(b.c.name));
