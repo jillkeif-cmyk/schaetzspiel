@@ -2538,7 +2538,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'pushOn') pushOn();
   else if (t.id === 'pushOff') pushOff();
   else if (t.id === 'newTrade') tradeDialog();
-  else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; render(); loadTcg(); }
+  else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
@@ -2561,7 +2561,7 @@ document.addEventListener('click', (e) => {
       loadFriends && loadFriends();
     }).catch((er) => toast(er.message));
   }
-  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); }
+  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbet) { cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
