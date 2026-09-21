@@ -655,8 +655,8 @@ app.post('/api/admin/unlock', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;
     const t = await store.userById(Number(req.body.id)); if (!t) return res.status(404).json({ error: 'Diesen Spieler gibt es nicht.' });
-    const list = cards.setUnlock(t, String(req.body.card || ''), !!req.body.on);
-    if (list === null) return res.status(400).json({ error: 'Unbekanntes Emblem oder Titel.' });
+    const list = cards.setUnlock(t, String(req.body.card || ''), !!req.body.on, frames.FRAMES.filter((f) => !f.dev).map((f) => f.id));
+    if (list === null) return res.status(400).json({ error: 'Unbekanntes Emblem, Titel oder Rahmen.' });
     await store.save(t.id, { unlocks: list });
     res.json({ user: modView(await store.userById(t.id)) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
