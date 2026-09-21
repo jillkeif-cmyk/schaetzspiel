@@ -929,6 +929,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .chg-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.3)}
 .chg-h b{font:400 19px/1 Anton,Impact,sans-serif;letter-spacing:.3px}.chg-h small{color:var(--muted);font-weight:700}
 .chgroup.isnew .chg-h{background:linear-gradient(135deg,rgba(142,107,255,.3),rgba(255,210,63,.12));box-shadow:inset 0 0 0 1.5px rgba(192,75,255,.6)}
+.nw-img{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:20px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.3)}
+.nw-img img{width:min(78%,300px);height:auto;align-self:center;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
+.nw-img b{font:400 20px/1.1 Anton,Impact,sans-serif;letter-spacing:.3px}.nw-img p{margin:6px 0 0;line-height:1.45;color:var(--paper);opacity:.92}
 </style>
 </head>
 <body>
@@ -1797,6 +1800,7 @@ function renderNews() {
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
     return '';
   };
