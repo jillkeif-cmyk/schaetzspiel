@@ -741,6 +741,12 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .modes button.on{background:var(--tape);color:var(--ink);box-shadow:none}
 .cgrid figure.meltsel img{box-shadow:0 0 0 3px var(--tape),0 8px 18px rgba(0,0,0,.45)}
 .meltn{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--tape);color:var(--ink);font:900 20px/1 Archivo;box-shadow:0 4px 14px rgba(0,0,0,.6);pointer-events:none}
+.fold2 summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none}
+.fold2 summary::-webkit-details-marker{display:none}
+.fold2 summary::after{content:'▾';color:var(--muted);transition:transform .2s}
+.fold2[open] summary::after{transform:rotate(180deg)}
+.row:has(> #back){position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:8}
+#back{background:rgba(5,26,29,.85);backdrop-filter:blur(8px);padding:8px 14px!important;border-radius:99px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);text-decoration:none;font-weight:800}
 </style>
 </head>
 <body>
@@ -1577,7 +1583,6 @@ function build() {
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
     <div class="panel" id="notifBox" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
-    <div class="panel" id="tagBox" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="modBox"></div>
     <div id="adminBox"></div>
     <div class="panel" id="nextPrestige" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -1873,22 +1878,26 @@ function update() {
         <button class="btn ghost small" id="cardClear" style="width:100%">Emblem und Titel abwählen</button>
         <form id="codeForm" class="row" style="margin-top:4px"><input class="field grow" id="codeIn" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="text-transform:uppercase"><button class="btn small">Einlösen</button></form>`;
     }
+    if ($('#cardBox') && !$('#tagBox')) {
+      const tb = document.createElement('details'); tb.className = 'fold'; tb.id = 'tagBox'; tb.dataset.fold = 'tag';
+      $('#cardBox').appendChild(tb);
+    }
     if ($('#tagBox') && !$('#tagForm')) {
       const cols = (home.tagColors || []).filter((c) => c !== 'rainbow' || home.me.admin);
-      $('#tagBox').innerHTML = `<b>Clan-Tag</b><p class="sub">Steht vor deinem Namen, 2 bis 5 Zeichen. Leer lassen entfernt ihn.</p>
+      $('#tagBox').innerHTML = `<summary><span class="grow">Clan-Tag</span><span class="sub">${home.me.tag ? '[' + esc(home.me.tag) + ']' : 'keiner'}</span></summary><div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><p class="sub">Steht vor deinem Namen, 2 bis 5 Zeichen. Leer lassen entfernt ihn.</p>
         <form id="tagForm" style="display:flex;flex-direction:column;gap:12px"><div class="row"><input class="field grow" id="tagIn" maxlength="5" autocomplete="off" placeholder="z. B. NT" style="text-transform:uppercase" value="${esc(home.me.tag || '')}"><span id="tagPrev" style="min-width:74px;text-align:center"></span></div>
         <div class="swatch">${cols.map((c) => `<button type="button" data-color="${c}" class="${c === 'rainbow' ? 'rb' : ''} ${(home.me.tagColor || 'cyan') === c ? 'on' : ''}" title="${c}" ><span class="ctag c-${c}" style="font-size:16px">${c === 'rainbow' ? '' : '■'}</span></button>`).join('')}</div>
-        <button class="btn small" style="width:100%">Tag speichern</button></form>`;
+        <button class="btn small" style="width:100%">Tag speichern</button></form></div>`;
       const prev = () => { const v = $('#tagIn').value.trim().toUpperCase(); $('#tagPrev').innerHTML = v ? `<span class="ctag c-${tagColor}" style="font-size:18px">[${esc(v)}]</span>` : '<span class="sub">kein Tag</span>'; };
       $('#tagIn').oninput = prev; prev();
       $('#tagForm').onsubmit = (e) => { e.preventDefault(); api('/api/tag', { tag: $('#tagIn').value, color: tagColor }).then(async () => { toast('Clan-Tag gespeichert'); await loadHome(); }).catch((er) => toast(er.message)); };
     }
     if ($('#notifBox')) $('#notifBox').innerHTML = `<div class="row"><b class="grow">Benachrichtigungen</b><button class="btn small" id="${pushState === 'on' ? 'pushOff' : 'pushOn'}" style="min-width:104px">${pushState === 'on' ? 'Ausschalten' : 'Einschalten'}</button></div><p class="sub">${pushState === 'on' ? 'Dieses Gerät bekommt Einladungen und Neuigkeiten.' : 'Auf dem iPhone nur möglich, wenn die App auf dem Homescreen liegt.'}</p>`;
     if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
-      $('#modBox').innerHTML = `<div class="panel mod" id="modPanel" style="display:flex;flex-direction:column;gap:12px"><b>Mod-Menü</b>
+      $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
         <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
         <div id="modList" class="plist"></div>
-        <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div>`;
+        <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
       modLoad('');
     }
     if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>Admin: Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off"><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
@@ -2077,7 +2086,7 @@ document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') re
 document.addEventListener('toggle', (e) => {
   const d = e.target.closest && e.target.closest('.fold');
   if (!d) return;
-  if (d.dataset.fold === 'off') { openFold = d.open ? 'off' : ''; return; } // Offline-Freunde: nur auf- und zuklappen
+  if (d.dataset.fold === 'off' || d.dataset.fold === 'tag') { openFold = d.open ? d.dataset.fold : ''; return; } // nur auf- und zuklappen
   if (d.open) {
     openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; });
     const C2 = home && home.cards;
