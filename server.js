@@ -338,6 +338,7 @@ setInterval(async () => {
       const f = { play_minutes: (Number(u.play_minutes) || 0) + 1 };
       if (atPoker.has(id)) f.poker_minutes = (Number(u.poker_minutes) || 0) + 1;
       await store.save(id, f);
+      checkProgress(id);
     }
   } catch (e) { console.error('Spielzeit:', e.message); }
 }, 60 * 1000);
@@ -389,6 +390,28 @@ const takeBet = async (u, amount) => {
   return { ok: true, left: have - amount };
 };
 // Casino-Statistik: Runden, Gewinne, bester Gewinn, Bilanz und eigene XP
+// ---------- Erfolge melden: neue Herausforderungsstufen und frisch freigeschaltete Stücke ----------
+const progressSnap = new Map(); // userId -> { chal: {key: done}, items: Set }
+async function checkProgress(uid) {
+  try {
+    const u = await store.userById(uid); if (!u) return;
+    const u2 = { ...u, ...(await cardStats(uid)), _mod: isMod(u) };
+    const chal = Object.fromEntries(progress.challengeView(u2).map((c) => [c.key, c.done]));
+    const cv = cards.view(u2), fv = frames.view(u2, isMod(u));
+    const items = new Map();
+    for (const e of cv.emblems) if (e.unlocked && !e.dev) items.set('e:' + e.id, { kind: 'emblem', id: e.id, name: e.name, anim: e.anim });
+    for (const t of cv.titles) if (t.unlocked && !t.dev) items.set('t:' + t.id, { kind: 'title', id: t.id, name: t.text, anim: t.anim });
+    for (const f of fv) if (f.unlocked) items.set('f:' + f.id, { kind: 'frame', id: f.id, name: f.name, anim: f.anim });
+    const prev = progressSnap.get(uid);
+    progressSnap.set(uid, { chal, items: new Set(items.keys()) });
+    if (!prev) return; // erster Blick: nur merken
+    const news = [];
+    for (const c of progress.challengeView(u2)) if (c.done > (prev.chal[c.key] || 0)) news.push({ kind: 'challenge', key: c.key, name: c.name, tier: c.done, total: c.total, xp: c.xps[c.done - 1] });
+    for (const [k, it] of items) if (!prev.items.has(k)) news.push(it);
+    if (news.length) io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('progress:new', news); });
+  } catch (e) { console.error('Erfolge:', e.message); }
+}
+
 const casinoStat = async (uid, stake, won, risk = stake) => {
   const u = await store.userById(uid); if (!u) return;
   const net = won - stake;
@@ -403,6 +426,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_net: (Number(u.casino_net) || 0) + net,
     casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1),
   });
+  setTimeout(() => checkProgress(uid), 400);
 };
 const payOut = async (uid, n) => {
   if (n <= 0) return null;
@@ -539,6 +563,7 @@ app.post('/api/tcg/open', async (req, res) => {
     const pulled = tcg.openPack(pid);
     for (const c of pulled) await store.cardAdd(u.id, c.id, c.variant, 1);
     await store.save(u.id, { packs_opened: (Number(u.packs_opened) || 0) + 1 });
+    setTimeout(() => checkProgress(u.id), 300);
     res.json({ pulled, state: await tcgState(await store.userById(u.id)) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -996,9 +1021,11 @@ const pokerStat = async (uid, stake, won, info = {}) => {
     poker_best: Math.max(Number(u.poker_best) || 0, won > 0 ? won : 0),
     poker_allin_wins: (Number(u.poker_allin_wins) || 0) + (info.allin && net > 0 ? 1 : 0),
   });
+  setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => true, push); // Poker ist für alle offen
-io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); } });
+io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); } }); // Erfolge: Ausgangsstand beim Verbinden
+game.hooks.progress = (id) => checkProgress(id);
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id));
 
 store.init().then(() => push.init(store)).then((k) => {

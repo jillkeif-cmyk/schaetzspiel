@@ -1077,6 +1077,16 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-emopop[hidden]{display:none}.pk-emopop button{font-size:22px;width:42px;height:42px;border-radius:50%}
 .pk-dock .pk-me b{font-size:16px}
 .pk-actions{min-height:96px}
+.cnt-badge{flex:none;min-width:26px;height:26px;padding:0 7px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 14px/26px Archivo;text-align:center;box-shadow:0 3px 10px rgba(192,75,255,.55);animation:ncpulse 1.4s ease-in-out infinite}
+.cnt-badge[hidden]{display:none}
+.ptoast{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;width:min(92vw,420px);padding:10px 14px;border-radius:18px;background:rgba(8,24,28,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55),0 10px 26px rgba(0,0,0,.35);animation:ptin .45s cubic-bezier(.2,.9,.3,1) both;cursor:pointer}
+.ptoast.out{animation:ptout .4s ease-in forwards}
+.ptoast b{display:block;font-size:13px;color:var(--tape);letter-spacing:.3px}.ptoast span span,.ptoast>span{font-size:14.5px;font-weight:800}
+.ptoast.wide{flex-direction:column;align-items:stretch;gap:6px;text-align:center}
+.pt-ic{width:44px;height:44px;object-fit:contain;flex:none}.pt-title{width:100%;border-radius:8px}.pt-fr{flex:none}
+@keyframes ptin{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes ptout{to{opacity:0;transform:translate(-50%,-10px)}}
+.dia-mini{font:800 11px/1 Archivo;padding:3px 6px;border-radius:99px;background:rgba(120,200,255,.14);color:#BDE6FF;vertical-align:2px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1491,7 +1501,7 @@ function renderRewards(box) {
   box.innerHTML = `
     <div class="rw-stats"><div><b>${fmt(cur.rounds)}</b><small>Runden</small></div><div><b>${fmt(cur.wins)}</b><small>Siege</small></div><div><b>${fmt(cur.best)}</b><small>bester Gewinn</small></div><div><b>${fmt(me.casinoXp || 0)}</b><small>Casino-XP</small></div></div>
     <h2 class="rw-h">Herausforderungen</h2>
-    <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
+    <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
     <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
     <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
     <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
@@ -2084,7 +2094,7 @@ const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card
 function casinoRow(u, i, me2) {
   return `<div class="pl crow ${me2 && u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}">
     <span class="pos">${i + 1}</span>${avatar(u, 40)}
-    <span class="nm"><span>${withTag(u)}</span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span>${titleHtml(u)}</span>
+    <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span>${titleHtml(u)}</span>
     <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(TIER_NAMES[u.casinoTier || 0])}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
@@ -2137,16 +2147,45 @@ function showChallenge(key) {
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
+// Geschaffte Stufen, die man noch nicht angesehen hat
+const chalTotal = () => ((home && home.progress && home.progress.challenges) || []).reduce((x, c) => x + (c.done || 0), 0);
+function chalBadge() {
+  const b = document.getElementById('chalBadge'); if (!b || !home) return;
+  let seen = Number(localStorage.getItem('chal_seen')); const tot = chalTotal();
+  if (!Number.isFinite(seen) || localStorage.getItem('chal_seen') === null) { seen = tot; try { localStorage.setItem('chal_seen', tot); } catch (e) {} }
+  const n = Math.max(0, tot - seen); b.hidden = !n; b.textContent = n;
+}
+function chalMarkSeen() { try { localStorage.setItem('chal_seen', chalTotal()); } catch (e) {} }
+// Kurze, halbdurchsichtige Einblendung für neue Erfolge, eine nach der anderen
+const toastQ = []; let toastBusy = false;
+function showProgressToast() {
+  if (toastBusy || !toastQ.length) return;
+  toastBusy = true; const n = toastQ.shift();
+  const pic = n.kind === 'challenge' ? `<img class="pt-ic" src="${chalImg(n.key)}" alt="">`
+    : n.kind === 'emblem' ? `<img class="pt-ic${n.anim ? ' a-' + n.anim : ''}" src="/emblems/pc_${esc(n.id)}.webp?v=${AVER}" alt="">`
+    : n.kind === 'title' ? `<img class="pt-title${n.anim ? ' a-' + n.anim : ''}" src="/emblems/title_${esc(n.id)}.webp?v=${AVER}" alt="">`
+    : `<span class="pt-fr">${avatar({ ...home.me, frame: n.id, frameAnim: n.anim }, 40, false)}</span>`;
+  const head = n.kind === 'challenge' ? '🏅 Herausforderung geschafft' : n.kind === 'title' ? '✨ Neuer Titel freigeschaltet' : n.kind === 'emblem' ? '✨ Neues Emblem freigeschaltet' : '✨ Neuer Rahmen freigeschaltet';
+  const sub = n.kind === 'challenge' ? `${esc(n.name)} · Stufe ${n.tier} von ${n.total}${n.xp ? ` · +${fmt(n.xp)} XP` : ''}` : esc(n.name);
+  const e = document.createElement('div'); e.className = 'ptoast ' + (n.kind === 'title' ? 'wide' : '');
+  e.innerHTML = n.kind === 'title' ? `<b>${head}</b>${pic}<span>${sub}</span>` : `${pic}<span class="grow"><b>${head}</b><span>${sub}</span></span>`;
+  e.onclick = () => e.classList.add('out'); // antippen blendet sofort aus
+  document.body.appendChild(e); sfx('question');
+  setTimeout(() => e.classList.add('out'), 2600);
+  setTimeout(() => { e.remove(); toastBusy = false; showProgressToast(); }, 3000);
+}
+const CHAL_IMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
+const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
 function renderChallenges() {
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
-  const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
-  const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+  const CIMG = CHAL_IMG;
+  const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="${chalImg(c.key)}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
-    const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
+    const CIMG2 = CHAL_IMG;
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 4);
-      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
     }
   const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
   setTimeout(() => document.querySelectorAll('[data-chal]').forEach((el) => { el.onclick = () => showChallenge(el.dataset.chal); }), 0);
@@ -2398,6 +2437,7 @@ function connect() {
   });
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
+  socket.on('progress:new', (list) => { for (const n of list || []) toastQ.push(n); showProgressToast(); if (!S) loadHome().then(chalBadge); });
   socket.on('pk:emote', (d) => {
     const tb = document.querySelector('.pk-table'); if (!tb || !pkState) return;
     const rot = pkState.me >= 0 ? (d.seat - pkState.me + pkState.max) % pkState.max : d.seat;
@@ -2550,7 +2590,7 @@ function build() {
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     ${home && home.me && home.me.admin ? '<button class="panel row" id="openAdmin" style="gap:12px;text-align:left"><span style="font-size:34px;width:46px;text-align:center">⚙️</span><span class="grow"><b>Admin</b><br><span class="sub">Fragen-Pool, Fragenquelle und Befüllung</span></span></button>' : ''}
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
-    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span></button>
+    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span><span class="cnt-badge" id="chalBadge" hidden></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
     <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
     <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
@@ -2768,12 +2808,14 @@ async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
     $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${esc(onlineText(u))}</span></div>`)}
-      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
       ${u.self ? '' : u.friend === 'ok' ? '' : u.friend === 'out' ? '<button class="btn ghost" disabled>Anfrage gesendet</button>' : u.friend === 'in' ? `<button class="btn" data-fr="accept" data-id="${u.id}">Anfrage annehmen</button>` : `<button class="btn" data-addfr="${u.id}">+ Als Freund hinzufügen</button>`}
       <button class="btn ghost" id="pwCancel">Schließen</button>${u.friend === 'ok' ? `<button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button>` : ''}</div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   } catch (e) { toast(e.message); }
 }
+// Diamanten kurz: 950, 1,2K, 15K, 2,3M
+const shortNum = (n) => { n = Number(n) || 0; const f = (x, u) => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toString().replace('.', ',') + u; return n >= 1e9 ? f(n / 1e9, 'Mrd') : n >= 1e6 ? f(n / 1e6, 'M') : n >= 1e3 ? f(n / 1e3, 'K') : String(Math.round(n)); };
 // Spielzeit lesbar: 45 min, 3 h 20 min, 12 h
 const playTime = (m) => { m = Number(m) || 0; if (m < 60) return m + ' min'; const h = Math.floor(m / 60), r = m % 60; return h >= 10 || !r ? h + ' h' : `${h} h ${r} min`; };
 const EMOJIS = ['😂', '👍', '👎', '😡', '🔥', '😱'];
@@ -2890,7 +2932,7 @@ function update() {
       const b = document.getElementById('openDaily');
       if (b) { b.classList.toggle('ready', !v.claimed); const sb = b.querySelector('.sub'); if (sb) sb.textContent = v.claimed ? 'Heute schon abgeholt' : 'Jetzt abholen: ' + fmt(v.loginDia) + ' Diamanten warten'; }
     }).catch(() => {});
-    renderHot();
+    renderHot(); chalBadge();
     const fb = $('#firstBonus');
     if (fb) fb.innerHTML = home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '';
     api('/api/newplayers').then((r) => {
@@ -3162,7 +3204,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
-  else if (t.id === 'openChallenges') { page = 'challenges'; render(); }
+  else if (t.id === 'openChallenges') { page = 'challenges'; chalMarkSeen(); render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }
   else if (t.id === 'openSupport') { page = 'support'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
