@@ -675,7 +675,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .daybox{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);font-size:12px;color:var(--muted)}
 .daybox img{width:38px;height:38px}
 .daybox b{color:var(--paper);font-size:13px}
-.daybox.done{background:rgba(79,196,106,.16);box-shadow:inset 0 0 0 1.5px rgba(79,196,106,.6)}
+.daybox.done{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);opacity:.45;filter:grayscale(1)}
+.daybox.done::after{content:'✓';position:absolute;right:6px;top:4px;font:900 14px/1 Archivo;color:#8BE28B;filter:none}
 .daybox.now{background:linear-gradient(180deg,#F0C233,#E8A91C);color:#10201F;box-shadow:0 0 18px rgba(255,210,63,.5)}
 .daybox.now b{color:#10201F}
 .daybox.d7{grid-column:span 4;flex-direction:row;justify-content:center;gap:10px}
@@ -956,6 +957,9 @@ function pushUI() {
 let rtab = 'world';
 let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
 let bjList = [], bjT = null;
+const bjDrawn = {}; // wie viele Karten je Hand schon auf dem Tisch lagen
+const bjNew = (key, k) => k >= (bjDrawn[key] || 0);
+const bjMark = (key, n) => { bjDrawn[key] = n; };
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C']];
@@ -1004,17 +1008,23 @@ function renderTables(box) {
     box.innerHTML = `<button class="btn" id="bjCreate" style="width:100%;margin-bottom:12px">Tisch eröffnen</button>
       ${bjList.length ? `<div class="plist">${bjList.map((t) => `<div class="pl" style="--c:var(--line)"><span class="nm"><b>Tisch von ${esc(t.host)}</b><br><span class="lv">${t.seats} von ${t.max} Plätzen · ${t.phase === 'betting' ? 'Einsätze offen' : t.phase === 'playing' ? 'Runde läuft' : 'Auswertung'}</span></span>${t.seats < t.max ? `<button class="mini go" data-bjjoin="${esc(t.id)}">Hinsetzen</button>` : ''}</div>`).join('')}</div>`
         : '<p class="sub">Gerade ist kein Tisch offen. Eröffne einen und lade Freunde ein.</p>'}`;
+    const cb = $('#bjCreate'); if (cb) cb.onclick = (e) => { e.preventDefault(); socket.emit('bj:create'); };
+    document.querySelectorAll('[data-bjjoin]').forEach((b) => { b.onclick = (e) => { e.preventDefault(); socket.emit('bj:join', b.dataset.bjjoin); }; });
     return;
   }
   const t = bjT, me = t.seats.find((x) => x.id === meId), myTurn = t.turn === meId;
-  const card = (c, k) => (c && c.hidden ? `<span class="pc back" style="--dl:${k * 0.15}s"><b>?</b></span>`
-    : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="--dl:${k * 0.15}s"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
+  if (t.phase === 'betting') for (const k of Object.keys(bjDrawn)) if (k.startsWith('t')) delete bjDrawn[k];
+  const card = (c, k, key) => {
+    const fresh = bjNew(key, k), st = fresh ? `--dl:${Math.max(0, k - (bjDrawn[key] || 0)) * 0.15}s` : 'animation:none';
+    return c && c.hidden ? `<span class="pc back" style="${st}"><b>?</b></span>`
+      : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="${st}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`;
+  };
   const can = (me && me.can) || {};
   box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
-      <div class="bjrow"><span class="bjlab">BANK${t.dealerScore != null ? ' · ' + t.dealerScore : ''}</span><div class="bjhand">${(t.dealer || []).map(card).join('')}</div></div>
+      <div class="bjrow"><span class="bjlab">BANK${t.dealerScore != null ? ' · ' + t.dealerScore : ''}</span><div class="bjhand">${(t.dealer || []).map((c, k) => card(c, k, c.hidden ? 'tdh' : 'td')).join('')}</div></div>
       <div class="bjhands">${t.seats.map((st) => `<div class="bjh ${t.turn === st.id ? 'act' : ''}">
           <span class="bjlab">${esc(st.name)}${st.id === meId ? ' (du)' : ''}</span>
-          ${st.hands.length ? st.hands.map((h) => `<div class="bjhand">${h.cards.map(card).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
+          ${st.hands.length ? st.hands.map((h, hi) => `<div class="bjhand">${h.cards.map((c, k) => card(c, k, 't' + st.id + '_' + hi)).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
             : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
           ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
     </div>
@@ -1030,6 +1040,8 @@ function renderTables(box) {
         : `<p class="sub center" style="margin-top:10px">${esc((t.seats.find((x) => x.id === t.turn) || {}).name || 'Die Bank')} ist am Zug …</p>`)
       : '<p class="sub center" style="margin-top:10px">Auswertung … gleich geht die nächste Runde los.</p>'}
     <button class="btn ghost" id="bjLeave" style="width:100%;margin-top:10px">Tisch verlassen</button>`;
+  bjMark('td', (t.dealer || []).filter((c) => !c.hidden).length); bjMark('tdh', 2);
+  t.seats.forEach((st) => st.hands.forEach((h, hi) => bjMark('t' + st.id + '_' + hi, h.cards.length)));
   const on = (sel, fn) => document.querySelectorAll(sel).forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) fn(b); }; });
   on('#bjCreate', () => socket.emit('bj:create'));
   on('[data-bjjoin]', (b) => socket.emit('bj:join', b.dataset.bjjoin));
@@ -1057,14 +1069,18 @@ function renderCasino() {
       <button class="btn" id="spinBtn" style="width:100%">Drehen</button>
       <p class="sub" id="cResult" style="text-align:center;margin-top:10px"></p>`;
   } else {
-    const card = (c, k) => (c && c.hidden ? `<span class="pc back" style="--dl:${k * 0.18}s"><b>?</b></span>`
-      : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="--dl:${k * 0.18}s"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
+    const card = (c, k, key) => {
+      const fresh = bjNew(key, k), dl = fresh ? Math.max(0, k - (bjDrawn[key] || 0)) * 0.18 : 0;
+      const st = fresh ? `--dl:${dl}s` : 'animation:none';
+      return c && c.hidden ? `<span class="pc back" style="${st}"><b>?</b></span>`
+        : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="${st}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`;
+    };
     const can = (bj && bj.can) || {};
     box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
         <div class="bjrow"><span class="bjlab">BANK${bj ? ' · ' + (bj.over ? bj.dealerScore : bj.dealerScore + ' offen') : ''}</span>
-          <div class="bjhand">${bj ? bj.dealer.map(card).join('') : ''}</div></div>
+          <div class="bjhand">${bj ? bj.dealer.map((c, k) => card(c, k, c.hidden ? 'dh' : 'd')).join('') : ''}</div></div>
         <div class="bjhands">${bj ? bj.hands.map((h, hi) => `<div class="bjh ${h.active ? 'act' : ''}">
-            <div class="bjhand">${h.cards.map((c, k) => card(c, k + hi)).join('')}</div>
+            <div class="bjhand">${h.cards.map((c, k) => card(c, k, 'h' + hi)).join('')}</div>
             <div class="row" style="gap:6px"><span class="bjscore">${h.score}</span><span class="bjchip">${fmt(h.bet)}</span></div>
             ${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
           : '<p class="bjlab" style="margin-top:40px">Einsatz wählen und austeilen</p>'}</div>
@@ -1130,10 +1146,12 @@ async function bjAction(path) {
   bjBusy = true;
   try {
     const amount = Math.round(Number($('#cbAmount').value) || 0);
+    if (path === 'deal') for (const k of Object.keys(bjDrawn)) delete bjDrawn[k];
     bj = path === 'deal' ? await api('/api/casino/bj/deal', { amount }) : await api('/api/casino/bj/act', { action: path });
     sfx('dart');
     renderCasino();
-
+    bjMark('d', bj.dealer.filter((c) => !c.hidden).length); bjMark('dh', 2); // verdeckte Karte nicht erneut animieren
+    bj.hands.forEach((h, i) => bjMark('h' + i, h.cards.length));
     if (bj.over) casinoDone(bj);
     const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
   } catch (e) { toast(e.message); }
