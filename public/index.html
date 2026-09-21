@@ -1672,7 +1672,8 @@ function renderCards() {
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
-    box.innerHTML += `<h2 style="margin:18px 0 10px">Verlauf</h2><div id="tradeHist"><p class="sub">Lädt …</p></div>`;
+  } else if (ctab === 'verlauf') {
+    box.innerHTML = `<p class="sub" style="margin-bottom:10px">Alle Käufe und Verkäufe in der Börse, die neuesten zuerst. Tippe auf einen Namen für das Profil.</p><div id="tradeHist"><p class="sub">Lädt …</p></div>`;
     api('/api/tcg/history').then((r) => {
       const el = $('#tradeHist'); if (!el) return;
       const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `vor ${Math.max(1, m)} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} Tagen`; };
@@ -2242,7 +2243,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
+    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
