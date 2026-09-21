@@ -948,6 +948,14 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .hotclock{font:400 18px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFB24A;flex:none}
 .btn.hotbtn{position:relative}.btn.hotbtn::after{content:"🔥 ×2";position:absolute;right:10px;top:50%;transform:translateY(-50%);font:900 12px/1 Archivo;padding:4px 7px;border-radius:99px;background:linear-gradient(135deg,#FF6A1A,#FFB33A);color:#2A1000;box-shadow:0 0 12px rgba(255,120,30,.7)}
 .qsrc{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:var(--bg-deep)}
+.adm{display:flex;flex-direction:column;gap:10px}
+.adm-st{font-weight:800;font-size:12.5px;color:var(--muted)}.adm-st.on{color:var(--ok)}
+.adm-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.adm-kpi div{background:var(--bg-deep);border-radius:12px;padding:8px 4px;text-align:center}
+.adm-kpi b{display:block;font:400 20px/1 Anton,Impact,sans-serif;color:var(--tape)}.adm-kpi small{color:var(--muted);font-size:10.5px}
+.adm-t{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.adm-t small{display:block;color:var(--muted);font-size:12px}.adm-t .bar{grid-column:1 / -1}.adm-t.skip{opacity:.5}
+.adm-n{font:400 15px/1 Anton,Impact,sans-serif}
+.adm-log{max-height:220px;overflow:auto;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
 </style>
 </head>
 <body>
@@ -1857,6 +1865,45 @@ function renderHot() {
   ['create', 'createSolo'].forEach((id) => { const b = document.getElementById(id); if (b) b.classList.toggle('hotbtn', !!hv.active); });
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
+// ---------- Admin: Fragen-Pool ----------
+let adminD = null, adminTimer = null;
+function loadAdmin() {
+  clearTimeout(adminTimer);
+  api('/api/admin/pool').then((d) => { adminD = d; renderAdmin(); }).catch((e) => { const b = $('#adminBody'); if (b) b.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
+  adminTimer = setTimeout(() => { if (page === 'admin' && !S) loadAdmin(); }, 4000); // live mitlaufen
+}
+function adminAct(action, value) { api('/api/admin/pool', { action, value }).then((d) => { adminD = d; renderAdmin(); }).catch((e) => toast(e.message)); }
+function renderAdmin() {
+  const b = $('#adminBody'); if (!b || !adminD) return;
+  const d = adminD, tot = d.themes.filter((t) => !t.skip).reduce((x, t) => x + t.count, 0);
+  const tk = d.tokens;
+  b.innerHTML = `
+    <div class="panel adm">
+      <b>Fragenquelle</b>
+      <div class="seg"><button data-qsrc="live" class="${d.source === 'live' ? 'on' : ''}">✨ Live</button><button data-qsrc="pool" class="${d.source === 'pool' ? 'on' : ''}">📚 Pool</button></div>
+      <p class="sub">${d.source === 'pool' ? 'Runden nehmen Fragen aus dem Pool, die keiner der Mitspieler je hatte. Reicht der Pool nicht, wird der Rest live erstellt.' : 'Jede Runde wird live erstellt. Die neuen Fragen wandern trotzdem automatisch in den Pool.'}</p>
+    </div>
+    <div class="panel adm">
+      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${d.running ? `läuft · ${d.inFlight} Anfragen` : 'pausiert'}</span></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn small" id="admStart" ${d.running ? 'disabled' : ''}>▶ Starten</button>
+        <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
+        <label class="row" style="gap:6px;margin:0"><span class="sub">Ziel je Kategorie</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
+      </div>
+      <label class="row" style="gap:8px;margin:0"><input type="checkbox" id="admAuto" ${d.auto ? 'checked' : ''}> <span>Automatisch nachfüllen, wenn die aktivsten Spieler 80 % einer Kategorie gesehen haben</span></label>
+      <div class="adm-kpi"><div><b>${fmt(tot)}</b><small>Fragen im Pool</small></div><div><b>${fmt(d.made)}</b><small>seit Start erstellt</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Ausgabe-Tokens</small></div></div>
+      <p class="sub">Tokens dieser Befüllung: ${fmt(tk.input)} Eingabe, ${fmt(tk.output)} Ausgabe in ${fmt(tk.calls)} Anfragen${d.made ? ` · etwa ${fmt(Math.round(tk.output / Math.max(1, d.made)))} Ausgabe-Tokens pro Frage` : ''}.</p>
+    </div>
+    <div class="panel adm">
+      <b>Kategorien</b>
+      ${d.themes.map((t) => `<div class="adm-t ${t.skip ? 'skip' : ''}"><span class="grow"><b>${esc(t.name)}</b><small>${t.skip ? 'eigene Fragen, keine KI' : `${fmt(t.count)} Fragen · du hast ${fmt(t.seen)} gesehen`}</small></span><span class="adm-n">${t.skip ? '–' : `${fmt(t.count)} / ${fmt(d.target)}`}</span><span class="bar"><i style="width:${t.skip ? 0 : Math.min(100, Math.round(100 * t.count / d.target))}%"></i></span></div>`).join('')}
+    </div>
+    <div class="panel adm"><b>Protokoll</b><div class="adm-log">${(d.log || []).map((l) => `<div>${esc(l)}</div>`).join('') || '<span class="sub">Noch nichts passiert.</span>'}</div></div>`;
+  $('#admStart').onclick = () => adminAct('start');
+  $('#admStop').onclick = () => adminAct('stop');
+  $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
+  $('#admAuto').onchange = (e) => adminAct('auto', e.target.checked);
+}
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
   document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
@@ -2036,6 +2083,11 @@ function build() {
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
 
+  if (!S && page === 'admin') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <h1 style="font-size:30px">Admin</h1>
+    <div id="adminBody"><p class="sub">Lädt …</p></div></div>`;
+
   if (!S && page === 'challenges') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Herausforderungen</h1>
@@ -2099,6 +2151,7 @@ function build() {
     </div>
     <div id="openList"></div>
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
+    ${home && home.me && home.me.admin ? '<button class="panel row" id="openAdmin" style="gap:12px;text-align:left"><span style="font-size:34px;width:46px;text-align:center">⚙️</span><span class="grow"><b>Admin</b><br><span class="sub">Fragen-Pool, Fragenquelle und Befüllung</span></span></button>' : ''}
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
@@ -2359,6 +2412,7 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
+  if (!S && page === 'admin') { loadAdmin(); return; }
   if (!S && page === 'challenges') { renderChallenges(); return; }
   if (!S && page === 'news') { renderNews(); return; }
   if (!S && page === 'ranks') { renderRanks(); return; }
@@ -2398,8 +2452,6 @@ function update() {
     if ($('#notifBox')) $('#notifBox').innerHTML = `<div class="row"><b class="grow">Benachrichtigungen</b><button class="btn small" id="${pushState === 'on' ? 'pushOff' : 'pushOn'}" style="min-width:104px">${pushState === 'on' ? 'Ausschalten' : 'Einschalten'}</button></div><p class="sub">${pushState === 'on' ? 'Dieses Gerät bekommt Einladungen und Neuigkeiten.' : 'Auf dem iPhone nur möglich, wenn die App auf dem Homescreen liegt.'}</p>`;
     if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
       $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-        <div class="qsrc"><b>Fragenquelle</b><div class="seg" id="qsrcSeg"><button data-qsrc="live" class="${(home.me.qsource || 'live') === 'live' ? 'on' : ''}">✨ Live</button><button data-qsrc="pool" class="${home.me.qsource === 'pool' ? 'on' : ''}">📚 Pool</button></div>
-          <p class="sub">Live: jede Runde wird frisch erstellt. Pool: Fragen aus dem eigenen Vorrat, den wir als Nächstes bauen. Bis dahin wird auch im Pool-Modus live erstellt.</p></div>
         <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
         <div id="modList" class="plist"></div>
         <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
@@ -2704,6 +2756,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.id === 'openChallenges') { page = 'challenges'; render(); }
+  else if (t.id === 'openAdmin') { page = 'admin'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
@@ -2726,7 +2779,7 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.qsrc) {
-    api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
+    api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbet) { cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }

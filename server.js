@@ -282,6 +282,15 @@ setTimeout(async () => {
   } catch (e) { console.error('Glücksrad-Reset:', e.message); }
 }, 3000);
 
+// Einmalig nach dem Update: Pool auf 200 Fragen pro Kategorie befüllen (im Admin-Bereich anhaltbar)
+setTimeout(async () => {
+  try {
+    if (await store.setting('pool_fill_started_v1')) return;
+    await store.setting('pool_fill_started_v1', '1');
+    game.qpool.setTarget(200); game.qpool.start();
+  } catch (e) { console.error('Pool-Start:', e.message); }
+}, 20000);
+
 // Hot Time: um 19:59 Uhr deutscher Zeit alle per Push benachrichtigen
 let lastHotPush = '';
 setInterval(async () => {
@@ -764,7 +773,31 @@ app.post('/api/admin/user', async (req, res) => {
 });
 
 // Embleme und Titel für einen Spieler einzeln freischalten oder zurücksetzen
-// Fragenquelle: live erstellen oder aus dem eigenen Pool (Pool folgt, bis dahin wirkt es wie Live)
+// Admin: Fragen-Pool ansehen und steuern
+app.get('/api/admin/pool', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    if (!isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const seen = await store.seenCounts(u.id).catch(() => new Set());
+    res.json({ source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/pool', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    if (!isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const a = String(req.body.action || '');
+    if (a === 'start') game.qpool.start();
+    else if (a === 'stop') game.qpool.stop();
+    else if (a === 'target') game.qpool.setTarget(req.body.value);
+    else if (a === 'auto') game.qpool.setAuto(!!req.body.value);
+    else return res.status(400).json({ error: 'Unbekannte Aktion.' });
+    const seen = await store.seenCounts(u.id).catch(() => new Set());
+    res.json({ source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// Fragenquelle: live erstellen oder aus dem eigenen Pool
 app.post('/api/admin/qsource', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;
