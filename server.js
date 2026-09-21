@@ -282,6 +282,20 @@ setTimeout(async () => {
   } catch (e) { console.error('Glücksrad-Reset:', e.message); }
 }, 3000);
 
+// Einmalig: Fragen, die vor den Gesehen-Listen schon gestellt wurden, gelten für alle bisherigen Spieler als gesehen
+setTimeout(async () => {
+  try {
+    if (await store.setting('seen_backfill_v1')) return;
+    const nkey = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9äöüß]+/g, ' ').trim();
+    const asked = new Set((await store.askedAll(100000)).map(nkey));
+    const played = (await store.poolAll()).filter((q) => asked.has(nkey(q.q))).map((q) => q.id);
+    const users = (await store.allUsers()).map((u) => u.id);
+    const n = played.length && users.length ? await store.seenAddMany(users, played) : 0;
+    await store.setting('seen_backfill_v1', '1');
+    console.log(`Gesehen-Listen nachgetragen: ${played.length} schon gestellte Fragen für ${users.length} Spieler (${n} Einträge)`);
+  } catch (e) { console.error('Nachtragen:', e.message); }
+}, 12000);
+
 // Einmalig nach dem Update: Pool auf 200 Fragen pro Kategorie befüllen (im Admin-Bereich anhaltbar)
 setTimeout(async () => {
   try {
