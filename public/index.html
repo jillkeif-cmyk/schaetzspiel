@@ -2277,7 +2277,7 @@ function renderAdmin() {
       <p class="sub">${d.source === 'pool' ? 'Runden nehmen Fragen aus dem Pool, die keiner der Mitspieler je hatte. Reicht der Pool nicht, wird der Rest live erstellt.' : 'Jede Runde wird live erstellt. Die neuen Fragen wandern trotzdem automatisch in den Pool.'}</p>
     </div>
     <div class="panel adm">
-      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${d.running ? `läuft · ${d.inFlight} Anfragen` : 'pausiert'}</span></div>
+      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? 'pausiert' : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
       <div class="row" style="gap:8px;flex-wrap:wrap">
         <button class="btn small" id="admStart" ${d.running ? 'disabled' : ''}>▶ Starten</button>
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
