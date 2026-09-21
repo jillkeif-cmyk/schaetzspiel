@@ -114,7 +114,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), hot: hot.view(), firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -764,6 +764,18 @@ app.post('/api/admin/user', async (req, res) => {
 });
 
 // Embleme und Titel für einen Spieler einzeln freischalten oder zurücksetzen
+// Fragenquelle: live erstellen oder aus dem eigenen Pool (Pool folgt, bis dahin wirkt es wie Live)
+app.post('/api/admin/qsource', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    if (!isAdmin(u)) return res.status(403).json({ error: 'Nur der Admin stellt die Fragenquelle um.' });
+    const src = req.body.source === 'pool' ? 'pool' : 'live';
+    await store.setting('question_source', src);
+    console.log('Fragenquelle umgestellt auf', src);
+    res.json({ source: src });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.post('/api/admin/unlock', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;

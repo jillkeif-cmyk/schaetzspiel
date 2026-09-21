@@ -947,6 +947,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .hotbar.on .flame{filter:none;opacity:1;animation:flick 1.2s ease-in-out infinite alternate}
 .hotclock{font:400 18px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFB24A;flex:none}
 .btn.hotbtn{position:relative}.btn.hotbtn::after{content:"🔥 ×2";position:absolute;right:10px;top:50%;transform:translateY(-50%);font:900 12px/1 Archivo;padding:4px 7px;border-radius:99px;background:linear-gradient(135deg,#FF6A1A,#FFB33A);color:#2A1000;box-shadow:0 0 12px rgba(255,120,30,.7)}
+.qsrc{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:var(--bg-deep)}
 </style>
 </head>
 <body>
@@ -966,7 +967,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '17';
+const AVER = '18';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2397,6 +2398,8 @@ function update() {
     if ($('#notifBox')) $('#notifBox').innerHTML = `<div class="row"><b class="grow">Benachrichtigungen</b><button class="btn small" id="${pushState === 'on' ? 'pushOff' : 'pushOn'}" style="min-width:104px">${pushState === 'on' ? 'Ausschalten' : 'Einschalten'}</button></div><p class="sub">${pushState === 'on' ? 'Dieses Gerät bekommt Einladungen und Neuigkeiten.' : 'Auf dem iPhone nur möglich, wenn die App auf dem Homescreen liegt.'}</p>`;
     if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
       $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+        <div class="qsrc"><b>Fragenquelle</b><div class="seg" id="qsrcSeg"><button data-qsrc="live" class="${(home.me.qsource || 'live') === 'live' ? 'on' : ''}">✨ Live</button><button data-qsrc="pool" class="${home.me.qsource === 'pool' ? 'on' : ''}">📚 Pool</button></div>
+          <p class="sub">Live: jede Runde wird frisch erstellt. Pool: Fragen aus dem eigenen Vorrat, den wir als Nächstes bauen. Bis dahin wird auch im Pool-Modus live erstellt.</p></div>
         <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
         <div id="modList" class="plist"></div>
         <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
@@ -2721,6 +2724,9 @@ document.addEventListener('click', (e) => {
       t.outerHTML = '<span class="sub">angefragt</span>';
       loadFriends && loadFriends();
     }).catch((er) => toast(er.message));
+  }
+  else if (t.dataset.qsrc) {
+    api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbet) { cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
