@@ -897,6 +897,17 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .chips button.allchip{color:#2A1600;font-size:10px;line-height:1.05}
 .chipbtn.allin{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;font-weight:900}
 .cgrid figure,.cardgrid button,.framegrid button,.rw-cell{content-visibility:auto;contain-intrinsic-size:auto 220px}
+#rres{position:fixed;inset:0;z-index:15;display:none;place-items:center;background:rgba(2,10,12,.72);padding:20px}
+#rres.on{display:grid;animation:fadein .25s ease-out}
+.rr-card{width:min(92vw,360px);padding:20px 18px;border-radius:22px;background:var(--bg-deep);text-align:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),0 20px 50px rgba(0,0,0,.6);animation:crpop .45s cubic-bezier(.2,1.4,.4,1)}
+#rres.win .rr-card{box-shadow:inset 0 0 0 2px #3DDC97,0 0 40px rgba(61,220,151,.45)}
+#rres.lose .rr-card{box-shadow:inset 0 0 0 2px #E05252,0 0 30px rgba(224,82,82,.3)}
+.rr-num{width:96px;height:96px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font:400 52px/1 Anton,Impact,sans-serif;color:#fff;box-shadow:0 0 0 4px #C89A3C,0 8px 20px rgba(0,0,0,.5)}
+.rr-num.rot{background:#B8322D}.rr-num.schwarz{background:#141B1C}.rr-num.gruen,.rr-num.grün{background:#1D7A4A}
+.rr-col{color:var(--muted);font-weight:700;font-size:13px}
+.rr-big{font:400 44px/1 Anton,Impact,sans-serif;margin:12px 0 4px}
+#rres.win .rr-big{color:#3DDC97}#rres.lose .rr-big{color:#FF8A80}
+.rr-sub{font-weight:700;font-size:14px}.rr-hits{margin-top:10px;font-size:13px;color:var(--muted)}.rr-hits b{color:var(--paper)}
 </style>
 </head>
 <body>
@@ -1083,7 +1094,15 @@ async function api(path, body) {
   const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: 'Der Server antwortet nicht.' }));
   if (!r.ok) throw Object.assign(new Error(j.error || 'Fehler'), { status: r.status });
+  // Jede Antwort mit Diamantenstand gleicht alle Anzeigen ab
+  const dn = typeof j.diamonds === 'number' ? j.diamonds : j.state && typeof j.state.diamonds === 'number' ? j.state.diamonds : null;
+  if (dn !== null && !path.startsWith('/api/admin')) syncDia(dn);
   return j;
+}
+function syncDia(n) {
+  if (home && home.me) home.me.diamonds = n;
+  if (tcg) tcg.diamonds = n;
+  document.querySelectorAll('.diaNum').forEach((el) => { el.textContent = fmt(n); });
 }
 function logout() { token = null; try { localStorage.removeItem('sz_token'); } catch (e) {} if (socket) socket.disconnect(); socket = null; S = null; home = null; page = 'home'; viewKey = ''; render(); }
 async function loadFriends() { try { friends = (await api('/api/friends')).friends; if (!S) update(); } catch (e) {} }
@@ -1445,6 +1464,27 @@ function casinoDone(d) {
   if (r) r.innerHTML = d.won ? `<b style="color:var(--ok);font-size:18px">+${fmt(d.won)} Diamanten</b>` : '<b style="color:#FFB3AC">Verloren</b>';
   if (d.won) { sfx('exact'); try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e) {} } else sfx('sent');
 }
+// Ergebnis groß anzeigen: gezogene Zahl, Farbe, Gewinn oder Verlust und welche Einsätze getroffen haben
+function showRouletteResult(d, bets) {
+  const net = d.won - d.stake;
+  const hits = bets.filter((b) => b.numbers.includes(d.n));
+  const name = (b) => (b.numbers.length === 1 ? 'Zahl ' + b.numbers[0] : b.numbers.length === 18 ? (b.numbers.every((n) => RED.has(n)) ? 'Rot' : b.numbers.every((n) => !RED.has(n)) ? 'Schwarz' : b.numbers[0] === 1 && b.numbers[17] === 18 ? '1–18' : b.numbers[0] === 19 ? '19–36' : b.numbers[0] % 2 ? 'Ungerade' : 'Gerade') : b.numbers.length === 12 ? (b.numbers[1] - b.numbers[0] === 1 ? b.numbers[0] + '–' + b.numbers[11] : 'Kolonne') : b.numbers.length + 'er-Wette');
+  const col = d.n === 0 ? 'grün' : RED.has(d.n) ? 'rot' : 'schwarz';
+  let o = document.getElementById('rres');
+  if (!o) { o = document.createElement('div'); o.id = 'rres'; document.body.appendChild(o); }
+  o.className = 'on ' + (net > 0 ? 'win' : net < 0 ? 'lose' : 'even');
+  o.innerHTML = `<div class="rr-card">
+      <div class="rr-num ${d.color}">${d.n}</div>
+      <div class="rr-col">${col === 'grün' ? 'Null' : col.charAt(0).toUpperCase() + col.slice(1)} · ${d.n === 0 ? '' : d.n % 2 ? 'ungerade · ' : 'gerade · '}${d.n === 0 ? 'kein Dutzend' : d.n <= 12 ? '1–12' : d.n <= 24 ? '13–24' : '25–36'}</div>
+      <div class="rr-big">${net > 0 ? `+${fmt(net)} 💎` : net < 0 ? `−${fmt(-net)} 💎` : '±0'}</div>
+      <div class="rr-sub">${net > 0 ? 'Gewonnen!' : net < 0 ? 'Verloren' : 'Einsatz zurück'} · Einsatz ${fmt(d.stake)}, ausgezahlt ${fmt(d.won)}</div>
+      ${hits.length ? `<div class="rr-hits">Getroffen: ${hits.map((b) => `<b>${esc(name(b))}</b>`).join(', ')}</div>` : '<div class="rr-hits">Keiner deiner Einsätze hat getroffen.</div>'}
+      <button class="btn" id="rrOk" style="width:100%;margin-top:12px">Weiter</button></div>`;
+  const close = () => { o.className = ''; o.innerHTML = ''; rbets = []; renderCasino(); };
+  $('#rrOk').onclick = close;
+  o.onclick = (e) => { if (e.target === o) close(); };
+}
+
 async function doSpin() {
   if (spinning) return;
   if (!rbets.length) return toast('Setz zuerst einen Chip auf das Tableau.');
@@ -1473,8 +1513,8 @@ async function doSpin() {
       ball.textContent = d.n; ball.className = 'ballnum ' + d.color;
       if (d.win) $('.wheelwrap').classList.add('winflash');
       setTimeout(() => $('.wheelwrap') && $('.wheelwrap').classList.remove('winflash'), 1300);
-      casinoDone(d); rbets = []; setTimeout(renderCasino, 1400);
-      const head = $('#cbody .dia'); if (head) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
+      casinoDone(d);
+      showRouletteResult(d, lastBets);
       spinning = false;
     }, 4700);
   } catch (e) { spinning = false; toast(e.message); }
@@ -1582,7 +1622,7 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">VIP 👑</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
@@ -1850,7 +1890,7 @@ function connect() {
     if (page === 'casino' && cgame === 'tables') renderCasino();
   });
   socket.on('note', (m) => { toast(m); sfx('sent'); });
-  socket.on('diamonds', (n) => { if (home && home.me) { home.me.diamonds = n; if (tcg) tcg.diamonds = n; viewKey = ''; update(); } });
+  socket.on('diamonds', (n) => { syncDia(n); });
   socket.on('needpw', (d) => askPassword(d.code, d.wrong));
   socket.on('challenged', (d) => {
     sfx('exact');
@@ -1897,12 +1937,12 @@ function build() {
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Casino</h1>
     <div id="cbody"></div></div>`;
 
   if (!S && page === 'cards') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
     <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
@@ -1929,7 +1969,7 @@ function build() {
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
     <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
-    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -2350,7 +2390,7 @@ function update() {
       const mine2 = (S.bets || []).find((b) => b.id === S.you);
       const others = (S.bets || []).filter((b) => b.id !== S.you);
       const dia = (home && home.me && home.me.diamonds) || 0;
-      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
         <p class="sub">Setze darauf, dass du gewinnst. Gewinnst du, bekommst du das Doppelte. Verlierst du, geht dein Einsatz an die Sieger.</p>
         ${mine2 ? `<div class="row"><b class="grow">Dein Einsatz: ${fmt(mine2.amount)} 💎</b><button class="btn small ghost" data-bet="0">Zurücknehmen</button></div>`
           : `<div class="row" style="flex-wrap:wrap;gap:6px">${[50, 100, 250, 500].map((v) => `<button class="chipbtn" data-bet="${v}" ${dia < v ? 'disabled style="opacity:.4"' : ''}>${v} 💎</button>`).join('')}</div>`}
