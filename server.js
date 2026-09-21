@@ -916,6 +916,7 @@ app.post('/api/admin/pool', async (req, res) => {
     else if (a === 'target') game.qpool.setTarget(req.body.value);
     else if (a === 'auto') game.qpool.setAuto(!!req.body.value);
     else if (a === 'mode') game.qpool.setMode(String(req.body.value));
+    else if (a === 'ttarget') { const v = typeof req.body.value === 'object' && req.body.value ? req.body.value : req.body; game.qpool.setThemeTarget(String(v.key), v.value); }
     else if (a === 'effort') game.qpool.setEffort(String(req.body.value));
     else return res.status(400).json({ error: 'Unbekannte Aktion.' });
     const seen = await store.seenCounts(u.id).catch(() => new Set());

@@ -1087,6 +1087,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 @keyframes ptin{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes ptout{to{opacity:0;transform:translate(-50%,-10px)}}
 .dia-mini{font:800 11px/1 Archivo;padding:3px 6px;border-radius:99px;background:rgba(120,200,255,.14);color:#BDE6FF;vertical-align:2px;white-space:nowrap}
+.adm-tt{width:64px;padding:4px 6px;border-radius:8px;border:0;background:var(--bg-deep);color:var(--paper);font:400 15px/1 Anton,Impact,sans-serif;text-align:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
+.adm-tt.custom{box-shadow:inset 0 0 0 1.5px var(--tape);color:var(--tape)}
 </style>
 </head>
 <body>
@@ -2279,26 +2281,28 @@ function renderAdmin() {
       <div class="row" style="gap:8px;flex-wrap:wrap">
         <button class="btn small" id="admStart" ${d.running ? 'disabled' : ''}>▶ Starten</button>
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
-        <label class="row" style="gap:6px;margin:0"><span class="sub">Ziel je Kategorie</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
+        <label class="row" style="gap:6px;margin:0"><span class="sub">Standard-Ziel</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
       </div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Modus</span><div class="seg"><button data-admmode="batch" class="${d.mode === 'batch' ? 'on' : ''}">📦 Sammelauftrag · halber Preis</button><button data-admmode="direct" class="${d.mode === 'direct' ? 'on' : ''}">⚡ Direkt</button></div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Nachdenken</span><div class="seg"><button data-admeff="low" class="${d.effort === 'low' ? 'on' : ''}">wenig · günstig</button><button data-admeff="medium" class="${d.effort === 'medium' ? 'on' : ''}">mittel</button><button data-admeff="high" class="${d.effort === 'high' ? 'on' : ''}">viel · teuer</button></div></div>
       ${d.batchStatus ? `<p class="sub">📦 Sammelauftrag läuft: ${esc(d.batchStatus)}. Ergebnisse kommen meist nach einigen Minuten, spätestens nach 24 Stunden.</p>` : ''}
       <label class="row" style="gap:8px;margin:0"><input type="checkbox" id="admAuto" ${d.auto ? 'checked' : ''}> <span>Automatisch nachfüllen, wenn die aktivsten Spieler 80 % einer Kategorie gesehen haben</span></label>
-      <div class="adm-kpi"><div><b>${fmt(d.distinct || tot)}</b><small>verschiedene Fragen</small></div><div><b>${fmt(d.made)}</b><small>seit Start erstellt</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Ausgabe-Tokens</small></div></div>
+      <div class="adm-kpi"><div><b>${fmt(d.distinct || tot)}</b><small>verschiedene Fragen</small></div><div><b>${fmt(d.made)}</b><small>erstellt seit Neustart</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert seit Neustart</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Tokens seit Neustart</small></div></div>
       <p class="sub">Im Pool liegen ${fmt(tot)} spielbare Fragen, davon ${fmt(d.distinct || tot)} inhaltlich verschieden. ${fmt(d.blocked || 0)} sind gesperrt (Klassiker, Lösung in der Frage oder abgeschnittene Antworten). Gleiche Fragen in anderer Formulierung gelten als gesehen, sobald man eine davon hatte.</p>
       <p class="sub">Tokens dieser Befüllung: ${fmt(tk.input)} Eingabe, ${fmt(tk.output)} Ausgabe in ${fmt(tk.calls)} Anfragen${d.made ? ` · etwa ${fmt(Math.round(tk.output / Math.max(1, d.made)))} Ausgabe-Tokens pro Frage` : ''}.</p>
       <p class="sub">Kosten dieser Befüllung: etwa <b>$${(tk.input * 2e-6 + tk.output * 10e-6).toFixed(2)}</b>${d.made ? ` · ${(100 * (tk.input * 2e-6 + tk.output * 10e-6) / Math.max(1, d.made)).toFixed(2)} Cent pro Frage` : ''} · seit Serverstart gesamt etwa $${(tk.totalInput * 2e-6 + tk.totalOutput * 10e-6).toFixed(2)} (Sonnet 5: $2 je Mio. Eingabe, $10 je Mio. Ausgabe, Sammelauftrag zur Hälfte)</p>
     </div>
     <div class="panel adm">
       <b>Kategorien</b>
-      ${d.themes.map((t) => `<div class="adm-t ${t.skip ? 'skip' : ''}"><span class="grow"><b>${esc(t.name)}</b><small>${t.skip ? 'eigene Fragen, keine KI' : `${fmt(t.count)} Fragen · du hast ${fmt(t.seen)} gesehen`}</small></span><span class="adm-n">${t.skip ? '–' : `${fmt(t.count)} / ${fmt(d.target)}`}</span><span class="bar"><i style="width:${t.skip ? 0 : Math.min(100, Math.round(100 * t.count / d.target))}%"></i></span></div>`).join('')}
+      ${d.themes.map((t) => `<div class="adm-t ${t.skip ? 'skip' : ''}"><span class="grow"><b>${esc(t.name)}</b><small>${t.skip ? 'eigene Fragen, keine KI' : `${fmt(t.count)} Fragen · du hast ${fmt(t.seen)} gesehen`}</small></span><span class="adm-n">${t.skip ? '–' : `${fmt(t.count)} / <input class="adm-tt ${t.custom ? 'custom' : ''}" data-tt="${t.key}" inputmode="numeric" value="${t.target}" aria-label="Ziel für ${esc(t.name)}">`}</span><span class="bar"><i style="width:${t.skip ? 0 : Math.min(100, Math.round(100 * t.count / t.target))}%"></i></span></div>`).join('')}
+      <p class="sub">Tippe auf die Zielzahl einer Kategorie, um sie einzeln zu ändern. Leer lassen heißt Standard-Ziel. Die Befüllung füllt nur Kategorien auf, die unter ihrem Ziel liegen.</p>
     </div>
-    <div class="panel adm"><b>Protokoll</b><div class="adm-log">${(d.log || []).map((l) => `<div>${esc(l)}</div>`).join('') || '<span class="sub">Noch nichts passiert.</span>'}</div></div>`;
+    <div class="panel adm"><b>Protokoll · Befüllung und Live-Matches</b><div class="adm-log">${(d.log || []).map((l) => `<div>${esc(l)}</div>`).join('') || '<span class="sub">Noch nichts passiert.</span>'}</div></div>`;
   $('#admStart').onclick = () => adminAct('start');
   $('#admStop').onclick = () => adminAct('stop');
   $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
   $('#admAuto').onchange = (e) => adminAct('auto', e.target.checked);
+  document.querySelectorAll('[data-tt]').forEach((x) => { x.onfocus = () => clearTimeout(adminTimer); x.onchange = () => api('/api/admin/pool', { action: 'ttarget', key: x.dataset.tt, value: x.value }).then((d) => { adminD = d; renderAdmin(); loadAdmin(); }).catch((er) => toast(er.message)); });
   document.querySelectorAll('[data-admmode]').forEach((x) => { x.onclick = () => adminAct('mode', x.dataset.admmode); });
   document.querySelectorAll('[data-admeff]').forEach((x) => { x.onclick = () => adminAct('effort', x.dataset.admeff); });
 }
