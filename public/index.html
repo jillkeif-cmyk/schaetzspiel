@@ -1544,7 +1544,7 @@ function renderCards() {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
     const have = all.filter((x) => x.n).length;
-    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended']];
+    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻']];
     let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
@@ -1652,7 +1652,7 @@ async function openPack(pid) {
     ]);
     // ein Ton je Karte, gute Karten klingen anders
     r.pulled.forEach((c, i) => setTimeout(() => {
-      const top = ['ultra', 'ext', 'legend'].includes(c.variant);
+      const top = ['ultra', 'ext', 'legend', 'ghost'].includes(c.variant);
       sfx(top ? 'exact' : c.variant === 'holo' ? 'dartbest' : 'dart');
       if (top) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e2) {}
     }, i * 650 + 350));
