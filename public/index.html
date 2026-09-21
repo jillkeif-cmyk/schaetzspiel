@@ -761,8 +761,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #openDaily.ready img{animation:dailybob 1.2s ease-in-out infinite alternate}
 @keyframes dailyglow{to{box-shadow:0 0 0 2px var(--tape),0 0 40px rgba(255,210,63,.75)}}
 @keyframes dailybob{to{transform:translateY(-4px) rotate(-4deg)}}
-.titleimg.a-dev{box-shadow:none!important;outline:3px solid transparent;border-radius:12px;position:relative;animation:devglow 2.4s linear infinite}
-@keyframes devglow{0%{filter:drop-shadow(0 0 6px #FF4D6D) drop-shadow(0 0 14px #FF4D6D)}25%{filter:drop-shadow(0 0 6px #FFD23F) drop-shadow(0 0 14px #FFD23F)}50%{filter:drop-shadow(0 0 6px #3DDC97) drop-shadow(0 0 14px #3DDC97)}75%{filter:drop-shadow(0 0 6px #5AA9FF) drop-shadow(0 0 14px #B04DFF)}100%{filter:drop-shadow(0 0 6px #FF4D6D) drop-shadow(0 0 14px #FF4D6D)}}
+.titleimg.a-dev{animation:devglow 3s linear infinite}
+@keyframes devglow{
+  0%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,77,109,.85)}
+  25%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,210,63,.85)}
+  50%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(61,220,151,.85)}
+  75%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(176,77,255,.9)}
+  100%{box-shadow:0 0 0 1.5px rgba(255,210,63,.95),0 0 0 3.5px rgba(10,30,32,.95),0 0 0 4.5px rgba(255,210,63,.45),0 0 16px 3px rgba(255,77,109,.85)}}
 </style>
 </head>
 <body>
@@ -1756,7 +1761,7 @@ function buildReveal() {
       return `<div class="step ${r.id === S.you ? 'me' : ''} ${i2 === 0 && r.value !== null ? 'first' : ''}" style="--c:${p2.color || 'var(--line)'};--d:${d};--in:${Math.min(i2, 4) * 8}px">
         <span class="rk">${r.value === null ? '–' : (medal[i2] || i2 + 1)}</span>
         ${avatar(p2, 40)}
-        <span class="nm"><span class="ln1">${withTag(p2)}${r.id === S.you ? '<small>(du)</small>' : ''}${r.exact ? '<span class="tag hit">×3</span>' : r.close ? '<span class="tag">×2</span>' : ''}</span>
+        <span class="nm"><span class="ln1"><span class="who">${withTag(p2)}</span>${r.id === S.you ? '<small>(du)</small>' : ''}${r.exact ? '<span class="tag hit">×3</span>' : r.close ? '<span class="tag">×2</span>' : ''}</span>
           <span class="bar"><i style="width:${Math.max(0, acc(r))}%"></i></span>
           <span class="diff">${diffText(r)}</span></span>
         <span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span>
