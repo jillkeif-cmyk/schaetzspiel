@@ -892,6 +892,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .oppl{font-size:13px;color:var(--muted)}.oppl b{color:var(--paper);font-weight:800}
 .addfr{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(255,210,63,.15);color:var(--tape);font:900 18px/1 Archivo;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);margin-left:6px}
 .oppl{cursor:pointer}
+.fbonus{margin-top:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(90deg,rgba(255,210,63,.22),rgba(255,210,63,.06));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);font-weight:800;font-size:13.5px;text-align:center}
 </style>
 </head>
 <body>
@@ -1924,6 +1925,7 @@ function build() {
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
       <button class="btn" id="create">Match eröffnen</button>
+      <div id="firstBonus"></div>
       <p class="sub">Offene Matches stehen unten in der Liste, ein Tipp auf „Beitreten“ reicht.</p>
       <div id="slots" class="sub"></div>
     </div>
@@ -2263,6 +2265,8 @@ function update() {
       const b = document.getElementById('openDaily');
       if (b) { b.classList.toggle('ready', !v.claimed); const sb = b.querySelector('.sub'); if (sb) sb.textContent = v.claimed ? 'Heute schon abgeholt' : 'Jetzt abholen: ' + fmt(v.loginDia) + ' Diamanten warten'; }
     }).catch(() => {});
+    const fb = $('#firstBonus');
+    if (fb) fb.innerHTML = home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '';
     api('/api/newplayers').then((r) => {
       const np = $('#newPlayers'); if (!np) return;
       const list = (r.players || []).filter((x) => !x.self).slice(0, 8);

@@ -56,7 +56,7 @@ const publicStats = (u) => ({
   id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
   casinoXp: Number(u.casino_xp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
-  bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
+  bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp),
 });
 const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
 
@@ -110,7 +110,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -691,7 +691,9 @@ app.get('/api/newplayers', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const rel = new Map((await store.friendList(u.id)).map((f) => [f.id, f.status]));
-    const list = (await store.recentUsers(12)).map((o) => ({ ...publicStats(o), online: game.online.has(o.id), friend: rel.get(o.id) || null, self: o.id === u.id, joined: Number(o.created_ms) || null }));
+    // Testkonten aus der Entwicklung nicht anzeigen
+    const TEST = /test|claude|tester|probe|dummy|demo/i;
+    const list = (await store.recentUsers(30)).filter((o) => !TEST.test(o.name)).slice(0, 12).map((o) => ({ ...publicStats(o), online: game.online.has(o.id), friend: rel.get(o.id) || null, self: o.id === u.id, joined: Number(o.created_ms) || null }));
     res.json({ players: list });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
