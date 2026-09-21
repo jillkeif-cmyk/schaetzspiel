@@ -2555,6 +2555,7 @@ function update() {
     } else sfx(S.reveal.results.some((r) => r.right && r.id === S.you) ? 'reveal' : 'sent');
   }
   if (S.phase === 'finished' && lastVibe !== 'f' + S.code) { lastVibe = 'f' + S.code; if (S.winners.includes(S.you)) sfx('win'); }
+  if (S.phase === 'reveal' && S.waitingMore && !$('#moreNote')) { const h = document.createElement('p'); h.id = 'moreNote'; h.className = 'sub center'; h.textContent = '⏳ Die nächste Frage wird gerade frisch erstellt …'; const r = $('#report'); if (r && r.parentNode) r.parentNode.insertBefore(h, r); }
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
