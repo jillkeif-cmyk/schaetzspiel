@@ -923,6 +923,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .nw-embs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.nw-embs.six{grid-template-columns:repeat(3,1fr)}
 .nw-em{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:16px;background:var(--bg-deep);text-align:center}.nw-em b{font-size:13px}
 .editbtn.big{display:block;margin:12px 0 0;padding:13px 16px;text-align:center;font-size:16px;border-radius:14px;box-shadow:0 4px 0 #9A6A0A,0 8px 18px rgba(0,0,0,.35)}
+.chgroup{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.chg-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.3)}
+.chg-h b{font:400 19px/1 Anton,Impact,sans-serif;letter-spacing:.3px}.chg-h small{color:var(--muted);font-weight:700}
+.chgroup.isnew .chg-h{background:linear-gradient(135deg,rgba(142,107,255,.3),rgba(255,210,63,.12));box-shadow:inset 0 0 0 1.5px rgba(192,75,255,.6)}
 </style>
 </head>
 <body>
@@ -1794,14 +1798,21 @@ function renderNews() {
     return '';
   };
   box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p) => `<article class="nw-post">
-      <div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}</small></div></div>
+      <div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>
       <p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`).join('');
 }
 function renderChallenges() {
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
-  const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34' };
-    $('#chals').innerHTML = pr.challenges.map((c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
-      <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`).join('');
+  const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
+  const row = (c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+      <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
+  const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
+  $('#chals').innerHTML = G.map(([g, n]) => {
+    const list = pr.challenges.filter((c) => c.group === g); if (!list.length) return '';
+    const done = list.reduce((x, c) => x + c.done, 0), tot = list.reduce((x, c) => x + c.total, 0);
+    const neu = list.some((c) => c.isNew);
+    return `<div class="chgroup ${neu ? 'isnew' : ''}"><div class="chg-h"><b>${n}</b>${neu ? '<span class="nw-badge">NEU</span>' : ''}<span class="grow"></span><small>${done} / ${tot} Stufen</small></div>${list.map(row).join('')}</div>`;
+  }).join('');
 }
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
@@ -2028,8 +2039,8 @@ function build() {
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
-    <button class="panel pcard" id="openProfile"></button>
     <div id="newsCard"></div>
+    <button class="panel pcard" id="openProfile"></button>
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
@@ -2382,8 +2393,10 @@ function update() {
     if (fb) fb.innerHTML = home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '';
     api('/api/newplayers').then((r) => {
       const np = $('#newPlayers'); if (!np) return;
-      const list = (r.players || []).filter((x) => !x.self).slice(0, 8);
-      np.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Neue Spieler</h2><div class="plist">${list.map((u) => `<div class="pl" data-user="${u.id}" style="--c:${u.online ? '#8BE28B' : 'var(--line)'}">${avatar(u, 38)}<span class="nm">${withTag(u)}<br><span class="lv">${u.online ? 'gerade online' : 'Level ' + (u.level || 1)} · ${fmt(u.matches || 0)} Matches</span></span>${u.friend === 'ok' ? '<span class="rw-ok">Freund</span>' : u.friend === 'out' ? '<span class="sub">angefragt</span>' : u.friend === 'in' ? `<button class="mini go" data-fr="accept" data-id="${u.id}">Annehmen</button>` : `<button class="addfr" data-addfr="${u.id}">+</button>`}</div>`).join('')}</div>` : '';
+      const list = (r.players || []).filter((x) => !x.self).slice(0, 10);
+      const rowNP = (u) => `<div class="pl" data-user="${u.id}" style="--c:${u.online ? '#8BE28B' : 'var(--line)'}">${avatar(u, 38)}<span class="nm">${withTag(u)}<br><span class="lv">${u.online ? 'gerade online' : 'Level ' + (u.level || 1)} · ${fmt(u.matches || 0)} Matches</span></span>${u.friend === 'ok' ? '<span class="rw-ok">Freund</span>' : u.friend === 'out' ? '<span class="sub">angefragt</span>' : u.friend === 'in' ? `<button class="mini go" data-fr="accept" data-id="${u.id}">Annehmen</button>` : `<button class="addfr" data-addfr="${u.id}">+</button>`}</div>`;
+      np.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Neue Spieler</h2><div class="plist">${list.slice(0, 2).map(rowNP).join('')}</div>
+        ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
     if (newsPosts) renderNewsCard(); else loadNews();
     const cs = $('#chalSub'), prg = home && home.progress;
@@ -2544,7 +2557,7 @@ document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') re
 document.addEventListener('toggle', (e) => {
   const d = e.target.closest && e.target.closest('.fold');
   if (!d) return;
-  if (d.dataset.fold === 'off' || d.dataset.fold === 'tag') { openFold = d.open ? d.dataset.fold : ''; return; } // nur auf- und zuklappen
+  if (d.dataset.fold === 'off' || d.dataset.fold === 'tag' || d.dataset.fold === 'np') { openFold = d.open ? d.dataset.fold : ''; return; } // nur auf- und zuklappen
   if (d.open) {
     openFold = d.dataset.fold; document.querySelectorAll('.fold[open]').forEach((o) => { if (o !== d) o.open = false; });
     const C2 = home && home.cards;
