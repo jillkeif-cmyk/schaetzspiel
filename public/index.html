@@ -2649,7 +2649,11 @@ document.addEventListener('click', (e) => {
   if (t.dataset.role !== undefined) { document.querySelectorAll('#modRole .chipbtn').forEach((b) => b.classList.toggle('on', b === t)); return; }
   if (t.dataset.mu !== undefined) {
     const uid = modOpen; const on = t.dataset.on !== undefined ? t.dataset.on === '1' : !t.classList.contains('on');
-    return api('/api/admin/unlock', { id: uid, card: t.dataset.mu, on }).then((res) => { modUsers = modUsers.map((x) => x.id === res.user.id ? res.user : x); modEdit(uid, 'cards'); }).catch((er) => toast(er.message));
+    return api('/api/admin/unlock', { id: uid, card: t.dataset.mu, on }).then((res) => {
+      modUsers = modUsers.map((x) => x.id === res.user.id ? res.user : x); modEdit(uid, 'cards');
+      toast(on ? 'Freigeschaltet' : 'Wieder gesperrt');
+      if (home && home.me && uid === home.me.id) loadHome().then(() => { if (!S) { viewKey = ''; render(); } }); // eigener Stand sofort aktuell
+    }).catch((er) => toast(er.message));
   }
   if (t.dataset.emote !== undefined) return socket.emit('emote', Number(t.dataset.emote));
   if (t.dataset.addfriend) return api('/api/friends/add', { name: t.dataset.addfriend }).then((r) => { toast(r.status === 'ok' ? r.name + ' ist jetzt dein Freund' : 'Anfrage an ' + r.name + ' gesendet'); t.remove(); loadFriends(); }).catch((er) => toast(er.message));
