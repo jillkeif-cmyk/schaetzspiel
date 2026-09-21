@@ -2340,7 +2340,8 @@ function connect() {
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
-  socket.on('connect', () => { lastPresence = ''; reportPresence(); });
+  socket.on('connect', () => { lastPresence = ''; reportPresence(); if (pkState) socket.emit('pk:refresh'); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && pkState && socket) { if (!socket.connected) socket.connect(); socket.emit('pk:refresh'); } });
   socket.on('bj:invited', (d) => {
     $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>🃏 Blackjack-Einladung</h2><p>${esc(d.from)} lädt dich an den Tisch ein.</p>
       <button class="btn" id="bjAccept">Hinsetzen</button><button class="btn ghost" id="pwCancel">Später</button></div>`;
