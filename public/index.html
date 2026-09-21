@@ -1553,13 +1553,15 @@ function renderCards() {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
     const have = all.filter((x) => x.n).length;
-    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['toon', 'Toon-Welt 🎩']];
-    let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter === 'toon' ? x.c.set === 'toon' : x.v === cfilter));
+    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻']];
+    const SF = [['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩']];
+    let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter.startsWith('set:') ? x.c.set === cfilter.slice(4) : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
     list.sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || rank(b.v) - rank(a.v) || a.c.name.localeCompare(b.c.name));
     box.innerHTML = `<p class="sub" style="margin-bottom:8px">${have} von ${all.length} Varianten gesammelt</p>
       <div class="cfilter">${F.map(([k, n]) => `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="cfilter"><span class="sub" style="align-self:center;font-size:12px;margin-right:2px">Booster:</span>${SF.map(([k, n]) => { const inSet = all.filter((x) => x.c.set === k.slice(4)); return `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n} <small>${inSet.filter((x) => x.n).length}/${inSet.length}</small></button>`; }).join('')}</div>
       <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : 'miss'}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
         <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
