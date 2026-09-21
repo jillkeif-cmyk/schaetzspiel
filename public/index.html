@@ -993,6 +993,34 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tk.st-abgeschlossen{border-left-color:#3DDC97}.tk.st-abgeschlossen .tk-st{background:#3DDC97}
 .tk.st-abgelehnt{border-left-color:#E05252;opacity:.8}.tk.st-abgelehnt .tk-st{background:#E05252;color:#fff}
 .tk.st-eingereicht{border-left-color:#5AA9FF}.tk.st-eingereicht .tk-st{background:#5AA9FF}
+.pk-lobby{display:flex;gap:12px;padding:12px;border-radius:18px;background:var(--bg-deep);margin-bottom:10px;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.25)}
+.pk-lobby img{width:76px;height:auto;border-radius:10px;flex:none}.pk-lobby b{display:block;font:400 20px/1.1 Anton,Impact,sans-serif}.pk-lobby small{display:block;color:var(--muted);font-size:12.5px}
+.pk-table{position:relative;width:100%;aspect-ratio:3/4;background-size:cover;background-position:center;border-radius:22px;overflow:visible;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.pk-center{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;width:80%}
+.pk-board{display:flex;gap:4px}
+.pkc{width:38px;height:54px;border-radius:6px;background:linear-gradient(180deg,#FBF7EA,#E4DCC6);color:#16202A;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.5);animation:flip .35s ease-out both}
+.pkc b{font:900 16px/1 Archivo}.pkc i{font-style:normal;font-size:15px}.pkc.red{color:#C0342F}
+.pkc.slot{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12);animation:none}
+.pkc.back{background:repeating-linear-gradient(45deg,#7A0F1F 0 6px,#5A0A16 6px 12px);box-shadow:inset 0 0 0 2px #E6B640,0 3px 8px rgba(0,0,0,.5)}
+.pkc.big{width:58px;height:82px}.pkc.big b{font-size:24px}.pkc.big i{font-size:22px}
+.pk-pot{font-weight:800;font-size:14px;color:#FFE9B0;text-shadow:0 1px 3px rgba(0,0,0,.8);background:rgba(0,0,0,.35);padding:4px 10px;border-radius:99px}
+.pk-win{background:rgba(0,0,0,.6);padding:8px 12px;border-radius:12px;text-align:center;font-size:13px;box-shadow:0 0 0 1.5px var(--tape);animation:crpop .45s cubic-bezier(.2,1.4,.4,1)}
+.pk-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:96px}
+.pk-seat.empty{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 2px rgba(255,210,63,.5);color:var(--tape);font:900 22px/1 Archivo}
+.pk-seat.folded{opacity:.45}.pk-seat.away .pk-av{filter:grayscale(1)}
+.pk-av{position:relative}.pk-ring{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(var(--tape) calc(var(--p,100) * 1%),transparent 0);-webkit-mask:radial-gradient(circle,transparent 60%,#000 61%);mask:radial-gradient(circle,transparent 60%,#000 61%)}
+.pk-seat.act .pk-plate{box-shadow:0 0 0 2px var(--tape),0 0 14px rgba(255,210,63,.6)}
+.pk-dealer{position:absolute;right:-8px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:#FFF;color:#111;font:900 11px/20px Archivo;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.pk-plate{background:rgba(5,15,18,.88);border-radius:10px;padding:3px 8px;text-align:center;min-width:76px}
+.pk-plate b{display:block;font-size:12px;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pk-plate span{font:400 14px/1 Anton,Impact,sans-serif;color:var(--tape)}
+.pk-last{font:900 10px/1 Archivo;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:#3DDC97;color:#063}
+.pk-last.f{background:#8E9AA0;color:#1b1b1b}.pk-last.a{background:#E05252;color:#fff}.pk-last.r{background:#FFB24A;color:#3a2000}
+.pk-hole{display:flex;gap:2px}.pk-hole .pkc{width:24px;height:34px}.pk-hole .pkc b{font-size:11px}.pk-hole .pkc i{font-size:10px}
+.pk-bet{font-weight:900;font-size:11.5px;background:rgba(0,0,0,.55);padding:2px 7px;border-radius:99px}
+.pk-hn{font-size:10.5px;color:#FFE9B0;font-weight:800}
+.pk-me{display:flex;align-items:center;gap:12px;margin-top:12px}.pk-mycards{display:flex;gap:6px}.pk-me b{display:block;font-size:15px}.pk-me small{color:var(--muted)}
+.pk-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pk-raise{grid-column:1 / -1;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:14px;background:var(--bg-deep)}
+.pk-raise input[type=range]{width:100%;accent-color:#FFD23F}
 </style>
 </head>
 <body>
@@ -1480,6 +1508,68 @@ function renderVip(box) {
   }; });
 }
 
+// ---------- Poker: Texas Hold'em ----------
+let pkState = null, pkList = null, pkRaise = 0, pkTick = null;
+const PK_POS = [[50, 86], [11, 66], [11, 30], [50, 9], [89, 30], [89, 66]]; // Plätze um den Tisch, 0 = unten
+const pkCard = (c, big) => (c && c.hidden ? `<span class="pkc back ${big ? 'big' : ''}"></span>` : c ? `<span class="pkc ${['♥', '♦'].includes(c.s) ? 'red' : ''} ${big ? 'big' : ''}"><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>` : '');
+function renderPoker(box) {
+  if (!pkState || pkState.me < 0) {
+    if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
+    box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Setz dich hin, sobald zwei Spieler da sind, geht es los. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
+      ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.running ? ' · Hand läuft' : ''}</small>
+        <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
+    box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
+    box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
+    if (!pkState) return;
+  }
+  const t = pkState, meIdx = t.me, me = meIdx >= 0 ? t.seats[meIdx] : null;
+  const rot = (i) => (meIdx >= 0 ? (i - meIdx + t.max) % t.max : i); // eigener Platz immer unten
+  const myTurn = meIdx >= 0 && t.toAct === meIdx;
+  const need = me ? Math.max(0, t.currentBet - me.bet) : 0;
+  const minTo = t.currentBet + t.minRaise, maxTo = me ? me.bet + me.stack : 0;
+  if (!pkRaise || pkRaise < minTo) pkRaise = Math.min(maxTo, minTo);
+  const seatHtml = (s, i) => {
+    const [x, y] = PK_POS[rot(i)];
+    if (!s) return meIdx < 0 ? `<button class="pk-seat empty" style="left:${x}%;top:${y}%" data-pkseat="${i}">+</button>` : '';
+    const act = t.toAct === i;
+    return `<div class="pk-seat ${act ? 'act' : ''} ${s.folded ? 'folded' : ''} ${s.away ? 'away' : ''}" style="left:${x}%;top:${y}%">
+      <div class="pk-av" data-user="${s.id}">${avatar(s, 46, false)}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
+      <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span></div>
+      ${s.last ? `<span class="pk-last ${/Fold/.test(s.last) ? 'f' : /All/.test(s.last) ? 'a' : /Raise/.test(s.last) ? 'r' : ''}">${esc(s.last)}</span>` : ''}
+      ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c) => pkCard(c)).join('')}</div>` : ''}
+      ${s.bet ? `<span class="pk-bet">🪙 ${fmt(s.bet)}</span>` : ''}
+      ${s.handName && rot(i) !== 0 ? `<small class="pk-hn">${esc(s.handName)}</small>` : ''}
+    </div>`;
+  };
+  const win = t.winners && t.winners.length ? `<div class="pk-win">🏆 ${t.winners.map((w) => `<b>${esc(w.name)}</b> +${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>')}</div>` : '';
+  box.innerHTML = `
+    <div class="row" style="margin-bottom:8px;gap:8px"><b class="grow">${esc(t.name)} · Blinds ${t.sb}/${t.bb}</b>${me ? '<button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
+    <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
+      <div class="pk-center"><div class="pk-board">${t.board.map((c) => pkCard(c)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
+        <div class="pk-pot">${t.pot ? `Pot <b>${fmt(t.pot)}</b>` : t.street === 'waiting' ? 'Warte auf Mitspieler …' : ''}</div>${win}</div>
+      ${t.seats.map(seatHtml).join('')}
+    </div>
+    ${me ? `<div class="pk-me"><div class="pk-mycards">${me.cards.map((c) => pkCard(c, true)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' ? 'Warte auf die nächste Hand' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
+      ${myTurn ? `<div class="pk-actions">
+        <button class="btn ghost" data-pka="fold">Fold</button>
+        ${need > 0 ? `<button class="btn" data-pka="call">Call ${fmt(Math.min(need, me.stack))}</button>` : '<button class="btn" data-pka="check">Check</button>'}
+        ${maxTo > t.currentBet ? `<div class="pk-raise"><div class="row" style="gap:6px;flex-wrap:wrap">${[['Min', minTo], ['½ Pot', t.currentBet + Math.round(t.pot / 2)], ['Pot', t.currentBet + t.pot]].filter(([, v]) => v >= minTo && v < maxTo).map(([n, v]) => `<button class="chipbtn" data-pkto="${v}">${n}</button>`).join('')}<button class="chipbtn allin" data-pka="allin">All in ${fmt(maxTo)}</button></div>
+          <input type="range" id="pkRange" min="${Math.min(minTo, maxTo)}" max="${maxTo}" step="${t.bb}" value="${pkRaise}"><button class="btn" data-pka="raise" id="pkRaiseBtn">Raise auf ${fmt(pkRaise)}</button></div>` : ''}
+      </div>` : ''}
+      ${me.stack === 0 && t.street === 'showdown' || me.stack === 0 && t.street === 'waiting' ? `<button class="btn" id="pkRebuy" style="width:100%;margin-top:8px">Nachkaufen · ${fmt(t.buyIn)} 💎</button>` : ''}` : ''}`;
+  box.querySelectorAll('[data-pkseat]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: t.id, seat: Number(b.dataset.pkseat) }); });
+  box.querySelectorAll('[data-pka]').forEach((b) => { b.onclick = () => { const a = b.dataset.pka; socket.emit('pk:act', a === 'raise' ? { action: 'raise', to: pkRaise } : { action: a }); pkRaise = 0; sfx('dart'); }; });
+  box.querySelectorAll('[data-pkto]').forEach((b) => { b.onclick = () => { pkRaise = Number(b.dataset.pkto); const r = $('#pkRange'); if (r) r.value = pkRaise; $('#pkRaiseBtn').textContent = 'Raise auf ' + fmt(pkRaise); }; });
+  const rg = $('#pkRange'); if (rg) rg.oninput = () => { pkRaise = Number(rg.value); $('#pkRaiseBtn').textContent = (pkRaise >= maxTo ? 'All in ' : 'Raise auf ') + fmt(pkRaise); };
+  if ($('#pkLeave')) $('#pkLeave').onclick = () => { socket.emit('pk:leave'); pkState = null; setTimeout(() => socket.emit('pk:list'), 400); };
+  if ($('#pkBack')) $('#pkBack').onclick = () => { pkState = null; socket.emit('pk:list'); renderCasino(); };
+  if ($('#pkRebuy')) $('#pkRebuy').onclick = () => socket.emit('pk:rebuy');
+  // Zeitring für den, der dran ist
+  clearInterval(pkTick);
+  if (t.deadline) { const off = Date.now() - t.now; pkTick = setInterval(() => { const r = document.querySelector('.pk-ring'); if (!r) return clearInterval(pkTick); const left = Math.max(0, t.deadline - (Date.now() - off)); r.style.setProperty('--p', (left / 20000 * 100).toFixed(1)); }, 200); }
+  if (myTurn && !renderPoker.buzzed) { renderPoker.buzzed = true; sfx('tick'); } if (!myTurn) renderPoker.buzzed = false;
+}
+
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
@@ -1488,6 +1578,7 @@ function renderCasino() {
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
+  if (cgame === 'poker') return renderPoker(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
     box.innerHTML = list.length ? `<div class="plist">${list.map((u, i) => casinoRow(u, i, home.me)).join('')}</div>` : '<p class="sub">Noch hat niemand im Casino gespielt.</p>';
@@ -1716,10 +1807,10 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
       `;
@@ -2153,6 +2244,8 @@ function connect() {
     $('#bjAccept').onclick = () => { closeModal(); page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', d.table); };
   });
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); });
+  socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
+  socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); });
   socket.on('bj:state', (t) => {
     const prev = bjT; bjT = t;
     if (t && prev && prev.phase !== 'done' && t.phase === 'done') { const me = t.seats.find((x) => x.id === home.me.id); if (me && me.payout) { sfx('exact'); toast(`+${fmt(me.payout)} Diamanten`); } }
