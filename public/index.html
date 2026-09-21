@@ -1265,14 +1265,15 @@ function renderCards() {
       <div class="row" style="gap:8px;margin-bottom:10px"><button class="chipbtn" id="meltAll">Alle Doppelten wählen</button><button class="chipbtn" id="meltNone">Auswahl leeren</button></div>
       ${groups.map(([v, list]) => `<h2 style="margin:14px 0 8px;font-size:18px">${esc(varName(v))} <span class="sub">· ${fmt(melt[v] || 40)} 💎 je Karte</span></h2>
         <div class="cgrid">${list.map((d) => { const n = Math.min(meltSel[d.key] || 0, d.extra); return `<figure class="${n ? 'meltsel' : ''}">
-          <img src="${cardImg(d.c.id, d.v)}" data-meltpick="${d.key}" alt="">${badge(d.v)}<span class="cnt">×${d.extra + 1}</span>
+          <img src="${cardImg(d.c.id, d.v)}" data-meltpick="${d.key}" alt="">${badge(d.v)}<span class="cnt">${d.extra}× doppelt</span>
           ${n ? `<span class="meltn">${n}</span>` : ''}
           <figcaption><b>${esc(d.c.name)}</b>
             <span class="row" style="gap:4px;margin-top:4px"><button class="mini" data-meltdec="${d.key}">−</button>
             <input class="field" style="padding:5px;width:46px;text-align:center" type="number" min="0" max="${d.extra}" value="${n}" data-meltin="${d.key}">
-            <button class="mini" data-meltinc="${d.key}">+</button><small class="sub">von ${d.extra}</small></span></figcaption></figure>`; }).join('')}</div>`).join('')}
-      <div style="position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));margin-top:14px">
-        <button class="btn" id="meltGo" style="width:100%" ${count ? '' : 'disabled'}>${count ? `${count} ${count === 1 ? 'Karte' : 'Karten'} umwandeln · +${fmt(total)} 💎` : 'Noch nichts ausgewählt'}</button></div>`;
+            <button class="mini" data-meltinc="${d.key}">+</button><small class="sub">von ${d.extra}</small></span>
+            <small class="sub" style="display:block;margin-top:3px">Du besitzt ${d.extra + 1}, eine bleibt dir</small></figcaption></figure>`; }).join('')}</div>`).join('')}
+      <div style="position:sticky;bottom:0;margin:14px -4px 0;padding:10px 4px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 35%)">
+        <button class="btn" id="meltGo" style="width:100%;${count ? '' : 'opacity:1;background:var(--bg-deep);color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)'}" ${count ? '' : 'disabled'}>${count ? `${count} ${count === 1 ? 'Karte' : 'Karten'} umwandeln · +${fmt(total)} 💎` : 'Noch nichts ausgewählt'}</button></div>`;
     const maxOf = (k) => { const d = dupes.find((x) => x.key === k); return d ? d.extra : 0; };
     const setN = (k, n) => { meltSel[k] = Math.max(0, Math.min(maxOf(k), n)); renderCards(); };
     box.querySelectorAll('[data-meltpick]').forEach((el) => { el.onclick = (e) => { e.stopPropagation(); const k = el.dataset.meltpick; setN(k, (meltSel[k] || 0) >= maxOf(k) ? 0 : (meltSel[k] || 0) + 1); }; });
