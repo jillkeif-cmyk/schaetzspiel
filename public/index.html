@@ -1049,6 +1049,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-raise input[type=range]{flex:1}
 .goalbox{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
 .pk-botmark{position:absolute;left:-6px;top:-6px;font-size:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.pk-solo{font:800 11px/1 Archivo;vertical-align:4px;padding:4px 8px;border-radius:99px;background:rgba(142,107,255,.25);color:#D8C8FF;box-shadow:inset 0 0 0 1px rgba(142,107,255,.6)}
 </style>
 </head>
 <body>
@@ -1565,7 +1566,7 @@ function renderPoker(box) {
     if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     if (!pkState) {
       box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Sitzt du allein, spielt ein Bot gegen dich. Kommt jemand dazu, geht der Bot nach der laufenden Hand. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
-        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
+        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)} <span class="pk-solo">🤖 Solo möglich</span></b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
           <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
       box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
       box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
