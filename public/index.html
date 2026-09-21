@@ -1021,6 +1021,12 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-me{display:flex;align-items:center;gap:12px;margin-top:12px}.pk-mycards{display:flex;gap:6px}.pk-me b{display:block;font-size:15px}.pk-me small{color:var(--muted)}
 .pk-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pk-raise{grid-column:1 / -1;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:14px;background:var(--bg-deep)}
 .pk-raise input[type=range]{width:100%;accent-color:#FFD23F}
+.rkrow .nm .titleimg{max-width:200px;margin-top:5px}
+.chalhint .ch.isnew{box-shadow:inset 0 0 0 1.5px rgba(192,75,255,.7)}
+.pk-emotes{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.pk-emotes button{font-size:22px;width:42px;height:42px;border-radius:50%;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
+.pk-emo{position:absolute;transform:translate(-50%,-50%);font-size:34px;z-index:5;animation:pkemo 2.6s ease-out forwards;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+@keyframes pkemo{0%{transform:translate(-50%,-30%) scale(.3);opacity:0}15%{transform:translate(-50%,-50%) scale(1.25);opacity:1}30%{transform:translate(-50%,-55%) scale(1)}85%{opacity:1}100%{transform:translate(-50%,-110%) scale(.9);opacity:0}}
 </style>
 </head>
 <body>
@@ -1411,8 +1417,9 @@ const CASINO_GOALS = {
   t31: ['best', 5000], t32: ['rounds', 400], TL1: ['best', 50000], TL2: ['wins', 500], TL4: ['rounds', 2500], THR: ['best', 100000],
   f21: ['wins', 25], fL1: ['best', 100000], fL3: ['rounds', 5000], fL5: ['wins', 1200],
   EC1: 'code', EC2: 'code', EC3: 'code', TC1: 'code', TC2: 'code', TC3: 'code', fC1: 'code', fC2: 'code', fC3: 'code',
+  TP1: ['pwins', 25], TP2: ['pallin', 20], TP3: ['pwins', 800], EP1: ['phands', 50], EP2: ['pbest', 5000], EP3: ['pbest', 60000],
 };
-const STAT_TXT = { rounds: 'Runden gespielt', wins: 'Runden gewonnen', best: 'Diamanten auf einmal' };
+const STAT_TXT = { rounds: 'Runden gespielt', wins: 'Runden gewonnen', best: 'Diamanten auf einmal', phands: 'Poker-Hände', pwins: 'gewonnene Pots', pbest: 'Diamanten in einem Pot', pallin: 'gewonnene All-ins' };
 function renderRewards(box) {
   const me = home.me, C = home.cards;
   const cur = { rounds: me.casinoRounds || 0, wins: me.casinoWins || 0, best: me.casinoBest || 0 };
@@ -1428,11 +1435,13 @@ function renderRewards(box) {
   const titles = C.titles.filter((t) => CASINO_GOALS[t.id]).sort(order);
   const embs = C.emblems.filter((e) => CASINO_GOALS[e.id]).sort(order);
   const frs = (home.frames || []).filter((f) => CASINO_GOALS[f.id]).sort(order);
-  const chals = home.progress.challenges.filter((c) => c.key.startsWith('casino_'));
+  const chals = home.progress.challenges.filter((c) => c.key.startsWith('casino_') || c.key.startsWith('poker_'));
+  const pc = (k) => (home.progress.challenges.find((c) => c.key === k) || {}).cur || 0;
+  Object.assign(cur, { phands: pc('poker_hands'), pwins: pc('poker_wins'), pbest: pc('poker_best'), pallin: pc('poker_allin_wins') });
   box.innerHTML = `
     <div class="rw-stats"><div><b>${fmt(cur.rounds)}</b><small>Runden</small></div><div><b>${fmt(cur.wins)}</b><small>Siege</small></div><div><b>${fmt(cur.best)}</b><small>bester Gewinn</small></div><div><b>${fmt(me.casinoXp || 0)}</b><small>Casino-XP</small></div></div>
     <h2 class="rw-h">Herausforderungen</h2>
-    <div class="chalhint">${chals.map((c) => `<div class="ch"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
+    <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="/emblems/${({ casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' })[c.key]}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
     <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
     <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
     <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
@@ -1440,6 +1449,7 @@ function renderRewards(box) {
     <h2 class="rw-h">Rahmen <span class="sub">${frs.filter((f) => f.unlocked).length} / ${frs.length}</span></h2>
     <div class="rw-grid">${frs.map((f) => `<button class="rw-cell ${f.unlocked ? '' : 'lk'}" data-rwk="frame" data-rwid="${f.id}">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 78, false)}<b>${esc(f.name)}</b><small>${esc(needTxt(f))}</small>${prog(f.id, f.unlocked)}</button>`).join('')}</div>`;
   box.querySelectorAll('[data-rwid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.rwk, b.dataset.rwid); });
+  box.querySelectorAll('[data-chal]').forEach((b) => { b.onclick = () => showChallenge(b.dataset.chal); });
 }
 
 const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(5, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(5, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
@@ -1543,12 +1553,13 @@ function renderPoker(box) {
   };
   const win = t.winners && t.winners.length ? `<div class="pk-win">🏆 ${t.winners.map((w) => `<b>${esc(w.name)}</b> +${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>')}</div>` : '';
   box.innerHTML = `
-    <div class="row" style="margin-bottom:8px;gap:8px"><b class="grow">${esc(t.name)} · Blinds ${t.sb}/${t.bb}</b>${me ? '<button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
+    <div class="row" style="margin-bottom:8px;gap:8px"><b class="grow">${esc(t.name)} · Blinds ${t.sb}/${t.bb}</b>${me ? '<button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
     <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
       <div class="pk-center"><div class="pk-board">${t.board.map((c) => pkCard(c)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
         <div class="pk-pot">${t.pot ? `Pot <b>${fmt(t.pot)}</b>` : t.street === 'waiting' ? 'Warte auf Mitspieler …' : ''}</div>${win}</div>
       ${t.seats.map(seatHtml).join('')}
     </div>
+    ${me ? `<div class="pk-emotes">${EMOJIS.map((e, i) => `<button data-pkemo="${i}">${e}</button>`).join('')}</div>` : ''}
     ${me ? `<div class="pk-me"><div class="pk-mycards">${me.cards.map((c) => pkCard(c, true)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' ? 'Warte auf die nächste Hand' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
       ${myTurn ? `<div class="pk-actions">
         <button class="btn ghost" data-pka="fold">Fold</button>
@@ -1564,6 +1575,27 @@ function renderPoker(box) {
   if ($('#pkLeave')) $('#pkLeave').onclick = () => { socket.emit('pk:leave'); pkState = null; setTimeout(() => socket.emit('pk:list'), 400); };
   if ($('#pkBack')) $('#pkBack').onclick = () => { pkState = null; socket.emit('pk:list'); renderCasino(); };
   if ($('#pkRebuy')) $('#pkRebuy').onclick = () => socket.emit('pk:rebuy');
+  box.querySelectorAll('[data-pkemo]').forEach((b) => { b.onclick = () => socket.emit('pk:emote', Number(b.dataset.pkemo)); });
+  if ($('#pkInvite')) $('#pkInvite').onclick = () => {
+    const fl = friends.filter((f) => f.status === 'ok' && !t.seats.some((x) => x && x.id === f.id));
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>An den Pokertisch einladen</h2>
+      ${fl.length ? `<div class="plist">${fl.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 34)}<span class="nm">${withTag(f)}<br><span class="lv">${esc(onlineText(f))}</span></span><button class="mini go" data-pkinv="${f.id}">Einladen</button></div>`).join('')}</div>` : '<p class="sub">Du hast noch keine Freunde zum Einladen.</p>'}
+      <p class="sub">Wer offline ist, bekommt eine Benachrichtigung aufs Handy.</p><button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    document.querySelectorAll('[data-pkinv]').forEach((b) => { b.onclick = () => { socket.emit('pk:invite', Number(b.dataset.pkinv)); b.textContent = 'gesendet ✓'; b.disabled = true; }; });
+  };
+  // Chips weg: fragen, ob nachkaufen oder aufstehen
+  if (me && me.stack === 0 && (t.street === 'showdown' || t.street === 'waiting') && !renderPoker.asked) {
+    renderPoker.asked = true;
+    setTimeout(() => {
+      $('#modal').innerHTML = `<div class="panel" style="gap:12px;text-align:center"><h2>Deine Chips sind weg</h2><p class="sub">Willst du dich für ${fmt(t.buyIn)} 💎 neu einkaufen und weiterspielen?</p>
+        <button class="btn" id="pkRe">Nachkaufen · ${fmt(t.buyIn)} 💎</button><button class="btn ghost" id="pkUp">Aufstehen</button><button class="btn ghost" id="pwCancel">Erst mal zuschauen</button></div>`;
+      $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+      $('#pkRe').onclick = () => { closeModal(); socket.emit('pk:rebuy'); };
+      $('#pkUp').onclick = () => { closeModal(); socket.emit('pk:leave'); pkState = null; setTimeout(() => socket.emit('pk:list'), 400); };
+    }, 1800);
+  }
+  if (me && me.stack > 0) renderPoker.asked = false;
   // Zeitring für den, der dran ist
   clearInterval(pkTick);
   if (t.deadline) { const off = Date.now() - t.now; pkTick = setInterval(() => { const r = document.querySelector('.pk-ring'); if (!r) return clearInterval(pkTick); const left = Math.max(0, t.deadline - (Date.now() - off)); r.style.setProperty('--p', (left / 20000 * 100).toFixed(1)); }, 200); }
@@ -1933,7 +1965,7 @@ const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card
 function casinoRow(u, i, me2) {
   return `<div class="pl crow ${me2 && u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}">
     <span class="pos">${i + 1}</span>${avatar(u, 40)}
-    <span class="nm"><span>${withTag(u)}</span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span></span>
+    <span class="nm"><span>${withTag(u)}</span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span>${titleHtml(u)}</span>
     <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(TIER_NAMES[u.casinoTier || 0])}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
@@ -1988,7 +2020,7 @@ function showChallenge(key) {
 }
 function renderChallenges() {
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
-  const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
+  const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
   const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
     const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
@@ -2120,7 +2152,7 @@ function renderRanks() {
     if (rtab === 'casino') return casinoRow(u, i, me2);
     const right = rtab === 'points' ? `${fmt(u.points || 0)} Pkt` : `${fmt(u.rankPoints || 0)} WP`;
     const sub = rankText(u);
-    return `<div class="pl ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${sub}</span></span><span class="wp">${right}</span>${addFr(u)}</div>`;
+    return `<div class="pl rkrow ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${sub}</span>${titleHtml(u)}</span><span class="wp">${right}</span>${addFr(u)}</div>`;
   };
   box.innerHTML = rows.length ? `<div class="plist">${rows.map(line).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>';
 }
@@ -2245,6 +2277,20 @@ function connect() {
   });
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
+  socket.on('pk:emote', (d) => {
+    const tb = document.querySelector('.pk-table'); if (!tb || !pkState) return;
+    const rot = pkState.me >= 0 ? (d.seat - pkState.me + pkState.max) % pkState.max : d.seat;
+    const [x, y] = PK_POS[rot] || [50, 50];
+    const e = document.createElement('span'); e.className = 'pk-emo'; e.textContent = EMOJIS[d.i] || '🙂'; e.style.left = x + '%'; e.style.top = (y - 9) + '%';
+    tb.appendChild(e); setTimeout(() => e.remove(), 2600);
+  });
+  socket.on('pk:invited', (d) => {
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>♠️ Poker-Einladung</h2><p>${esc(d.from)} lädt dich an den ${esc(d.name)}-Tisch ein. Einkauf ${fmt(d.buyIn)} 💎.</p>
+      <button class="btn" id="pkAcc">Hinsetzen</button><button class="btn ghost" id="pkWatch">Erst zuschauen</button><button class="btn ghost" id="pwCancel">Später</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    const go = (ev) => { closeModal(); page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit(ev, ev === 'pk:sit' ? { table: d.table } : d.table); };
+    $('#pkAcc').onclick = () => go('pk:sit'); $('#pkWatch').onclick = () => go('pk:watch');
+  });
   socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); });
   socket.on('bj:state', (t) => {
     const prev = bjT; bjT = t;

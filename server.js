@@ -95,7 +95,7 @@ app.post('/api/login', async (req, res) => {
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
-  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp']) base[k] = 0;
+  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins']) base[k] = 0;
   const items = [...cards.EMBLEMS.map((i) => ['e', i]), ...cards.TITLES.map((i) => ['t', i]), ...frames.FRAMES.map((i) => ['f', i])].filter(([, i]) => i.cond && !i.secret && !i.dev && !i.event);
   const out = {};
   for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
@@ -955,7 +955,21 @@ const game = attachGame(io, store);
 // Mehrspieler-Blackjack: eigene Socket-Events, gleiche Anmeldung wie das Schätzspiel
 const bjTables = require('./lib/bjtables')(io, store, casinoStat, push);
 // Poker: vorerst nur für das Entwicklerteam, bis 'poker_open' gesetzt ist
-const poker = require('./lib/poker')(io, store, casinoStat, async (u) => isMod(u) || (await store.setting('poker_open')) === '1');
+// Poker zählt als Casino, gibt aber 25 % mehr XP, weil gegen echte Spieler gespielt wird
+const pokerStat = async (uid, stake, won, info = {}) => {
+  await casinoStat(uid, stake, won);
+  const u = await store.userById(uid); if (!u) return;
+  const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1);
+  const net = won - stake;
+  await store.save(uid, {
+    casino_xp: (Number(u.casino_xp) || 0) + bonus,
+    poker_hands: (Number(u.poker_hands) || 0) + 1,
+    poker_wins: (Number(u.poker_wins) || 0) + (won > 0 ? 1 : 0),
+    poker_best: Math.max(Number(u.poker_best) || 0, won > 0 ? won : 0),
+    poker_allin_wins: (Number(u.poker_allin_wins) || 0) + (info.allin && net > 0 ? 1 : 0),
+  });
+};
+const poker = require('./lib/poker')(io, store, pokerStat, async (u) => isMod(u) || (await store.setting('poker_open')) === '1', push);
 io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); } });
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id));
 
