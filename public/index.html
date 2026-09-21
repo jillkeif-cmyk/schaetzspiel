@@ -937,6 +937,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .dr{display:flex;align-items:center;gap:10px;font-size:14.5px}.dr img{width:32px;height:32px;object-fit:contain;flex:none}
 .dr.jp{color:var(--tape);font-weight:800}
 @keyframes crpop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.waitbtn{animation:waitpulse 1.4s ease-in-out infinite}
+@keyframes waitpulse{0%,100%{opacity:.75}50%{opacity:1}}
 </style>
 </head>
 <body>
@@ -2495,7 +2497,14 @@ function update() {
   }
   if (S.phase === 'countdown') {
     $('#aiNote').textContent = { loading: S.waitAi ? 'Frische Fragen werden erstellt. Das Match startet, sobald sie da sind.' : 'Frische Fragen werden erstellt … was nicht rechtzeitig fertig wird, kommt aus dem festen Pool.', waiting: 'Warte auf die frischen Fragen, es wird noch einmal versucht …', ready: 'Frische Fragen sind fertig.', failed: S.waitAi ? 'Mehrere Anläufe ohne Erfolg, der feste Pool übernimmt.' : 'Diesmal ohne frische Fragen, der feste Pool übernimmt.', off: '', idle: '' }[S.aiStatus] || '';
-    $('#cdAct').innerHTML = (host ? '<button class="btn ghost" id="skip">Sofort loslegen</button>' : '') + '<button class="btn ghost" id="leave">Match verlassen</button>';
+    const busy = ['loading', 'waiting'].includes(S.aiStatus);
+    const skipBtn = !host ? '' : S.readyGo ? '<button class="btn" disabled>✨ Frische Fragen sind da, gleich geht es los</button>'
+      : busy && S.startWhenReady ? '<button class="btn ghost" disabled>✅ Start vorgemerkt · wartet auf die Fragen</button>'
+      : busy ? '<button class="btn ghost waitbtn" id="skip">⏳ Fragen werden erstellt · Start vormerken</button>'
+      : '<button class="btn" id="skip">Jetzt starten</button>';
+    $('#cdAct').innerHTML = skipBtn + '<button class="btn ghost" id="leave">Match verlassen</button>';
+    if (S.readyGo) { $('#aiNote').textContent = 'Frische Fragen sind da! Das Spiel beginnt jetzt.'; const l = $('#cdLabel'); if (l) l.textContent = 'Frische Fragen sind da · Start in'; }
+    else if (busy && S.startWhenReady) $('#aiNote').textContent = 'Start ist vorgemerkt. Sobald die frischen Fragen da sind, geht es nach 5 Sekunden automatisch los.';
   }
   if (S.phase === 'question') {
     const mine = S.myAnswer, q = S.question, left = S.players.filter((p) => p.connected && !p.answered).length;
