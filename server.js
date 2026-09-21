@@ -233,6 +233,10 @@ app.post('/api/casino/theme', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// ---------- News und Updates ----------
+const NEWS = require('./lib/news');
+app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
+
 // ---------- Tagesbelohnungen ----------
 app.get('/api/daily', async (req, res) => {
   try {

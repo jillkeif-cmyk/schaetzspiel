@@ -903,6 +903,25 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .rr-sep{color:var(--muted)}
 .packcard.lockedpack img{filter:grayscale(.35) brightness(.75)}
 .newtag.soon{background:linear-gradient(135deg,#8E6BFF,#C04BFF)}
+
+.newscard{display:flex;gap:14px;align-items:center;width:100%;padding:12px;border-radius:20px;text-align:left;background:linear-gradient(135deg,rgba(142,107,255,.25),rgba(255,210,63,.12));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45),0 10px 26px rgba(0,0,0,.35)}
+.nc-img{flex:none;width:78px;height:96px;display:grid;place-items:center}.nc-img img{max-width:100%;max-height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.nc-t{display:flex;flex-direction:column;gap:3px;min-width:0}.nc-t b{font:400 20px/1.1 Anton,Impact,sans-serif;letter-spacing:.3px}.nc-t small{color:var(--muted);font-size:12px}
+.nc-tag{font:800 11px/1 Archivo;letter-spacing:1.5px;text-transform:uppercase;color:var(--tape)}.nc-new{color:#FF7FC8;font-weight:900}
+.nc-more{font-weight:800;font-size:13px;color:var(--tape);margin-top:2px}
+.nw-post{display:flex;flex-direction:column;gap:12px;padding-bottom:20px}
+.nw-hero{display:flex;gap:14px;align-items:center;padding:14px;border-radius:22px;background:radial-gradient(circle at 20% 30%,rgba(142,107,255,.35),rgba(5,26,29,.9) 70%);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)}
+.nw-hero img{width:110px;height:auto;flex:none;filter:drop-shadow(0 10px 16px rgba(0,0,0,.6))}
+.nw-hero h1{font-size:26px;line-height:1.05;margin:4px 0}.nw-hero small{color:var(--muted)}
+.nw-lead{font-size:16px;font-weight:700}
+.nw-h{font-size:21px;margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nw-badge{font:800 11px/1 Archivo;padding:5px 9px;border-radius:99px;background:linear-gradient(135deg,#8E6BFF,#C04BFF);color:#fff;letter-spacing:1px}
+.nw-p{color:var(--paper);opacity:.9;line-height:1.5}
+.nw-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}.nw-list li{line-height:1.4}.nw-list li::marker{color:var(--tape)}
+.nw-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.nw-cards img{width:100%;border-radius:10px;box-shadow:0 8px 18px rgba(0,0,0,.45)}
+.nw-titles{display:flex;flex-direction:column;gap:10px}.nw-ti{display:flex;flex-direction:column;gap:4px}.nw-ti .titleimg{max-width:100%}.nw-ti small,.nw-em small{color:var(--muted);font-size:12px}
+.nw-embs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.nw-embs.six{grid-template-columns:repeat(3,1fr)}
+.nw-em{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:16px;background:var(--bg-deep);text-align:center}.nw-em b{font-size:13px}
 </style>
 </head>
 <body>
@@ -1749,6 +1768,34 @@ function casinoRow(u, i, me2) {
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
 const addFr = (u) => (!u || (home && home.me && u.id === home.me.id) || frStatus(u.id) ? '' : `<button class="addfr" data-addfr="${u.id}" title="Als Freund hinzufügen">+</button>`);
+let newsPosts = null;
+const newsWhen = (iso) => { const d = new Date(iso); return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr'; };
+function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts || []; renderNewsCard(); if (page === 'news') renderNews(); }).catch(() => {}); }
+function renderNewsCard() {
+  const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
+  const p = newsPosts[0]; let seen = ''; try { seen = localStorage.getItem('news_seen') || ''; } catch (e) {}
+  el.innerHTML = `<button class="newscard" id="openNews"><span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
+    <span class="nc-t"><span class="nc-tag">${esc(p.tag)}${seen !== p.id ? ' · <b class="nc-new">NEU</b>' : ''}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
+}
+function renderNews() {
+  const box = $('#newsBody'); if (!box) return;
+  if (!newsPosts) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadNews(); return; }
+  try { localStorage.setItem('news_seen', newsPosts[0] ? newsPosts[0].id : ''); } catch (e) {}
+  const TN = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'];
+  const block = (b) => {
+    if (b.type === 'head') return `<h2 class="nw-h">${esc(b.text)}${b.badge ? ` <span class="nw-badge">${esc(b.badge)}</span>` : ''}</h2>`;
+    if (b.type === 'text') return `<p class="nw-p">${esc(b.text)}</p>`;
+    if (b.type === 'list') return `<ul class="nw-list">${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
+    if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
+    return '';
+  };
+  box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p) => `<article class="nw-post">
+      <div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}</small></div></div>
+      <p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`).join('');
+}
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
   document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
@@ -1928,6 +1975,10 @@ function build() {
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
 
+  if (!S && page === 'news') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <div id="newsBody"></div></div>`;
+
   if (!S && page === 'ranks') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Ranglisten</h1>
@@ -1964,6 +2015,7 @@ function build() {
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
+    <div id="newsCard"></div>
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
     <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
@@ -2236,6 +2288,7 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
+  if (!S && page === 'news') { renderNews(); return; }
   if (!S && page === 'ranks') { renderRanks(); return; }
   if (!S && (page === 'cards' || page === 'casino')) { renderCards(); return; }
   if (!S && page === 'profile') {
@@ -2320,6 +2373,7 @@ function update() {
       const list = (r.players || []).filter((x) => !x.self).slice(0, 8);
       np.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Neue Spieler</h2><div class="plist">${list.map((u) => `<div class="pl" data-user="${u.id}" style="--c:${u.online ? '#8BE28B' : 'var(--line)'}">${avatar(u, 38)}<span class="nm">${withTag(u)}<br><span class="lv">${u.online ? 'gerade online' : 'Level ' + (u.level || 1)} · ${fmt(u.matches || 0)} Matches</span></span>${u.friend === 'ok' ? '<span class="rw-ok">Freund</span>' : u.friend === 'out' ? '<span class="sub">angefragt</span>' : u.friend === 'in' ? `<button class="mini go" data-fr="accept" data-id="${u.id}">Annehmen</button>` : `<button class="addfr" data-addfr="${u.id}">+</button>`}</div>`).join('')}</div>` : '';
     }).catch(() => {});
+    if (newsPosts) renderNewsCard(); else loadNews();
     const ct = $('#casinoTop');
     if (ct) {
       const list = (home && home.casinoTop) || [];
@@ -2550,6 +2604,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'pushOff') pushOff();
   else if (t.id === 'newTrade') tradeDialog();
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
+  else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
