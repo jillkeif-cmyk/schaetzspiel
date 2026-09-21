@@ -545,8 +545,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #pushbar b{display:block;font-size:15px}
 
 .badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#4FC46A;color:#08231A;font:800 13px/1 Archivo;box-shadow:0 0 10px rgba(79,196,106,.6)}
-.cardgrid button.fresh,.framegrid button.fresh,.tlist button.fresh{box-shadow:inset 0 0 0 2px #4FC46A}
-.cardgrid button.fresh::after,.framegrid button.fresh::after{content:"";position:absolute;right:6px;top:6px;width:9px;height:9px;border-radius:50%;background:#4FC46A;box-shadow:0 0 8px #4FC46A}
+.cardgrid button.fresh,.framegrid button.fresh,.tlist button.fresh{box-shadow:inset 0 0 0 3px #FFD23F,0 0 16px rgba(255,210,63,.55);animation:freshglow 1.6s ease-in-out infinite alternate}
+@keyframes freshglow{from{box-shadow:inset 0 0 0 3px #FFD23F,0 0 8px rgba(255,210,63,.35)}to{box-shadow:inset 0 0 0 3px #FFE88A,0 0 20px rgba(255,210,63,.75)}}
+.cardgrid button.fresh::after,.framegrid button.fresh::after{content:"NEU";position:absolute;right:4px;top:4px;padding:3px 6px;border-radius:99px;background:linear-gradient(135deg,#FFE27A,#E0A21E);color:#2A1600;font:900 10px/1 Archivo;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.tlist button.fresh{position:relative}.tlist button.fresh::after{content:"NEU";position:absolute;right:8px;top:8px;padding:3px 7px;border-radius:99px;background:linear-gradient(135deg,#FFE27A,#E0A21E);color:#2A1600;font:900 10px/1 Archivo}
 .cardgrid button,.framegrid button{position:relative}
 .tlist button.fresh .why b::after{content:" NEU";color:#4FC46A;font-size:11px}
 .chalhint{display:flex;flex-direction:column;gap:8px}
@@ -1015,9 +1017,10 @@ async function uploadAvatar(file) {
 
 // Kleine Synth-Sounds, kein Download nötig
 let tagColor = 'cyan', themeSel = null, boardMode = 'points', openFold = '', needCode = false;
-const seenSet = () => new Set((home && home.seen) || []);
+let freshKeep = new Set(); // in dieser Sitzung als neu angezeigt, bleibt bis zum Verlassen markiert
+const seenSet = () => { const s0 = new Set((home && home.seen) || []); freshKeep.forEach((k) => s0.delete(k)); return s0; };
 const freshOf = (list, kind) => { const s2 = seenSet(); return list.filter((x) => x.unlocked && !s2.has(kind + ':' + x.id)); };
-function markSeen(ids) { if (!ids.length) return; api('/api/seen', { ids }).then(() => { if (home) home.seen = [...new Set([...(home.seen || []), ...ids])]; }).catch(() => {}); }
+function markSeen(ids) { if (!ids.length) return; ids.forEach((k) => freshKeep.add(k)); api('/api/seen', { ids }).then(() => { if (home) home.seen = [...new Set([...(home.seen || []), ...ids])]; }).catch(() => {}); }
 let actx = null, master = null, muted = false, vol = 0.7; try { muted = localStorage.getItem('sz_mute') === '1'; const v = parseFloat(localStorage.getItem('sz_vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
 function setVol() { if (master) master.gain.value = vol * 1.6; }
 function noise(dur, vol, cut) {
@@ -1806,6 +1809,12 @@ function renderChallenges() {
   const CIMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
   const row = (c) => `<div class="chal"><img class="ci ${c.done ? '' : 'none'}" src="/emblems/${CIMG[c.key] ? CIMG[c.key] : 'c_' + c.key}.webp?v=${AVER}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
+    const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1' };
+    const pr2 = home && home.progress;
+    if ($('#nextUp') && pr2 && pr2.challenges) {
+      const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 4);
+      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+    }
   const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
   $('#chals').innerHTML = G.map(([g, n]) => {
     const list = pr.challenges.filter((c) => c.group === g); if (!list.length) return '';
@@ -1997,6 +2006,7 @@ function build() {
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Herausforderungen</h1>
     <p class="sub">Jede Stufe bringt XP. Prestige und Ränge findest du weiterhin im Profil.</p>
+    <div id="nextUp"></div>
     <div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div>`;
 
   if (!S && page === 'news') return `<div class="col">
@@ -2060,7 +2070,6 @@ function build() {
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
-    <div id="nextUp"></div>
 
     <div hidden><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div id="newPlayers"></div>
@@ -2408,12 +2417,6 @@ function update() {
       ct.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Casino-Rangliste</h2>
         <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
     }
-    const CIMG2 = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34' };
-    const pr2 = home && home.progress;
-    if ($('#nextUp') && pr2 && pr2.challenges) {
-      const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 3);
-      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="/emblems/${CIMG2[c.key] || 'c_' + c.key}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
-    }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
     const blist = boardMode === 'points' ? (home && home.points) || [] : (home && home.leaderboard) || [];
@@ -2566,7 +2569,6 @@ document.addEventListener('toggle', (e) => {
         : d.dataset.fold === 'tit' ? freshOf(C2.titles, 't').map((x) => 't:' + x.id)
         : freshOf(home.frames || [], 'f').map((x) => 'f:' + x.id);
       markSeen(ids);
-      d.querySelectorAll('.fresh').forEach((x) => x.classList.remove('fresh'));
       const b = d.querySelector('summary .badge'); if (b) b.remove();
     }
     setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
@@ -2666,7 +2668,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openNext') openPack(pid_last);
   else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
   else if (t.id === 'openProfile') { page = 'profile'; render(); }
-  else if (t.id === 'back') { page = 'home'; render(); }
+  else if (t.id === 'back') { freshKeep = new Set(); page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
   else if (t.dataset.frame !== undefined) {
     if (t.classList.contains('lock')) return showLocked('frame', t.dataset.frame);
