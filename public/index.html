@@ -711,6 +711,24 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .bjacts button .ic{font-size:22px}
 .bjacts button:disabled{opacity:.3}
 .bjacts button.go{background:linear-gradient(180deg,#F0C233,#E8A91C);color:var(--ink);box-shadow:none}
+
+/* Roulette-Tableau */
+.rhist{display:flex;gap:5px;overflow-x:auto;padding:4px 0 10px}
+.rhist span{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font:800 12px/1 Archivo;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}
+.rhist .r{background:#C0342F}.rhist .s{background:#141B1C}.rhist .g{background:#1D7A4A}
+.rboard{overflow-x:auto;padding:10px;border-radius:16px;background:radial-gradient(ellipse at 50% 30%,#1F7A55,#0F5238 70%);box-shadow:inset 0 0 0 6px #6B3A1E,inset 0 0 0 8px #C89A3C,0 12px 26px rgba(0,0,0,.45)}
+.rgrid{display:grid;grid-template-columns:34px repeat(12,32px);grid-template-rows:repeat(3,38px) 30px 30px;gap:2px;width:max-content}
+.rgrid button{position:relative;border-radius:5px;font:800 13px/1 Archivo;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.rgrid .r{background:#B8322D}.rgrid .s{background:#161C1D}.rgrid .z{background:#1D7A4A;grid-row:1/4}
+.rgrid .o{background:rgba(0,0,0,.25);font-size:11px}
+.rgrid .sel{box-shadow:inset 0 0 0 2px var(--tape),0 0 10px rgba(255,210,63,.6)}
+.rchip{position:absolute;right:-4px;top:-6px;min-width:20px;height:20px;padding:0 4px;border-radius:99px;display:grid;place-items:center;background:radial-gradient(circle,#F3D36B 0 50%,#B8861C 51%);color:#3a2600;font:900 9px/1 Archivo;box-shadow:0 2px 5px rgba(0,0,0,.6);z-index:2}
+.chips{display:flex;gap:8px;justify-content:center;margin:10px 0}
+.chips button{width:44px;height:44px;border-radius:50%;font:900 11px/1 Archivo;color:#fff;box-shadow:inset 0 0 0 4px rgba(255,255,255,.55),0 3px 8px rgba(0,0,0,.5)}
+.chips button.on{transform:translateY(-4px);box-shadow:inset 0 0 0 4px #fff,0 0 14px rgba(255,210,63,.9)}
+.modes{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.modes button{padding:7px 10px;border-radius:99px;background:var(--bg-deep);font-weight:800;font-size:12px;color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}
+.modes button.on{background:var(--tape);color:var(--ink);box-shadow:none}
 </style>
 </head>
 <body>
@@ -938,6 +956,46 @@ function pushUI() {
 let rtab = 'world';
 let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
 let bjList = [], bjT = null;
+const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
+const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C']];
+const numAt = (c, r) => 3 * c + (3 - r);
+function boardHtml() {
+  const chipOn = (nums) => { const k = nums.slice().sort((a, b) => a - b).join(','); const b = rbets.find((x) => x.key === k); return b ? `<span class="rchip">${b.amount >= 1000 ? (b.amount / 1000).toFixed(1).replace('.0', '') + 'k' : b.amount}</span>` : ''; };
+  const inBet = (n) => rbets.some((b) => b.numbers.includes(n) && b.numbers.length <= 6);
+  let h = `<button class="z ${inBet(0) ? 'sel' : ''}" data-rn="0">0${chipOn([0])}</button>`;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 12; c++) {
+    const n = numAt(c, r);
+    h += `<button class="${RED.has(n) ? 'r' : 's'} ${inBet(n) || rsplitFirst === n ? 'sel' : ''}" style="grid-row:${r + 1};grid-column:${c + 2}" data-rn="${n}">${n}${chipOn([n])}</button>`;
+  }
+  const out = (label, nums, row, col, span) => `<button class="o" style="grid-row:${row};grid-column:${col} / span ${span}" data-rset="${nums.join(',')}">${label}${chipOn(nums)}</button>`;
+  const rg = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  h += out('1–12', rg(1, 12), 4, 2, 4) + out('13–24', rg(13, 24), 4, 6, 4) + out('25–36', rg(25, 36), 4, 10, 4);
+  h += out('1–18', rg(1, 18), 5, 2, 2) + out('Gerade', rg(1, 36).filter((n) => n % 2 === 0), 5, 4, 2)
+    + out('Rot', rg(1, 36).filter((n) => RED.has(n)), 5, 6, 2) + out('Schwarz', rg(1, 36).filter((n) => !RED.has(n)), 5, 8, 2)
+    + out('Ungerade', rg(1, 36).filter((n) => n % 2 === 1), 5, 10, 2) + out('19–36', rg(19, 36), 5, 12, 2);
+  return h;
+}
+function placeBet(nums) {
+  const k = nums.slice().sort((a, b) => a - b).join(',');
+  const b = rbets.find((x) => x.key === k);
+  if (b) b.amount += rchip; else rbets.push({ key: k, numbers: nums, amount: rchip });
+  sfx('dart'); renderCasino();
+}
+function tapNumber(n) {
+  const col = Math.floor((n - 1) / 3), row = 3 - (n - 3 * col);
+  if (rmode === 'zahl' || n === 0) return placeBet([n]);
+  if (rmode === 'street') return placeBet([numAt(col, 0), numAt(col, 1), numAt(col, 2)]);
+  if (rmode === 'sechs') { const c2 = Math.min(col, 10); return placeBet([0, 1, 2].flatMap((r) => [numAt(c2, r), numAt(c2 + 1, r)])); }
+  if (rmode === 'ecke') { const c2 = Math.min(col, 10), r2 = Math.min(row, 1); return placeBet([numAt(c2, r2), numAt(c2, r2 + 1), numAt(c2 + 1, r2), numAt(c2 + 1, r2 + 1)]); }
+  if (rmode === 'split') {
+    if (rsplitFirst == null) { rsplitFirst = n; return renderCasino(); }
+    const a = rsplitFirst; rsplitFirst = null;
+    const ca = Math.floor((a - 1) / 3), ra = 3 - (a - 3 * ca);
+    if (Math.abs(ca - col) + Math.abs(ra - row) !== 1) { toast('Split geht nur mit zwei benachbarten Zahlen.'); return renderCasino(); }
+    return placeBet([a, n]);
+  }
+}
 let cgame = 'roulette', cbet = 100, cpick = 'rot', spinning = false, bj = null;
 const RBETS = [['rot', 'Rot', 'rot'], ['schwarz', 'Schwarz', 'schwarz'], ['gruen0', '', ''], ['gerade', 'Gerade', ''], ['ungerade', 'Ungerade', ''], ['klein', '1–18', ''], ['gross', '19–36', ''], ['drittel1', '1–12', ''], ['drittel2', '13–24', ''], ['drittel3', '25–36', '']];
 function renderTables(box) {
@@ -986,14 +1044,16 @@ function renderCasino() {
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'roulette') {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
-    const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
         <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt="">${nums}<span class="ball" id="ball" hidden></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
-      <div class="betgrid">${RBETS.filter((b) => b[1]).map(([k, n, c]) => `<button data-pick="${k}" class="${c} ${cpick === k ? 'on' : ''}">${n}</button>`).join('')}
-        <button data-pick="zahl" class="${cpick === 'zahl' ? 'on' : ''}">Zahl ×36</button></div>
-      ${cpick === 'zahl' ? '<input class="field" id="cbNumber" inputmode="numeric" placeholder="Zahl 0 bis 36" value="7" style="margin-bottom:10px">' : ''}
+      <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
+      <div class="modes">${[['zahl', 'Zahl ×36'], ['split', 'Split ×18'], ['street', 'Reihe ×12'], ['ecke', 'Ecke ×9'], ['sechs', '6er ×6']].map(([k, n]) => `<button data-rmode="${k}" class="${rmode === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="rboard"><div class="rgrid">${boardHtml()}</div></div>
+      <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${rchip === v ? 'on' : ''}" style="background:${c}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}</div>
+      <div class="row" style="gap:8px"><button class="btn ghost small grow" id="rClear">Löschen</button><button class="btn ghost small grow" id="rRepeat" ${lastBets.length ? '' : 'disabled'}>Wiederholen</button></div>
+      <p class="sub center" style="margin:8px 0">Einsatz: <b>${fmt(rbets.reduce((x, b) => x + b.amount, 0))}</b> 💎 auf ${rbets.length} ${rbets.length === 1 ? 'Feld' : 'Felder'}</p>
       <button class="btn" id="spinBtn" style="width:100%">Drehen</button>
       <p class="sub" id="cResult" style="text-align:center;margin-top:10px"></p>`;
   } else {
@@ -1025,7 +1085,12 @@ function renderCasino() {
   on('#spinBtn', doSpin);
   on('#bjDeal', () => bjAction('deal'));
   document.querySelectorAll('[data-bj]').forEach((b) => { b.onclick = (e) => { e.preventDefault(); if (!b.disabled) bjAction(b.dataset.bj); }; });
-  document.querySelectorAll('[data-pick]').forEach((b) => { b.onclick = () => { cpick = b.dataset.pick; renderCasino(); }; });
+  document.querySelectorAll('[data-rn]').forEach((b) => { b.onclick = () => tapNumber(Number(b.dataset.rn)); });
+  document.querySelectorAll('[data-rset]').forEach((b) => { b.onclick = () => placeBet(b.dataset.rset.split(',').map(Number)); });
+  document.querySelectorAll('[data-rmode]').forEach((b) => { b.onclick = () => { rmode = b.dataset.rmode; rsplitFirst = null; renderCasino(); }; });
+  document.querySelectorAll('[data-chip]').forEach((b) => { b.onclick = () => { rchip = Number(b.dataset.chip); renderCasino(); }; });
+  on('#rClear', () => { rbets = []; rsplitFirst = null; renderCasino(); });
+  on('#rRepeat', () => { rbets = lastBets.map((b) => ({ ...b })); renderCasino(); });
 }
 const cardHtml = (c) => (c && c.hidden ? '<span class="pcard2 back">?</span>' : `<span class="pcard2 ${['♥', '♦'].includes(c.s) ? 'red' : ''}">${esc(c.r)}${esc(c.s)}</span>`);
 function casinoDone(d) {
@@ -1036,11 +1101,12 @@ function casinoDone(d) {
 }
 async function doSpin() {
   if (spinning) return;
-  const amount = Math.round(Number($('#cbAmount').value) || 0);
-  const number = $('#cbNumber') ? Math.round(Number($('#cbNumber').value) || 0) : 0;
+  if (!rbets.length) return toast('Setz zuerst einen Chip auf das Tableau.');
   spinning = true;
   try {
-    const d = await api('/api/casino/roulette', { amount, kind: cpick, number });
+    const d = await api('/api/casino/board', { bets: rbets.map((b) => ({ numbers: b.numbers, amount: b.amount })) });
+    d.win = d.won > 0;
+    lastBets = rbets.map((b) => ({ ...b })); rhist = d.history || rhist;
     const wheel = $('#wheel'), ball = $('#ballnum'), kugel = $('#ball');
     const deg = 360 * 6 + (360 - (d.index * (360 / 37)));
     wheel.style.transform = `rotate(${deg}deg)`;
@@ -1052,7 +1118,7 @@ async function doSpin() {
       ball.textContent = d.n; ball.className = 'ballnum ' + d.color;
       if (d.win) $('.wheelwrap').classList.add('winflash');
       setTimeout(() => $('.wheelwrap') && $('.wheelwrap').classList.remove('winflash'), 1300);
-      casinoDone(d);
+      casinoDone(d); rbets = []; setTimeout(renderCasino, 1400);
       const head = $('#cbody .dia'); if (head) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
       spinning = false;
     }, 4700);
@@ -1132,8 +1198,8 @@ function renderCards() {
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button></div>
-      <div class="row" style="margin-bottom:10px;${cgame === 'tables' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
+      <div class="row" style="margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
       <div id="cgame"></div>
       <div id="cChals" style="margin-top:16px"></div>`;

@@ -273,6 +273,27 @@ app.post('/api/casino/roulette', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// Roulette-Tableau: mehrere Einsätze auf einmal
+const rHistory = new Map(); // userId -> letzte Zahlen
+app.post('/api/casino/board', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const bets = (Array.isArray(req.body.bets) ? req.body.bets : []).slice(0, 60).map((b) => ({ numbers: b.numbers, amount: Math.round(Number(b.amount) || 0) }));
+    if (!bets.length) return res.status(400).json({ error: 'Setz zuerst einen Chip.' });
+    const total = bets.reduce((x, b) => x + b.amount, 0);
+    if (total > MAX_BET) return res.status(400).json({ error: 'Höchstens 20.000 Diamanten pro Runde.' });
+    const have = Number(u.diamonds) || 0;
+    if (have < total) return res.status(400).json({ error: 'So viele Diamanten hast du nicht.' });
+    const r = casino.spinBoard(bets);
+    if (r.error) return res.status(400).json({ error: r.error });
+    const after = have - r.stake + r.won;
+    await store.save(u.id, { diamonds: after });
+    await casinoStat(u.id, r.stake, r.won);
+    const h = [r.n, ...(rHistory.get(u.id) || [])].slice(0, 14); rHistory.set(u.id, h);
+    res.json({ ...r, diamonds: after, history: h });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 // Blackjack mit vollen Regeln: Teilen, Verdoppeln, Versicherung, Aufgeben
 const BJ = casino.bj;
 const bjSend = async (res, uid, g, left) => {
