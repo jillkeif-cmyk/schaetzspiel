@@ -101,6 +101,21 @@ const CHALLENGE_REWARDS = (() => {
   for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
   return out;
 })();
+// Zu jedem Titel, Emblem und Rahmen: welche Kennzahl, welcher Zielwert? Per Suche aus der Bedingung ermittelt
+const GOAL_KEYS = ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes'];
+const ITEM_GOALS = (() => {
+  const base = Object.fromEntries(GOAL_KEYS.map((k) => [k, 0]));
+  const items = [...cards.EMBLEMS, ...cards.TITLES, ...frames.FRAMES].filter((i) => i.cond && !i.secret && !i.dev && !i.event);
+  const out = {};
+  for (const i of items) {
+    const hits = GOAL_KEYS.filter((k) => { try { return !i.cond(base) && i.cond({ ...base, [k]: 1e12 }); } catch (e) { return false; } });
+    if (hits.length !== 1) continue; // nur eindeutige Bedingungen
+    const k = hits[0]; let lo = 0, hi = 1e12;
+    while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); let ok = false; try { ok = i.cond({ ...base, [k]: mid }); } catch (e) {} if (ok) hi = mid; else lo = mid; }
+    out[i.id] = [k, hi];
+  }
+  return out;
+})();
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
 const TOP = new Set(['ext', 'ghost']);
 async function cardStats(uid) {
@@ -123,7 +138,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),

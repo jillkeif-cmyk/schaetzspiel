@@ -1047,6 +1047,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-dock .pk-me{margin-top:0}.pk-dock .pk-emotes{margin:0;gap:4px}.pk-dock .pk-emotes button{width:36px;height:36px;font-size:18px}
 .pk-actions{min-height:110px}.pk-actions.wait{display:flex;align-items:center;justify-content:center}
 .pk-raise input[type=range]{flex:1}
+.goalbox{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
 </style>
 </head>
 <body>
@@ -2002,6 +2003,14 @@ function packInfo(pid) {
   };
 }
 // Gesperrtes ansehen: echtes Bild, Animation und die Bedingung
+// Fortschritt zu einem Stück: "70 von 100 Siegen" mit Balken
+const GOAL_TXT = { matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', close: 'Doppelte', answered: 'beantwortete Fragen', mc_right: 'richtige Auswahlfragen', points: 'Punkte', best_score: 'Punkte in einem Match', best_streak: 'Siege in Folge', streak: 'Siege in Folge', rank_points: 'Weltranglistenpunkte', prestige: 'Prestige', casino_rounds: 'Casino-Runden', casino_wins: 'Casino-Siege', casino_best: 'Diamanten auf einmal', casino_xp: 'Casino-XP', cards_total: 'Karten', cards_rare: 'seltene Karten', cards_ext: 'Extended Art', toon_distinct: 'Toon-Karten', packs_opened: 'geöffnete Booster', melted: 'umgewandelte Karten', daily_streak: 'Tage in Folge', xp: 'XP', poker_hands: 'Poker-Hände', poker_wins: 'gewonnene Hände', poker_best: 'Diamanten in einem Pot', poker_allin_wins: 'gewonnene All-ins', poker_minutes: 'Minuten am Pokertisch', play_minutes: 'Minuten Spielzeit' };
+function goalHtml(item) {
+  const g = home.me.goals && home.me.goals[item.id]; if (!g) return '';
+  const [k, goal] = g, cur = Math.min(goal, (home.me.stats && home.me.stats[k]) || 0);
+  const done = item.unlocked || cur >= goal, pct = Math.round(100 * cur / goal);
+  return `<div class="goalbox"><div class="row" style="justify-content:space-between"><span><b>${fmt(done ? goal : cur)}</b> von ${fmt(goal)} ${esc(GOAL_TXT[k] || k)}</span><b style="color:${done ? 'var(--ok)' : 'var(--tape)'}">${done ? '✓ geschafft' : pct + ' %'}</b></div><span class="bar"><i style="width:${done ? 100 : pct}%"></i></span></div>`;
+}
 function showLocked(kind, id) {
   const C = home.cards || { emblems: [], titles: [] };
   const item = kind === 'frame' ? (home.frames || []).find((x) => x.id === id)
@@ -2018,7 +2027,7 @@ function showLocked(kind, id) {
     <h2>${esc(item.secret && !item.unlocked ? 'Geheim' : name)}</h2>
     ${pic}
     <div class="unlocks" style="background:rgba(255,210,63,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)">
-      <b style="color:var(--tape)">So bekommst du es</b><span class="uitem" style="font-weight:600">${esc(item.need || 'Geheim')}</span></div>
+      <b style="color:var(--tape)">So bekommst du es</b><span class="uitem" style="font-weight:600">${esc(item.need || 'Geheim')}</span>${goalHtml(item)}</div>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
