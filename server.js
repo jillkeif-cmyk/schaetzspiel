@@ -63,7 +63,8 @@ const auth = async (req) => { const id = readToken((req.headers.authorization ||
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '120kb' }));
+const jsonSmall = express.json({ limit: '120kb' }), jsonBig = express.json({ limit: '2mb' }); // Tickets dürfen einen Screenshot mitbringen
+app.use((req, res, next) => (req.path === '/api/tickets' ? jsonBig : jsonSmall)(req, res, next));
 app.get('/healthz', (_, res) => res.send('ok'));
 app.get('/api/push/key', (_, res) => res.json({ key: push.publicKey() }));
 app.get('/api/config', (_, res) => res.json({ needCode: !!INVITE_CODE }));
@@ -573,6 +574,52 @@ app.post('/api/tcg/cancel', async (req, res) => {
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+app.get('/api/tcg/history', async (req, res) => {
+  try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json({ trades: await store.trades(60) }); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// ---------- Support-Tickets ----------
+const TICKET_CATS = ['Fehler', 'Account', 'Wunsch'], TICKET_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
+app.get('/api/tickets', async (req, res) => {
+  try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json({ tickets: await store.tickets(), canManage: isMod(u) }); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/tickets/:id/image', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).end();
+    const t = await store.ticketGet(req.params.id); if (!t || !t.image) return res.status(404).end();
+    const m = String(t.image).match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/); if (!m) return res.status(404).end();
+    res.set('Content-Type', m[1]); res.set('Cache-Control', 'private, max-age=86400'); res.send(Buffer.from(m[2], 'base64'));
+  } catch (e) { console.error(e); res.status(500).end(); }
+});
+app.post('/api/tickets', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const category = TICKET_CATS.includes(req.body.category) ? req.body.category : 'Fehler';
+    const title = String(req.body.title || '').trim().slice(0, 80), text = String(req.body.text || '').trim().slice(0, 2000);
+    if (title.length < 3) return res.status(400).json({ error: 'Bitte gib einen kurzen Titel an.' });
+    let image = null;
+    if (req.body.image) { image = String(req.body.image); if (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > 1400000) return res.status(400).json({ error: 'Das Bild ist zu groß oder kein Bild.' }); }
+    const t = await store.ticketAdd({ user_id: u.id, user_name: u.name, category, title, text, image });
+    // Admin und Co-Admins bekommen Bescheid
+    for (const x of await store.searchUsers('', 200).catch(() => [])) if (isMod(x) && x.id !== u.id) push.toUser(x.id, { title: '🎫 Neues Ticket', body: `${u.name}: ${title}`, tag: 'ticket', url: '/' }).catch(() => {});
+    res.json({ ok: true, id: t.id, tickets: await store.tickets(), canManage: isMod(u) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tickets/:id/status', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!isMod(u)) return res.status(403).json({ error: 'Nur das Entwicklerteam kann Tickets bearbeiten.' });
+    const status = String(req.body.status || '');
+    if (!TICKET_STATES.includes(status)) return res.status(400).json({ error: 'Unbekannter Status.' });
+    const t = await store.ticketStatus(req.params.id, status, u.name);
+    if (!t) return res.status(404).json({ error: 'Dieses Ticket gibt es nicht.' });
+    if (t.user_id !== u.id) push.toUser(t.user_id, { title: '🎫 Dein Ticket', body: `„${t.title}“ ist jetzt: ${status}`, tag: 'ticket', url: '/' }).catch(() => {});
+    res.json({ tickets: await store.tickets(), canManage: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.post('/api/tcg/market/buy', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -586,7 +633,9 @@ app.post('/api/tcg/market/buy', async (req, res) => {
     await store.save(u.id, { diamonds: have - price });
     if (seller) await store.save(seller.id, { diamonds: (Number(seller.diamonds) || 0) + price });
     await store.cardAdd(u.id, row.card_id, row.variant, 1);
-    push.toUser(row.seller, { title: '💎 Verkauft', body: `${u.name} hat deine Karte für ${price} Diamanten gekauft.`, tag: 'market', url: '/' }).catch(() => {});
+    const cdef = tcg.view().cards.find((c) => c.id === row.card_id), vname = tcg.view().names[row.variant] || row.variant;
+    await store.tradeLog({ seller: row.seller, seller_name: seller ? seller.name : '?', buyer: u.id, buyer_name: u.name, card_id: row.card_id, variant: row.variant, price }).catch((e) => console.error('Verlauf:', e.message));
+    push.toUser(row.seller, { title: '💎 Karte verkauft', body: `Deine Karte „${cdef ? cdef.name : row.card_id}“ (${vname}) wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.`, tag: 'market', url: '/' }).catch(() => {});
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

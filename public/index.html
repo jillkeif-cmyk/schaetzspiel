@@ -971,6 +971,28 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .ch-it.wide{grid-column:1 / -1;flex-direction:column;align-items:stretch}
 .ch-it b{display:block;font-size:13.5px}.ch-it small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3}
 .ch-it.lk img,.ch-it.lk .frm{filter:grayscale(.55) brightness(.8)}
+.nw-code{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 12px;padding:16px;border-radius:20px;background:linear-gradient(135deg,rgba(255,210,63,.3),rgba(255,120,40,.18));box-shadow:inset 0 0 0 2px #FFD23F,0 0 26px rgba(255,190,50,.35);animation:codeglow 2.2s ease-in-out infinite alternate}
+.nw-code-l{font:800 12px/1 Archivo;letter-spacing:1.5px;text-transform:uppercase;color:var(--tape)}
+.nw-code-c{font:400 34px/1 Anton,Impact,sans-serif;letter-spacing:4px;color:#FFF3C4;text-shadow:0 0 14px rgba(255,210,63,.8)}
+.nw-code p{grid-column:1 / -1;margin:0;font-size:13.5px}
+@keyframes codeglow{from{box-shadow:inset 0 0 0 2px #FFD23F,0 0 14px rgba(255,190,50,.25)}to{box-shadow:inset 0 0 0 2px #FFE88A,0 0 30px rgba(255,190,50,.55)}}
+.thist{display:flex;flex-direction:column;gap:8px}
+.th-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:14px;background:var(--bg-deep)}
+.th-row img{width:42px;border-radius:6px;flex:none}.th-row b{display:block;font-size:14px}.th-row small{display:block;color:var(--muted);font-size:12px}
+.th-u{color:var(--paper);font-weight:800;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.25)}
+.th-p{flex:none;font-weight:800}
+.tk-new{display:flex;flex-direction:column;gap:10px}
+.tk-new textarea{resize:vertical;font:600 15px/1.4 Archivo,sans-serif}
+.tk-file{display:block;padding:12px;border-radius:12px;border:2px dashed rgba(255,255,255,.18);text-align:center;color:var(--muted);font-weight:700;cursor:pointer}
+.tk{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:var(--bg-deep);margin-bottom:10px;border-left:5px solid #8E9AA0}
+.tk-h{display:flex;align-items:center;gap:10px}.tk-ic{font-size:24px}.tk-h b{display:block}.tk-h small{display:block;color:var(--muted);font-size:12px}
+.tk-st{flex:none;padding:5px 9px;border-radius:99px;font:800 11px/1 Archivo;text-transform:uppercase;letter-spacing:.6px;background:#8E9AA0;color:#10201F}
+.tk-t{margin:0;white-space:pre-wrap;font-size:14px;line-height:1.45}
+.tk-act{display:flex;gap:6px;flex-wrap:wrap}
+.tk.st-in-Bearbeitung{border-left-color:#FFB24A}.tk.st-in-Bearbeitung .tk-st{background:#FFB24A}
+.tk.st-abgeschlossen{border-left-color:#3DDC97}.tk.st-abgeschlossen .tk-st{background:#3DDC97}
+.tk.st-abgelehnt{border-left-color:#E05252;opacity:.8}.tk.st-abgelehnt .tk-st{background:#E05252;color:#fff}
+.tk.st-eingereicht{border-left-color:#5AA9FF}.tk.st-eingereicht .tk-st{background:#5AA9FF}
 </style>
 </head>
 <body>
@@ -1650,6 +1672,12 @@ function renderCards() {
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
+    box.innerHTML += `<h2 style="margin:18px 0 10px">Verlauf</h2><div id="tradeHist"><p class="sub">Lädt …</p></div>`;
+    api('/api/tcg/history').then((r) => {
+      const el = $('#tradeHist'); if (!el) return;
+      const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `vor ${Math.max(1, m)} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} Tagen`; };
+      el.innerHTML = (r.trades || []).length ? `<div class="thist">${r.trades.map((x) => `<div class="th-row"><img src="${cardImg(x.card_id, x.variant)}" data-card="${esc(x.card_id)}:${esc(x.variant)}" alt=""><span class="grow"><b>${esc(cardDef(x.card_id) ? cardDef(x.card_id).name : x.card_id)}</b><small>${esc(varName(x.variant))} · ${ago(x.created)}</small><small><span class="th-u" data-user="${x.seller}">${esc(x.seller_name)}</span> → <span class="th-u" data-user="${x.buyer}">${esc(x.buyer_name)}</span></small></span><span class="dia th-p">${D} ${fmt(x.price)}</span></div>`).join('')}</div>` : '<p class="sub">Noch wurde nichts verkauft.</p>';
+    }).catch(() => {});
   } else if (ctab === 'melt') {
     const melt = (tcg.def.melt) || {};
     const order = (tcg.def.order || []).slice().reverse(); // seltenste zuerst
@@ -1687,7 +1715,7 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">VIP 👑</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
@@ -1839,6 +1867,7 @@ function renderNews() {
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
     return '';
@@ -1899,6 +1928,52 @@ function renderHot() {
   ['create', 'createSolo'].forEach((id) => { const b = document.getElementById(id); if (b) b.classList.toggle('hotbtn', !!hv.active); });
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
+// ---------- Support-Tickets ----------
+let tkCat = 'Fehler', tkImage = null, tkD = null;
+const TK_ICON = { Fehler: '🐞', Account: '👤', Wunsch: '💡' };
+const TK_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
+function loadTickets() { api('/api/tickets').then((d) => { tkD = d; renderTickets(); }).catch((e) => toast(e.message)); bindTicketForm(); }
+function bindTicketForm() {
+  document.querySelectorAll('[data-tkcat]').forEach((b) => { b.onclick = () => { tkCat = b.dataset.tkcat; document.querySelectorAll('[data-tkcat]').forEach((x) => x.classList.toggle('on', x === b)); }; });
+  const f = $('#tkImg'); if (f) f.onchange = () => {
+    const file = f.files && f.files[0]; if (!file) return;
+    const img = new Image(), rd = new FileReader();
+    rd.onload = () => { img.onload = () => { // verkleinern, damit es schnell hochlädt
+      const sc = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      tkImage = c.toDataURL('image/jpeg', 0.75); $('#tkImgLbl').textContent = '✓ Screenshot angehängt · tippen zum Ändern';
+    }; img.src = rd.result; };
+    rd.readAsDataURL(file);
+  };
+  const b = $('#tkSend'); if (b) b.onclick = () => {
+    b.disabled = true;
+    api('/api/tickets', { category: tkCat, title: $('#tkTitle').value, text: $('#tkText').value, image: tkImage }).then((d) => {
+      tkD = d; tkImage = null; $('#tkTitle').value = ''; $('#tkText').value = ''; $('#tkImgLbl').textContent = '📎 Screenshot anhängen (optional)';
+      toast('Danke! Dein Ticket ist eingereicht.'); renderTickets();
+    }).catch((e) => toast(e.message)).finally(() => { b.disabled = false; });
+  };
+}
+function renderTickets() {
+  const el = $('#tkList'); if (!el || !tkD) return;
+  const ago = (t) => new Date(t).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  el.innerHTML = tkD.tickets.length ? tkD.tickets.map((t) => `<div class="tk st-${t.status.replace(/ /g, '-')}">
+      <div class="tk-h"><span class="tk-ic">${TK_ICON[t.category] || '🎫'}</span><span class="grow"><b>${esc(t.title)}</b><small>#${t.id} · ${esc(t.category)} · <span class="th-u" data-user="${t.user_id}">${esc(t.user_name)}</span> · ${ago(t.created)}</small></span><span class="tk-st">${esc(t.status)}</span></div>
+      ${t.text ? `<p class="tk-t">${esc(t.text)}</p>` : ''}
+      ${t.hasImage ? `<button class="mini" data-tkimg="${t.id}">🖼 Screenshot ansehen</button>` : ''}
+      ${t.handler && t.status !== 'eingereicht' ? `<small class="sub">bearbeitet von ${esc(t.handler)}</small>` : ''}
+      ${tkD.canManage ? `<div class="tk-act">${TK_STATES.map((s2) => `<button class="mini ${t.status === s2 ? 'go' : ''}" data-tkst="${t.id}" data-st="${s2}">${s2}</button>`).join('')}</div>` : ''}
+    </div>`).join('') : '<p class="sub">Noch keine Tickets. Du kannst das erste einreichen.</p>';
+  el.querySelectorAll('[data-tkst]').forEach((b) => { b.onclick = () => api('/api/tickets/' + b.dataset.tkst + '/status', { status: b.dataset.st }).then((d) => { tkD = d; renderTickets(); toast('Status: ' + b.dataset.st); }).catch((e) => toast(e.message)); });
+  el.querySelectorAll('[data-tkimg]').forEach((b) => { b.onclick = async () => {
+    try {
+      const r = await fetch('/api/tickets/' + b.dataset.tkimg + '/image', { headers: { authorization: 'Bearer ' + token } }); if (!r.ok) throw new Error('Bild nicht gefunden');
+      const url = URL.createObjectURL(await r.blob());
+      $('#modal').innerHTML = `<div class="panel" style="gap:10px"><img src="${url}" style="width:100%;border-radius:12px" alt=""><button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+      $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    } catch (e) { toast(e.message); }
+  }; });
+}
+
 // ---------- Admin: Fragen-Pool ----------
 let adminD = null, adminTimer = null;
 function loadAdmin() {
@@ -2123,6 +2198,20 @@ function build() {
       <button class="btn">${authTab === 'login' ? 'Anmelden' : 'Konto anlegen'}</button>
     </form>`;
 
+  if (!S && page === 'support') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <h1 style="font-size:30px">Support & Feedback</h1>
+    <div class="panel tk-new">
+      <b>Neues Ticket</b>
+      <div class="seg" id="tkCat"><button data-tkcat="Fehler" class="on">🐞 Fehler</button><button data-tkcat="Account">👤 Account</button><button data-tkcat="Wunsch">💡 Wunsch</button></div>
+      <input class="field" id="tkTitle" maxlength="80" placeholder="Kurz: Worum geht es?" autocomplete="off">
+      <textarea class="field" id="tkText" maxlength="2000" rows="4" placeholder="Beschreib es genauer. Bei Fehlern: Was hast du gemacht, was ist passiert?"></textarea>
+      <label class="tk-file"><input type="file" id="tkImg" accept="image/*" hidden><span id="tkImgLbl">📎 Screenshot anhängen (optional)</span></label>
+      <button class="btn" id="tkSend">Ticket einreichen</button>
+    </div>
+    <h2 style="margin-top:6px">Alle Tickets</h2>
+    <div id="tkList"><p class="sub">Lädt …</p></div></div>`;
+
   if (!S && page === 'admin') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Admin</h1>
@@ -2202,6 +2291,7 @@ function build() {
 
     <div hidden><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div id="newPlayers"></div>
+    <button class="panel row" id="openSupport" style="gap:12px;text-align:left"><span style="font-size:32px;width:46px;text-align:center">🎫</span><span class="grow"><b>Support & Feedback</b><br><span class="sub">Fehler melden, Account-Hilfe, Wünsche und Ideen</span></span></button>
     <div hidden><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
       <div id="board" class="plist" style="margin-top:10px"></div></div></div>`;
@@ -2452,6 +2542,7 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
+  if (!S && page === 'support') { loadTickets(); return; }
   if (!S && page === 'admin') { loadAdmin(); return; }
   if (!S && page === 'challenges') { renderChallenges(); return; }
   if (!S && page === 'news') { renderNews(); return; }
@@ -2803,6 +2894,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.id === 'openChallenges') { page = 'challenges'; render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }
+  else if (t.id === 'openSupport') { page = 'support'; render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
@@ -2824,6 +2916,7 @@ document.addEventListener('click', (e) => {
       loadFriends && loadFriends();
     }).catch((er) => toast(er.message));
   }
+  else if (t.dataset.copycode) { try { navigator.clipboard.writeText(t.dataset.copycode); toast('Code kopiert: ' + t.dataset.copycode); } catch (er) { toast(t.dataset.copycode); } }
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
