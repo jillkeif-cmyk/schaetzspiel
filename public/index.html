@@ -1061,7 +1061,7 @@ function showCodeReveal(r) {
   ];
   u.innerHTML = `<div class="rays"></div><div class="in cr">
     <p class="sub">Code eingelöst</p><h1 class="cr-code">${esc(r.code || '')}</h1>
-    ${r.diamonds ? `<div class="cr-dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
     <div class="cr-grid">${tiles.map((h, i) => h.replace('class="cr-item', `style="--d:${i}" class="cr-item`)).join('')}</div>
     <button class="btn" id="unlockOk" style="min-width:220px">Stark!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
@@ -1326,7 +1326,7 @@ function renderVip(box) {
   const FILL = ['#5B0E1B', '#101214', '#0E4733', '#101214', '#5B0E1B', '#0E4733', '#101214', '#5B0E1B', '#0E4733'];
   const conic = v.wheel.map((l, i) => `${l === 'JACKPOT' ? '#C8922A' : FILL[i % FILL.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
   const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost' };
-  const icon = (l) => (PK[l] ? `<img loading="lazy" decoding="async" src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img loading="lazy" decoding="async" class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
+  const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
     <div class="lwrap">
@@ -1334,9 +1334,9 @@ function renderVip(box) {
         <div class="lsheen"></div>
         ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '5.000' : l)}</b>`}</span></span>`).join('')}
       </div>
-      <img loading="lazy" decoding="async" class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
-      <img loading="lazy" decoding="async" class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
-      <img loading="lazy" decoding="async" class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
+      <img class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
+      <img class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
+      <img class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
     </div>
     <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} von ${v.spinsTotal} heute` : 'Morgen wieder drehen'}</button>
     <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
@@ -1386,7 +1386,7 @@ function renderCasino() {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img loading="lazy" decoding="async" src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
         <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
@@ -1474,7 +1474,7 @@ async function doSpin() {
       if (d.win) $('.wheelwrap').classList.add('winflash');
       setTimeout(() => $('.wheelwrap') && $('.wheelwrap').classList.remove('winflash'), 1300);
       casinoDone(d); rbets = []; setTimeout(renderCasino, 1400);
-      const head = $('#cbody .dia'); if (head) head.innerHTML = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
+      const head = $('#cbody .dia'); if (head) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(d.diamonds)}`;
       spinning = false;
     }, 4700);
   } catch (e) { spinning = false; toast(e.message); }
@@ -1492,7 +1492,7 @@ async function bjAction(path) {
     bjMark('d', bj.dealer.filter((c) => !c.hidden).length); bjMark('dh', 2); // verdeckte Karte nicht erneut animieren
     bj.hands.forEach((h, i) => bjMark('h' + i, h.cards.length));
     if (bj.over) casinoDone(bj);
-    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
+    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
   } catch (e) { toast(e.message); }
   finally { bjBusy = false; }
 }
@@ -1512,7 +1512,7 @@ function renderCards() {
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
-  const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
@@ -1528,12 +1528,12 @@ function renderCards() {
         <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
-    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar</span></span>
       <button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button></div>`).join('')
       : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>';
   } else if (ctab === 'shop') {
-    box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.cards} Karten · Chancen ansehen ›</p></span></button>`).join('')
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
@@ -1582,7 +1582,7 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">VIP 👑</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-cbet="all">All in</button></div>
       <div id="cgame"></div>
@@ -1648,7 +1648,7 @@ function sellCard(key) {
 
 function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
-  const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   // die drei stärksten Karten, die aus diesem Booster kommen können
   const rank = tcg.def.order || [];
   const pool = [];
@@ -1662,7 +1662,7 @@ function packInfo(pid) {
   pool.sort((a, b) => b.r - a.r);
   const top = pool.slice(0, 3);
   $('#modal').innerHTML = `<div class="panel" style="gap:12px">
-    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img loading="lazy" decoding="async" src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt="">
+    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt="">
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span></span></div>
     <b>Beste Karten, die drin sein können</b>
     <div class="cgrid">${top.map((x) => `<figure><img loading="lazy" decoding="async" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}</figcaption></figure>`).join('')}</div>
@@ -1728,7 +1728,7 @@ function renderRanks() {
 async function dailyDialog() {
   try {
     const v = await api('/api/daily');
-    const D = `<img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
+    const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
     const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
     const boxes = (v.rewards || v.days.map((d) => ({ dia: d }))).map((rw, i) => {
       const day = i + 1;
@@ -1897,12 +1897,12 @@ function build() {
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Casino</h1>
     <div id="cbody"></div></div>`;
 
   if (!S && page === 'cards') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me.diamonds) || 0)}</span></div>
     <h1 style="font-size:30px">Karten</h1>
     <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
@@ -1929,7 +1929,7 @@ function build() {
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
     <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
-    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img loading="lazy" decoding="async" src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt((home && home.me && home.me.diamonds) || 0)}</span></button>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -2350,7 +2350,7 @@ function update() {
       const mine2 = (S.bets || []).find((b) => b.id === S.you);
       const others = (S.bets || []).filter((b) => b.id !== S.you);
       const dia = (home && home.me && home.me.diamonds) || 0;
-      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
         <p class="sub">Setze darauf, dass du gewinnst. Gewinnst du, bekommst du das Doppelte. Verlierst du, geht dein Einsatz an die Sieger.</p>
         ${mine2 ? `<div class="row"><b class="grow">Dein Einsatz: ${fmt(mine2.amount)} 💎</b><button class="btn small ghost" data-bet="0">Zurücknehmen</button></div>`
           : `<div class="row" style="flex-wrap:wrap;gap:6px">${[50, 100, 250, 500].map((v) => `<button class="chipbtn" data-bet="${v}" ${dia < v ? 'disabled style="opacity:.4"' : ''}>${v} 💎</button>`).join('')}</div>`}
@@ -2392,7 +2392,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img loading="lazy" decoding="async" src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>+${fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished') $('#endAct').innerHTML = (host ? '<button class="btn" id="again">Nochmal spielen</button>' : '<p class="sub center">Der Host kann eine neue Runde starten.</p>') + '<button class="btn ghost" id="leave">Zur Startseite</button>';
 }
 
