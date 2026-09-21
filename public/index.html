@@ -1048,6 +1048,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-actions{min-height:110px}.pk-actions.wait{display:flex;align-items:center;justify-content:center}
 .pk-raise input[type=range]{flex:1}
 .goalbox{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
+.pk-botmark{position:absolute;left:-6px;top:-6px;font-size:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
 </style>
 </head>
 <body>
@@ -1563,8 +1564,8 @@ function renderPoker(box) {
   if (!pkState || pkState.me < 0) {
     if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     if (!pkState) {
-      box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Setz dich hin, sobald zwei Spieler da sind, geht es los. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
-        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.running ? ' · Hand läuft' : ''}</small>
+      box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Sitzt du allein, spielt ein Bot gegen dich. Kommt jemand dazu, geht der Bot nach der laufenden Hand. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
+        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)}</b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
           <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
       box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
       box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
@@ -1585,7 +1586,7 @@ function renderPoker(box) {
     if (!s) return meIdx < 0 ? `<button class="pk-seat empty" style="left:${x}%;top:${y}%" data-pkseat="${i}">+</button>` : '';
     const act = t.toAct === i;
     return `<div class="pk-seat ${act ? 'act' : ''} ${s.folded ? 'folded' : ''} ${s.away ? 'away' : ''}" style="left:${x}%;top:${y}%">
-      <div class="pk-av" data-user="${s.id}">${avatar(s, 46, false)}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
+      <div class="pk-av" ${s.bot ? '' : `data-user="${s.id}"`}>${avatar(s, 46, false)}${s.bot ? '<span class="pk-botmark">🤖</span>' : ''}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
       <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span></div>
       ${s.last ? `<span class="pk-last ${/Fold/.test(s.last) ? 'f' : /All/.test(s.last) ? 'a' : /Raise/.test(s.last) ? 'r' : ''}">${esc(s.last)}</span>` : ''}
       ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c, k) => pkCard(c, false, `s${i}:${k}:${c.hidden ? 'h' : c.r + c.s}`)).join('')}</div>` : ''}
