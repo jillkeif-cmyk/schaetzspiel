@@ -825,6 +825,42 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #hl .stage{animation:hlshake .5s .95s ease-out}
 @keyframes hlshake{0%,100%{transform:none}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
 #hl .tap{color:#9FB8B6}
+
+.vipb{vertical-align:middle;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.viphead{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:10px 0;border-radius:18px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35)}
+.viphead b{font:400 20px/1 Anton,Impact,sans-serif;letter-spacing:.5px}.viphead small{color:var(--muted);font-size:12px}
+.viphead .bar{display:block;margin:6px 0 4px}
+.viphead.vt5{background:linear-gradient(135deg,#0B0B0B,#1d1706);box-shadow:inset 0 0 0 1.5px #D9A92E,0 0 22px rgba(217,169,46,.35)}
+.viphead.vt4{box-shadow:inset 0 0 0 1.5px #9FE3FF,0 0 18px rgba(160,227,255,.3)}
+.vchip{flex:none;padding:8px 10px;border-radius:99px;background:rgba(255,210,63,.14);font-weight:800;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.5)}
+.vchip.hot{background:var(--tape);color:var(--ink)}
+.lwrap{position:relative;width:min(80vw,320px);aspect-ratio:1;margin:6px auto 0}
+.lwheel{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 8px #6B3A1E,0 0 0 11px #C89A3C,0 14px 30px rgba(0,0,0,.5)}
+.lseg{position:absolute;left:50%;top:50%;width:0;height:0;transform:rotate(var(--a))}
+.lseg b{position:absolute;left:0;top:0;transform:translate(-50%,calc(min(80vw,320px) * -0.4)) ;font:800 12px/1 Archivo;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);white-space:nowrap}
+.lhub{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#1c2a2c,#071416);box-shadow:0 0 0 4px #C89A3C}
+.lptr{position:absolute;left:50%;top:-10px;margin-left:-13px;z-index:3;border:13px solid transparent;border-top:24px solid var(--tape);filter:drop-shadow(0 3px 3px rgba(0,0,0,.5))}
+.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.thm{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:14px;background:var(--bg-deep);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08)}
+.thm.on{box-shadow:inset 0 0 0 2px var(--tape)}.thm.lk{opacity:.45}
+.thm .sw{width:100%;height:34px;border-radius:9px}
+.thm b{font-size:12px}.thm small{color:var(--muted);font-size:11px}
+.tiers{display:flex;flex-direction:column;gap:8px}
+.tier{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:var(--bg-deep)}
+.tier.cur{box-shadow:inset 0 0 0 2px var(--tape)}.tier.lk{opacity:.6}
+.tier small{display:block;color:var(--muted);font-size:12px}.tier .perks{display:block;font-size:12px;margin-top:3px}
+/* Tischdesigns */
+.th-gruen .sw,.bjfelt.th-gruen,.rboard.th-gruen{--f1:#1F7A55;--f2:#0F5238;--f3:#0A3A28;--rim:#6B3A1E;--edge:#C89A3C}
+.th-blau{--f1:#1E4E8C;--f2:#12305A;--f3:#0A1C38;--rim:#2A2F3A;--edge:#C9D3D6}
+.th-rot{--f1:#8C1E26;--f2:#5A1218;--f3:#380A0F;--rim:#3A1A0E;--edge:#E6B640}
+.th-violett{--f1:#5E2A8C;--f2:#3B1A5A;--f3:#220E38;--rim:#2A1A36;--edge:#C9B3F0}
+.th-eis{--f1:#3F8FA8;--f2:#23596B;--f3:#123440;--rim:#1E2E36;--edge:#CFF3FF}
+.th-schwarz{--f1:#2A2A2A;--f2:#141414;--f3:#050505;--rim:#0A0A0A;--edge:#D9A92E}
+.th-gruen{--f1:#1F7A55;--f2:#0F5238;--f3:#0A3A28;--rim:#6B3A1E;--edge:#C89A3C}
+.bjfelt[class*="th-"]{background:radial-gradient(ellipse at 50% 30%,var(--f1),var(--f2) 60%,var(--f3));box-shadow:inset 0 0 0 10px var(--rim),inset 0 0 0 13px var(--edge),inset 0 0 40px rgba(0,0,0,.45),0 16px 34px rgba(0,0,0,.5)}
+.rboard[class*="th-"]{background:radial-gradient(ellipse at 50% 30%,var(--f1),var(--f2) 70%);box-shadow:inset 0 0 0 6px var(--rim),inset 0 0 0 8px var(--edge),0 12px 26px rgba(0,0,0,.45)}
+.thm .sw{background:radial-gradient(ellipse at 50% 30%,var(--f1),var(--f3));box-shadow:inset 0 0 0 3px var(--rim),inset 0 0 0 4px var(--edge)}
+.th-schwarz.bjfelt::before{color:rgba(217,169,46,.6)}
 </style>
 </head>
 <body>
@@ -844,7 +880,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '13';
+const AVER = '14';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1074,6 +1110,8 @@ const bjDrawn = {}; // wie viele Karten je Hand schon auf dem Tisch lagen
 const bjNew = (key, k) => k >= (bjDrawn[key] || 0);
 const bjMark = (key, n) => { bjDrawn[key] = n; };
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+let vipD = null;
+const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C']];
 const numAt = (c, r) => 3 * c + (3 - r);
@@ -1133,10 +1171,10 @@ function renderTables(box) {
       : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="${st}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`;
   };
   const can = (me && me.can) || {};
-  box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
+  box.innerHTML = `<div class="bjfelt th-${esc(t.theme || 'gruen')}"><span class="shoe"></span>
       <div class="bjrow"><span class="bjlab">BANK${t.dealerScore != null ? ' · ' + t.dealerScore : ''}</span><div class="bjhand">${(t.dealer || []).map((c, k) => card(c, k, c.hidden ? 'tdh' : 'td')).join('')}</div></div>
       <div class="bjhands">${t.seats.map((st) => `<div class="bjh ${t.turn === st.id ? 'act' : ''}">
-          <span class="bjlab">${esc(st.name)}${st.id === meId ? ' (du)' : ''}</span>
+          <span class="bjlab">${vipBadge(st.tier, 18)} ${esc(st.name)}${st.id === meId ? ' (du)' : ''}</span>
           ${st.hands.length ? st.hands.map((h, hi) => `<div class="bjhand">${h.cards.map((c, k) => card(c, k, 't' + st.id + '_' + hi)).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')
             : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
           ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
@@ -1221,10 +1259,71 @@ function renderRewards(box) {
   box.querySelectorAll('[data-rwid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.rwk, b.dataset.rwid); });
 }
 
+const vipBadge = (t, size) => `<img class="vipb" src="/emblems/vip${Math.max(0, Math.min(5, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
+function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
+function renderVipHead() {
+  const h = $('#vipHead'); if (!h || !vipD) return;
+  const t = vipD.tiers[vipD.tier], nx = vipD.next;
+  const pct = nx ? Math.round(100 * (vipD.xp - t.xp) / (nx.xp - t.xp)) : 100;
+  h.innerHTML = `<div class="viphead vt${vipD.tier}">${vipBadge(vipD.tier, 58)}<div class="grow"><b>VIP ${esc(t.name)}</b>
+      <span class="bar"><i style="width:${pct}%"></i></span><small>${nx ? `${fmt(vipD.xp)} / ${fmt(nx.xp)} XP bis ${esc(nx.name)}` : `${fmt(vipD.xp)} XP · höchste Stufe`}</small></div>
+      <button class="vchip" id="vhWheel">🎡 ${vipD.spinsLeft}</button>${vipD.cashback ? `<button class="vchip hot" id="vhCash">💸 ${fmt(vipD.cashback)}</button>` : ''}</div>`;
+  $('#vhWheel').onclick = () => { cgame = 'vip'; renderCards(); };
+  if ($('#vhCash')) $('#vhCash').onclick = claimCashback;
+}
+function claimCashback() {
+  api('/api/casino/cashback', {}).then((r) => { vipD = r.vip; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; sfx('exact'); toast(`+${fmt(r.gained)} Diamanten Cashback`); renderCards(); }).catch((e) => toast(e.message));
+}
+let wheelBusy = false, wheelDeg = 0;
+function renderVip(box) {
+  if (!vipD) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadVip(); return; }
+  const v = vipD, N = v.wheel.length, seg = 360 / N;
+  const COLS = ['#C0342F', '#161C1D', '#1F7A55', '#2B6CB0', '#6B2FB3', '#B8861C'];
+  const conic = v.wheel.map((_, i) => `${COLS[i % COLS.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
+  box.innerHTML = `
+    <h2 class="rw-h">Glücksrad</h2>
+    <div class="lwrap"><span class="lptr"></span>
+      <div class="lwheel" id="lwheel" style="background:conic-gradient(${conic});transform:rotate(${wheelDeg}deg)">${v.wheel.map((l, i) => `<span class="lseg" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><b>${esc(l)}</b></span>`).join('')}</div>
+      <div class="lhub">${vipBadge(v.tier, 54)}</div></div>
+    <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} von ${v.spinsTotal} heute` : 'Morgen wieder drehen'}</button>
+    <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
+    <h2 class="rw-h">Cashback</h2>
+    <div class="panel" style="display:flex;align-items:center;gap:12px">${v.cashbackPct ? `<span class="grow">${v.cashback ? `Von gestern bekommst du <b>${fmt(v.cashback)} 💎</b> zurück (${Math.round(v.cashbackPct * 100)} % deiner Verluste).` : v.cashbackClaimed ? 'Heute schon abgeholt.' : 'Gestern gab es keine Verluste, also auch kein Cashback.'}</span>${v.cashback ? '<button class="btn small" id="cashGo">Abholen</button>' : ''}` : '<span class="grow sub">Cashback gibt es ab VIP Gold: Ein Teil deiner Verluste vom Vortag kommt zurück.</span>'}</div>
+    <h2 class="rw-h">Tischdesign</h2>
+    <div class="themes">${v.themes.map((t) => `<button class="thm th-${t.key} ${v.theme === t.key ? 'on' : ''} ${t.unlocked ? '' : 'lk'}" data-thm="${t.key}"><span class="sw"></span><b>${esc(t.name)}</b><small>${t.unlocked ? (v.theme === t.key ? 'aktiv' : 'wählen') : 'ab ' + esc(v.tiers[t.tier].name)}</small></button>`).join('')}</div>
+    <h2 class="rw-h">VIP-Stufen</h2>
+    <div class="tiers">${v.tiers.map((t, i) => `<div class="tier ${i === v.tier ? 'cur' : ''} ${i > v.tier ? 'lk' : ''}">${vipBadge(i, 46)}<div class="grow"><b>${esc(t.name)}</b><small>ab ${fmt(t.xp)} Casino-XP</small>
+      <span class="perks">🎡 ${t.spins}× drehen · ${t.cashback ? '💸 ' + Math.round(t.cashback * 100) + ' % Cashback' : 'kein Cashback'} · 🎨 ${esc(v.themes[i].name)}</span></div>${i === v.tier ? '<span class="rw-ok">du</span>' : i < v.tier ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>`;
+  const sp = $('#lspin'); if (sp) sp.onclick = () => {
+    if (wheelBusy) return; wheelBusy = true; sp.disabled = true;
+    api('/api/casino/wheel', {}).then((r) => {
+      const target = 360 - (r.index * seg + seg / 2);
+      wheelDeg = wheelDeg - (wheelDeg % 360) + 360 * 6 + target;
+      const w = $('#lwheel'); w.style.transition = 'transform 4.2s cubic-bezier(.12,.62,.12,1)'; w.style.transform = `rotate(${wheelDeg}deg)`;
+      sfx('dart');
+      setTimeout(() => {
+        wheelBusy = false; vipD = r.vip; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds;
+        const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
+        sfx(r.label === 'JACKPOT' ? 'prestige' : 'exact');
+        toast(r.pack ? `Gewonnen: ${PN[r.pack]}!` : `Gewonnen: ${fmt(r.dia)} Diamanten${r.label === 'JACKPOT' ? ' · JACKPOT!' : ''}`);
+        renderCards();
+      }, 4400);
+    }).catch((e) => { wheelBusy = false; sp.disabled = false; toast(e.message); });
+  };
+  if ($('#cashGo')) $('#cashGo').onclick = claimCashback;
+  box.querySelectorAll('[data-thm]').forEach((b) => { b.onclick = () => {
+    if (b.classList.contains('lk')) return toast('Dieses Design gibt es ab einer höheren VIP-Stufe.');
+    api('/api/casino/theme', { theme: b.dataset.thm }).then((v2) => { vipD = v2; renderCards(); toast('Tischdesign gewechselt'); }).catch((e) => toast(e.message));
+  }; });
+}
+
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  renderVipHead();
+  if (!vipD) loadVip();
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
+  if (cgame === 'vip') return renderVip(box);
   if (cgame === 'roulette') {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
@@ -1234,7 +1333,7 @@ function renderCasino() {
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
       <div class="modes">${[['zahl', 'Zahl ×36'], ['split', 'Split ×18'], ['street', 'Reihe ×12'], ['ecke', 'Ecke ×9'], ['sechs', '6er ×6']].map(([k, n]) => `<button data-rmode="${k}" class="${rmode === k ? 'on' : ''}">${n}</button>`).join('')}</div>
-      <div class="rboard"><div class="rgrid">${boardHtml()}</div></div>
+      <div class="rboard th-${THEME_OF()}"><div class="rgrid">${boardHtml()}</div></div>
       <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${rchip === v ? 'on' : ''}" style="background:${c}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}</div>
       <div class="row" style="gap:8px"><button class="btn ghost small grow" id="rClear">Löschen</button><button class="btn ghost small grow" id="rRepeat" ${lastBets.length ? '' : 'disabled'}>Wiederholen</button></div>
       <p class="sub center" style="margin:8px 0">Einsatz: <b>${fmt(rbets.reduce((x, b) => x + b.amount, 0))}</b> 💎 auf ${rbets.length} ${rbets.length === 1 ? 'Feld' : 'Felder'}</p>
@@ -1248,7 +1347,7 @@ function renderCasino() {
         : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}" style="${st}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`;
     };
     const can = (bj && bj.can) || {};
-    box.innerHTML = `<div class="bjfelt"><span class="shoe"></span>
+    box.innerHTML = `<div class="bjfelt th-${THEME_OF()}"><span class="shoe"></span>
         <div class="bjrow"><span class="bjlab">BANK${bj ? ' · ' + (bj.over ? bj.dealerScore : bj.dealerScore + ' offen') : ''}</span>
           <div class="bjhand">${bj ? bj.dealer.map((c, k) => card(c, k, c.hidden ? 'dh' : 'd')).join('') : ''}</div></div>
         <div class="bjhands">${bj ? bj.hands.map((h, hi) => `<div class="bjh ${h.active ? 'act' : ''}">
@@ -1282,6 +1381,7 @@ function renderCasino() {
 }
 const cardHtml = (c) => (c && c.hidden ? '<span class="pcard2 back">?</span>' : `<span class="pcard2 ${['♥', '♦'].includes(c.s) ? 'red' : ''}">${esc(c.r)}${esc(c.s)}</span>`);
 function casinoDone(d) {
+  setTimeout(loadVip, 600); // XP und Stufe nach jeder Runde auffrischen
   if (d.diamonds != null) { if (tcg) tcg.diamonds = d.diamonds; if (home && home.me) home.me.diamonds = d.diamonds; }
   const r = $('#cResult');
   if (r) r.innerHTML = d.won ? `<b style="color:var(--ok);font-size:18px">+${fmt(d.won)} Diamanten</b>` : '<b style="color:#FFB3AC">Verloren</b>';
@@ -1422,9 +1522,10 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button></div>
-      <div class="row" style="margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">VIP 👑</button></div>
+      <div id="vipHead"></div>
+      <div class="row" style="margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' || cgame === 'vip' ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(dia)}</span></div>
+      <div class="row" style="gap:8px;margin-bottom:10px;${cgame === 'tables' || cgame === 'roulette' || cgame === 'rewards' || cgame === 'vip' ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
         ${[100, 500, 1000].map((v) => `<button class="chipbtn" data-cbet="${v}">${v}</button>`).join('')}</div>
       <div id="cgame"></div>
       `;
@@ -1550,7 +1651,7 @@ function renderRanks() {
   const rows = rtab === 'casino' ? (home.casinoTop || []) : rtab === 'points' ? (home.points || []) : (home.world || []);
   const line = (u, i) => {
     const right = rtab === 'casino' ? `${fmt(u.casinoXp || 0)} XP` : rtab === 'points' ? `${fmt(u.points || 0)} Pkt` : `${fmt(u.rankPoints || 0)} WP`;
-    const sub = rtab === 'casino' ? `${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester ${fmt(u.casinoBest || 0)} 💎` : rankText(u);
+    const sub = rtab === 'casino' ? `${vipBadge(u.casinoTier, 16)} ${esc(['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'][u.casinoTier || 0])} · ${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester ${fmt(u.casinoBest || 0)} 💎` : rankText(u);
     return `<div class="pl ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${sub}</span></span><span class="wp">${right}</span></div>`;
   };
   box.innerHTML = rows.length ? `<div class="plist">${rows.map(line).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>';

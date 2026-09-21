@@ -13,6 +13,7 @@ const push = require('./lib/push');
 const tcg = require('./lib/tcg');
 const casino = require('./lib/casino');
 const daily = require('./lib/daily');
+const vip = require('./lib/vip');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString('hex');
@@ -53,7 +54,7 @@ const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
   id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
-  casinoXp: Number(u.casino_xp) || 0, casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  casinoXp: Number(u.casino_xp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: u.prestige, av: u.av, ...progress.levelInfo(u.xp),
 });
@@ -173,6 +174,62 @@ app.post('/api/seen', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// ---------- Casino-VIP: Stufe, Cashback, Glücksrad, Tischdesign ----------
+function vipView(u) {
+  const xp = Number(u.casino_xp) || 0, ti = vip.tierIndex(xp), t = vip.TIERS[ti], nx = vip.TIERS[ti + 1] || null;
+  const today = daily.dayKey(), yesterday = daily.dayKey(new Date(Date.now() - 86400000));
+  // Verlust von gestern: entweder schon in cash_prev_* verschoben oder noch als laufender Tag gespeichert
+  let prevNet = 0;
+  if (u.casino_day === yesterday) prevNet = Number(u.casino_day_net) || 0;
+  else if (u.cash_prev_day === yesterday) prevNet = Number(u.cash_prev_net) || 0;
+  const cashback = t.cashback && prevNet < 0 && u.cash_claimed !== today ? Math.min(vip.CASHBACK_CAP, Math.round(-prevNet * t.cashback)) : 0;
+  const used = u.wheel_day === today ? Number(u.wheel_used) || 0 : 0;
+  return {
+    xp, tier: ti, tiers: vip.TIERS, next: nx, cashback, cashbackPct: t.cashback, cashbackClaimed: u.cash_claimed === today,
+    spinsLeft: Math.max(0, t.spins - used), spinsTotal: t.spins, wheel: vip.WHEEL.map((f) => f.label),
+    themes: vip.THEMES.map((th) => ({ ...th, unlocked: ti >= th.tier })), theme: u.casino_theme || 'gruen',
+  };
+}
+app.get('/api/casino/vip', async (req, res) => {
+  try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json(vipView(u)); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/cashback', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const v = vipView(u);
+    if (!v.cashback) return res.status(400).json({ error: v.cashbackClaimed ? 'Heute schon abgeholt.' : 'Heute gibt es kein Cashback.' });
+    const after = (Number(u.diamonds) || 0) + v.cashback;
+    await store.save(u.id, { diamonds: after, cash_claimed: daily.dayKey() });
+    res.json({ gained: v.cashback, diamonds: after, vip: vipView(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/wheel', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const v = vipView(u);
+    if (!v.spinsLeft) return res.status(400).json({ error: 'Für heute hast du keine Drehung mehr. Morgen geht es weiter.' });
+    const r = vip.spinWheel(v.tier);
+    const today = daily.dayKey();
+    const save = { wheel_day: today, wheel_used: (u.wheel_day === today ? Number(u.wheel_used) || 0 : 0) + 1 };
+    if (r.dia) save.diamonds = (Number(u.diamonds) || 0) + r.dia;
+    await store.save(u.id, save);
+    if (r.pack) await store.packAdd(u.id, r.pack, 1);
+    const nu = await store.userById(u.id);
+    res.json({ ...r, diamonds: Number(nu.diamonds) || 0, vip: vipView(nu) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/theme', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const th = vip.THEMES.find((x) => x.key === String(req.body.theme || ''));
+    if (!th) return res.status(400).json({ error: 'Dieses Design gibt es nicht.' });
+    if (vip.tierIndex(Number(u.casino_xp) || 0) < th.tier) return res.status(403).json({ error: 'Dafür brauchst du die Stufe ' + vip.TIERS[th.tier].name + '.' });
+    await store.save(u.id, { casino_theme: th.key });
+    res.json(vipView(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 // ---------- Tagesbelohnungen ----------
 app.get('/api/daily', async (req, res) => {
   try {
@@ -242,7 +299,11 @@ const takeBet = async (u, amount) => {
 const casinoStat = async (uid, stake, won) => {
   const u = await store.userById(uid); if (!u) return;
   const net = won - stake;
+  const today = daily.dayKey();
+  const dayMove = u.casino_day && u.casino_day !== today ? { cash_prev_day: u.casino_day, cash_prev_net: Number(u.casino_day_net) || 0 } : {};
+  const dayNet = (u.casino_day === today ? Number(u.casino_day_net) || 0 : 0) + net;
   await store.save(uid, {
+    ...dayMove, casino_day: today, casino_day_net: dayNet,
     casino_rounds: (Number(u.casino_rounds) || 0) + 1,
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
