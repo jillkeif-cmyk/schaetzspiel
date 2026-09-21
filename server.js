@@ -543,8 +543,10 @@ app.post('/api/redeem', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const r = cards.redeem(u, req.body.code);
     if (!r.ok) return res.status(400).json({ error: r.error });
-    await store.save(u.id, { codes: r.codes });
-    res.json({ reward: r.reward });
+    const save = { codes: r.codes };
+    if (r.diamonds) save.diamonds = (Number(u.diamonds) || 0) + r.diamonds; // Aktionscode mit Diamanten
+    await store.save(u.id, save);
+    res.json({ reward: r.reward, diamonds: r.diamonds || 0 });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
