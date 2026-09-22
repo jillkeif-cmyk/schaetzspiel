@@ -1100,6 +1100,22 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #chalWrap[hidden],#itemsWrap[hidden]{display:none}
 .tab-badge{display:inline-block;min-width:20px;height:20px;margin-left:6px;padding:0 5px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 12px/20px Archivo;text-align:center;vertical-align:1px;animation:ncpulse 1.4s ease-in-out infinite}
 #casBadge{order:3}
+.rt-glitter{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(142,75,214,.55),rgba(255,79,163,.35)) !important;color:#fff !important;box-shadow:inset 0 0 0 1.5px rgba(214,160,255,.8),0 0 14px rgba(192,75,255,.45)}
+.rt-glitter::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);transform:translateX(-120%);animation:glint 2.6s ease-in-out infinite}
+.rt-glitter.on{background:linear-gradient(135deg,#B45CFF,#FF4FA3) !important}
+@keyframes glint{0%,40%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.collect-head{padding:14px;border-radius:18px;margin-bottom:12px;background:linear-gradient(135deg,rgba(142,75,214,.28),rgba(255,79,163,.14));box-shadow:inset 0 0 0 1.5px rgba(214,160,255,.55)}
+.collect-head>b{font:400 20px/1.1 Anton,Impact,sans-serif;color:#E6C2FF}.collect-head p{margin:6px 0 10px;font-size:13.5px;line-height:1.45}.collect-head small{color:var(--muted)}
+.collect-pts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.collect-pts span{font-size:12px;font-weight:800;padding:4px 8px;border-radius:99px;background:rgba(0,0,0,.35);display:inline-flex;align-items:center;gap:5px}
+.collect-pts i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.cp-haeufig{background:#9AA5AB}.cp-selten{background:#4FA3FF}.cp-holo{background:linear-gradient(135deg,#7CF,#F7C)}.cp-ultra{background:#FFB24A}.cp-legend{background:#FFD23F}.cp-ext{background:linear-gradient(135deg,#B45CFF,#FF4FA3)}.cp-ghost{background:#E6F4FF;box-shadow:0 0 6px #fff}
+.collect-row .nm{flex:1;min-width:0}.collect-row .nm b{display:block}
+.collect-chips{display:flex !important;flex-wrap:wrap;gap:4px;margin-top:3px}
+.collect-row .collect-chips span{display:inline-block !important;width:auto !important}.collect-row .collect-chips b{display:inline !important}.collect-chips span{font-size:11px;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--muted);white-space:nowrap}.collect-chips b{display:inline;color:var(--paper)}
+.collect-chips .x{background:rgba(180,92,255,.2)}.collect-chips .g{background:rgba(230,244,255,.14)}.collect-row .wp small{font-size:12px;opacity:.8}
+.collect-bar{display:block;height:6px;border-radius:99px;background:rgba(255,255,255,.1);margin:5px 0 3px;overflow:hidden;max-width:200px}
+.collect-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#B45CFF,#FF4FA3)}
 </style>
 </head>
 <body>
@@ -1119,7 +1135,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '21';
+const AVER = '22';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2348,10 +2364,30 @@ function renderAdmin() {
   document.querySelectorAll('[data-admmode]').forEach((x) => { x.onclick = () => adminAct('mode', x.dataset.admmode); });
   document.querySelectorAll('[data-admeff]').forEach((x) => { x.onclick = () => adminAct('effort', x.dataset.admeff); });
 }
+// Sammler-Rangliste: jede Karte in jeder Fassung zählt einmal, Doppelte nicht
+let collectD = null;
+function renderCollectRanks(box, me2) {
+  if (!collectD) { box.innerHTML = '<p class="sub">Lädt …</p>'; api('/api/ranks/cards').then((d) => { collectD = d; if (rtab === 'cards') renderRanks(); }).catch((e) => toast(e.message)); return; }
+  const d = collectD, P = d.points, N = d.names;
+  const head = `<div class="collect-head">
+    <b>Wer hat die größte Sammlung?</b>
+    <p>Es gibt aktuell <b>${fmt(d.total)}</b> verschiedene Karten: ${fmt(d.totals.normal)} normale Fassungen, ${fmt(d.totals.ext)} Extended Arts und ${fmt(d.totals.ghost)} Ghost Rares. Jede zählt nur einmal, Doppelte bringen nichts.</p>
+    <div class="collect-pts">${Object.keys(P).map((k) => `<span><i class="cp-${k}"></i>${esc(N[k] || k)} <b>${P[k]}</b></span>`).join('')}</div>
+    <small>Punkte je Karte · höchstens ${fmt(d.maxPts)} Punkte möglich</small></div>`;
+  const row = (u, i) => `<div class="pl collect-row ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? '#C04BFF' : 'var(--line)'}">
+    <span class="pos">${i + 1}</span>${avatar(u, 38)}
+    <span class="nm"><b>${esc(u.name)}</b>
+      <span class="collect-chips"><span>Normal <b>${fmt(u.have.normal)}</b>/${fmt(d.totals.normal)}</span><span class="x">Extended <b>${fmt(u.have.ext)}</b>/${fmt(d.totals.ext)}</span><span class="g">Ghost <b>${fmt(u.have.ghost)}</b>/${fmt(d.totals.ghost)}</span></span>
+      <span class="collect-bar"><i style="width:${Math.round(100 * u.unique / d.total)}%"></i></span>
+      <span class="lv">${fmt(u.unique)} von ${fmt(d.total)} Karten · ${Math.round(100 * u.unique / d.total)} %</span></span>
+    <span class="wp">${fmt(u.pts)}<small> Pkt</small></span></div>`;
+  box.innerHTML = head + (d.rows.length ? `<div class="plist">${d.rows.map(row).join('')}</div>` : '<p class="sub">Noch hat niemand Karten gesammelt.</p>');
+}
 function renderRanks() {
   const box = $('#rbody'); if (!box || !home) return;
   document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
   const me2 = home.me;
+  if (rtab === 'cards') return renderCollectRanks(box, me2);
   const rows = rtab === 'casino' ? (home.casinoTop || []) : rtab === 'points' ? (home.points || []) : (home.world || []);
   const line = (u, i) => {
     if (rtab === 'casino') return casinoRow(u, i, me2);
@@ -2587,7 +2623,7 @@ function build() {
   if (!S && page === 'ranks') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Ranglisten</h1>
-    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button></div>
+    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button><button data-rt="cards" class="rt-glitter">✨ Sammlung</button></div>
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
@@ -3255,7 +3291,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openChallenges') { page = 'challenges'; chalMarkSeen(); render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }
   else if (t.id === 'openSupport') { page = 'support'; render(); }
-  else if (t.dataset.rt) { rtab = t.dataset.rt; renderRanks(); }
+  else if (t.dataset.rt) { rtab = t.dataset.rt; if (rtab === 'cards') collectD = null; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }

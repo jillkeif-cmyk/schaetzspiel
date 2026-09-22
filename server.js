@@ -627,6 +627,36 @@ app.post('/api/tcg/cancel', async (req, res) => {
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// ---------- Sammler-Rangliste: jede Karte in jeder Fassung zählt einmal ----------
+const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15 };
+const COLLECT = (() => {
+  const v = tcg.view(); const all = [];
+  for (const c of v.cards) for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va });
+  const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' ? 'ghost' : 'normal');
+  const totals = { normal: 0, ext: 0, ghost: 0 }; let maxPts = 0;
+  for (const e of all) { totals[group(e.variant)]++; maxPts += COLLECT_PTS[e.variant] || 1; }
+  return { keys: new Set(all.map((e) => e.id + ':' + e.variant)), total: all.length, totals, maxPts, group };
+})();
+let collectCache = { at: 0, data: null };
+app.get('/api/ranks/cards', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!collectCache.data || Date.now() - collectCache.at > 60000) { // höchstens einmal pro Minute neu rechnen
+      const users = await store.searchUsers('', 500).catch(() => []);
+      const rows = [];
+      for (const x of users) {
+        const cs = await store.cardsOf(x.id).catch(() => []);
+        const have = { normal: 0, ext: 0, ghost: 0 }; let pts = 0; const seen = new Set();
+        for (const r of cs) { const k = r.card_id + ':' + r.variant; if ((Number(r.count) || 0) > 0 && COLLECT.keys.has(k) && !seen.has(k)) { seen.add(k); have[COLLECT.group(r.variant)]++; pts += COLLECT_PTS[r.variant] || 1; } }
+        if (seen.size) rows.push({ ...publicStats(x), have, unique: seen.size, pts });
+      }
+      rows.sort((a, b) => b.pts - a.pts || b.unique - a.unique);
+      collectCache = { at: Date.now(), data: rows };
+    }
+    res.json({ rows: collectCache.data, total: COLLECT.total, totals: COLLECT.totals, maxPts: COLLECT.maxPts, points: COLLECT_PTS, names: tcg.view().names });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.get('/api/tcg/history', async (req, res) => {
   try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json({ trades: await store.trades(60) }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
