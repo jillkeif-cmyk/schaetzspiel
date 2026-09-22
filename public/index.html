@@ -1354,7 +1354,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '37';
+const AVER = '38';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2573,6 +2573,21 @@ function tcRunLight(targetSeg) { // Licht läuft um, beschleunigt, bremst ab und
 }
 // Risikoleiter: senkrechte Stufen, ganz oben Ausspielung. Risiko: das Licht taktet zwischen oben und unten, START hält an.
 const tcLow = (pos) => Math.max(0, pos - 1); // eine Stufe zurück, unten die Ausspielung
+// Auslaufendes Flackern wie am Automaten: nach dem Druck wird der Takt langsamer und bleibt auf dem Ergebnis stehen
+function tcLadderLand(hi, lo, up) {
+  const gaps = [80, 90, 100, 115, 135, 160, 195, 240, 300]; // 9 Wechsel, zusammen gut 1,2 Sekunden
+  const target = up ? hi : lo, other = up ? lo : hi;
+  return new Promise((done) => {
+    let i = 0;
+    const step = () => {
+      const k = (gaps.length - 1 - i) % 2 === 0 ? target : other; // so gewählt, dass der letzte Wechsel auf dem Ergebnis landet
+      [hi, lo].forEach((n) => { const e = $('#tcLs' + n); if (e) e.classList.toggle('flash', n === k); });
+      sfx('tick');
+      if (++i < gaps.length) setTimeout(step, gaps[i - 1]); else setTimeout(done, 420);
+    };
+    step();
+  });
+}
 const tcNoRisk = () => { if (tc.risk && tc.risk.noRisk) { toast('Höchstgewinn erreicht, Risiko geht nur bis zum 50-fachen Einsatz. START nimmt mit.'); return true; } return false; };
 function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste hält an, Grün nimmt mit
   if (tcNoRisk()) return;
@@ -2601,8 +2616,11 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
   };
   const go = async () => { // ein Druck, ein Versuch: weiteres Drücken ändert nichts
     if (busy) return; busy = true; stopBlink();
+    const R0 = tc.risk, hi0 = R0.pos + 1, lo0 = tcLow(R0.pos);
     const r = await api('/api/casino/triple/risk', { action: 'ladder' }).catch((e) => { toast(e.message); return null; });
-    busy = false; if (!r) { draw(); return; }
+    if (!r) { busy = false; draw(); return; }
+    await tcLadderLand(hi0, lo0, !!r.up); // Ergebnis steht fest, das Licht läuft nur sichtbar darauf aus
+    busy = false;
     if (r.done) { tc.risk = null; tc.mode = 'play'; tc.startHook = null; tc.startLabel = null; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
       const cell = $('#tcLs' + r.pos); if (cell) cell.classList.add('cur');
       if (r.ausspielung) { tcSetMsg('🔔 AUSSPIELUNG · der ganze Gewinn ist weg'); sfx('wrong'); }
