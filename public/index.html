@@ -1157,6 +1157,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #opener .slot.r-mythic{animation:flip .55s cubic-bezier(.2,.9,.3,1) var(--d) both, shake .5s ease-out calc(var(--d) + .6s) none}
 #hl.mythic .banner{background:conic-gradient(from 0deg,#FF4FA3,#FFD23F,#3DDC97,#5AA9FF,#B45CFF,#FF4FA3);-webkit-background-clip:text;background-clip:text;color:transparent;animation:mythspin 2s linear infinite}
 .giftcard.dev{background:linear-gradient(135deg,rgba(180,92,255,.3),rgba(90,169,255,.18));box-shadow:inset 0 0 0 2px rgba(214,160,255,.8),0 0 22px rgba(180,92,255,.35)}
+.watchbox{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 14px;border-radius:20px;background:var(--bg-deep);box-shadow:inset 0 0 0 2px rgba(90,169,255,.45);text-align:center}
+.watchbox small{color:var(--muted);font-weight:700}.watchbox b{font:400 44px/1.05 Anton,Impact,sans-serif;color:#9CCBFF;word-break:break-word}.watchbox b.done{color:var(--tape)}
+.watchopts{margin-top:10px}.watchopts .opt{cursor:default;opacity:.8}.watchopts .opt.picked{opacity:1;box-shadow:0 0 0 3px var(--tape),0 0 18px rgba(255,210,63,.5)}
 </style>
 </head>
 <body>
@@ -2780,6 +2783,25 @@ const IDLE_MS = 5 * 60 * 1000;
 function markActive() { lastInput = Date.now(); if (idleSent && socket && socket.connected) { idleSent = false; socket.emit('idle', false); } }
 ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'].forEach((ev) => window.addEventListener(ev, markActive, { passive: true, capture: true }));
 setInterval(() => { if (!idleSent && socket && socket.connected && Date.now() - lastInput > IDLE_MS) { idleSent = true; socket.emit('idle', true); } }, 20000);
+// Zuschaueranzeige während einer Frage
+function renderWatch() {
+  const el = document.getElementById('watchBox'); if (!el || !S || !S.watching || S.phase !== 'question') return;
+  const q = S.question, unit = q.unit ? ' ' + esc(q.unit) : '';
+  if (S.solo && S.live) {
+    const L = S.live, done = L.answer !== null;
+    const val = done ? (q.type === 'mc' ? 'ABCD'[L.answer] + ' · ' + esc(q.options[L.answer] || '') : Number(L.answer).toLocaleString('de-DE') + unit) : (L.typing ? esc(L.typing) + unit : '…');
+    el.innerHTML = `<small>👀 Du schaust ${esc(L.name)} zu</small><b class="${done ? 'done' : ''}">${val}</b><small>${done ? '✓ Schätzung abgegeben' : q.type === 'mc' ? 'wählt gerade eine Antwort …' : 'tippt gerade …'}</small>`;
+    document.querySelectorAll('[data-wi]').forEach((x) => x.classList.toggle('picked', done && Number(x.dataset.wi) === L.answer));
+  } else {
+    const ps = S.players || [], n = ps.filter((p) => p.answered).length;
+    el.innerHTML = `<small>👀 Du schaust zu</small><b>${n} von ${ps.length}</b><small>haben schon geantwortet · die Zahlen siehst du bei der Auflösung</small>`;
+  }
+}
+let typeT = 0;
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'guess' || !S || !S.solo || !S.watchers || S.watching || !socket) return;
+  clearTimeout(typeT); typeT = setTimeout(() => socket.emit('typing', e.target.value), 250); // Solo-Zuschauer sehen die Eingabe live
+});
 function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
@@ -2957,7 +2979,7 @@ function build() {
     <div id="chips" class="chips mobonly"></div><div class="col">
     <div class="cat"><span>${esc(q.cat)}${q.ai ? ' · frisch generiert' : ''}</span><span>Frage ${S.qIndex} von ${S.qTotal}</span></div>
     <div class="qtext">${esc(q.text)}</div>
-    <div id="answerArea">${q.type === 'mc'
+    <div id="answerArea">${S.watching ? `<div class="watchbox" id="watchBox"></div>${q.type === 'mc' ? `<div class="opts watchopts">${q.options.map((o, i) => `<div class="opt" data-wi="${i}"><em>${'ABCD'[i]}</em>${esc(o)}</div>`).join('')}</div>` : ''}` : q.type === 'mc'
       ? `<div class="opts">${q.options.map((o, i) => `<button class="opt" data-i="${i}"><em>${'ABCD'[i]}</em>${esc(o)}</button>`).join('')}</div>`
       : `<form id="guessForm" style="display:flex;flex-direction:column;gap:10px">
           <div class="guess"><input id="guess" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Deine Schätzung">${q.unit ? `<span>${esc(q.unit)}</span>` : ''}</div>
@@ -3143,6 +3165,7 @@ function barHtml(cur, goal, done) { return `<div class="bar ${done ? 'done' : ''
 const OPTS = { pointLimit: ['Punktelimit', [500, 1000, 2000, 3000, 4000], ''], maxQuestions: ['Höchstens Fragen', [15, 25, 40], ''], countdown: ['Countdown vor dem Start', [30, 60, 120], ' s'], answerTime: ['Zeit pro Schätzfrage', [8, 20, 30, 45], ' s'] };
 
 function update() {
+  try { renderWatch(); } catch (e) {} // Zuschaueranzeige aktuell halten
   $('#quit').classList.toggle('on', !!(token && S && (S.phase === 'question' || S.phase === 'reveal' || S.phase === 'countdown')));
   const sb = $('#sound');
   sb.classList.toggle('on', !!(token && S));
