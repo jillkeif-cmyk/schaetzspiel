@@ -2313,7 +2313,7 @@ const GUIDES = {
     ['Bedienung', 'Einsatz wählt den Betrag, START dreht die Walzen. Auto dreht von selbst weiter und nimmt Gewinne sofort mit, nochmal Auto stoppt. Turbo macht alles schneller.'],
     ['Gewinne', 'Krone 150-fach, Sieben 40-fach, Hufeisen 12-fach, Blitz, Herz, Stern und Mond je 8-fach. Chip gibt den Einsatz zurück plus einen Gratis-Dreh. Die genauen Beträge zu deinem Einsatz stehen unter „Gewinne“.'],
     ['Vollbild und Rewin-Rad', 'Zeigen alle 9 Felder Blitz, Herz, Stern oder Mond, gewinnen alle 5 Linien. Dann startet das Rad mit 12 Feldern, in Runde 1 mit nur einem Stop. Landet das Licht auf Rewin, wird das Vollbild nochmal gezählt, und es kommt ein Stop-Feld dazu. START beschleunigt das Licht, nochmal START bremst es ab. Wo es landet, ist Zufall, im Schnitt gibt es knapp drei Rewins.'],
-    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Das Licht taktet zwischen der nächsthöheren und der nächstniedrigeren Stufe, START hält es an. Ganz oben wartet die Ausspielung. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
+    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Es blinken abwechselnd eine höhere und eine tiefere Stufe, START hält an. Unten geht es nur eine Stufe zurück, weiter oben fällt man tiefer. Mitten in der Leiter sitzt die Ausspielung: Wer dort landet, bekommt den Betrag ausgezahlt und das Risiko ist vorbei. Ganz unten auf der 0 ist der Gewinn weg. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
     ['Fair', 'Alles wird auf dem Server ausgelost. Die Auszahlungsquote liegt bei rund 96 %, die Chancen beim Riskieren sind genau fair.']]],
   roulette: ['🎡 Roulette', [
     ['Ziel', 'Die Kugel landet auf einer Zahl von 0 bis 36. Du setzt vorher darauf, wo sie landet.'],
@@ -2507,27 +2507,32 @@ function tcRunLight(targetSeg) { // Licht läuft um, beschleunigt, bremst ab und
   });
 }
 // Risikoleiter: senkrechte Stufen, ganz oben Ausspielung. Risiko: das Licht taktet zwischen oben und unten, START hält an.
+const tcLow = (pos) => Math.max(0, pos - (1 + Math.floor(pos / 3))); // wie tief es zurückgeht
 function tcLadderOpen() {
   tc.mode = 'ladder'; tcSync();
   const draw = () => {
     const R = tc.risk, top = R.steps.length - 1;
     // Goldene Leiter in der Mitte: jede Stufe breiter als die darunter, ganz oben die Ausspielung
-    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((v, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${i === top ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${i === top ? `<small>👑 AUSSPIELUNG</small><b>${fmt(v)}</b>` : `<b>${fmt(v)}</b>`}</div>`).reverse().join('')}</div>
-      <div class="tc-lbtns"><button class="btn tc-riskbtn" id="tcLRisk" ${R.pos >= top ? 'disabled' : ''}>Risiko<small>${R.pos < top ? Math.round(100 * (R.win - R.steps[R.pos - 1]) / (R.steps[R.pos + 1] - R.steps[R.pos - 1])) + ' % hoch' : ''}</small></button><button class="btn ghost" id="tcLSplit">Teilen<small>${fmt(Math.floor(R.win / 2))} sicher</small></button><button class="btn ghost" id="tcLCard">Karte</button><button class="btn" id="tcLTake">Nehmen</button></div></div>`;
+    // Goldene Leiter: unten 0, mittendrin die AUSSPIELUNG (dort wird ausgezahlt und das Risiko endet)
+    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? `<small>AUSSPIELUNG</small><b>${fmt(st.v)}</b>` : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div>
+      <div class="tc-lbtns"><button class="btn tc-riskbtn" id="tcLRisk" ${R.pos >= top ? 'disabled' : ''}>Risiko<small>${R.pos < top ? Math.round(100 * (R.win - R.steps[tcLow(R.pos)].v) / (R.steps[R.pos + 1].v - R.steps[tcLow(R.pos)].v)) + ' % hoch' : ''}</small></button><button class="btn ghost" id="tcLSplit">Teilen<small>${fmt(Math.floor(R.win / 2))} sicher</small></button><button class="btn ghost" id="tcLCard">Karte</button><button class="btn" id="tcLTake">Nehmen</button></div></div>`;
     $('#tcLRisk').onclick = ladderRisk; $('#tcLTake').onclick = async () => { await tcTakeQuiet(); tcSetMsg(`💰 ${fmt(tc.lastWin)} gutgeschrieben`); };
     $('#tcLSplit').onclick = () => tcSplit(draw); $('#tcLCard').onclick = tcCardOpen;
   };
-  const ladderRisk = () => { // taktet hoch und runter, bis START oder nach kurzer Zeit
-    const R = tc.risk, hi = R.pos + 1, lo = R.pos - 1; let on = true, n = 0, stop = false;
+  const ladderRisk = () => { // es blinken abwechselnd die nächste Stufe und die Null
+    const R = tc.risk, hi = R.pos + 1, lo = tcLow(R.pos); let on = true, n = 0, stop = false; // höhere und tiefere Stufe blinken
     const iv = setInterval(() => { on = !on; n++; ['tcLs' + hi, 'tcLs' + lo].forEach((id) => $('#' + id) && $('#' + id).classList.remove('flash')); const el = $('#tcLs' + (on ? hi : lo)); if (el) el.classList.add('flash'); sfx('tick'); if (n > 26 || stop) { clearInterval(iv); go(); } }, 120);
     tc.startHook = () => { stop = true; }; tc.startLabel = 'STOPP'; tcSync();
     const go = async () => {
       tc.startHook = null; tc.startLabel = null;
       const r = await api('/api/casino/triple/risk', { action: 'ladder' }).catch((e) => { toast(e.message); return null; }); if (!r) return;
       if (r.done) { tc.risk = null; tc.mode = 'play'; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
-        if (r.ausspielung) { tcSetMsg(`🏆 AUSSPIELUNG! ${fmt(r.paid)} Diamanten`); sfx('prestige'); } else { tcSetMsg('💥 Auf 0 gefallen'); sfx('wrong'); }
-        setTimeout(() => { $('#tcOver').innerHTML = ''; }, 1400); tcSync(); return; }
-      tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos }; sfx(r.up ? 'exact' : 'wrong'); tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Runter auf ${fmt(r.win)}`); tcSync(); draw();
+        const cell = $('#tcLs' + r.pos); if (cell) cell.classList.add('cur');
+        if (r.ausspielung) { tcSetMsg(`🔔 AUSSPIELUNG · ${fmt(r.paid)} Diamanten, das Risiko ist vorbei`); sfx('prestige'); }
+        else if (r.top) { tcSetMsg(`🏆 GANZ OBEN! ${fmt(r.paid)} Diamanten`); sfx('prestige'); }
+        else { tcSetMsg('💥 Ganz nach unten · der Gewinn ist weg'); sfx('wrong'); }
+        setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1800); tcSync(); return; }
+      tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos }; sfx(r.up ? 'exact' : 'wrong'); tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); tcSync(); draw();
     };
   };
   draw();
@@ -2535,7 +2540,7 @@ function tcLadderOpen() {
 async function tcSplit(redraw) {
   const r = await api('/api/casino/triple/risk', { action: 'split' }).catch((e) => { toast(e.message); return null; }); if (!r) return;
   tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds;
-  tc.risk = { win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); tcSync(); redraw();
+  tc.risk = { win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, bet: r.bet }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); tcSync(); redraw();
 }
 // Kartenrisiko: Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg
 function tcCardOpen() {
@@ -2546,7 +2551,7 @@ function tcCardOpen() {
     $('#tcOver').innerHTML = `<div class="tc-cardbox"><div class="tc-ltitle">RISIKO</div>
       <div class="tc-cardrow"><div class="tc-prev">${cards.slice(-5).map((c) => `<span class="tc-pc ${suitCol(c)}"><b>${esc(c.r)}</b>${esc(c.s)}</span>`).join('') || '<small>vorherige Karten</small>'}</div>
         <div class="tc-deck ${flip ? 'flip ' + suitCol(flip) : ''}">${flip ? `<b>${esc(flip.r)}</b><i>${esc(flip.s)}</i>` : ''}</div></div>
-      <div class="tc-cstats"><div><small>Risiko-Spitze</small><b>${fmt(R.top || R.steps[R.steps.length - 1])}</b></div><div><small>Risiko-Erfolg</small><b>${fmt(R.win)}</b></div></div>
+      <div class="tc-cstats"><div><small>Risiko-Spitze</small><b>${fmt(R.top || (R.steps[R.steps.length - 1] || {}).v || 0)}</b></div><div><small>Risiko-Erfolg</small><b>${fmt(R.win)}</b></div></div>
       <div class="tc-cbtns"><button class="tc-rb red" id="tcCRed">ROT</button><button class="tc-rb black" id="tcCBlack">SCHWARZ</button></div>
       <div class="tc-lbtns"><button class="btn ghost" id="tcCSplit">Teilen</button><button class="btn ghost" id="tcCLad">zur Leiter</button><button class="btn" id="tcCTake">Nehmen</button></div></div>`;
     $('#tcCRed').onclick = () => pick('red'); $('#tcCBlack').onclick = () => pick('black');
