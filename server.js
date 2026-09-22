@@ -501,6 +501,7 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
   tripleOpen.delete(uid);
   return dia;
 }
+const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: st.steps[st.steps.length - 1] });
 app.post('/api/casino/triple', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -510,10 +511,10 @@ app.post('/api/casino/triple', async (req, res) => {
     const u2 = await store.userById(u.id);
     const t = await takeBet(u2, bet); if (t.error) return res.status(400).json({ error: t.error });
     const r = triple.play(bet);
-    let diamonds = t.left, lad = null;
-    if (r.total > 0) { lad = triple.ladder(r.total); tripleOpen.set(u.id, { bet, win: r.total, ladder: lad, pos: 0, paid: 0 }); }
+    let risk = null;
+    if (r.total > 0) { const L = triple.ladder(r.total); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
     else await casinoStat(u.id, bet, 0);
-    res.json({ ...r, bet, ladder: lad, pos: 0, diamonds });
+    res.json({ ...r, bet, risk, diamonds: t.left });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/casino/triple/risk', async (req, res) => {
@@ -521,22 +522,32 @@ app.post('/api/casino/triple/risk', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const st = tripleOpen.get(u.id); if (!st) return res.status(400).json({ error: 'Kein offener Gewinn.' });
     const a = String(req.body.action || '');
-    if (a === 'take') { const d = await tripleFinish(u.id, st, st.win); return res.json({ done: true, paid: st.win, diamonds: d }); }
-    if (a === 'split') { // Hälfte sicher nehmen, mit der anderen Hälfte weiter
+    const endWith = async (pay, extra) => { const d = await tripleFinish(u.id, st, pay); return res.json({ done: true, paid: pay, diamonds: d === null ? (await store.userById(u.id)).diamonds : d, ...extra }); };
+    if (a === 'take') return endWith(st.win, {});
+    if (a === 'split') { // Hälfte sicher, mit der anderen Hälfte weiter
       if (st.win < 2) return res.status(400).json({ error: 'Zu wenig zum Teilen.' });
-      const half = Math.floor(st.win / 2); const d = await payOut(u.id, half); st.paid += half;
-      st.win -= half; st.ladder = triple.ladder(st.win); st.pos = 0;
-      return res.json({ done: false, win: st.win, ladder: st.ladder, pos: 0, banked: half, diamonds: d });
+      const half = Math.floor(st.win / 2); const d = await payOut(u.id, half); st.paid += half; st.win -= half;
+      const L = triple.ladder(st.win); st.steps = L.steps; st.pos = L.pos;
+      return res.json({ done: false, banked: half, diamonds: d, ...tripleView(st) });
     }
-    if (a === 'risk') {
-      if (st.pos >= st.ladder.length - 1) return res.status(400).json({ error: 'Ganz oben angekommen.' });
-      if (triple.riskWins(st.ladder[st.pos], st.ladder[st.pos + 1])) {
-        st.pos++; st.win = st.ladder[st.pos];
-        if (st.pos >= st.ladder.length - 1) { const d = await tripleFinish(u.id, st, st.win); return res.json({ done: true, up: true, top: true, paid: st.win, pos: st.pos, ladder: st.ladder, diamonds: d }); }
-        return res.json({ done: false, up: true, win: st.win, ladder: st.ladder, pos: st.pos });
-      }
-      const lost = st.win; st.win = 0; const d = await tripleFinish(u.id, st, 0);
-      return res.json({ done: true, up: false, lost, diamonds: d === null ? (await store.userById(u.id)).diamonds : d });
+    if (a === 'ladder') { // Licht taktet zwischen nächsthöherer und nächstniedrigerer Stufe
+      const top = st.steps.length - 1; if (st.pos >= top || st.pos <= 0) return res.status(400).json({ error: 'Hier geht es nicht weiter.' });
+      const low = st.steps[st.pos - 1], high = st.steps[st.pos + 1];
+      const up = triple.riskWins(triple.chance(low, st.win, high));
+      st.pos += up ? 1 : -1; st.win = st.steps[st.pos];
+      if (st.pos === top) return endWith(st.win, { up: true, ausspielung: true, ...tripleView(st) });
+      if (st.pos === 0) return endWith(0, { up: false, lost: true, ...tripleView(st) });
+      return res.json({ done: false, up, ...tripleView(st) });
+    }
+    if (a === 'card') { // Rot oder Schwarz: richtig verdoppelt (höchstens bis zur Risiko-Spitze), falsch ist alles weg
+      const pick = req.body.color === 'black' ? 'black' : 'red', c = triple.drawCard(), right = (triple.cardRed(c) ? 'red' : 'black') === pick;
+      st.cards = [...st.cards, c].slice(-6);
+      if (!right) return endWith(0, { card: c, right: false, lost: true, cards: st.cards });
+      const top = st.steps[st.steps.length - 1]; st.win = Math.min(top, st.win * 2);
+      if (st.win >= top) return endWith(st.win, { card: c, right: true, ausspielung: true, cards: st.cards });
+      const L = triple.ladder(st.win); st.steps = L.steps.slice(0, -1).concat([top]); st.pos = L.pos; // Spitze bleibt gleich
+      if (st.pos >= st.steps.length - 1) st.pos = st.steps.length - 2;
+      return res.json({ done: false, card: c, right: true, ...tripleView(st) });
     }
     res.status(400).json({ error: 'Unbekannte Aktion.' });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
