@@ -1096,7 +1096,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .it-row b{font-size:14.5px}.it-row small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
 .it-row .it-kind{display:inline;font-size:10.5px;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.08);vertical-align:1px}
 .it-row .bar{margin-top:4px}
-.it-row:not(.ok) .it-pic{filter:grayscale(.45) brightness(.85)}
+.it-row:not(.ok) .it-pic{opacity:.6} /* Transparenz statt Filter: Safari zeichnete gefilterte Bilder in langen Listen verrutscht */
+.it-emb{width:52px;height:52px;object-fit:contain;display:block}
 #chalWrap[hidden],#itemsWrap[hidden]{display:none}
 .tab-badge{display:inline-block;min-width:20px;height:20px;margin-left:6px;padding:0 5px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 12px/20px Archivo;text-align:center;vertical-align:1px;animation:ncpulse 1.4s ease-in-out infinite}
 #casBadge{order:3}
@@ -1216,6 +1217,7 @@ body.no-grading .grading-only{display:none !important}
 .chal.isnew{position:relative;box-shadow:0 0 0 2px #3DDC97,0 0 18px rgba(61,220,151,.45)}
 .new-tag{position:absolute;top:-8px;right:10px;z-index:2;padding:3px 8px;border-radius:99px;background:linear-gradient(135deg,#3DDC97,#1FA35A);color:#062015;font:900 10px/1.2 Archivo}
 .it-row.isnew{box-shadow:0 0 0 2px #3DDC97,0 0 14px rgba(61,220,151,.4)}.it-new{display:inline;color:#3DDC97;font-weight:900}
+.it-h{margin:14px 0 8px;font:800 16px/1.2 Archivo}.it-h small{color:var(--muted);font-weight:600;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -2557,7 +2559,7 @@ function renderItemsTab() {
     .filter((i) => !i.dev && !i.event && (itKind === 'all' || i.k === itKind));
   const sn = seenSet(), open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked).sort((a, b) => (sn.has(a.k + ':' + a.id) ? 1 : 0) - (sn.has(b.k + ':' + b.id) ? 1 : 0));
   const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${AVER}" alt="">`
-    : i.k === 'e' ? `<img class="pcemb${i.anim ? ' a-' + i.anim : ''}" style="--s:48px" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
+    : i.k === 'e' ? `<img class="it-emb" width="52" height="52" loading="lazy" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
     : avatar({ ...home.me, frame: i.id, frameAnim: i.anim }, 48, false);
   const row = (i) => {
     const x = g[i.id], cur = x ? Math.min(x[1], st[x[0]] || 0) : 0, pct = Math.round(100 * prog(i));
@@ -2570,8 +2572,8 @@ function renderItemsTab() {
   };
   box.innerHTML = `<div class="seg" style="margin:4px 0 10px">${[['all', 'Alle'], ['t', 'Titel'], ['e', 'Embleme'], ['f', 'Rahmen']].map(([k, n]) => `<button data-itkind="${k}" class="${itKind === k ? 'on' : ''}">${n}</button>`).join('')}</div>
     <p class="sub">${open.length} noch offen · ${done.length} freigeschaltet. Die, bei denen du am weitesten bist, stehen oben.</p>
-    <div class="it-list">${open.map(row).join('')}</div>
-    ${done.length ? `<h2 style="margin:16px 0 8px">Freigeschaltet</h2><div class="it-list">${done.map(row).join('')}</div>` : ''}`;
+    ${itKind === 'all' ? [['t', '🏷 Titel'], ['e', '🛡 Embleme'], ['f', '⭕ Rahmen']].map(([k, n]) => { const l = open.filter((i) => i.k === k); return l.length ? `<h3 class="it-h">${n} <small>${l.length} offen</small></h3><div class="it-list">${l.map(row).join('')}</div>` : ''; }).join('') : `<div class="it-list">${open.map(row).join('')}</div>`}
+    ${done.length ? `<h2 style="margin:16px 0 8px">Freigeschaltet</h2>${itKind === 'all' ? [['t', '🏷 Titel'], ['e', '🛡 Embleme'], ['f', '⭕ Rahmen']].map(([k, n]) => { const l = done.filter((i) => i.k === k); return l.length ? `<h3 class="it-h">${n} <small>${l.length}</small></h3><div class="it-list">${l.map(row).join('')}</div>` : ''; }).join('') : `<div class="it-list">${done.map(row).join('')}</div>`}` : ''}`;
   box.querySelectorAll('[data-itkind]').forEach((b) => { b.onclick = () => { itKind = b.dataset.itkind; renderItemsTab(); }; });
   box.querySelectorAll('[data-itid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.itk, b.dataset.itid); });
 }
