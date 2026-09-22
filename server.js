@@ -521,6 +521,7 @@ const fmtInt = (n) => String(n);
 const triple = require('./lib/triple');
 const tripleOpen = new Map(); // offener Gewinn auf der Risikoleiter je Spieler
 async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde für Casino-XP verbuchen
+  tripleOpen.delete(uid); // zuerst schließen, damit ein zweiter gleichzeitiger Aufruf nichts mehr findet
   let dia = null;
   if (extraPay > 0) dia = await payOut(uid, extraPay);
   await casinoStat(uid, st.bet, st.paid + (extraPay || 0)); await bigWin(uid, 'Triple Crown', st.paid + (extraPay || 0));
@@ -530,13 +531,17 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
   tripleOpen.delete(uid);
   return dia;
 }
-const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: st.steps[st.steps.length - 1].v, bet: st.bet });
+const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: triple.riskTop(st.bet), bet: st.bet, noRisk: st.win >= triple.riskTop(st.bet) });
+const tripleBusy = new Set(); // pro Spieler immer nur eine Triple-Anfrage gleichzeitig
+const tripleLock = (uid, res) => { if (tripleBusy.has(uid)) { res.status(429).json({ error: 'Einen Moment …' }); return false; } tripleBusy.add(uid); return true; };
 app.post('/api/casino/triple', async (req, res) => {
   try {
     if (gameLocked('triple', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const bet = Math.round(Number(req.body.bet) || 0);
     if (!triple.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
+    if (!tripleLock(u.id, res)) return;
+    try {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
     const u2 = await store.userById(u.id);
     const t = await takeBet(u2, bet); if (t.error) return res.status(400).json({ error: t.error });
@@ -544,22 +549,27 @@ app.post('/api/casino/triple', async (req, res) => {
     const fulls = r.spins.filter((x) => x.full).length;
     await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
     let risk = null;
-    if (r.total > 0) { const L = triple.ladder(r.total); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
+    if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
     else await casinoStat(u.id, bet, 0);
     res.json({ ...r, bet, risk, diamonds: t.left });
+    } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/casino/triple/risk', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!tripleLock(u.id, res)) return;
+    try {
     const st = tripleOpen.get(u.id); if (!st) return res.status(400).json({ error: 'Kein offener Gewinn.' });
     const a = String(req.body.action || '');
+    const capped = st.win >= triple.riskTop(st.bet); // Höchstgewinn erreicht: nur noch Nehmen oder Teilen
+    if (capped && (a === 'ladder' || a === 'card')) return res.status(400).json({ error: `Risiko geht nur bis ${triple.RISK_TOP}-fach. Nimm den Gewinn mit.` });
     const endWith = async (pay, extra) => { const d = await tripleFinish(u.id, st, pay); return res.json({ done: true, paid: pay, diamonds: d === null ? (await store.userById(u.id)).diamonds : d, ...extra }); };
     if (a === 'take') return endWith(st.win, {});
     if (a === 'split') { // Hälfte sicher, mit der anderen Hälfte weiter
       if (st.win < 2) return res.status(400).json({ error: 'Zu wenig zum Teilen.' });
       const half = Math.floor(st.win / 2); const d = await payOut(u.id, half); st.paid += half; st.win -= half;
-      const L = triple.ladder(st.win); st.steps = L.steps; st.pos = L.pos;
+      const L = triple.ladder(st.win, st.bet); st.steps = L.steps; st.pos = L.pos;
       return res.json({ done: false, banked: half, diamonds: d, ...tripleView(st) });
     }
     if (a === 'ladder') { // Zeiger springt zwischen der Stufe darüber und dem Feld darunter
@@ -573,14 +583,16 @@ app.post('/api/casino/triple/risk', async (req, res) => {
     }
     if (a === 'card') { // Rot oder Schwarz: richtig verdoppelt (höchstens bis zur Risiko-Spitze), falsch ist alles weg
       const pick = req.body.color === 'black' ? 'black' : 'red', c = triple.drawCard(), right = (triple.cardRed(c) ? 'red' : 'black') === pick;
+      // Die Spitze liegt fest beim RISK_TOP-fachen Einsatz; höher geht es auch mit der Karte nicht
       st.cards = [...st.cards, c].slice(-6);
       if (!right) return endWith(0, { card: c, right: false, lost: true, cards: st.cards });
-      const top = st.steps[st.steps.length - 1].v; st.win = Math.min(top, st.win * 2);
+      const top = triple.riskTop(st.bet); st.win = Math.min(top, st.win * 2);
       if (st.win >= top) return endWith(st.win, { card: c, right: true, top: true, cards: st.cards });
-      const L = triple.ladder(st.win); st.steps = L.steps; st.pos = L.pos;
+      const L = triple.ladder(st.win, st.bet); st.steps = L.steps; st.pos = L.pos;
       return res.json({ done: false, card: c, right: true, ...tripleView(st) });
     }
     res.status(400).json({ error: 'Unbekannte Aktion.' });
+    } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

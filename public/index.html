@@ -1354,7 +1354,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '36';
+const AVER = '37';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2347,7 +2347,7 @@ const GUIDES = {
     ['Bedienung', 'Einsatz wählt den Betrag, START dreht die Walzen. Auto dreht von selbst weiter und nimmt Gewinne sofort mit, nochmal Auto stoppt. Turbo macht alles schneller.'],
     ['Gewinne', 'Krone 150-fach, Sieben 40-fach, Hufeisen 12-fach, Blitz, Herz, Stern und Mond je 8-fach. Chip gibt den Einsatz zurück plus einen Gratis-Dreh. Die genauen Beträge zu deinem Einsatz stehen unter „Gewinne“.'],
     ['Vollbild und Rewin-Rad', 'Zeigen alle 9 Felder Blitz, Herz, Stern oder Mond, gewinnen alle 5 Linien. Dann startet das Rad mit 12 Feldern, in Runde 1 mit nur einem Stop. Landet das Licht auf Rewin, wird das Vollbild nochmal gezählt, und es kommt ein Stop-Feld dazu. START beschleunigt das Licht, nochmal START bremst es ab. Wo es landet, ist Zufall, im Schnitt gibt es knapp drei Rewins.'],
-    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Es blinken abwechselnd die Stufe darüber und das Feld darunter, START hält an. Unter deiner Stufe steht die Ausspielung: Landet der Zeiger dort, ist der ganze Gewinn weg. Du musst das Risiko aber nie annehmen, Nehmen geht immer. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
+    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Es blinken abwechselnd die Stufe darüber und das Feld darunter, START hält an. Unter deiner Stufe steht die Ausspielung: Landet der Zeiger dort, ist der ganze Gewinn weg. Die Leiter hat feste Stufen bis zum 50-fachen Einsatz, höher geht es auch mit der Karte nicht. Du musst das Risiko aber nie annehmen, Nehmen geht immer. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
     ['Fair', 'Alles wird auf dem Server ausgelost. Die Auszahlungsquote liegt bei rund 96 %, die Chancen beim Riskieren sind genau fair.']]],
   roulette: ['🎡 Roulette', [
     ['Ziel', 'Die Kugel landet auf einer Zahl von 0 bis 36. Du setzt vorher darauf, wo sie landet.'],
@@ -2516,7 +2516,7 @@ async function tcSpin() {
       await tcSleep(sp.win ? 500 : 180);
     }
     tc.busy = false;
-    if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(`Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 40) sfx('exact'); }
+    if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 40) sfx('exact'); }
     else tcSetMsg('Leider nichts');
     tcSync();
     if (tc.auto) { // Gewinn im Autoplay sofort einsacken und weiterdrehen
@@ -2573,7 +2573,9 @@ function tcRunLight(targetSeg) { // Licht läuft um, beschleunigt, bremst ab und
 }
 // Risikoleiter: senkrechte Stufen, ganz oben Ausspielung. Risiko: das Licht taktet zwischen oben und unten, START hält an.
 const tcLow = (pos) => Math.max(0, pos - 1); // eine Stufe zurück, unten die Ausspielung
+const tcNoRisk = () => { if (tc.risk && tc.risk.noRisk) { toast('Höchstgewinn erreicht, Risiko geht nur bis zum 50-fachen Einsatz. START nimmt mit.'); return true; } return false; };
 function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste hält an, Grün nimmt mit
+  if (tcNoRisk()) return;
   tc.mode = 'ladder'; tcSync();
   let blink = null, busy = false;
   const stopBlink = () => { if (blink) clearInterval(blink); blink = null; document.querySelectorAll('#tcOver .tc-ls.flash').forEach((e) => e.classList.remove('flash')); };
@@ -2607,7 +2609,7 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
       else if (r.top) { tcSetMsg(`🏆 GANZ OBEN! ${fmt(r.paid)} Diamanten`); sfx('prestige'); }
       else { tcSetMsg('💥 Verloren'); sfx('wrong'); }
       setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1800); tcSync(); return; }
-    tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos }; sfx(r.up ? 'exact' : 'wrong');
+    tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos, noRisk: r.noRisk }; sfx(r.up ? 'exact' : 'wrong');
     tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); tcSync(); draw();
   };
   tc.startHook = () => { if (tc.mode === 'ladder') go(); }; tc.startLabel = 'RISIKO'; // große Taste riskiert ebenfalls
@@ -2616,10 +2618,11 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
 async function tcSplit(redraw) {
   const r = await api('/api/casino/triple/risk', { action: 'split' }).catch((e) => { toast(e.message); return null; }); if (!r) return;
   tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds;
-  tc.risk = { win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, bet: r.bet }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); tcSync(); redraw();
+  tc.risk = { win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, bet: r.bet, noRisk: r.noRisk }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); tcSync(); redraw();
 }
 // Kartenrisiko: Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg
 function tcCardOpen() {
+  if (tcNoRisk()) return;
   tc.mode = 'card'; tc.startHook = null; tc.startLabel = null; tcSync();
   const suitCol = (c) => (c.s === '♥' || c.s === '♦' ? 'red' : '');
   const draw = (flip) => {
@@ -2640,7 +2643,7 @@ function tcCardOpen() {
     if (r.done) { tc.risk = { ...tc.risk, win: r.right ? r.paid : 0 }; draw(r.card); tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid || 0;
       tcSetMsg(r.right ? `🏆 AUSSPIELUNG! ${fmt(r.paid)} Diamanten` : `💥 ${r.card.s} ${r.card.r} · leider falsch`); sfx(r.right ? 'prestige' : 'wrong');
       tc.risk = null; tc.mode = 'play'; setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1600); tcSync(); return; }
-    tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top }; tcSetMsg(`✅ Richtig! Jetzt ${fmt(r.win)}`); sfx('exact'); tcSync(); draw(r.card);
+    tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, noRisk: r.noRisk }; tcSetMsg(`✅ Richtig! Jetzt ${fmt(r.win)}`); sfx('exact'); tcSync(); draw(r.card);
   };
   draw();
 }
@@ -2650,7 +2653,7 @@ function tcPaytable() {
     <div class="tc-pays">${Object.keys(TC_PAY).map((k) => `<div class="tc-pay"><span class="tc-three"><i class="s-${k}"></i><i class="s-${k}"></i><i class="s-${k}"></i></span><b>${fmt(TC_PAY[k] * bet)}</b>${k === 'C' ? '<small>+ Gratis-Dreh</small>' : ['B', 'R', 'T', 'M'].includes(k) ? '<small>Vollbild: alle 5 Linien + Rewin-Rad</small>' : ''}</div>`).join('')}</div>
     <div class="gl-item"><b>So wird gewonnen</b><p>3 gleiche Symbole auf einer der 5 Linien: oben, Mitte, unten und die beiden Diagonalen. Mehrere Linien werden addiert.</p></div>
     <div class="gl-item"><b>Vollbild und Rewin-Rad</b><p>Alle 9 Felder Blitz, Herz, Stern oder Mond: Alle 5 Linien gewinnen, dann startet das Rad. Es hat 12 Felder, in der ersten Runde 1 Stop. Landet das Licht auf Rewin, wird das Vollbild nochmal gezählt und ein Stop-Feld kommt dazu. START beschleunigt, nochmal START stoppt.</p></div>
-    <div class="gl-item"><b>Risiko nach jedem Gewinn</b><p>Leiter: Das Licht taktet zwischen nächsthöherer und nächstniedrigerer Stufe, START hält es an. Ganz oben wartet die Ausspielung. Karte: Rot oder Schwarz, richtig verdoppelt. In beiden kannst du teilen: Die Hälfte ist sicher, mit dem Rest geht es weiter. Die Chancen sind immer fair.</p></div>
+    <div class="gl-item"><b>Risiko nach jedem Gewinn</b><p>Leiter: Das Licht taktet zwischen nächsthöherer und nächstniedrigerer Stufe, START hält es an. Die Stufen reichen bis zum 50-fachen Einsatz. Ganz oben wartet die Ausspielung. Karte: Rot oder Schwarz, richtig verdoppelt. In beiden kannst du teilen: Die Hälfte ist sicher, mit dem Rest geht es weiter. Die Chancen sind immer fair.</p></div>
     <p class="sub">Auszahlungsquote rund 96 %.</p><button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
