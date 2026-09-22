@@ -1179,7 +1179,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '26';
+const AVER = '27';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2272,13 +2272,29 @@ function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts 
 function renderNewsCard() {
   const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
   const p = newsPosts[0]; let seen = ''; try { seen = localStorage.getItem('news_seen') || ''; } catch (e) {}
-  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? `<span class="nc-corner">${(() => { const k = newsPosts.findIndex((x) => x.id === seen); return k > 0 ? k : 1; })()} NEU</span>` : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
+  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? `<span class="nc-corner">${(() => { const k = newsPosts.findIndex((x) => x.id === seen); return k > 0 ? k : 1; })()} NEU · +1.000 💎</span>` : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
     <span class="nc-t"><span class="nc-tag">${esc(p.tag)}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
 }
 function renderNews() {
   const box = $('#newsBody'); if (!box) return;
   if (!newsPosts) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadNews(); return; }
   try { localStorage.setItem('news_seen', newsPosts[0] ? newsPosts[0].id : ''); } catch (e) {}
+  // Belohnung fürs Lesen des neuesten Updates, einmalig pro Update
+  if (newsPosts[0] && !renderNews.asked) {
+    renderNews.asked = newsPosts[0].id;
+    api('/api/news/read', { id: newsPosts[0].id }).then((r) => {
+      if (!r.dia) return;
+      if (home) home.me.diamonds = r.total; if (tcg) tcg.diamonds = r.total;
+      setTimeout(() => {
+        const u = $('#unlock');
+        u.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Danke fürs Lesen</p><h1 class="cr-code" style="font-size:30px">📰 Update gelesen!</h1>
+          <p class="sub">„${esc(r.title || '')}“</p><div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.dia)}</b><span>Diamanten</span></div>
+          <button class="btn" id="unlockOk" style="min-width:220px">Super!</button></div>`;
+        u.classList.add('on'); sfx('prestige');
+        $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
+      }, 900);
+    }).catch(() => {});
+  }
   const TN = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'];
   const block = (b) => {
     if (b.type === 'head') return `<h2 class="nw-h">${esc(b.text)}${b.badge ? ` <span class="nw-badge">${esc(b.badge)}</span>` : ''}</h2>`;

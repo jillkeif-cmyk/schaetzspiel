@@ -262,6 +262,21 @@ app.post('/api/casino/theme', async (req, res) => {
 
 // ---------- News und Updates ----------
 const NEWS = require('./lib/news');
+// Belohnung fürs Lesen: 1.000 Diamanten einmalig für das jeweils neueste Update
+const NEWS_REWARD = 1000;
+app.post('/api/news/read', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const latest = NEWS[0]; const id = String(req.body.id || '');
+    if (!latest || id !== latest.id) return res.json({ dia: 0 });
+    const got = String(u.news_claimed || '').split(',').filter(Boolean);
+    if (got.includes(id)) return res.json({ dia: 0 });
+    const total = (Number(u.diamonds) || 0) + NEWS_REWARD;
+    await store.save(u.id, { diamonds: total, news_claimed: [...got, id].slice(-30).join(',') });
+    res.json({ dia: NEWS_REWARD, total, title: latest.title });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
 
 // ---------- Tagesbelohnungen ----------
