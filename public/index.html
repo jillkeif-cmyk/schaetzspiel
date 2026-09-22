@@ -1335,6 +1335,7 @@ body.no-grading .grading-only{display:none !important}
 .btn.preset small{font-weight:700;font-size:11px;opacity:.85}
 .btn.preset.on{box-shadow:0 0 0 2px #FFD23F,0 0 16px rgba(255,210,63,.5)}
 .lockgrid{display:flex;flex-wrap:wrap;gap:6px}.chipbtn.lockon{background:linear-gradient(180deg,#FF6A7A,#C8283D) !important;color:#fff !important}
+.tc-key.on{box-shadow:0 0 0 3px #FFE27A,0 0 16px rgba(255,210,63,.6) !important}
 </style>
 </head>
 <body>
@@ -1354,7 +1355,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '40';
+const AVER = '41';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2434,9 +2435,11 @@ function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   $('#tcBet').textContent = fmt(TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
   $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : '5 Linien · 3 gleiche Symbole gewinnen');
-  const canRisk = !!tc.risk && !tc.busy && tc.mode === 'play';
-  $('#tcKBet').disabled = tc.busy || !!tc.risk; $('#tcKLad').disabled = !canRisk; $('#tcKCard').disabled = !canRisk;
-  $('#tcKLad').classList.toggle('blink', canRisk); $('#tcKCard').classList.toggle('blink', canRisk);
+  const canRisk = !!tc.risk && !tc.busy && !tc.risk.noRisk;
+  const canLad = canRisk && tc.mode !== 'ladder', canCard = canRisk && tc.mode !== 'card'; // jederzeit zwischen Leiter und Karte wechseln
+  $('#tcKBet').disabled = tc.busy || !!tc.risk; $('#tcKLad').disabled = !canLad; $('#tcKCard').disabled = !canCard;
+  $('#tcKLad').classList.toggle('blink', canLad && tc.mode === 'play'); $('#tcKCard').classList.toggle('blink', canCard && tc.mode === 'play');
+  $('#tcKLad').classList.toggle('on', tc.mode === 'ladder'); $('#tcKCard').classList.toggle('on', tc.mode === 'card');
   $('#tcKAuto').classList.toggle('on', !!tc.auto); $('#tcKAuto').innerHTML = tc.auto ? `Auto läuft<br><small>${tc.auto > 9000 ? '∞ · STOP' : tc.auto + ' · STOP'}</small>` : 'Auto';
   $('#tcTurbo').classList.toggle('on', tc.turbo);
   const st = $('#tcStart'); st.textContent = tc.startLabel || (tc.risk ? 'START · NEHMEN' : 'START');
@@ -2593,7 +2596,9 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
   if (tcNoRisk()) return;
   tc.mode = 'ladder'; tcSync();
   let blink = null, busy = false;
+  if (tc.stopBlink) tc.stopBlink();
   const stopBlink = () => { if (blink) clearInterval(blink); blink = null; document.querySelectorAll('#tcOver .tc-ls.flash').forEach((e) => e.classList.remove('flash')); };
+  tc.stopBlink = stopBlink;
   const startBlink = () => { // gleichbleibende Geschwindigkeit, egal wie oft man drückt
     stopBlink();
     const R = tc.risk; if (!R || R.pos >= R.steps.length - 1) return;
@@ -2616,11 +2621,9 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
   };
   const go = async () => { // ein Druck, ein Versuch: weiteres Drücken ändert nichts
     if (busy) return; busy = true; stopBlink();
-    const R0 = tc.risk, hi0 = R0.pos + 1, lo0 = tcLow(R0.pos);
     const r = await api('/api/casino/triple/risk', { action: 'ladder' }).catch((e) => { toast(e.message); return null; });
     if (!r) { busy = false; draw(); return; }
-    await tcLadderLand(hi0, lo0, !!r.up); // Ergebnis steht fest, das Licht läuft nur sichtbar darauf aus
-    busy = false;
+    busy = false; // Ergebnis sofort anzeigen, kein Auslaufen
     if (r.done) { tc.risk = null; tc.mode = 'play'; tc.startHook = null; tc.startLabel = null; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
       const cell = $('#tcLs' + r.pos); if (cell) cell.classList.add('cur');
       if (r.ausspielung) { tcSetMsg('🔔 AUSSPIELUNG · der ganze Gewinn ist weg'); sfx('wrong'); }
@@ -2641,6 +2644,7 @@ async function tcSplit(redraw) {
 // Kartenrisiko: Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg
 function tcCardOpen() {
   if (tcNoRisk()) return;
+  if (tc.stopBlink) tc.stopBlink(); // Leiter-Blinken anhalten
   tc.mode = 'card'; tc.startHook = null; tc.startLabel = null; tcSync();
   const suitCol = (c) => (c.s === '♥' || c.s === '♦' ? 'red' : '');
   const draw = (flip) => {
