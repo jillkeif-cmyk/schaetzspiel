@@ -491,6 +491,57 @@ const payOut = async (uid, n) => {
 };
 const fmtInt = (n) => String(n);
 
+// ---------- Triple Crown: Walzenspiel mit Rewin-Rad, Gratis-Drehs und Risikoleiter ----------
+const triple = require('./lib/triple');
+const tripleOpen = new Map(); // offener Gewinn auf der Risikoleiter je Spieler
+async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde für Casino-XP verbuchen
+  let dia = null;
+  if (extraPay > 0) dia = await payOut(uid, extraPay);
+  await casinoStat(uid, st.bet, st.paid + (extraPay || 0));
+  tripleOpen.delete(uid);
+  return dia;
+}
+app.post('/api/casino/triple', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const bet = Math.round(Number(req.body.bet) || 0);
+    if (!triple.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
+    const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
+    const u2 = await store.userById(u.id);
+    const t = await takeBet(u2, bet); if (t.error) return res.status(400).json({ error: t.error });
+    const r = triple.play(bet);
+    let diamonds = t.left, lad = null;
+    if (r.total > 0) { lad = triple.ladder(r.total); tripleOpen.set(u.id, { bet, win: r.total, ladder: lad, pos: 0, paid: 0 }); }
+    else await casinoStat(u.id, bet, 0);
+    res.json({ ...r, bet, ladder: lad, pos: 0, diamonds });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/triple/risk', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const st = tripleOpen.get(u.id); if (!st) return res.status(400).json({ error: 'Kein offener Gewinn.' });
+    const a = String(req.body.action || '');
+    if (a === 'take') { const d = await tripleFinish(u.id, st, st.win); return res.json({ done: true, paid: st.win, diamonds: d }); }
+    if (a === 'split') { // Hälfte sicher nehmen, mit der anderen Hälfte weiter
+      if (st.win < 2) return res.status(400).json({ error: 'Zu wenig zum Teilen.' });
+      const half = Math.floor(st.win / 2); const d = await payOut(u.id, half); st.paid += half;
+      st.win -= half; st.ladder = triple.ladder(st.win); st.pos = 0;
+      return res.json({ done: false, win: st.win, ladder: st.ladder, pos: 0, banked: half, diamonds: d });
+    }
+    if (a === 'risk') {
+      if (st.pos >= st.ladder.length - 1) return res.status(400).json({ error: 'Ganz oben angekommen.' });
+      if (triple.riskWins(st.ladder[st.pos], st.ladder[st.pos + 1])) {
+        st.pos++; st.win = st.ladder[st.pos];
+        if (st.pos >= st.ladder.length - 1) { const d = await tripleFinish(u.id, st, st.win); return res.json({ done: true, up: true, top: true, paid: st.win, pos: st.pos, ladder: st.ladder, diamonds: d }); }
+        return res.json({ done: false, up: true, win: st.win, ladder: st.ladder, pos: st.pos });
+      }
+      const lost = st.win; st.win = 0; const d = await tripleFinish(u.id, st, 0);
+      return res.json({ done: true, up: false, lost, diamonds: d === null ? (await store.userById(u.id)).diamonds : d });
+    }
+    res.status(400).json({ error: 'Unbekannte Aktion.' });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.post('/api/casino/roulette', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });

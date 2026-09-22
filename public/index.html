@@ -1230,6 +1230,38 @@ body.no-grading .grading-only{display:none !important}
 .pk-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 10px 12px}
 .pk-th{position:relative;padding:0;border-radius:6px;background:none}.pk-th img{width:100%;aspect-ratio:460/610;object-fit:cover;display:block;border-radius:6px;opacity:.45}
 .pk-th.have img{opacity:1;box-shadow:0 0 0 2px #3DDC97}.pk-ok{position:absolute;right:2px;bottom:2px;padding:1px 4px;border-radius:6px;background:#3DDC97;color:#062015;font:900 9.5px/1.3 Archivo}
+.tc{display:flex;flex-direction:column;gap:10px;padding:10px 8px 14px;border-radius:22px;background:#12082A url(/tcg/tc_bg.webp) center/cover;box-shadow:inset 0 0 0 2px rgba(255,210,63,.35),0 10px 30px rgba(0,0,0,.4)}
+.tc-logo{width:78%;max-width:320px;margin:-4px auto -8px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+.tc-machine{display:grid;grid-template-columns:22px 1fr 22px;gap:4px;align-items:stretch}
+.tc-nums{position:relative}.tc-nums span{position:absolute;left:0;width:22px;height:20px;border-radius:5px;display:grid;place-items:center;font:900 12px/1 Archivo;color:#111;box-shadow:0 0 8px rgba(0,0,0,.4)}
+.tc-nums .n1{top:calc(50% - 10px);background:#3DDC97}.tc-nums .n2{top:calc(16.6% - 10px);background:#8CF06B}.tc-nums .n3{top:calc(83.3% - 10px);background:#8CF06B}
+.tc-nums.l .n4{top:calc(16.6% - 32px);background:#FFD23F}.tc-nums.l .n5{top:calc(83.3% + 12px);background:#FF5A6A}.tc-nums.r .n5{top:calc(16.6% - 32px);background:#FF5A6A}.tc-nums.r .n4{top:calc(83.3% + 12px);background:#FFD23F}
+.tc-reels{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;border-radius:16px;background:linear-gradient(180deg,#2a1450,#150a2e);box-shadow:inset 0 0 0 2px rgba(255,210,63,.6),0 0 22px rgba(180,92,255,.35)}
+.tc-reel{height:calc(var(--tcc,84px) * 3);overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#0b0620,#1c0f3c 50%,#0b0620);box-shadow:inset 0 0 12px rgba(0,0,0,.8)}
+.tc-strip{will-change:transform}.tc-strip.spinning img{filter:blur(2px) brightness(1.1)}
+.tc-cell{height:var(--tcc,84px);display:grid;place-items:center;border-radius:8px}.tc-cell img{width:82%;height:82%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.tc-cell.hit{background:radial-gradient(circle,rgba(255,230,120,.35),transparent 70%);animation:tchit .7s ease-in-out infinite alternate}
+@keyframes tchit{from{box-shadow:inset 0 0 0 2px rgba(255,230,120,.5)}to{box-shadow:inset 0 0 0 3px #FFE27A}}
+.tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}.tc-lines polyline{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor);opacity:.9}
+.tc-msg{min-height:22px;text-align:center;font:800 13.5px/1.35 Archivo;color:#FFE9A8;text-shadow:0 1px 3px #000}
+.tc-info{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px}.tc-info div{padding:8px;border-radius:12px;background:rgba(10,4,24,.72);text-align:center}.tc-info small{display:block;color:#C9B8F0;font-size:11px}.tc-info b{font:400 18px/1.1 Anton,Impact,sans-serif;color:#FFE27A}
+.tc-ladder{padding:10px;border-radius:14px;background:rgba(10,4,24,.8);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.5)}
+.tc-steps{display:flex;gap:4px;margin-bottom:8px}.tc-steps span{flex:1;text-align:center;padding:7px 2px;border-radius:8px;background:rgba(255,255,255,.07);font:800 12px/1 Archivo;color:#C9B8F0}
+.tc-steps span.past{color:#8a7aa8}.tc-steps span.cur{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;box-shadow:0 0 14px rgba(255,210,63,.7);transform:scale(1.08)}
+.tc-risk{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:6px}.tc-risk .btn{padding:10px 4px;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:2px}.tc-risk small{font-size:10.5px;font-weight:700;opacity:.85}
+.tc-riskbtn{background:linear-gradient(180deg,#FF6A7A,#C8283D) !important;color:#fff !important}
+.tc-ctrl{display:grid;grid-template-columns:62px 1fr 62px;gap:10px;align-items:center}
+.tc-round{height:62px;border-radius:50%;background:rgba(10,4,24,.8);color:#FFE27A;font:900 30px/1 Archivo;box-shadow:inset 0 0 0 2px rgba(255,210,63,.6)}
+.tc-spin{height:74px;border-radius:40px;background:radial-gradient(circle at 50% 30%,#FFF1A8,#F5B321 55%,#C77A0A);color:#3A1E00;font:400 28px/1 Anton,Impact,sans-serif;letter-spacing:.06em;box-shadow:0 6px 0 #8A5200,0 0 26px rgba(255,190,60,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tc-spin small{font:800 10.5px/1 Archivo;letter-spacing:0}.tc-spin:active{transform:translateY(4px);box-shadow:0 2px 0 #8A5200}.tc-spin.busy{filter:saturate(.6) brightness(.9)}
+.tc-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.tc-tools .chipbtn.on{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600}
+.tc-autos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tc-pays{display:flex;flex-direction:column;gap:6px}.tc-pay{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--bg-deep)}.tc-pay b{font:400 20px/1 Anton,Impact,sans-serif;color:var(--tape);text-align:right}.tc-pay small{grid-column:1/-1;color:var(--muted);font-size:11.5px}
+.tc-three{display:flex;gap:2px}.tc-three img{width:34px;height:34px;object-fit:contain}
+.tc-wheel-wrap{position:relative;width:240px;height:240px;margin:6px auto}.tc-pointer{position:absolute;left:50%;top:-14px;transform:translateX(-50%);z-index:2;color:#fff;font-size:26px;text-shadow:0 2px 6px #000}
+.tc-wheel{width:100%;height:100%;border-radius:50%;background:conic-gradient(#2ECC71 0 90deg,#27AE60 90deg 180deg,#E74C3C 180deg 270deg,#2ECC71 270deg 360deg);box-shadow:0 0 0 8px #d9d9e0,0 0 0 11px #555,0 0 30px rgba(0,0,0,.6);transition:transform 2.5s cubic-bezier(.15,.8,.2,1);position:relative}
+.tc-wheel span{position:absolute;left:50%;top:50%;transform:rotate(var(--a)) translateY(-78px) translateX(-50%);transform-origin:0 0;font:900 15px/1 Archivo;color:#FFE27A;text-shadow:0 2px 4px #000}
+.tc-tab{background:linear-gradient(135deg,rgba(255,226,122,.35),rgba(180,92,255,.3)) !important;color:#FFE9A8 !important}
 </style>
 </head>
 <body>
@@ -1890,6 +1922,7 @@ function renderCasino() {
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
   if (cgame === 'poker') return renderPoker(box);
+  if (cgame === 'triple') return renderTriple(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
     box.innerHTML = list.length ? `<div class="plist">${list.map((u, i) => casinoRow(u, i, home.me)).join('')}</div>` : '<p class="sub">Noch hat niemand im Casino gespielt.</p>';
@@ -2155,10 +2188,10 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <div id="cgame"></div>
       `;
@@ -2214,6 +2247,146 @@ async function openPack(pid) {
     if (idx >= 0) { const c = r.pulled[idx]; setTimeout(() => { if ($('#opener').classList.contains('on')) packHighlight(c.variant, cardImg(c.id, c.variant)); }, idx * 650 + 900); }
   } catch (e) { toast(e.message); }
 }
+
+// ---------- Triple Crown ----------
+const TC_SYM = { K: 'Krone', S: 'Sieben', H: 'Hufeisen', B: 'Blitz', R: 'Herz', T: 'Stern', M: 'Mond', C: 'Chip' };
+const TC_PAY = { K: 150, S: 40, H: 12, B: 8, R: 8, T: 8, M: 8, C: 1 };
+const TC_BETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+const TC_LINES = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
+const TC_LINE_COL = ['#3DDC97', '#8CF06B', '#8CF06B', '#FFD23F', '#FF5A6A'];
+let tc = { bi: 3, grid: null, busy: false, auto: 0, turbo: false, open: null, lastWin: 0, msg: '' };
+const tcImg = (k) => `<img src="/tcg/tc_${k}.webp?v=${AVER}" alt="${TC_SYM[k]}" draggable="false">`;
+const tcRandSym = () => 'KSHBRTMCBRTMC'[Math.floor(Math.random() * 13)];
+function renderTriple(box) {
+  const bet = TC_BETS[tc.bi], g = tc.grid || [['B', 'S', 'R'], ['T', 'K', 'M'], ['R', 'C', 'B']];
+  const lad = tc.open;
+  box.innerHTML = `<div class="tc">
+    <img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
+    <div class="tc-machine">
+      <div class="tc-nums l"><span class="n4">4</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n5">5</span></div>
+      <div class="tc-reels" id="tcReels">${[0, 1, 2].map((r) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${r}">${g[r].map((k) => `<div class="tc-cell">${tcImg(k)}</div>`).join('')}</div></div>`).join('')}<svg class="tc-lines" id="tcLines" viewBox="0 0 300 300" preserveAspectRatio="none"></svg></div>
+      <div class="tc-nums r"><span class="n5">5</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n4">4</span></div>
+    </div>
+    <div class="tc-msg" id="tcMsg">${tc.msg || '5 Linien · 3 gleiche Symbole gewinnen'}</div>
+    <div class="tc-info"><div><small>Guthaben</small><b id="tcBal">${fmt((tcg && tcg.diamonds) || 0)} 💎</b></div><div><small>Einsatz</small><b>${fmt(bet)}</b></div><div><small>Gewinn</small><b id="tcWin">${fmt(lad ? lad.win : tc.lastWin)}</b></div></div>
+    ${lad ? `<div class="tc-ladder"><div class="tc-steps">${lad.ladder.map((v, i) => `<span class="${i === lad.pos ? 'cur' : i < lad.pos ? 'past' : ''}">${shortNum(v)}</span>`).join('')}</div>
+      <div class="tc-risk"><button class="btn" data-tcr="take">💰 Nehmen</button><button class="btn tc-riskbtn" data-tcr="risk" ${lad.pos >= lad.ladder.length - 1 ? 'disabled' : ''}>🎲 Risiko<small>${lad.pos < lad.ladder.length - 1 ? Math.round(100 * lad.ladder[lad.pos] / lad.ladder[lad.pos + 1]) + ' % auf ' + shortNum(lad.ladder[lad.pos + 1]) : 'ganz oben'}</small></button><button class="btn ghost" data-tcr="split" ${lad.win < 2 ? 'disabled' : ''}>✂️ Teilen<small>${shortNum(Math.floor(lad.win / 2))} sicher</small></button></div></div>` : ''}
+    <div class="tc-ctrl">
+      <button class="tc-round" data-tcbet="-1" ${tc.busy || lad ? 'disabled' : ''}>−</button>
+      <button class="tc-spin ${tc.busy ? 'busy' : ''}" id="tcSpin" ${tc.busy && !tc.auto ? 'disabled' : ''}>${tc.auto ? `STOP<small>Auto ${tc.auto}</small>` : lad ? 'DREHEN<small>Gewinn wird eingesackt</small>' : 'DREHEN'}</button>
+      <button class="tc-round" data-tcbet="1" ${tc.busy || lad ? 'disabled' : ''}>+</button>
+    </div>
+    <div class="tc-tools"><button class="chipbtn ${tc.auto ? 'on' : ''}" id="tcAuto">🔁 Autoplay</button><button class="chipbtn ${tc.turbo ? 'on' : ''}" id="tcTurbo">⚡ Turbo</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
+  </div>`;
+  $('#tcSpin').onclick = () => { if (tc.auto) { tc.auto = 0; renderTriple(box); return; } if (tc.open) { tc.open = null; } tcSpin(); }; // offener Gewinn wird vom Server vorher eingesackt
+  box.querySelectorAll('[data-tcbet]').forEach((b) => { b.onclick = () => { tc.bi = Math.max(0, Math.min(TC_BETS.length - 1, tc.bi + Number(b.dataset.tcbet))); renderTriple(box); }; });
+  box.querySelectorAll('[data-tcr]').forEach((b) => { b.onclick = () => tcRisk(b.dataset.tcr); });
+  $('#tcTurbo').onclick = () => { tc.turbo = !tc.turbo; renderTriple(box); };
+  $('#tcPay').onclick = tcPaytable;
+  $('#tcAuto').onclick = () => {
+    if (tc.auto) { tc.auto = 0; return renderTriple(box); }
+    $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>🔁 Autoplay</h2><p class="sub">Dreht automatisch mit ${fmt(bet)} 💎 Einsatz. Gewinne werden sofort eingesackt, ohne Risiko.</p><div class="tc-autos">${[10, 25, 50, 100].map((n) => `<button class="btn" data-tcauto="${n}">${n}×</button>`).join('')}</div><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    $('#modal').querySelectorAll('[data-tcauto]').forEach((b) => { b.onclick = () => { closeModal(); tc.auto = Number(b.dataset.tcauto); tcSpin(); }; });
+  };
+  if (tc.grid && tc.lastLines) tcDrawLines(tc.lastLines);
+}
+function tcDrawLines(lines) {
+  const svg = $('#tcLines'); if (!svg) return;
+  const pt = (col, row) => `${50 + col * 100},${50 + row * 100}`;
+  svg.innerHTML = lines.map((l) => { const L = TC_LINES[l.line - 1]; return `<polyline points="${pt(0, L[0])} ${pt(1, L[1])} ${pt(2, L[2])}" style="stroke:${TC_LINE_COL[l.line - 1]}"/>`; }).join('');
+  document.querySelectorAll('.tc-cell.hit').forEach((c) => c.classList.remove('hit'));
+  for (const l of lines) { const L = TC_LINES[l.line - 1]; L.forEach((row, col) => { const c = document.querySelectorAll(`#tcStrip${col} .tc-cell`)[row]; if (c) c.classList.add('hit'); }); }
+}
+// Walzen drehen lassen und auf dem Ergebnis stoppen
+function tcAnimate(grid) {
+  return new Promise((done) => {
+    const fast = tc.turbo, cellH = ($('.tc-cell') || {}).offsetHeight || 90;
+    let left = 3;
+    [0, 1, 2].forEach((r) => {
+      const strip = $('#tcStrip' + r); if (!strip) { if (!--left) done(); return; }
+      const n = (fast ? 6 : 12) + r * (fast ? 2 : 5);
+      const cur = [...strip.querySelectorAll('img')].map((i) => i.alt).map((a) => Object.keys(TC_SYM).find((k) => TC_SYM[k] === a) || 'B');
+      const syms = [...grid[r], ...Array.from({ length: n }, tcRandSym), ...cur]; // oben das Ergebnis, unten der alte Stand
+      strip.style.transition = 'none'; strip.innerHTML = syms.map((k) => `<div class="tc-cell">${tcImg(k)}</div>`).join('');
+      strip.style.transform = `translateY(${-(syms.length - 3) * cellH}px)`; strip.classList.add('spinning');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const dur = (fast ? 0.45 : 0.9) + r * (fast ? 0.18 : 0.38);
+        strip.style.transition = `transform ${dur}s cubic-bezier(.25,.1,.25,1.08)`; strip.style.transform = 'translateY(0)';
+        setTimeout(() => { strip.classList.remove('spinning'); strip.style.transition = 'none'; strip.innerHTML = grid[r].map((k) => `<div class="tc-cell">${tcImg(k)}</div>`).join(''); sfx('tick'); if (!--left) done(); }, dur * 1000 + 30);
+      }));
+    });
+  });
+}
+const tcSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function tcSetMsg(t) { tc.msg = t; const m = $('#tcMsg'); if (m) m.innerHTML = t; }
+async function tcSpin() {
+  if (tc.busy) return; const bet = TC_BETS[tc.bi];
+  if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return renderTriple($('#cgame')); }
+  tc.busy = true; tc.lastLines = null; tc.lastWin = 0; tc.msg = ''; renderTriple($('#cgame'));
+  try {
+    const r = await api('/api/casino/triple', { bet });
+    tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; const bal = $('#tcBal'); if (bal) bal.textContent = fmt(r.diamonds) + ' 💎';
+    for (let i = 0; i < r.spins.length; i++) {
+      const sp = r.spins[i];
+      if (i > 0) { tcSetMsg('🟢 GRATIS-DREH!'); sfx('dart'); await tcSleep(tc.turbo ? 300 : 700); }
+      await tcAnimate(sp.grid); tc.grid = sp.grid; tc.lastLines = sp.lines; tcDrawLines(sp.lines);
+      if (sp.win) { tcSetMsg(sp.lines.map((l) => `Linie ${l.line}: ${TC_SYM[l.sym]} +${fmt(l.win)}`).join(' · ')); sfx(sp.win >= bet * 40 ? 'exact' : 'dartbest'); }
+      if (sp.full) { tcSetMsg(`👑 VOLLBILD ${TC_SYM[sp.full].toUpperCase()}!`); sfx('prestige'); await tcSleep(tc.turbo ? 500 : 1100); }
+      if (sp.wheel) await tcWheel(sp.wheel, sp.win);
+      await tcSleep(sp.win ? (tc.turbo ? 350 : 800) : (tc.turbo ? 120 : 250));
+    }
+    tc.busy = false;
+    if (r.total > 0) {
+      tc.open = { win: r.total, ladder: r.ladder, pos: 0 }; tc.lastWin = r.total;
+      if (tc.auto) { renderTriple($('#cgame')); await tcSleep(tc.turbo ? 250 : 500); return tcRisk('take', true); }
+    } else tcSetMsg('Leider nichts · nochmal!');
+    renderTriple($('#cgame'));
+    if (tc.auto) { tc.auto--; if (tc.auto > 0) setTimeout(tcSpin, tc.turbo ? 200 : 450); else renderTriple($('#cgame')); }
+  } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); renderTriple($('#cgame')); }
+}
+async function tcRisk(action, thenSpin) {
+  try {
+    const r = await api('/api/casino/triple/risk', { action });
+    if (r.diamonds !== null && r.diamonds !== undefined) { tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; }
+    if (action === 'take') { tc.open = null; tcSetMsg(`💰 ${fmt(r.paid)} Diamanten gutgeschrieben`); sfx('sent'); }
+    else if (action === 'split') { tc.open = { win: r.win, ladder: r.ladder, pos: 0 }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); }
+    else if (r.up) { if (r.done) { tc.open = null; tcSetMsg(`🏆 GANZ OBEN! ${fmt(r.paid)} Diamanten`); sfx('prestige'); } else { tc.open = { win: r.win, ladder: r.ladder, pos: r.pos }; tcSetMsg(`🎲 Geschafft! Jetzt ${fmt(r.win)}`); sfx('exact'); } }
+    else { tc.open = null; tcSetMsg(`💥 Verloren · ${fmt(r.lost)} sind weg`); sfx('wrong'); }
+    tc.lastWin = tc.open ? tc.open.win : 0;
+    renderTriple($('#cgame'));
+    if (tc.auto && !tc.open) { tc.auto--; if (tc.auto > 0) setTimeout(tcSpin, tc.turbo ? 200 : 450); else renderTriple($('#cgame')); }
+  } catch (e) { toast(e.message); }
+}
+// Rewin-Rad: 3 grüne Felder, 1 Stop
+function tcWheel(res, baseWin) {
+  return new Promise((done) => {
+    const el = $('#unlock'); let k = 0, rot = 0;
+    el.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Vollbild · Rewin-Rad</p><h1 class="cr-code" style="font-size:30px">REWIN</h1>
+      <div class="tc-wheel-wrap"><div class="tc-pointer">▼</div><div class="tc-wheel" id="tcWheel"><span style="--a:45deg">REWIN</span><span style="--a:135deg">REWIN</span><span style="--a:225deg">STOP</span><span style="--a:315deg">REWIN</span></div></div>
+      <p class="sub" id="tcWheelTxt">Jedes grüne Feld zahlt das Vollbild von ${fmt(baseWin)} noch einmal</p></div>`;
+    el.classList.add('on');
+    const step = () => {
+      if (k >= res.length) { setTimeout(() => { el.classList.remove('on'); el.innerHTML = ''; done(); }, 1400); return; }
+      const green = res[k] === 'green', target = green ? [45, 135, 315][Math.floor(Math.random() * 3)] : 225;
+      rot += 1440 + ((360 - target) - (rot % 360) + 360) % 360;
+      const w = $('#tcWheel'); if (w) w.style.transform = `rotate(${rot}deg)`;
+      setTimeout(() => { $('#tcWheelTxt').textContent = green ? `🟢 REWIN! +${fmt(baseWin)} · Dreh ${k + 1} von 3` : '🔴 STOP · das Rad ist vorbei'; sfx(green ? 'exact' : 'wrong'); k++; setTimeout(step, 1100); }, 2600);
+    };
+    setTimeout(step, 700);
+  });
+}
+function tcPaytable() {
+  const bet = TC_BETS[tc.bi];
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>📋 Gewinne bei ${fmt(bet)} 💎 Einsatz</h2>
+    <div class="tc-pays">${Object.keys(TC_PAY).map((k) => `<div class="tc-pay"><span class="tc-three">${tcImg(k)}${tcImg(k)}${tcImg(k)}</span><b>${fmt(TC_PAY[k] * bet)}</b>${k === 'C' ? '<small>+ Gratis-Dreh</small>' : ['B', 'R', 'T', 'M'].includes(k) ? '<small>Vollbild: Rewin-Rad</small>' : ''}</div>`).join('')}</div>
+    <div class="gl-item"><b>So wird gewonnen</b><p>3 gleiche Symbole auf einer der 5 Linien gewinnen: oben, Mitte, unten und die beiden Diagonalen. Gewinne auf mehreren Linien werden addiert.</p></div>
+    <div class="gl-item"><b>Vollbild und Rewin-Rad</b><p>Zeigen alle 9 Felder Blitz, Herz, Stern oder Mond, gewinnen alle 5 Linien. Dann startet das Rad mit 3 grünen Feldern und 1 Stop: Jedes Grün zahlt das Vollbild noch einmal, bis zu dreimal.</p></div>
+    <div class="gl-item"><b>Risikoleiter</b><p>Nach jedem Gewinn kannst du nehmen, riskieren oder teilen. Riskieren bringt dich eine Stufe höher, die Chance ist genau fair. Teilen nimmt die Hälfte sicher, mit dem Rest geht es weiter.</p></div>
+    <p class="sub">Auszahlungsquote rund 96 %.</p><button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
+
 // ---------- Grading: Gehäuse mit Note ----------
 const gLabel = (g) => (g === 11 ? '10+' : String(g));
 const gWord = (g) => ({ 7: 'NEAR MINT', 8: 'NM-MINT', 9: 'MINT', 10: 'GEM MINT', 11: 'PRISTINE' })[g] || '';
@@ -3521,8 +3694,8 @@ function update() {
         : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
       const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
       $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
-    }
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
+    }
     return;
   }
   if (!S) {
