@@ -2764,14 +2764,14 @@ let builtKey = '';
 function render() {
   setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
-  const keepY = window.scrollY;
+  const keepY = window.scrollY, samePage = key === builtKey; // war vorher dieselbe Seite zu sehen?
   if (key !== viewKey) {
-    const same = key === builtKey; viewKey = key; builtKey = key;
+    const same = samePage; viewKey = key; builtKey = key;
     app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind();
     window.scrollTo(0, same ? keepY : 0); // gleiche Seite neu gezeichnet: Position bleiben
   }
   update();
-  if (key === builtKey && Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY);
+  if (samePage && Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY); // nur bei derselben Seite, nie beim Seitenwechsel
 }
 
 function build() {
@@ -3516,7 +3516,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.info) { showInfo(t.dataset.info); }
   else if (t.dataset.mkind) { mKind = t.dataset.mkind; renderCards(); }
   else if (t.dataset.mmiss) { mMissing = !mMissing; renderCards(); }
-  else if (t.dataset.price) { const [c2, v2] = t.dataset.price.split(':'); showPrice(c2, v2); }
+  else if (t.dataset.price) { const [c2, v2] = t.dataset.price.split(':'); $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); showPrice(c2, v2); } // Kartenansicht mit Schwenk vorher schließen
   else if (t.dataset.sellpack) {
     const pid = t.dataset.sellpack, pr = prompt(`Für wie viele Diamanten willst du einen ${PACK_NAME[pid] || 'Booster'} verkaufen?`, String(((tcg.def.packs.find((x) => x.id === pid) || {}).price) || 500));
     if (pr) api('/api/tcg/sellpack', { pack: pid, price: Number(pr) }).then((st) => { tcg = st; market = null; renderCards(); toast('Booster steht jetzt in der Börse'); }).catch((e) => toast(e.message));
