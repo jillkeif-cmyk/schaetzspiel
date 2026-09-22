@@ -132,7 +132,13 @@ async function cardStats(uid) {
     if (TOP.has(r.variant)) ext += n;
   }
   const uniq = new Set(rows.filter((r) => (Number(r.count) || 0) > 0).map((r) => r.card_id + ':' + r.variant).filter((k) => COLLECT.keys.has(k)));
-  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size + toonExt.size, collect_unique: uniq.size, collect_all: COLLECT.total }; // 30 Karten + 3 Extended Arts = 33
+  const cur = { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size + toonExt.size, collect_unique: uniq.size }; // Toon: 30 Karten + 3 Extended Arts = 33
+  // Einmal erreicht bleibt erreicht: Wer Karten umwandelt, verliert keine Stufen, Titel oder Rahmen
+  const PK = { cards_total: 'peak_cards_total', cards_rare: 'peak_cards_rare', cards_ext: 'peak_cards_ext', toon_distinct: 'peak_toon', collect_unique: 'peak_collect' };
+  const u = await store.userById(uid).catch(() => null), up = {}, out = { collect_all: COLLECT.total };
+  for (const [k, f] of Object.entries(PK)) { const peak = Number(u && u[f]) || 0; if (cur[k] > peak) up[f] = cur[k]; out[k] = Math.max(cur[k], peak); }
+  if (u && Object.keys(up).length) await store.save(uid, up).catch(() => {});
+  return out;
 }
 
 app.get('/api/home', async (req, res) => {
@@ -432,6 +438,21 @@ async function checkProgress(uid) {
     for (const e of cv.emblems) if (e.unlocked && !e.dev) items.set('e:' + e.id, { kind: 'emblem', id: e.id, name: e.name, anim: e.anim });
     for (const t of cv.titles) if (t.unlocked && !t.dev) items.set('t:' + t.id, { kind: 'title', id: t.id, name: t.text, anim: t.anim });
     for (const f of fv) if (f.unlocked) items.set('f:' + f.id, { kind: 'frame', id: f.id, name: f.name, anim: f.anim });
+    // XP für Herausforderungen außerhalb des Quiz (Casino, Poker, Karten ...): bisher nur angezeigt, nie gutgeschrieben
+    const MATCH_KEYS = new Set(['answered', 'exact', 'close', 'mc_right', 'mc_total', 'matches', 'wins', 'points', 'best_score', 'rank_points', 'best_streak', 'streak']);
+    let paid = {}; try { paid = JSON.parse(u.chal_paid || '{}'); } catch (e) {}
+    let pay = 0; const payParts = [];
+    for (const c of progress.challengeView(u2)) {
+      if (MATCH_KEYS.has(c.key)) continue;
+      const from = paid[c.key] || 0;
+      for (let t = from; t < c.done; t++) { pay += c.xps[t] || 0; payParts.push(`${c.name} ${t + 1}`); }
+      if (c.done > from) paid[c.key] = c.done;
+    }
+    if (pay) {
+      await store.save(uid, { xp: Math.min(progress.CAP, (Number(u.xp) || 0) + pay), chal_paid: JSON.stringify(paid) });
+      console.log(`Herausforderungs-XP: ${u.name} +${pay} (${payParts.join(', ')})`);
+      io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('xp:paid', { xp: pay, parts: payParts }); });
+    }
     const prev = progressSnap.get(uid);
     progressSnap.set(uid, { chal, items: new Set(items.keys()) });
     if (!prev) return; // erster Blick: nur merken
