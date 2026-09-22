@@ -1176,6 +1176,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #statBox[hidden]{display:none}
 .vit-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.vp{position:relative;padding:0;border-radius:8px;background:none}.vp img{width:100%;border-radius:8px;display:block;opacity:.8}
 .vp.on img{opacity:1;box-shadow:0 0 0 3px var(--tape),0 0 14px rgba(255,210,63,.6)}.vp-n{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:var(--tape);color:#1a1200;font:900 12px/22px Archivo;text-align:center}
+.psum-lv{display:flex;align-items:center;gap:6px}.psum-lv img{width:30px;height:30px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -3180,7 +3181,7 @@ async function showUser(id) {
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
     }).join('')}</div>${!u.showcase || !u.showcase.length ? `<small class="sub">${u.self ? 'Stell deine liebsten Karten aus: im Profil unter „Vitrine“.' : 'Hier ist noch nichts ausgestellt.'}</small>` : ''}</div>`;
     const sum = `<div class="psum">
-      <div><small>Level</small><b>Lv ${u.level || 1}</b><small>${u.prestige ? esc(PN[u.prestige] || 'Prestige ' + u.prestige) : 'noch kein Prestige'}</small></div>
+      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(11, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img src="/emblems/p${t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
       <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
       <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
       <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div></div>`;
