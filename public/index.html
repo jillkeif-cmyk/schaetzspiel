@@ -1240,7 +1240,7 @@ body.no-grading .grading-only{display:none !important}
 .tc-reel{height:calc(var(--tcc,84px) * 3);overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#0b0620,#1c0f3c 50%,#0b0620);box-shadow:inset 0 0 12px rgba(0,0,0,.8)}
 .tc-strip{will-change:transform}.tc-strip.spinning img{filter:blur(2px) brightness(1.1)}
 .tc-cell{height:var(--tcc,84px);display:grid;place-items:center;border-radius:8px}.tc-cell img{width:82%;height:82%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
-.tc-cell.hit{background:radial-gradient(circle,rgba(255,230,120,.35),transparent 70%);animation:tchit .7s ease-in-out infinite alternate}
+
 @keyframes tchit{from{box-shadow:inset 0 0 0 2px rgba(255,230,120,.5)}to{box-shadow:inset 0 0 0 3px #FFE27A}}
 .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}.tc-lines polyline{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor);opacity:.9}
 .tc-msg{min-height:22px;text-align:center;font:800 13.5px/1.35 Archivo;color:#FFE9A8;text-shadow:0 1px 3px #000}
@@ -1264,7 +1264,7 @@ body.no-grading .grading-only{display:none !important}
 .tc-tab{background:linear-gradient(135deg,rgba(255,226,122,.35),rgba(180,92,255,.3)) !important;color:#FFE9A8 !important}
 .s-K{background-image:url(/tcg/tc_K.webp?v=31)}.s-S{background-image:url(/tcg/tc_S.webp?v=31)}.s-H{background-image:url(/tcg/tc_H.webp?v=31)}.s-B{background-image:url(/tcg/tc_B.webp?v=31)}.s-R{background-image:url(/tcg/tc_R.webp?v=31)}.s-T{background-image:url(/tcg/tc_T.webp?v=31)}.s-M{background-image:url(/tcg/tc_M.webp?v=31)}.s-C{background-image:url(/tcg/tc_C.webp?v=31)}
 .tc-cell{background-size:80% auto;background-repeat:no-repeat;background-position:center}
-.tc-cell.hit{background-color:rgba(255,230,120,.16);animation:tchit .6s ease-in-out infinite alternate}
+
 .tc-strip.spinning .tc-cell{filter:blur(1.5px)}
 .tc-linewin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:4px 12px;border-radius:10px;background:rgba(10,4,24,.85);color:#FFE27A;font:400 26px/1 Anton,Impact,sans-serif;box-shadow:0 0 0 2px #FFD23F;transition:all .2s}
 .tc-linewin.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -1301,6 +1301,8 @@ body.no-grading .grading-only{display:none !important}
 .tc-cstats{display:grid;grid-template-columns:1fr 1fr;gap:5px}.tc-cstats div{text-align:center;padding:5px;border-radius:8px;background:rgba(255,255,255,.06)}.tc-cstats small{display:block;color:#C9B8F0;font-size:10px}.tc-cstats b{font:400 17px/1 Anton,Impact,sans-serif;color:#FFE27A}
 .tc-cbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tc-rb{height:44px;border-radius:22px;font:900 15px/1 Archivo;color:#fff}.tc-rb.red{background:radial-gradient(circle at 50% 30%,#FF7A85,#C8182A)}.tc-rb.black{background:radial-gradient(circle at 50% 30%,#777,#111)}
 .tc-three i{display:inline-block;width:34px;height:34px;background-size:contain;background-repeat:no-repeat;background-position:center}
+.tc-cell.hit{box-shadow:inset 0 0 0 3px var(--hc,#FFE27A),0 0 14px var(--hc,#FFE27A);animation:tcglow .45s ease-in-out infinite alternate} /* Symbol bleibt sichtbar, nur Rahmen und Leuchten */
+@keyframes tcglow{from{filter:brightness(1)}to{filter:brightness(1.45) saturate(1.2)}}
 </style>
 </head>
 <body>
@@ -2360,7 +2362,7 @@ function tcShowLine(l, add) { // eine Gewinnlinie hervorheben, Betrag in der Mit
   const svg = $('#tcLines'), L = TC_LINES[l.line - 1], pt = (c, r) => `${50 + c * 100},${50 + r * 100}`;
   if (!add) tcClearLines();
   svg.insertAdjacentHTML('beforeend', `<polyline points="${pt(0, L[0])} ${pt(1, L[1])} ${pt(2, L[2])}" style="stroke:${TC_LINE_COL[l.line - 1]}"/>`);
-  L.forEach((row, col) => { const c = document.querySelectorAll(`#tcStrip${col} .tc-cell`)[row]; if (c) c.classList.add('hit'); });
+  L.forEach((row, col) => { const c = document.querySelectorAll(`#tcStrip${col} .tc-cell`)[row]; if (c) { c.classList.add('hit'); c.style.setProperty('--hc', TC_LINE_COL[l.line - 1]); } }); // Rahmen in Linienfarbe
   const lw = $('#tcLineWin'); lw.textContent = fmt(l.win); lw.className = 'tc-linewin on';
 }
 function tcAnimate(grid) { // Walzen drehen und nacheinander auf dem Ergebnis stoppen
