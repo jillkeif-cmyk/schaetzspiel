@@ -1334,6 +1334,7 @@ body.no-grading .grading-only{display:none !important}
 .btn.preset{width:100%;margin-bottom:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px}
 .btn.preset small{font-weight:700;font-size:11px;opacity:.85}
 .btn.preset.on{box-shadow:0 0 0 2px #FFD23F,0 0 16px rgba(255,210,63,.5)}
+.lockgrid{display:flex;flex-wrap:wrap;gap:6px}.chipbtn.lockon{background:linear-gradient(180deg,#FF6A7A,#C8283D) !important;color:#fff !important}
 </style>
 </head>
 <body>
@@ -1353,7 +1354,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '35';
+const AVER = '36';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1770,6 +1771,7 @@ function renderRewards(box) {
   box.querySelectorAll('[data-chal]').forEach((b) => { b.onclick = () => showChallenge(b.dataset.chal); });
 }
 
+const isLocked = (k) => !!(home && home.locked && home.locked.includes(k)); // vom Admin gesperrt
 const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(10, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(10, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
 function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
 function renderVipHead() {
@@ -1993,6 +1995,7 @@ function renderPoker(box) {
 
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  if (isLocked(cgame) || (cgame === 'vip' && isLocked('wheel'))) cgame = 'setup'; // gesperrtes Spiel: zurück zu den Einstellungen
   const keepY = window.scrollY; requestAnimationFrame(() => { if (Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY); }); // Bildschirm bleibt stehen
   const gb = document.getElementById('guideBtn'); if (gb) { gb.hidden = !GUIDES[cgame]; gb.dataset.guide = cgame; gb.textContent = GUIDES[cgame] ? `ⓘ So spielst du ${GUIDES[cgame][0].replace(/^\S+\s/, '')}` : ''; }
   app.classList.toggle('pk-on', cgame === 'poker' && !!pkState && pkState.me >= 0); // Tischmodus: alles passt auf den Bildschirm
@@ -2270,7 +2273,12 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="setup" class="${cgame === 'setup' ? 'on' : ''}">⚙️ Casino-Einstellungen</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
+    const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
+    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
+    const tabs = games.filter(([k]) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))
+      .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label, extra || '')).join('');
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
@@ -3140,12 +3148,18 @@ function renderTickets() {
 
 // ---------- Admin: Fragen-Pool ----------
 let adminD = null, adminTimer = null, adminUsers = null;
+let adminLocks = null;
 function loadAdmin() {
   clearTimeout(adminTimer);
+  if (!adminLocks) api('/api/admin/locks').then((r) => { adminLocks = r.games; renderAdmin(); }).catch(() => {});
   if (document.activeElement && /^gf/.test(document.activeElement.id || '')) { adminTimer = setTimeout(loadAdmin, 4000); return; } // nicht mitten im Tippen neu zeichnen
   if (!adminUsers) api('/api/admin/users').then((r) => { adminUsers = (r.users || []).sort((a, b) => a.name.localeCompare(b.name)); renderAdmin(); }).catch(() => {});
   api('/api/admin/pool').then((d) => { adminD = d; renderAdmin(); }).catch((e) => { const b = $('#adminBody'); if (b) b.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
   adminTimer = setTimeout(() => { if (page === 'admin' && !S) loadAdmin(); }, 4000); // live mitlaufen
+}
+function toggleLock(key) { // Spiel sperren oder freigeben
+  const g = (adminLocks || []).find((x) => x.key === key); if (!g) return;
+  api('/api/admin/locks', { key, locked: !g.locked }).then((r) => { adminLocks = r.games; renderAdmin(); toast(`${g.name} ${g.locked ? 'wieder frei' : 'gesperrt'}`); }).catch((e) => toast(e.message));
 }
 function adminAct(action, value) { api('/api/admin/pool', { action, value }).then((d) => { adminD = d; renderAdmin(); }).catch((e) => toast(e.message)); }
 function renderAdmin() {
@@ -3153,6 +3167,11 @@ function renderAdmin() {
   const d = adminD, tot = d.themes.filter((t) => !t.skip).reduce((x, t) => x + t.count, 0);
   const tk = d.tokens;
   b.innerHTML = `
+    <div class="panel adm">
+      <b>🔒 Casino-Spiele sperren</b>
+      <p class="sub" style="margin:2px 0 6px">Gesperrte Spiele verschwinden für alle aus dem Casino und lassen sich auch nicht über Umwege starten.</p>
+      <div class="lockgrid" id="lockGrid">${(adminLocks || []).map((g) => `<button class="chipbtn ${g.locked ? 'lockon' : ''}" data-lock="${g.key}">${g.locked ? '🔒' : '✅'} ${esc(g.name)}</button>`).join('') || '<span class="sub">Lädt …</span>'}</div>
+    </div>
     <div class="panel adm">
       <b>Fragenquelle</b>
       <div class="seg"><button data-qsrc="live" class="${d.source === 'live' ? 'on' : ''}">✨ Live</button><button data-qsrc="pool" class="${d.source === 'pool' ? 'on' : ''}">📚 Pool</button></div>
@@ -3366,6 +3385,7 @@ function connect() {
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); if (!S && page === 'home') update(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
   socket.on('gift:new', () => { if (!S) loadHome(); });
+  socket.on('locks', (l) => { if (home) home.locked = l; if (!S && page === 'casino') { pageFilled = ''; renderCards(); } }); // Admin hat gesperrt oder freigegeben
   socket.on('bigwin', (b) => { // großer Casino-Gewinn von jemandem, der gerade online ist
     if (!b || b.id === (home && home.me.id)) return;
     const el = document.createElement('div'); el.className = 'bigwin';
@@ -4293,6 +4313,7 @@ document.addEventListener('click', (e) => {
   }
   else if (t.dataset.info) { showInfo(t.dataset.info); }
   else if (t.dataset.guide) { showGuide(t.dataset.guide); }
+  else if (t.dataset.lock) { toggleLock(t.dataset.lock); }
   else if (t.id === 'modPackGo') api('/api/admin/pack', { id: modOpen, pack: $('#modPack').value, n: Number($('#modPackN').value) || 1 }).then((r) => toast(`${r.name} an ${r.to} geschenkt, jetzt ${r.count} im Inventar`)).catch((er) => toast(er.message));
   else if (t.dataset.grade) { const [c2, v2] = t.dataset.grade.split(':'); $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); gradeFlow(c2, v2); }
   else if (t.dataset.gf) { gFilter = t.dataset.gf; renderCards(); }

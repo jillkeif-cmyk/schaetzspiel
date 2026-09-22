@@ -147,7 +147,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -243,6 +243,7 @@ app.post('/api/casino/cashback', async (req, res) => {
 });
 app.post('/api/casino/wheel', async (req, res) => {
   try {
+    if (gameLocked('wheel', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const v = vipView(u);
     if (!v.spinsLeft) return res.status(400).json({ error: 'Für heute hast du keine Drehung mehr. Morgen geht es weiter.' });
@@ -467,6 +468,24 @@ async function checkProgress(uid) {
   } catch (e) { console.error('Erfolge:', e.message); }
 }
 
+// Gesperrte Casino-Spiele (Admin): Schlüssel wie triple, roulette, bj, tables, poker, wheel
+const GAME_NAMES = { triple: 'Triple Crown', roulette: 'Roulette', bj: 'Blackjack', tables: 'Blackjack-Tische', poker: 'Poker', wheel: 'Glücksrad' };
+let lockedGames = new Set();
+const loadLocks = async () => { try { lockedGames = new Set(JSON.parse((await store.setting('locked_games')) || '[]')); } catch (e) { lockedGames = new Set(); } };
+loadLocks();
+const gameLocked = (key, res) => { if (!lockedGames.has(key)) return false; res.status(423).json({ error: `${GAME_NAMES[key] || 'Dieses Spiel'} ist gerade gesperrt.` }); return true; };
+app.get('/api/admin/locks', async (req, res) => { const u = await modAuth(req, res); if (!u) return; res.json({ games: Object.entries(GAME_NAMES).map(([k, n]) => ({ key: k, name: n, locked: lockedGames.has(k) })) }); });
+app.post('/api/admin/locks', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const key = String(req.body.key || ''); if (!GAME_NAMES[key]) return res.status(400).json({ error: 'Unbekanntes Spiel.' });
+    if (req.body.locked) lockedGames.add(key); else lockedGames.delete(key);
+    await store.setting('locked_games', JSON.stringify([...lockedGames]));
+    io.emit('locks', [...lockedGames]);
+    console.log(`Casino-Sperre: ${GAME_NAMES[key]} ${req.body.locked ? 'gesperrt' : 'frei'} durch ${u.name}`);
+    res.json({ games: Object.entries(GAME_NAMES).map(([k, n]) => ({ key: k, name: n, locked: lockedGames.has(k) })) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 const BIGWIN_MIN = 50000; // ab so vielen Diamanten Gewinn sehen es alle, die online sind
 const bigWin = async (uid, game, won) => {
   if (won < BIGWIN_MIN) return;
@@ -514,6 +533,7 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
 const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: st.steps[st.steps.length - 1].v, bet: st.bet });
 app.post('/api/casino/triple', async (req, res) => {
   try {
+    if (gameLocked('triple', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const bet = Math.round(Number(req.body.bet) || 0);
     if (!triple.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
@@ -566,6 +586,7 @@ app.post('/api/casino/triple/risk', async (req, res) => {
 
 app.post('/api/casino/roulette', async (req, res) => {
   try {
+    if (gameLocked('roulette', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const amount = Math.round(Number(req.body.amount) || 0);
     const kind = String(req.body.kind || '');
@@ -618,6 +639,7 @@ const bjSend = async (res, uid, g, left) => {
 };
 app.post('/api/casino/bj/deal', async (req, res) => {
   try {
+    if (gameLocked('bj', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (bjGames.has(u.id)) return bjSend(res, u.id, bjGames.get(u.id)); // offene Runde weiterführen
     const amount = Math.round(Number(req.body.amount) || 0);
@@ -1358,7 +1380,7 @@ io.use(async (socket, next) => {
 });
 const game = attachGame(io, store);
 // Mehrspieler-Blackjack: eigene Socket-Events, gleiche Anmeldung wie das Schätzspiel
-const bjTables = require('./lib/bjtables')(io, store, casinoStat, push);
+const bjTables = require('./lib/bjtables')(io, store, casinoStat, push, () => lockedGames.has('tables'));
 // Poker: vorerst nur für das Entwicklerteam, bis 'poker_open' gesetzt ist
 // Poker zählt als Casino, gibt aber 25 % mehr XP, weil gegen echte Spieler gespielt wird
 const pokerStat = async (uid, stake, won, info = {}) => {
@@ -1375,7 +1397,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   });
   setTimeout(() => checkProgress(uid), 500);
 };
-const poker = require('./lib/poker')(io, store, pokerStat, async () => true, push); // Poker ist für alle offen
+const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
 io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); } }); // Erfolge: Ausgangsstand beim Verbinden
 game.hooks.progress = (id) => checkProgress(id);
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id));
