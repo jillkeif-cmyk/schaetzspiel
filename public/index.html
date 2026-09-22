@@ -1089,6 +1089,17 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .dia-mini{font:800 11px/1 Archivo;padding:3px 6px;border-radius:99px;background:rgba(120,200,255,.14);color:#BDE6FF;vertical-align:2px;white-space:nowrap}
 .adm-tt{width:64px;padding:4px 6px;border-radius:8px;border:0;background:var(--bg-deep);color:var(--paper);font:400 15px/1 Anton,Impact,sans-serif;text-align:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
 .adm-tt.custom{box-shadow:inset 0 0 0 1.5px var(--tape);color:var(--tape)}
+.it-list{display:flex;flex-direction:column;gap:8px}
+.it-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--bg-deep);cursor:pointer}
+.it-row.wide{flex-direction:column;align-items:stretch}.it-row.wide .it-pic .titleimg{width:100%;max-width:250px}
+.it-row .it-pic{flex:none;display:flex;justify-content:center}
+.it-row b{font-size:14.5px}.it-row small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+.it-row .it-kind{display:inline;font-size:10.5px;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.08);vertical-align:1px}
+.it-row .bar{margin-top:4px}
+.it-row:not(.ok) .it-pic{filter:grayscale(.45) brightness(.85)}
+#chalWrap[hidden],#itemsWrap[hidden]{display:none}
+.tab-badge{display:inline-block;min-width:20px;height:20px;margin-left:6px;padding:0 5px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 12px/20px Archivo;text-align:center;vertical-align:1px;animation:ncpulse 1.4s ease-in-out infinite}
+#casBadge{order:3}
 </style>
 </head>
 <body>
@@ -1565,7 +1576,7 @@ function renderVip(box) {
       const w = $('#lwheel'); w.style.transition = 'transform 4.2s cubic-bezier(.12,.62,.12,1)'; w.style.transform = `rotate(${wheelDeg}deg)`;
       sfx('dart');
       setTimeout(() => {
-        wheelBusy = false; vipD = r.vip; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds;
+        wheelBusy = false; vipD = r.vip; tcg.diamonds = r.diamonds; if (home) { home.me.diamonds = r.diamonds; home.me.wheelLeft = r.vip.spinsLeft; } // Zähler verschwindet, wenn alle Drehungen weg sind
         const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
         sfx(r.label === 'JACKPOT' ? 'prestige' : 'exact');
         toast(r.pack ? `Gewonnen: ${PN[r.pack]}!` : `Gewonnen: ${fmt(r.dia)} Diamanten${r.label === 'JACKPOT' ? ' · JACKPOT!' : ''}`);
@@ -1962,7 +1973,7 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
@@ -2152,6 +2163,8 @@ function showChallenge(key) {
 // Geschaffte Stufen, die man noch nicht angesehen hat
 const chalTotal = () => ((home && home.progress && home.progress.challenges) || []).reduce((x, c) => x + (c.done || 0), 0);
 function chalBadge() {
+  const cb = document.getElementById('casBadge'); // offene Glücksrad-Drehungen am Casino-Knopf
+  if (cb && home) { const n = home.me.wheelLeft || 0; cb.hidden = !n; cb.textContent = n || ''; }
   const b = document.getElementById('chalBadge'); if (!b || !home) return;
   let seen = Number(localStorage.getItem('chal_seen')); const tot = chalTotal();
   if (!Number.isFinite(seen) || localStorage.getItem('chal_seen') === null) { seen = tot; try { localStorage.setItem('chal_seen', tot); } catch (e) {} }
@@ -2178,7 +2191,36 @@ function showProgressToast() {
 }
 const CHAL_IMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
 const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
+// Alle freischaltbaren Stücke mit Bedingung und Fortschritt, die fast geschafften zuerst
+let chTab = 'chal', itKind = 'all';
+function renderItemsTab() {
+  const box = $('#itemsWrap'); if (!box || !home) return;
+  const C = home.cards, F = home.frames || [], g = home.me.goals || {}, st = home.me.stats || {};
+  const prog = (it) => { const x = g[it.id]; if (!x) return it.unlocked ? 1 : 0; return Math.min(1, (st[x[0]] || 0) / x[1]); };
+  const all = [...C.titles.map((i) => ({ ...i, k: 't', nm: i.text })), ...C.emblems.map((i) => ({ ...i, k: 'e', nm: i.name })), ...F.map((i) => ({ ...i, k: 'f', nm: i.name }))]
+    .filter((i) => !i.dev && !i.event && (itKind === 'all' || i.k === itKind));
+  const open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked);
+  const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${AVER}" alt="">`
+    : i.k === 'e' ? `<img class="pcemb${i.anim ? ' a-' + i.anim : ''}" style="--s:48px" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
+    : avatar({ ...home.me, frame: i.id, frameAnim: i.anim }, 48, false);
+  const row = (i) => {
+    const x = g[i.id], cur = x ? Math.min(x[1], st[x[0]] || 0) : 0, pct = Math.round(100 * prog(i));
+    return `<div class="it-row ${i.k === 't' ? 'wide' : ''} ${i.unlocked ? 'ok' : ''}" data-itk="${i.k === 't' ? 'title' : i.k === 'e' ? 'emblem' : 'frame'}" data-itid="${esc(i.id)}">
+      <div class="it-pic">${pic(i)}</div>
+      <div class="grow"><b>${esc(i.nm)}</b> <small class="it-kind">${{ t: 'Titel', e: 'Emblem', f: 'Rahmen' }[i.k]}</small>
+        <small>${i.secret && !i.unlocked ? 'Geheim · wird über einen Code freigeschaltet' : esc(i.need || '')}</small>
+        ${i.unlocked ? '<small class="rw-ok">✓ freigeschaltet</small>' : x ? `<div class="row" style="justify-content:space-between"><small>${fmt(cur)} von ${fmt(x[1])} ${esc(GOAL_TXT[x[0]] || '')}</small><small><b>${pct} %</b></small></div><span class="bar"><i style="width:${pct}%"></i></span>` : ''}</div></div>`;
+  };
+  box.innerHTML = `<div class="seg" style="margin:4px 0 10px">${[['all', 'Alle'], ['t', 'Titel'], ['e', 'Embleme'], ['f', 'Rahmen']].map(([k, n]) => `<button data-itkind="${k}" class="${itKind === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+    <p class="sub">${open.length} noch offen · ${done.length} freigeschaltet. Die, bei denen du am weitesten bist, stehen oben.</p>
+    <div class="it-list">${open.map(row).join('')}</div>
+    ${done.length ? `<h2 style="margin:16px 0 8px">Freigeschaltet</h2><div class="it-list">${done.map(row).join('')}</div>` : ''}`;
+  box.querySelectorAll('[data-itkind]').forEach((b) => { b.onclick = () => { itKind = b.dataset.itkind; renderItemsTab(); }; });
+  box.querySelectorAll('[data-itid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.itk, b.dataset.itid); });
+}
 function renderChallenges() {
+  document.querySelectorAll('[data-cht]').forEach((b) => { b.onclick = () => { chTab = b.dataset.cht; document.querySelectorAll('[data-cht]').forEach((x) => x.classList.toggle('on', x === b)); $('#chalWrap').hidden = chTab !== 'chal'; $('#itemsWrap').hidden = chTab !== 'items'; if (chTab === 'items') renderItemsTab(); }; });
+  if (chTab === 'items') renderItemsTab();
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
   const CIMG = CHAL_IMG;
   const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="${chalImg(c.key)}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
@@ -2532,9 +2574,11 @@ function build() {
   if (!S && page === 'challenges') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Herausforderungen</h1>
-    <p class="sub">Jede Stufe bringt XP. Prestige und Ränge findest du weiterhin im Profil.</p>
+    <div class="tabs2" id="chTabs"><button data-cht="chal" class="${chTab === 'chal' ? 'on' : ''}">🏅 Herausforderungen</button><button data-cht="items" class="${chTab === 'items' ? 'on' : ''}">✨ Titel, Embleme & Rahmen</button></div>
+    <div id="chalWrap" ${chTab === 'items' ? 'hidden' : ''}><p class="sub">Jede Stufe bringt XP. Prestige und Ränge findest du weiterhin im Profil.</p>
     <div id="nextUp"></div>
-    <div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div>`;
+    <div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div id="itemsWrap" ${chTab === 'items' ? '' : 'hidden'}></div></div>`;
 
   if (!S && page === 'news') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
@@ -2596,7 +2640,7 @@ function build() {
     <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
     <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span><span class="cnt-badge" id="chalBadge" hidden></span></button>
     <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
-    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
+    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="cnt-badge" id="casBadge" ${home && home.me && home.me.wheelLeft ? '' : 'hidden'}>${(home && home.me && home.me.wheelLeft) || ''}</span><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
     <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten &amp; Booster</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Geister-Booster mit Ghost-Rare-Karten</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>

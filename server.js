@@ -121,15 +121,15 @@ const TOP = new Set(['ext', 'ghost']);
 async function cardStats(uid) {
   const rows = await store.cardsOf(uid).catch(() => []);
   let total = 0, rare = 0, ext = 0;
-  const toon = new Set();
+  const toon = new Set(), toonExt = new Set();
   for (const r of rows) {
     const n = Number(r.count) || 0;
-    if (n > 0 && TOON_IDS.has(r.card_id)) toon.add(r.card_id);
+    if (n > 0 && TOON_IDS.has(r.card_id)) { toon.add(r.card_id); if (r.variant === 'ext') toonExt.add(r.card_id); }
     total += n;
     if (RARE.has(r.variant)) rare += n;
     if (TOP.has(r.variant)) ext += n;
   }
-  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size };
+  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size + toonExt.size }; // 30 Karten + 3 Extended Arts = 33
 }
 
 app.get('/api/home', async (req, res) => {
@@ -138,7 +138,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
