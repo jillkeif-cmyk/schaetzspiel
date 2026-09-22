@@ -140,7 +140,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), showcase: String(u.showcase || '').split(',').filter(Boolean), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -630,7 +630,8 @@ app.get('/api/tcg/market', async (req, res) => {
     const out = [];
     for (const r of rows) {
       const s = await store.userById(r.seller);
-      out.push({ id: r.id, cardId: r.card_id, variant: r.variant, price: Number(r.price), seller: s ? s.name : '?', sellerId: r.seller, mine: r.seller === u.id });
+      const gx = r.card_id === 'graded' ? await store.gradedGet(Number(r.variant)) : null;
+      out.push({ id: r.id, cardId: r.card_id, variant: r.variant, price: Number(r.price), seller: s ? s.name : '?', sellerId: r.seller, mine: r.seller === u.id, graded: gx ? await gView(gx) : null });
     }
     res.json({ listings: out, diamonds: Number(u.diamonds) || 0 });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -652,10 +653,80 @@ app.get('/api/tcg/price', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const cid = String(req.query.card || ''), v = String(req.query.variant || '');
+    if (cid.startsWith('graded:')) { // Karte:Fassung:Note
+      const c2 = cid.slice(7), [v2, gr] = v.split(':');
+      const sales2 = (await store.tradesFor(cid, v)).sort((a, b) => a.created - b.created);
+      const lst = [];
+      for (const m of await store.marketList()) { if (m.card_id !== 'graded') continue; const g = await store.gradedGet(Number(m.variant)); if (g && g.card_id === c2 && g.variant === v2 && String(g.grade) === gr) lst.push({ id: m.id, price: Number(m.price), mine: m.seller === u.id }); }
+      lst.sort((a, b) => a.price - b.price);
+      const avg2 = sales2.length ? Math.round(sales2.reduce((x, q) => x + q.price, 0) / sales2.length) : null;
+      return res.json({ melt: null, sales: sales2.map((q) => ({ price: q.price, at: q.created })), avg: avg2, last: sales2.length ? sales2[sales2.length - 1].price : null, low: lst.length ? lst[0].price : null, listings: lst, pop: await popOf(c2, v2), grade: Number(gr), gradeName: GRADE_NAME[gr] });
+    }
     const sales = (await store.tradesFor(cid, v)).sort((a, b) => a.created - b.created);
     const listings = (await store.marketList()).filter((m) => m.card_id === cid && m.variant === v).map((m) => ({ id: m.id, price: Number(m.price), mine: m.seller === u.id })).sort((a, b) => a.price - b.price);
     const avg = sales.length ? Math.round(sales.reduce((x, s) => x + s.price, 0) / sales.length) : null;
     res.json({ melt: cid === 'pack' ? null : (MELT[v] || 0), sales: sales.map((s) => ({ price: s.price, at: s.created })), avg, last: sales.length ? sales[sales.length - 1].price : null, low: listings.length ? listings[0].price : null, listings });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+// ---------- Grading: Karte ins Gehäuse, zufällige Note 7 bis 10, selten 10+ ----------
+const GRADE_COST = 5000;
+const GRADE_W = [[7, 30], [8, 34], [9, 23], [10, 11], [11, 2]]; // 11 = 10+
+const GRADE_NAME = { 7: 'NEAR MINT 7', 8: 'NM-MINT 8', 9: 'MINT 9', 10: 'GEM MINT 10', 11: 'PRISTINE 10+' };
+const GRADE_MULT = { 7: 1, 8: 1.5, 9: 2.2, 10: 3.5, 11: 6 };
+const rollGrade = () => { let r = Math.random() * 100; for (const [g, w] of GRADE_W) { if ((r -= w) < 0) return g; } return 8; };
+const serialOf = (id) => 'PL-' + String(id).padStart(6, '0');
+async function popOf(cid, v) {
+  const all = (await store.gradedAll()).filter((x) => x.card_id === cid && x.variant === v);
+  const by = { 7: 0, 8: 0, 9: 0, 10: 0, 11: 0 }; for (const x of all) by[x.grade] = (by[x.grade] || 0) + 1;
+  return { total: all.length, by };
+}
+const gView = async (g) => ({ id: g.id, card: g.card_id, variant: g.variant, grade: Number(g.grade), gradeName: GRADE_NAME[g.grade], serial: serialOf(g.id), pop: await popOf(g.card_id, g.variant), listed: Number(g.user_id) === 0 });
+app.post('/api/tcg/grade', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const cid = String(req.body.card || ''), v = String(req.body.variant || '');
+    if (!tcg.has(cid, v)) return res.status(400).json({ error: 'Diese Karte gibt es nicht.' });
+    if (await store.cardCount(u.id, cid, v) < 1) return res.status(400).json({ error: 'Du besitzt diese Karte nicht.' });
+    if ((Number(u.diamonds) || 0) < GRADE_COST) return res.status(400).json({ error: `Graden kostet ${GRADE_COST.toLocaleString('de-DE')} Diamanten.` });
+    await store.save(u.id, { diamonds: (Number(u.diamonds) || 0) - GRADE_COST });
+    await store.cardAdd(u.id, cid, v, -1);
+    const g = await store.gradedAdd({ user_id: u.id, card_id: cid, variant: v, grade: rollGrade() });
+    console.log(`Grading: ${u.name} ${cid}:${v} → ${GRADE_NAME[g.grade]}`);
+    res.json({ graded: await gView(g), state: await tcgState(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/tcg/graded', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const list = []; for (const g of await store.gradedOf(u.id)) list.push(await gView(g));
+    res.json({ graded: list, cost: GRADE_COST, odds: GRADE_W.map(([g, w]) => ({ grade: g, name: GRADE_NAME[g], pct: w })) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/tcg/sellgraded', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const g = await store.gradedGet(req.body.id); const price = Math.max(10, Math.min(10000000, Math.round(Number(req.body.price) || 0)));
+    if (!g || Number(g.user_id) !== u.id) return res.status(400).json({ error: 'Diese gegradete Karte gehört dir nicht.' });
+    await store.gradedMove(g.id, 0); // liegt während des Angebots bei der Börse
+    await store.marketAdd({ seller: u.id, card_id: 'graded', variant: String(g.id), price });
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/ranks/graded', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const by = new Map();
+    for (const g of await store.gradedAll()) {
+      if (Number(g.user_id) <= 0) continue;
+      const e = by.get(g.user_id) || { n: 0, pts: 0, best: 0, tens: 0 };
+      e.n++; e.pts += Math.round((COLLECT_PTS[g.variant] || 1) * GRADE_MULT[g.grade] * 10); e.best = Math.max(e.best, g.grade); if (g.grade >= 10) e.tens++;
+      by.set(g.user_id, e);
+    }
+    const rows = [];
+    for (const [id, e] of by) { const x = await store.userById(id); if (x) rows.push({ ...publicStats(x), ...e, bestName: GRADE_NAME[e.best] }); }
+    rows.sort((a, b) => b.pts - a.pts || b.n - a.n);
+    res.json({ rows, mult: GRADE_MULT, names: GRADE_NAME });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -677,7 +748,7 @@ app.post('/api/tcg/cancel', async (req, res) => {
     const row = await store.marketGet(req.body.id);
     if (!row || row.seller !== u.id) return res.status(403).json({ error: 'Das ist nicht dein Angebot.' });
     await store.marketDrop(row.id);
-    if (row.card_id === 'pack') await store.packAdd(u.id, row.variant, 1); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    if (row.card_id === 'pack') await store.packAdd(u.id, row.variant, 1); else if (row.card_id === 'graded') await store.gradedMove(Number(row.variant), u.id); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -815,11 +886,13 @@ app.post('/api/tcg/market/buy', async (req, res) => {
     await store.marketDrop(row.id);
     await store.save(u.id, { diamonds: have - price });
     if (seller) await store.save(seller.id, { diamonds: (Number(seller.diamonds) || 0) + price });
-    const isPack = row.card_id === 'pack';
-    if (isPack) await store.packAdd(u.id, row.variant, 1); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
-    const cdef = isPack ? { name: (tcg.PACKS[row.variant] || {}).name || 'Booster' } : tcg.view().cards.find((c) => c.id === row.card_id), vname = isPack ? 'Booster' : tcg.view().names[row.variant] || row.variant;
-    await store.tradeLog({ seller: row.seller, seller_name: seller ? seller.name : '?', buyer: u.id, buyer_name: u.name, card_id: row.card_id, variant: row.variant, price }).catch((e) => console.error('Verlauf:', e.message));
-    push.toUser(row.seller, { title: isPack ? '💎 Booster verkauft' : '💎 Karte verkauft', body: isPack ? `Dein ${cdef.name} wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.` : `Deine Karte „${cdef ? cdef.name : row.card_id}“ (${vname}) wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.`, tag: 'market', url: '/' }).catch(() => {});
+    const isPack = row.card_id === 'pack', isG = row.card_id === 'graded';
+    let gRow = null;
+    if (isG) { gRow = await store.gradedMove(Number(row.variant), u.id); }
+    else if (isPack) await store.packAdd(u.id, row.variant, 1); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    const cdef = isPack ? { name: (tcg.PACKS[row.variant] || {}).name || 'Booster' } : isG ? { name: ((tcg.card(gRow.card_id) || {}).name || 'Karte') + ' · ' + GRADE_NAME[gRow.grade] } : tcg.view().cards.find((c) => c.id === row.card_id), vname = isPack ? 'Booster' : isG ? 'gegradet' : tcg.view().names[row.variant] || row.variant;
+    await store.tradeLog({ seller: row.seller, seller_name: seller ? seller.name : '?', buyer: u.id, buyer_name: u.name, card_id: isG ? 'graded:' + gRow.card_id : row.card_id, variant: isG ? gRow.variant + ':' + gRow.grade : row.variant, price }).catch((e) => console.error('Verlauf:', e.message));
+    push.toUser(row.seller, { title: isPack ? '💎 Booster verkauft' : '💎 Karte verkauft', body: isG ? `Deine gegradete Karte „${cdef.name}“ wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.` : isPack ? `Dein ${cdef.name} wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.` : `Deine Karte „${cdef ? cdef.name : row.card_id}“ (${vname}) wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.`, tag: 'market', url: '/' }).catch(() => {});
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -969,11 +1042,20 @@ async function profileExtras(o) {
   const showcase = String(o.showcase || '').split(',').filter((k) => k && own.has(k)).slice(0, 4);
   const unique = [...own].filter((k) => COLLECT.keys.has(k)).length;
   const ti = vip.tierIndex(Number(o.casino_xp) || 0);
-  return { showcase, collect: { unique, total: COLLECT.total }, vipTier: ti, vipName: vip.TIERS[ti].name };
+  const gl = await store.gradedOf(o.id).catch(() => []);
+  const gIds = new Set(gl.map((g) => g.id));
+  const showG = []; for (const id of String(o.showcase_g || '').split(',').map(Number).filter((id) => gIds.has(id)).slice(0, 4)) showG.push(await gView(gl.find((g) => g.id === id)));
+  return { showcase, showcaseG: showG, gradedCount: gl.length, collect: { unique, total: COLLECT.total }, vipTier: ti, vipName: vip.TIERS[ti].name };
 }
 app.post('/api/showcase', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (Array.isArray(req.body.graded)) {
+      const mine = new Set((await store.gradedOf(u.id)).map((g) => g.id));
+      const okg = req.body.graded.map(Number).filter((id, i, a) => mine.has(id) && a.indexOf(id) === i).slice(0, 4);
+      await store.save(u.id, { showcase_g: okg.join(',') });
+      return res.json({ showcaseG: okg });
+    }
     const want = (Array.isArray(req.body.cards) ? req.body.cards : []).map(String).slice(0, 4);
     const cs = await store.cardsOf(u.id);
     const own = new Set(cs.filter((r) => (Number(r.count) || 0) > 0).map((r) => r.card_id + ':' + r.variant));
