@@ -140,7 +140,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -670,6 +670,8 @@ app.get('/api/tcg/price', async (req, res) => {
 });
 
 // ---------- Grading: Karte ins Gehäuse, zufällige Note 7 bis 10, selten 10+ ----------
+const GRADING_ON = process.env.GRADING === '1'; // Graden ist vorerst aus, mit GRADING=1 einschalten
+const gradingOff = (res) => (GRADING_ON ? false : (res.status(403).json({ error: 'Graden ist noch nicht verfügbar.' }), true));
 const GRADE_COST = 5000;
 const GRADE_W = [[7, 30], [8, 34], [9, 23], [10, 11], [11, 2]]; // 11 = 10+
 const GRADE_NAME = { 7: 'NEAR MINT 7', 8: 'NM-MINT 8', 9: 'MINT 9', 10: 'GEM MINT 10', 11: 'PRISTINE 10+' };
@@ -684,6 +686,7 @@ async function popOf(cid, v) {
 const gView = async (g) => ({ id: g.id, card: g.card_id, variant: g.variant, grade: Number(g.grade), gradeName: GRADE_NAME[g.grade], serial: serialOf(g.id), pop: await popOf(g.card_id, g.variant), listed: Number(g.user_id) === 0 });
 app.post('/api/tcg/grade', async (req, res) => {
   try {
+    if (gradingOff(res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const cid = String(req.body.card || ''), v = String(req.body.variant || '');
     if (!tcg.has(cid, v)) return res.status(400).json({ error: 'Diese Karte gibt es nicht.' });
@@ -698,6 +701,7 @@ app.post('/api/tcg/grade', async (req, res) => {
 });
 app.get('/api/tcg/graded', async (req, res) => {
   try {
+    if (gradingOff(res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const list = []; for (const g of await store.gradedOf(u.id)) list.push(await gView(g));
     res.json({ graded: list, cost: GRADE_COST, odds: GRADE_W.map(([g, w]) => ({ grade: g, name: GRADE_NAME[g], pct: w })) });
@@ -705,6 +709,7 @@ app.get('/api/tcg/graded', async (req, res) => {
 });
 app.post('/api/tcg/sellgraded', async (req, res) => {
   try {
+    if (gradingOff(res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const g = await store.gradedGet(req.body.id); const price = Math.max(10, Math.min(10000000, Math.round(Number(req.body.price) || 0)));
     if (!g || Number(g.user_id) !== u.id) return res.status(400).json({ error: 'Diese gegradete Karte gehört dir nicht.' });
@@ -715,6 +720,7 @@ app.post('/api/tcg/sellgraded', async (req, res) => {
 });
 app.get('/api/ranks/graded', async (req, res) => {
   try {
+    if (gradingOff(res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const by = new Map();
     for (const g of await store.gradedAll()) {

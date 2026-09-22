@@ -1209,6 +1209,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .vit-g{background:linear-gradient(160deg,rgba(255,226,122,.18),rgba(0,0,0,.3));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6)}
 .slabgrid.four{grid-template-columns:repeat(2,1fr)}
 .vpg{position:relative;border-radius:14px}.vpg.on{box-shadow:0 0 0 3px var(--tape)}.vpg .slab{pointer-events:none}
+body.no-grading .grading-only{display:none !important}
 </style>
 </head>
 <body>
@@ -2051,7 +2052,7 @@ function renderCards() {
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     const packsL = market.listings.filter((l) => l.cardId === 'pack'), gradL = market.listings.filter((l) => l.cardId === 'graded' && l.graded), cardsL = market.listings.filter((l) => l.cardId !== 'pack' && l.cardId !== 'graded');
-    const seg = `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button><button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button></div>`;
+    const seg = `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
     if (mKind === 'graded') {
       box.innerHTML = seg + (gradL.length ? `<div class="slabgrid">${gradL.map((l) => `<div class="mk-slab">${slabHtml(l.graded)}<div class="row" style="justify-content:space-between;align-items:center;margin-top:6px"><span><b>${D} ${fmt(l.price)}</b><br><small class="sub">von ${esc(l.seller)} · ${l.graded.pop.by[l.graded.grade]}× in dieser Note</small></span>${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurück</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</div></div>`).join('')}</div>`
         : '<p class="sub">Gerade bietet niemand gegradete Karten an. Deine eigenen verkaufst du im Reiter „🏅 Gegradet“.</p>');
@@ -2107,15 +2108,26 @@ function renderCards() {
             <button class="mini" data-meltinc="${d.key}">+</button><small class="sub">von ${d.extra}</small></span>
             <small class="sub" style="display:block;margin-top:3px">Du besitzt ${d.extra + 1}, eine bleibt dir</small></figcaption></figure>`; }).join('')}</div>`).join('')}
       <div style="position:sticky;bottom:0;margin:14px -4px 0;padding:10px 4px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 35%)">
-        <button class="btn" id="meltGo" style="width:100%;${count ? '' : 'opacity:1;background:var(--bg-deep);color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)'}" ${count ? '' : 'disabled'}>${count ? `${count} ${count === 1 ? 'Karte' : 'Karten'} umwandeln · +${fmt(total)} 💎` : 'Noch nichts ausgewählt'}</button></div>`;
+        <button class="btn" id="meltGo" data-empty="Noch nichts ausgewählt" style="width:100%;${count ? '' : 'opacity:1;background:var(--bg-deep);color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)'}" ${count ? '' : 'disabled'}>${count ? `${count} ${count === 1 ? 'Karte' : 'Karten'} umwandeln · +${fmt(total)} 💎` : 'Noch nichts ausgewählt'}</button></div>`;
     const maxOf = (k) => { const d = dupes.find((x) => x.key === k); return d ? d.extra : 0; };
-    const setN = (k, n) => { meltSel[k] = Math.max(0, Math.min(maxOf(k), n)); renderCards(); };
+    // Nur die angetippte Karte und den Knopf aktualisieren, nicht die ganze Liste: sonst laden alle Bilder neu und die Seite springt
+    const setN = (k, n) => {
+      meltSel[k] = Math.max(0, Math.min(maxOf(k), n));
+      const img = box.querySelector(`[data-meltpick="${CSS.escape(k)}"]`), fig = img && img.closest('figure'), inp = box.querySelector(`[data-meltin="${CSS.escape(k)}"]`);
+      if (fig) fig.classList.toggle('meltsel', meltSel[k] > 0);
+      if (inp) inp.value = meltSel[k];
+      const cnt = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra), 0), sum = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra) * (melt[d.v] || 40), 0);
+      const go = $('#meltGo'); if (!go) return;
+      go.disabled = !cnt;
+      go.style.cssText = 'width:100%;' + (cnt ? '' : 'opacity:1;background:var(--bg-deep);color:var(--muted);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)');
+      go.textContent = cnt ? `${cnt} ${cnt === 1 ? 'Karte' : 'Karten'} umwandeln · +${fmt(sum)} 💎` : go.dataset.empty;
+    };
     box.querySelectorAll('[data-meltpick]').forEach((el) => { el.onclick = (e) => { e.stopPropagation(); const k = el.dataset.meltpick; setN(k, (meltSel[k] || 0) >= maxOf(k) ? 0 : (meltSel[k] || 0) + 1); }; });
     box.querySelectorAll('[data-meltinc]').forEach((el) => { el.onclick = () => setN(el.dataset.meltinc, (meltSel[el.dataset.meltinc] || 0) + 1); });
     box.querySelectorAll('[data-meltdec]').forEach((el) => { el.onclick = () => setN(el.dataset.meltdec, (meltSel[el.dataset.meltdec] || 0) - 1); });
     box.querySelectorAll('[data-meltin]').forEach((el) => { el.onchange = () => setN(el.dataset.meltin, Math.round(Number(el.value) || 0)); });
-    $('#meltAll').onclick = () => { dupes.forEach((d) => { meltSel[d.key] = d.extra; }); renderCards(); };
-    $('#meltNone').onclick = () => { meltSel = {}; renderCards(); };
+    $('#meltAll').onclick = () => { dupes.forEach((d) => setN(d.key, d.extra)); };
+    $('#meltNone').onclick = () => { dupes.forEach((d) => setN(d.key, 0)); };
     $('#meltGo').onclick = () => {
       const items = dupes.map((d) => ({ card: d.c.id, variant: d.v, n: Math.min(meltSel[d.key] || 0, d.extra) })).filter((x) => x.n > 0);
       if (!items.length) return;
@@ -2483,7 +2495,9 @@ function showGiftReveal(r) {
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
   $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
+function gradingVisibility() { document.body.classList.toggle('no-grading', !(home && home.me.grading)); } // Graden vorerst ausgeblendet
 function chalBadge() {
+  gradingVisibility();
   renderGifts();
   tkBadgeUpdate();
   const cb = document.getElementById('casBadge'); // offene Glücksrad-Drehungen am Casino-Knopf
@@ -2814,7 +2828,7 @@ function showCard(key) {
       ${['holo', 'ultra', 'ext', 'legend', 'mythic'].includes(v) ? '<span class="sheen"></span><span class="rain"></span>' : ''}${v === 'mythic' ? '<span class="myth-aura"></span>' : ''}</div>
     <div class="meta"><b>${esc(c.name)}</b>${esc(varName(v))} · ${esc(c.theme)} · ${c.lvl} Sterne · ATK ${fmt(c.atk)} / DEF ${fmt(c.def)}
       <br>${esc(c.effect)}${n ? `<br><span style="color:var(--ok);font-weight:700">Du hast sie ${n}×</span>` : '<div class="miss2">Fehlt dir noch</div>'}</div>
-    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap">${n ? `<button class="btn gold" data-grade="${esc(cid)}:${esc(v)}">🏅 Graden</button>` : ''}<button class="btn ghost" data-price="${esc(cid)}:${esc(v)}">📈 Preisverlauf</button><button class="btn ghost" id="closeCard" style="min-width:140px">Schließen</button></div></div>`;
+    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap">${n && home && home.me.grading ? `<button class="btn gold" data-grade="${esc(cid)}:${esc(v)}">🏅 Graden</button>` : ''}<button class="btn ghost" data-price="${esc(cid)}:${esc(v)}">📈 Preisverlauf</button><button class="btn ghost" id="closeCard" style="min-width:140px">Schließen</button></div></div>`;
   el.classList.add('on');
   const t = $('#tiltc');
   let tx = 0.5, ty = 0.5, cx = 0.5, cy = 0.5, raf = 0, drag = false;
@@ -3000,7 +3014,7 @@ function build() {
   if (!S && page === 'ranks') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Ranglisten</h1>
-    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button><button data-rt="cards" class="rt-glitter">✨ Sammlung</button><button data-rt="graded" class="ct-gold">🏅 Gegradet</button></div>
+    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button><button data-rt="cards" class="rt-glitter">✨ Sammlung</button><button data-rt="graded" class="ct-gold grading-only">🏅 Gegradet</button></div>
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
@@ -3011,7 +3025,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
+    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
@@ -3276,7 +3290,7 @@ async function showUser(id) {
     const slots = [0, 1, 2, 3].map((k) => u.showcase && u.showcase[k]);
     const gv = u.showcaseG || [];
     const vitG = `<div class="vit vit-g"><div class="vit-h"><b>🏅 Gegradete Karten</b>${u.self ? '<button class="link" id="vitEditG">bearbeiten</button>' : ''}</div>${gv.length ? `<div class="slabgrid four">${gv.map((x) => slabHtml(x)).join('')}</div>` : `<small class="sub">${u.self ? (u.gradedCount ? 'Stell deine gegradeten Karten aus: tippe auf „bearbeiten“.' : 'Du hast noch keine gegradeten Karten.') : 'Hat keine gegradeten Karten ausgestellt.'}</small>`}</div>`;
-    const vit = vitG + `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
+    const vit = (home && home.me.grading ? vitG : '') + `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
       if (!key) return `<div class="vit-slot empty">${u.self ? '+' : ''}</div>`;
       const [cid, v] = key.split(':');
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
