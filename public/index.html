@@ -2330,7 +2330,7 @@ function packInfo(pid) {
 }
 // Gesperrtes ansehen: echtes Bild, Animation und die Bedingung
 // Fortschritt zu einem Stück: "70 von 100 Siegen" mit Balken
-const GOAL_TXT = { matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', close: 'Doppel-Treffer', answered: 'beantwortete Fragen', mc_right: 'richtige Auswahlfragen', points: 'Punkte', best_score: 'Punkte in einem Match', best_streak: 'Siege in Folge', streak: 'Siege in Folge', rank_points: 'Weltranglistenpunkte', prestige: 'Prestige', casino_rounds: 'Casino-Runden', casino_wins: 'Casino-Siege', casino_best: 'Diamanten auf einmal', casino_xp: 'Casino-XP', cards_total: 'Karten', cards_rare: 'seltene Karten', cards_ext: 'Extended Art', toon_distinct: 'Toon-Karten', packs_opened: 'geöffnete Booster', melted: 'umgewandelte Karten', daily_streak: 'Tage in Folge', xp: 'XP', poker_hands: 'Poker-Hände', poker_wins: 'gewonnene Hände', poker_best: 'Diamanten in einem Pot', poker_allin_wins: 'gewonnene All-ins', poker_minutes: 'Minuten am Pokertisch', play_minutes: 'Minuten Spielzeit' };
+const GOAL_TXT = { collect_unique: 'verschiedenen Karten', matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', close: 'Doppel-Treffer', answered: 'beantwortete Fragen', mc_right: 'richtige Auswahlfragen', points: 'Punkte', best_score: 'Punkte in einem Match', best_streak: 'Siege in Folge', streak: 'Siege in Folge', rank_points: 'Weltranglistenpunkte', prestige: 'Prestige', casino_rounds: 'Casino-Runden', casino_wins: 'Casino-Siege', casino_best: 'Diamanten auf einmal', casino_xp: 'Casino-XP', cards_total: 'Karten', cards_rare: 'seltene Karten', cards_ext: 'Extended Art', toon_distinct: 'Toon-Karten', packs_opened: 'geöffnete Booster', melted: 'umgewandelte Karten', daily_streak: 'Tage in Folge', xp: 'XP', poker_hands: 'Poker-Hände', poker_wins: 'gewonnene Hände', poker_best: 'Diamanten in einem Pot', poker_allin_wins: 'gewonnene All-ins', poker_minutes: 'Minuten am Pokertisch', play_minutes: 'Minuten Spielzeit' };
 // Kleines Lexikon: was bedeuten die Begriffe, und wie erreicht man sie?
 const GLOSSARY = {
   exact: ['🎯 Punktlandung', 'Deine Schätzung trifft die Lösung genau. Das bringt 300 Punkte, die meisten, die es für eine Frage gibt.'],
@@ -2547,7 +2547,7 @@ function showProgressToast() {
   setTimeout(() => e.classList.add('out'), 2600);
   setTimeout(() => { e.remove(); toastBusy = false; showProgressToast(); }, 3000);
 }
-const CHAL_IMG = { casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
+const CHAL_IMG = { collect_unique: 'pc_EK1', casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
 const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
 // Alle freischaltbaren Stücke mit Bedingung und Fortschritt, die fast geschafften zuerst
 let chTab = 'chal', itKind = 'all';

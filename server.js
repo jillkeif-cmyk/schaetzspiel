@@ -95,14 +95,14 @@ app.post('/api/login', async (req, res) => {
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
-  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
+  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
   const items = [...cards.EMBLEMS.map((i) => ['e', i]), ...cards.TITLES.map((i) => ['t', i]), ...frames.FRAMES.map((i) => ['f', i])].filter(([, i]) => i.cond && !i.secret && !i.dev && !i.event);
   const out = {};
   for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
   return out;
 })();
 // Zu jedem Titel, Emblem und Rahmen: welche Kennzahl, welcher Zielwert? Per Suche aus der Bedingung ermittelt
-const GOAL_KEYS = ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes'];
+const GOAL_KEYS = ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes'];
 const ITEM_GOALS = (() => {
   const base = Object.fromEntries(GOAL_KEYS.map((k) => [k, 0]));
   const items = [...cards.EMBLEMS, ...cards.TITLES, ...frames.FRAMES].filter((i) => i.cond && !i.secret && !i.dev && !i.event);
@@ -131,7 +131,8 @@ async function cardStats(uid) {
     if (RARE.has(r.variant)) rare += n;
     if (TOP.has(r.variant)) ext += n;
   }
-  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size + toonExt.size }; // 30 Karten + 3 Extended Arts = 33
+  const uniq = new Set(rows.filter((r) => (Number(r.count) || 0) > 0).map((r) => r.card_id + ':' + r.variant).filter((k) => COLLECT.keys.has(k)));
+  return { cards_total: total, cards_rare: rare, cards_ext: ext, toon_distinct: toon.size + toonExt.size, collect_unique: uniq.size, collect_all: COLLECT.total }; // 30 Karten + 3 Extended Arts = 33
 }
 
 app.get('/api/home', async (req, res) => {
