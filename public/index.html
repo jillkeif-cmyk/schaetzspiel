@@ -1135,7 +1135,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tk-s b{display:block;font:400 26px/1 Anton,Impact,sans-serif}.tk-s small{color:var(--muted);font-size:11px;font-weight:800}
 .tk-s.st-eingereicht{border-top-color:#5AA9FF}.tk-s.st-in-Bearbeitung{border-top-color:#FFB24A}.tk-s.st-abgeschlossen{border-top-color:#3DDC97}.tk-s.st-abgelehnt{border-top-color:#E05252}
 .tk{position:relative}.tk.isnew{box-shadow:0 0 0 2px #C04BFF,0 0 16px rgba(192,75,255,.35)}
-.tk-new{position:absolute;top:-8px;right:10px;padding:4px 8px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 10.5px/1 Archivo}
+.tk-newtag{position:absolute;top:-8px;right:10px;padding:4px 8px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 10.5px/1 Archivo}
 .tk-reply{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border-left:3px solid var(--tape)}.tk-reply small{color:var(--tape);font-weight:800}.tk-reply p{margin:4px 0 0;font-size:13.5px;white-space:pre-wrap}
 </style>
 </head>
@@ -2367,7 +2367,7 @@ function renderTickets() {
   const list = tkD.tickets.filter((t) => tkFilter === 'all' || (tkFilter === 'open' ? isOpen(t) : !isOpen(t)));
   const summary = `<div class="tk-sum">${[['eingereicht', '🔵', 'eingereicht'], ['in Bearbeitung', '🟠', 'in Arbeit'], ['abgeschlossen', '🟢', 'erledigt'], ['abgelehnt', '🔴', 'abgelehnt']].map(([k, i, n]) => `<div class="tk-s st-${k.replace(/ /g, '-')}"><b>${cnt(k)}</b><small>${i} ${n}</small></div>`).join('')}</div>
     <div class="seg" style="margin:8px 0 10px">${[['open', `Offen (${tkD.tickets.filter(isOpen).length})`], ['done', 'Erledigt'], ['all', 'Alle']].map(([k, n]) => `<button data-tkf="${k}" class="${tkFilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>`;
-  el.innerHTML = summary + (list.length ? list.map((t) => `<div class="tk st-${t.status.replace(/ /g, '-')} ${tkNewIds.has(t.id) ? 'isnew' : ''}">${tkNewIds.has(t.id) ? '<span class="tk-new">NEU</span>' : ''}
+  el.innerHTML = summary + (list.length ? list.map((t) => `<div class="tk st-${t.status.replace(/ /g, '-')} ${tkNewIds.has(t.id) ? 'isnew' : ''}">${tkNewIds.has(t.id) ? '<span class="tk-newtag">NEU</span>' : ''}
       <div class="tk-h"><span class="tk-ic">${TK_ICON[t.category] || '🎫'}</span><span class="grow"><b>${esc(t.title)}</b><small>#${t.id} · ${esc(t.category)} · <span class="th-u" data-user="${t.user_id}">${esc(t.user_name)}</span> · ${ago(t.created)}</small></span><span class="tk-st">${esc(t.status)}</span></div>
       ${t.text ? `<p class="tk-t">${esc(t.text)}</p>` : ''}
       ${t.hasImage ? `<button class="mini" data-tkimg="${t.id}">🖼 Screenshot ansehen</button>` : ''}

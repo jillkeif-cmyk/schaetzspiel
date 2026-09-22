@@ -306,6 +306,17 @@ setTimeout(async () => {
   } catch (e) { console.error('Glücksrad-Reset:', e.message); }
 }, 3000);
 
+// Einmalig: paddy ist durch den behobenen Solo-Fehler knapp unter Level 30 gefallen, zurücksetzen
+setTimeout(async () => {
+  try {
+    if (await store.setting('fix_paddy_lvl30')) return;
+    await store.setting('fix_paddy_lvl30', '1');
+    const u = (await store.searchUsers('paddy', 5)).find((x) => x.name.toLowerCase() === 'paddy');
+    if (u && Number(u.xp) < progress.CAP && Number(u.xp) >= progress.CAP - 600) { await store.save(u.id, { xp: progress.CAP }); console.log('paddy: Level 30 wiederhergestellt, XP', u.xp, '->', progress.CAP); }
+    else console.log('paddy: keine Korrektur nötig, XP', u && u.xp);
+  } catch (e) { console.error('paddy-Korrektur:', e.message); }
+}, 15000);
+
 // Einmalig: Fragen, die vor den Gesehen-Listen schon gestellt wurden, gelten für alle bisherigen Spieler als gesehen
 setTimeout(async () => {
   try {
