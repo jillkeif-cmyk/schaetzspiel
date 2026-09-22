@@ -345,6 +345,7 @@ setInterval(async () => {
   try {
     const atPoker = new Set(poker.seatedIds());
     for (const id of [...game.online.keys()]) {
+      if (game.isIdle(id) && !atPoker.has(id)) { checkProgress(id); continue; } // eingeschlafen: keine Spielzeit
       const u = await store.userById(id); if (!u) continue;
       const f = { play_minutes: (Number(u.play_minutes) || 0) + 1 };
       if (atPoker.has(id)) f.poker_minutes = (Number(u.poker_minutes) || 0) + 1;
@@ -856,7 +857,7 @@ app.get('/api/friends', async (req, res) => {
     for (const f of await store.friendList(u.id)) {
       const o = await store.userById(f.id); if (!o) continue;
       const m = game.matches.get(game.userMatch.get(o.id));
-      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished', watchCode: m && m.phase !== 'lobby' && m.phase !== 'finished' ? m.code : '',
+      out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', idle: game.isIdle(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished', watchCode: m && m.phase !== 'lobby' && m.phase !== 'finished' ? m.code : '',
         joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 8 ? m.code : null });
     }
     res.json({ friends: out });

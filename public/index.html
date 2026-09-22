@@ -1138,6 +1138,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .tk{position:relative}.tk.isnew{box-shadow:0 0 0 2px #C04BFF,0 0 16px rgba(192,75,255,.35)}
 .tk-newtag{position:absolute;top:-8px;right:10px;padding:4px 8px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 10.5px/1 Archivo}
 .tk-reply{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border-left:3px solid var(--tape)}.tk-reply small{color:var(--tape);font-weight:800}.tk-reply p{margin:4px 0 0;font-size:13.5px;white-space:pre-wrap}
+.nw-rows{margin:10px 0;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}.nw-rows-t{display:block;color:var(--muted);font-weight:800;margin:0 0 8px 4px}.nw-fakebtn{pointer-events:none}
+.ava-wrap{position:relative;display:inline-block;flex:none}.ava-zz{position:absolute;right:-6px;top:-8px;font-size:16px;z-index:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));animation:zzfloat 2.4s ease-in-out infinite}
+@keyframes zzfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 </style>
 </head>
 <body>
@@ -1157,7 +1160,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '23';
+const AVER = '24';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1173,7 +1176,8 @@ function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp?v=$
 function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(11, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
   const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
-  return `<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>`;
+  const zz = p.idle ? `<span class="ava-zz" title="abwesend">😴</span>` : '';
+  return `${zz ? '<span class="ava-wrap">' : ''}<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>${zz ? zz + '</span>' : ''}`;
 }
 const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
 function streakHtml(p) {
@@ -1205,7 +1209,7 @@ function seenText(u) {
   const d = Math.round(h / 24);
   return d === 1 ? 'gestern' : 'vor ' + d + ' Tagen';
 }
-const onlineText = (u) => (u.online ? (u.act && u.act !== 'online' ? u.act : 'online') : 'zuletzt ' + seenText(u));
+const onlineText = (u) => (u.online ? (u.idle ? '😴 abwesend' + (u.act && u.act !== 'online' ? ' · ' + u.act : '') : u.act && u.act !== 'online' ? u.act : 'online') : 'zuletzt ' + seenText(u));
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
 function closeModal() { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; }
 function askPassword(code, wrong) {
@@ -2202,6 +2206,7 @@ function renderNews() {
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="btn small nw-fakebtn">${esc(btn)}</span>` : ''}</div>`).join('')}</div></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
@@ -2599,7 +2604,7 @@ function connect() {
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
-  socket.on('connect', () => { lastPresence = ''; reportPresence(); socket.emit('pk:list'); if (pkState) socket.emit('pk:refresh'); });
+  socket.on('connect', () => { lastPresence = ''; reportPresence(); if (idleSent) socket.emit('idle', true); socket.emit('pk:list'); if (pkState) socket.emit('pk:refresh'); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && pkState && socket) { if (!socket.connected) socket.connect(); socket.emit('pk:refresh'); } });
   socket.on('bj:invited', (d) => {
     $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>🃏 Blackjack-Einladung</h2><p>${esc(d.from)} lädt dich an den Tisch ein.</p>
@@ -2646,6 +2651,12 @@ function connect() {
 
 // ---------- Ansichten ----------
 let lastPresence = '';
+// Abwesenheit: 5 Minuten ohne Tippen, Scrollen oder Schreiben
+let lastInput = Date.now(), idleSent = false;
+const IDLE_MS = 5 * 60 * 1000;
+function markActive() { lastInput = Date.now(); if (idleSent && socket && socket.connected) { idleSent = false; socket.emit('idle', false); } }
+['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'].forEach((ev) => window.addEventListener(ev, markActive, { passive: true, capture: true }));
+setInterval(() => { if (!idleSent && socket && socket.connected && Date.now() - lastInput > IDLE_MS) { idleSent = true; socket.emit('idle', true); } }, 20000);
 function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
