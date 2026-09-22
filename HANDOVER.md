@@ -59,6 +59,21 @@ Dateinamen: Embleme `public/emblems/pc_<id>.webp`, Titel `title_<id>.webp`, Rahm
 Karten `public/tcg/<kartenid>_<variante>.webp`. Bei neuen Assets `AVER` in index.html erhöhen,
 falls Browser alte Versionen zeigen.
 
+## Bewegte Titel und Embleme (Wan 3.0)
+
+1. Standbild mit `gpt_image_2_5` erzeugen. Titel 16:9 als Panorama: „All important content is arranged in one flat
+   horizontal band across the exact vertical middle ... the top third and bottom third contain only soft dark background“.
+   Embleme 1:1 „Centered, fully visible with generous margin, isolated on a pure solid black background. No text“.
+2. Bild mit `media_import_url` zu Higgsfield holen, dann `generate_video_batch` mit `model: wan3_0`, `resolution: 720p`,
+   `duration: 5`, `generate_audio: false`, Startbild als `start_image`. Prompt immer mit „The camera stays completely still ...
+   The composition stays exactly the same, nothing moves out of frame. Seamless loop.“
+3. Umwandeln: `tools/anim/towebp.sh video.mp4 public/emblems/title_<id>.webp banner <YPOS>` (560×127, Schleife überblendet),
+   Embleme mit `python3 tools/anim/emb.py video.mp4 public/emblems/pc_<id>.webp` (180×180, Maske von den Rändern).
+4. **Gegen abgeschnittene Titel:** Zwei Einzelbilder (Anfang und Mitte) nebeneinander ansehen. Fehlt oben etwas
+   (Krone, Kopf), YPOS senken: bisher 0.30 (Komplettist), 0.22 (Violetter Flush), 0.0 (König des Pokers).
+5. Im Code `anim: 'video'` am Titel oder Emblem setzen. Rahmen bleiben Standbilder mit CSS-Animation (`spin`, `crown` usw.).
+6. Vorschau für Nick: Playwright-Aufnahme im Spiel plus Untertitel per ffmpeg `drawtext`, oder Vergleichsseite als Artifact.
+
 ## Karten rendern
 
 `tools/cards/build3.py` baut eine Karte aus Motiv plus Rahmenvorlage `frame2.png`
