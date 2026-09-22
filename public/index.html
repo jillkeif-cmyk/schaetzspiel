@@ -1303,6 +1303,20 @@ body.no-grading .grading-only{display:none !important}
 .tc-three i{display:inline-block;width:34px;height:34px;background-size:contain;background-repeat:no-repeat;background-position:center}
 .tc-cell.hit{box-shadow:inset 0 0 0 3px var(--hc,#FFE27A),0 0 14px var(--hc,#FFE27A);animation:tcglow .45s ease-in-out infinite alternate} /* Symbol bleibt sichtbar, nur Rahmen und Leuchten */
 @keyframes tcglow{from{filter:brightness(1)}to{filter:brightness(1.45) saturate(1.2)}}
+.tc-ladbox{background:linear-gradient(180deg,rgba(18,8,42,.55),rgba(18,8,42,.78)) !important;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.tc-lsteps{align-items:center;gap:4px !important}
+.tc-ls{width:var(--w);justify-content:center !important;gap:6px;border-radius:999px !important;padding:0 8px !important;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#7a5310,#4a3106) !important;box-shadow:inset 0 0 0 1.5px rgba(255,220,120,.55),0 2px 6px rgba(0,0,0,.5)}
+.tc-ls b{color:#FFE9A8 !important;font-size:15px !important;text-shadow:0 1px 2px #000}.tc-ls small{font:900 9px/1 Archivo;color:#FFE27A;letter-spacing:.06em}
+.tc-ls::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 45%,transparent 60%);transform:translateX(-120%);animation:tcshine 2.8s ease-in-out infinite;animation-delay:calc(var(--w) * .02s)}
+@keyframes tcshine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.tc-ls.zero{background:rgba(255,255,255,.08) !important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}.tc-ls.zero b{color:#aaa !important}
+.tc-ls.aus{background:linear-gradient(180deg,#FFE27A,#E0A21E 60%,#B7780A) !important;box-shadow:0 0 16px rgba(255,210,63,.8),inset 0 0 0 2px #fff6c9}.tc-ls.aus b,.tc-ls.aus small{color:#2A1600 !important;text-shadow:none}
+.tc-ls.cur{background:linear-gradient(180deg,#FFF6C9,#FFD23F 55%,#E0A21E) !important;box-shadow:0 0 20px rgba(255,220,90,1),0 0 0 2px #fff;transform:scale(1.06);z-index:1}.tc-ls.cur b{color:#2A1600 !important;text-shadow:none}
+.tc-ls.flash{background:#fff !important;box-shadow:0 0 22px #fff,0 0 0 2px #FFE27A}.tc-ls.flash b{color:#111 !important}
+.tc-ls.cur::before{content:"✦";position:absolute;right:10px;color:#fff;animation:tcspark 1s ease-in-out infinite}.tc-ls.cur::before{left:10px;right:auto}
+@keyframes tcspark{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.2)}}
+.guide-btn{align-self:flex-start;margin:0 0 8px;background:rgba(90,169,255,.16) !important;color:#BFE0FF !important}
 </style>
 </head>
 <body>
@@ -1955,6 +1969,7 @@ function renderPoker(box) {
 
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  const gb = document.getElementById('guideBtn'); if (gb) { gb.hidden = !GUIDES[cgame]; gb.dataset.guide = cgame; gb.textContent = GUIDES[cgame] ? `ⓘ So spielst du ${GUIDES[cgame][0].replace(/^\S+\s/, '')}` : ''; }
   app.classList.toggle('pk-on', cgame === 'poker' && !!pkState && pkState.me >= 0); // Tischmodus: alles passt auf den Bildschirm
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
   renderVipHead();
@@ -2234,6 +2249,7 @@ function renderCards() {
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
+      <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -2287,6 +2303,41 @@ async function openPack(pid) {
     const idx = r.pulled.findIndex((c) => c.variant === 'mythic') >= 0 ? r.pulled.findIndex((c) => c.variant === 'mythic') : r.pulled.findIndex((c) => c.variant === 'ghost') >= 0 ? r.pulled.findIndex((c) => c.variant === 'ghost') : r.pulled.findIndex((c) => c.variant === 'ext');
     if (idx >= 0) { const c = r.pulled[idx]; setTimeout(() => { if ($('#opener').classList.contains('on')) packHighlight(c.variant, cardImg(c.id, c.variant)); }, idx * 650 + 900); }
   } catch (e) { toast(e.message); }
+}
+
+
+// ---------- Spielanleitungen fürs Casino ----------
+const GUIDES = {
+  triple: ['👑 Triple Crown', [
+    ['Ziel', 'Drei gleiche Symbole auf einer der 5 Linien: oben, Mitte, unten und die beiden Diagonalen. Gewinne auf mehreren Linien werden zusammengezählt.'],
+    ['Bedienung', 'Einsatz wählt den Betrag, START dreht die Walzen. Auto dreht von selbst weiter und nimmt Gewinne sofort mit, nochmal Auto stoppt. Turbo macht alles schneller.'],
+    ['Gewinne', 'Krone 150-fach, Sieben 40-fach, Hufeisen 12-fach, Blitz, Herz, Stern und Mond je 8-fach. Chip gibt den Einsatz zurück plus einen Gratis-Dreh. Die genauen Beträge zu deinem Einsatz stehen unter „Gewinne“.'],
+    ['Vollbild und Rewin-Rad', 'Zeigen alle 9 Felder Blitz, Herz, Stern oder Mond, gewinnen alle 5 Linien. Dann startet das Rad mit 12 Feldern, in Runde 1 mit nur einem Stop. Landet das Licht auf Rewin, wird das Vollbild nochmal gezählt, und es kommt ein Stop-Feld dazu. START beschleunigt das Licht, nochmal START bremst es ab. Wo es landet, ist Zufall, im Schnitt gibt es knapp drei Rewins.'],
+    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Das Licht taktet zwischen der nächsthöheren und der nächstniedrigeren Stufe, START hält es an. Ganz oben wartet die Ausspielung. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
+    ['Fair', 'Alles wird auf dem Server ausgelost. Die Auszahlungsquote liegt bei rund 96 %, die Chancen beim Riskieren sind genau fair.']]],
+  roulette: ['🎡 Roulette', [
+    ['Ziel', 'Die Kugel landet auf einer Zahl von 0 bis 36. Du setzt vorher darauf, wo sie landet.'],
+    ['Setzen', 'Wähle unten deinen Einsatz und tippe auf ein Feld. Du kannst mehrere Felder gleichzeitig besetzen, dann drehst du.'],
+    ['Auszahlungen', 'Rot oder Schwarz, Gerade oder Ungerade, 1–18 oder 19–36: doppelter Einsatz zurück. Ein Drittel mit 12 Zahlen: dreifach. Eine einzelne Zahl: 36-fach.'],
+    ['Die Null', 'Die grüne 0 gehört zu keiner Farbe und keinem Drittel. Fällt sie, verlieren alle Einsätze außer auf die 0 selbst.']]],
+  bj: ['🃏 Blackjack', [
+    ['Ziel', 'Komm näher an 21 als der Geber, ohne darüber zu gehen. Bildkarten zählen 10, das Ass 1 oder 11.'],
+    ['Ablauf', 'Setzen, austeilen. Ziehen nimmt eine Karte, Halten beendet deine Hand. Danach zieht der Geber, bis er mindestens 17 hat.'],
+    ['Extras', 'Verdoppeln: doppelter Einsatz, genau eine Karte. Teilen: zwei gleiche Karten werden zu zwei Händen, bis zu vier. Versicherung: gegen einen Blackjack des Gebers, wenn er ein Ass zeigt. Aufgeben: die Hälfte des Einsatzes zurück.'],
+    ['Auszahlung', 'Gewonnen zahlt doppelt, Blackjack mit den ersten zwei Karten zahlt 3:2, unentschieden gibt den Einsatz zurück.']]],
+  tables: ['👥 Blackjack-Tische', [
+    ['Gemeinsam spielen', 'Bis zu 5 Spieler sitzen an einem Tisch gegen denselben Geber. Jeder setzt und spielt seine eigene Hand, die Regeln sind wie beim normalen Blackjack.'],
+    ['Tisch finden', 'Eröffne einen Tisch oder setz dich an einen offenen. Offene Tische siehst du auch auf der Startseite.']]],
+  poker: ['♠️ Texas Hold’em', [
+    ['Ziel', 'Die beste Hand aus 5 Karten bilden: deine 2 verdeckten Karten plus 5 gemeinsame in der Mitte. Oder alle anderen zum Aufgeben bringen.'],
+    ['Ablauf', 'Zwei Spieler setzen die Blinds. Nach dem Austeilen, nach dem Flop mit 3 Karten, dem Turn und dem River wird jeweils gesetzt.'],
+    ['Deine Züge', 'Fold: aufgeben. Check: schieben, wenn niemand erhöht hat. Call: mitgehen. Raise: erhöhen. All-in: alles setzen.'],
+    ['Hände von stark nach schwach', 'Royal Flush, Straight Flush, Vierling, Full House, Flush, Straße, Drilling, zwei Paare, ein Paar, höchste Karte.']]],
+};
+function showGuide(k) {
+  const g = GUIDES[k]; if (!g) return;
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>ⓘ So spielst du ${esc(g[0])}</h2>${g[1].map(([t, d]) => `<div class="gl-item"><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join('')}<button class="btn ghost" id="pwCancel">Verstanden</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
 
 // ---------- Triple Crown ----------
@@ -2460,7 +2511,8 @@ function tcLadderOpen() {
   tc.mode = 'ladder'; tcSync();
   const draw = () => {
     const R = tc.risk, top = R.steps.length - 1;
-    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-ltitle">RISIKOLEITER</div><div class="tc-lsteps">${R.steps.map((v, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${i === top ? 'aus' : ''}" id="tcLs${i}"><span>${i === top ? 'AUSSPIELUNG' : i === 0 ? '0' : ''}</span><b>${i === 0 ? '' : fmt(v)}</b></div>`).reverse().join('')}</div>
+    // Goldene Leiter in der Mitte: jede Stufe breiter als die darunter, ganz oben die Ausspielung
+    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((v, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${i === top ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${i === top ? `<small>👑 AUSSPIELUNG</small><b>${fmt(v)}</b>` : `<b>${fmt(v)}</b>`}</div>`).reverse().join('')}</div>
       <div class="tc-lbtns"><button class="btn tc-riskbtn" id="tcLRisk" ${R.pos >= top ? 'disabled' : ''}>Risiko<small>${R.pos < top ? Math.round(100 * (R.win - R.steps[R.pos - 1]) / (R.steps[R.pos + 1] - R.steps[R.pos - 1])) + ' % hoch' : ''}</small></button><button class="btn ghost" id="tcLSplit">Teilen<small>${fmt(Math.floor(R.win / 2))} sicher</small></button><button class="btn ghost" id="tcLCard">Karte</button><button class="btn" id="tcLTake">Nehmen</button></div></div>`;
     $('#tcLRisk').onclick = ladderRisk; $('#tcLTake').onclick = async () => { await tcTakeQuiet(); tcSetMsg(`💰 ${fmt(tc.lastWin)} gutgeschrieben`); };
     $('#tcLSplit').onclick = () => tcSplit(draw); $('#tcLCard').onclick = tcCardOpen;
@@ -4153,6 +4205,7 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.info) { showInfo(t.dataset.info); }
+  else if (t.dataset.guide) { showGuide(t.dataset.guide); }
   else if (t.id === 'modPackGo') api('/api/admin/pack', { id: modOpen, pack: $('#modPack').value, n: Number($('#modPackN').value) || 1 }).then((r) => toast(`${r.name} an ${r.to} geschenkt, jetzt ${r.count} im Inventar`)).catch((er) => toast(er.message));
   else if (t.dataset.grade) { const [c2, v2] = t.dataset.grade.split(':'); $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); gradeFlow(c2, v2); }
   else if (t.dataset.gf) { gFilter = t.dataset.gf; renderCards(); }
