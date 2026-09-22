@@ -1971,10 +1971,11 @@ function renderCards() {
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
     const all = [];
-    for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) all.push({ c, v, n: owned(c.id, v) });
+    for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) { const n = owned(c.id, v); if (c.set === 'dev' && !n) continue; all.push({ c, v, n }); } // Entwickler-Karten nur zeigen, wenn man sie hat
+    const hasDev = all.some((x) => x.c.set === 'dev');
     const have = all.filter((x) => x.n && x.c.set !== 'dev').length, allN = all.filter((x) => x.c.set !== 'dev').length; // Entwickler-Karten zählen nicht mit
     const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻']];
-    const SF = [['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ['set:dev', 'Entwickler-Karten ✦']];
+    const SF = [['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
     let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter.startsWith('set:') ? x.c.set === cfilter.slice(4) : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
