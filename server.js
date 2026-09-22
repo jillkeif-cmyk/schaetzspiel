@@ -140,7 +140,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), showcase: String(u.showcase || '').split(',').filter(Boolean), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -962,6 +962,26 @@ app.post('/api/friends/:act', async (req, res) => {
     res.status(404).json({ error: 'Unbekannte Aktion.' });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// Vitrine (bis zu 4 eigene Karten), Casino-Stufe und Sammlungsstand fürs Profil
+async function profileExtras(o) {
+  const cs = await store.cardsOf(o.id).catch(() => []);
+  const own = new Set(cs.filter((r) => (Number(r.count) || 0) > 0).map((r) => r.card_id + ':' + r.variant));
+  const showcase = String(o.showcase || '').split(',').filter((k) => k && own.has(k)).slice(0, 4);
+  const unique = [...own].filter((k) => COLLECT.keys.has(k)).length;
+  const ti = vip.tierIndex(Number(o.casino_xp) || 0);
+  return { showcase, collect: { unique, total: COLLECT.total }, vipTier: ti, vipName: vip.TIERS[ti].name };
+}
+app.post('/api/showcase', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const want = (Array.isArray(req.body.cards) ? req.body.cards : []).map(String).slice(0, 4);
+    const cs = await store.cardsOf(u.id);
+    const own = new Set(cs.filter((r) => (Number(r.count) || 0) > 0).map((r) => r.card_id + ':' + r.variant));
+    const ok = want.filter((k, i) => own.has(k) && want.indexOf(k) === i);
+    await store.save(u.id, { showcase: ok.join(',') });
+    res.json({ showcase: ok });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.get('/api/user/:id', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -969,7 +989,7 @@ app.get('/api/user/:id', async (req, res) => {
     const m2 = game.matches.get(game.userMatch.get(o.id));
     const rel = (await store.friendList(u.id)).find((f) => f.id === o.id);
     res.json({ user: { ...publicStats(o), online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', playing: !!m2 && !['lobby', 'finished'].includes(m2.phase),
-      self: o.id === u.id, friend: rel ? rel.status : null } });
+      self: o.id === u.id, friend: rel ? rel.status : null, ...(await profileExtras(o)) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 

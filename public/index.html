@@ -1160,6 +1160,22 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .watchbox{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 14px;border-radius:20px;background:var(--bg-deep);box-shadow:inset 0 0 0 2px rgba(90,169,255,.45);text-align:center}
 .watchbox small{color:var(--muted);font-weight:700}.watchbox b{font:400 44px/1.05 Anton,Impact,sans-serif;color:#9CCBFF;word-break:break-word}.watchbox b.done{color:var(--tape)}
 .watchopts{margin-top:10px}.watchopts .opt{cursor:default;opacity:.8}.watchopts .opt.picked{opacity:1;box-shadow:0 0 0 3px var(--tape),0 0 18px rgba(255,210,63,.5)}
+.vit{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:18px;background:linear-gradient(160deg,rgba(255,210,63,.1),rgba(0,0,0,.25));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35)}
+.vit-h{display:flex;justify-content:space-between;align-items:center}
+.vit-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.vit-slot{position:relative;aspect-ratio:460/610;border-radius:8px;overflow:visible;cursor:pointer}.vit-slot img{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block}
+.vit-slot.empty{border:2px dashed rgba(255,255,255,.18);display:grid;place-items:center;color:var(--muted);font-size:22px;cursor:default}
+.vit-slot .cbadge{top:3px;right:3px;left:auto;transform:scale(.8)}
+.vit-slot.r-holo img{box-shadow:0 0 0 2px rgba(150,240,255,.9),0 0 14px rgba(120,220,255,.8)}
+.vit-slot.r-ultra img,.vit-slot.r-legend img{box-shadow:0 0 0 2px #fff,0 0 16px rgba(255,240,180,.95)}
+.vit-slot.r-ext img{box-shadow:0 0 0 2px rgba(255,170,60,1),0 0 18px rgba(255,140,30,.95)}
+.vit-slot.r-ghost img{box-shadow:0 0 0 2px #fff,0 0 22px rgba(200,235,255,1)}
+.vit-slot.r-mythic img{box-shadow:0 0 0 2px #fff,0 0 22px rgba(255,120,220,1)}
+.psum{display:grid;grid-template-columns:1fr 1fr;gap:6px}.psum div{padding:10px;border-radius:14px;background:var(--bg-deep);display:flex;flex-direction:column;gap:2px}
+.psum small{color:var(--muted);font-size:11.5px}.psum b{font:400 20px/1.1 Anton,Impact,sans-serif}.psum-vip{display:flex;align-items:center;gap:6px}
+#statBox[hidden]{display:none}
+.vit-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.vp{position:relative;padding:0;border-radius:8px;background:none}.vp img{width:100%;border-radius:8px;display:block;opacity:.8}
+.vp.on img{opacity:1;box-shadow:0 0 0 3px var(--tape),0 0 14px rgba(255,210,63,.6)}.vp-n{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:var(--tape);color:#1a1200;font:900 12px/22px Archivo;text-align:center}
 </style>
 </head>
 <body>
@@ -2905,6 +2921,7 @@ function build() {
     <div class="row"><button class="link" id="back" style="padding-left:0">← Zurück</button><span class="grow"></span><button class="link" id="logout">Abmelden</button></div>
     <div id="profHead"></div>
     <div><input type="file" id="avaFile" accept="image/*" hidden><button class="btn ghost" id="avaBtn">Profilbild ändern</button></div>
+    <div class="panel row" style="gap:12px"><span style="font-size:30px">🏛</span><span class="grow"><b>Vitrine</b><br><span class="sub">Bis zu 4 Karten, die andere in deinem Profil sehen</span></span><button class="btn small" id="vitEditP">Bearbeiten</button></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
     <div class="panel" id="notifBox" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -3155,12 +3172,46 @@ function showInvite() {
 async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
-    $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${esc(onlineText(u))}</span></div>`)}
-      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppel-Treffer'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div>
+    const PN = (home && home.progress && home.progress.names) || [];
+    const slots = [0, 1, 2, 3].map((k) => u.showcase && u.showcase[k]);
+    const vit = `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
+      if (!key) return `<div class="vit-slot empty">${u.self ? '+' : ''}</div>`;
+      const [cid, v] = key.split(':');
+      return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
+    }).join('')}</div>${!u.showcase || !u.showcase.length ? `<small class="sub">${u.self ? 'Stell deine liebsten Karten aus: im Profil unter „Vitrine“.' : 'Hier ist noch nichts ausgestellt.'}</small>` : ''}</div>`;
+    const sum = `<div class="psum">
+      <div><small>Level</small><b>Lv ${u.level || 1}</b><small>${u.prestige ? esc(PN[u.prestige] || 'Prestige ' + u.prestige) : 'noch kein Prestige'}</small></div>
+      <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
+      <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
+      <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div></div>`;
+    $('#modal').innerHTML = `<div class="panel" style="gap:14px;max-height:90vh;overflow:auto">${playerCard(u, '')}
+      ${vit}${sum}
+      <button class="btn ghost" id="statToggle">📊 Alle Statistiken anzeigen</button>
+      <div id="statBox" hidden><div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppel-Treffer'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div></div>
       ${u.self ? '' : u.friend === 'ok' ? '' : u.friend === 'out' ? '<button class="btn ghost" disabled>Anfrage gesendet</button>' : u.friend === 'in' ? `<button class="btn" data-fr="accept" data-id="${u.id}">Anfrage annehmen</button>` : `<button class="btn" data-addfr="${u.id}">+ Als Freund hinzufügen</button>`}
       <button class="btn ghost" id="pwCancel">Schließen</button>${u.friend === 'ok' ? `<button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button>` : ''}</div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    $('#statToggle').onclick = () => { const b = $('#statBox'); b.hidden = !b.hidden; $('#statToggle').textContent = b.hidden ? '📊 Alle Statistiken anzeigen' : '📊 Statistiken ausblenden'; };
+    if ($('#vitEdit')) $('#vitEdit').onclick = () => editShowcase();
   } catch (e) { toast(e.message); }
+}
+// Vitrine bearbeiten: bis zu 4 eigene Karten auswählen, seltenste zuerst
+function editShowcase() {
+  const go = () => {
+    const rank = (v) => (tcg.def.order || []).indexOf(v);
+    const own = (tcg.cards || []).filter((r) => r.count > 0).sort((a, b) => rank(b.variant) - rank(a.variant));
+    let pick = [...((home && home.me.showcase) || [])];
+    const draw = () => {
+      $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>🏛 Vitrine</h2><p class="sub">Wähle bis zu 4 Karten, die andere in deinem Profil sehen. ${pick.length} von 4 gewählt.</p>
+        <div class="vit-pick">${own.map((r) => { const key = r.card_id + ':' + r.variant, n = pick.indexOf(key); return `<button class="vp ${n >= 0 ? 'on' : ''} r-${esc(r.variant)}" data-vp="${esc(key)}"><img src="${cardImg(r.card_id, r.variant)}" alt="">${n >= 0 ? `<span class="vp-n">${n + 1}</span>` : ''}</button>`; }).join('') || '<p class="sub">Du hast noch keine Karten.</p>'}</div>
+        <button class="btn" id="vpSave">Speichern</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
+      $('#pwCancel').onclick = closeModal;
+      document.querySelectorAll('[data-vp]').forEach((b) => { b.onclick = () => { const k2 = b.dataset.vp, n = pick.indexOf(k2); if (n >= 0) pick.splice(n, 1); else if (pick.length < 4) pick.push(k2); else return toast('Höchstens 4 Karten'); draw(); }; });
+      $('#vpSave').onclick = () => api('/api/showcase', { cards: pick }).then((r) => { if (home) home.me.showcase = r.showcase; toast('Vitrine gespeichert'); showUser(home.me.id); }).catch((er) => toast(er.message));
+    };
+    $('#modal').classList.add('on'); draw();
+  };
+  if (!tcg) loadTcg().then(go); else go();
 }
 // Diamanten kurz: 950, 1,2K, 15K, 2,3M
 const shortNum = (n) => { n = Number(n) || 0; const f = (x, u) => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toString().replace('.', ',') + u; return n >= 1e9 ? f(n / 1e9, 'Mrd') : n >= 1e6 ? f(n / 1e6, 'M') : n >= 1e3 ? f(n / 1e3, 'K') : String(Math.round(n)); };
@@ -3557,6 +3608,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.id === 'openChallenges') { page = 'challenges'; chalMarkSeen(); render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }
+  else if (t.id === 'vitEditP') { editShowcase(); }
   else if (t.id === 'openSupport') { page = 'support'; tkNewIds = new Set((home.me.openTickets || []).filter((id) => !tkSeen().has(id))); tkMarkSeen(); render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; if (rtab === 'cards') collectD = null; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
