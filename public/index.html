@@ -1336,6 +1336,21 @@ body.no-grading .grading-only{display:none !important}
 .btn.preset.on{box-shadow:0 0 0 2px #FFD23F,0 0 16px rgba(255,210,63,.5)}
 .lockgrid{display:flex;flex-wrap:wrap;gap:6px}.chipbtn.lockon{background:linear-gradient(180deg,#FF6A7A,#C8283D) !important;color:#fff !important}
 .tc-key.on{box-shadow:0 0 0 3px #FFE27A,0 0 16px rgba(255,210,63,.6) !important}
+.tc-lobby{padding:4px 0 10px}.tc-lhead{text-align:center}.tc-lhead img{width:min(260px,70%)}
+.tc-mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tc-mcard{background:linear-gradient(180deg,#2A1248,#140A26);border-radius:16px;padding:12px 10px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.35)}
+.tc-mcard.busy{box-shadow:inset 0 0 0 1.5px rgba(255,106,122,.5)}
+.tc-mtitle{font:800 13px/1 Archivo;color:#FFE27A;letter-spacing:.5px}
+.tc-mmini{width:100%;background:#0B0618;border-radius:10px;padding:6px}.tc-mmini img{width:80%}
+.tc-mreels{display:flex;gap:4px;margin-top:4px}.tc-mreels span{flex:1;height:26px;border-radius:5px;background:linear-gradient(180deg,#3B1C63,#1A0C30)}
+.tc-mcard.busy .tc-mreels span{animation:tcmr 1s linear infinite}.tc-mcard.busy .tc-mreels span:nth-child(2){animation-delay:.2s}.tc-mcard.busy .tc-mreels span:nth-child(3){animation-delay:.4s}
+@keyframes tcmr{50%{background:linear-gradient(180deg,#8E4BD6,#3B1C63)}}
+.tc-mwho{display:flex;align-items:center;gap:6px;min-height:30px;justify-content:center}.tc-mwho b{font:800 13px/1.1 Archivo;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-mava{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#333}
+.tc-mstate{font-size:11px;color:#C9B8F0}
+.tc-watchbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(142,75,214,.25);border-radius:12px;padding:8px 10px;margin-bottom:8px;font-size:13px}
+.tc-watchbar.mine{background:rgba(255,210,63,.12)}
+.tc.watching .tc-keys,.tc.watching .tc-start,.tc.watching #tcTurbo,.tc.watching #tcPay{display:none}
 </style>
 </head>
 <body>
@@ -1355,7 +1370,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '42';
+const AVER = '43';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2432,9 +2447,73 @@ Object.keys(TC_SYM).forEach((k) => { const im = new Image(); im.src = `/tcg/tc_$
 const tcCell = (k) => `<div class="tc-cell s-${k}"></div>`;
 const tcRandSym = () => 'KSHBRTMCBRTMCCBRTM'[Math.floor(Math.random() * 18)];
 const tcSleep = (ms) => new Promise((r) => setTimeout(r, tc.turbo ? ms * 0.45 : ms));
+let tcMachines = [];
+const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}" alt="" onerror="this.style.visibility='hidden'">`;
+function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
+  const me = home && home.me && home.me.id;
+  box.innerHTML = `<div class="tc-lobby" id="tcLobby"><div class="tc-lhead"><img src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown"></div>
+    <p class="sub" style="text-align:center;margin:0 0 10px">Zwei Maschinen. Setz dich an eine freie oder schau jemandem zu.</p>
+    <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1 }, { id: 2 }]).map((m) => {
+      const mine = m.user && m.user.id === me;
+      return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${m.id}</div>
+        <div class="tc-mmini"><img src="/tcg/tc_logo.webp?v=${AVER}" alt=""><div class="tc-mreels"><span></span><span></span><span></span></div></div>
+        ${m.user ? `<div class="tc-mwho">${tcAva(m.user)}<b>${esc(m.user.name)}</b></div><div class="tc-mstate">${mine ? 'Dein Platz' : 'Belegt'}${m.watchers ? ` · 👀 ${m.watchers}` : ''}</div>
+          ${mine ? `<button class="btn small" data-tcsit="${m.id}">Weiterspielen</button>` : `<button class="btn small ghost" data-tcwatch="${m.id}">👀 Zuschauen</button>`}`
+        : `<div class="tc-mwho"><b style="color:#7CF0A8">Frei</b></div><div class="tc-mstate">&nbsp;</div><button class="btn small" data-tcsit="${m.id}">Hinsetzen</button>`}</div>`; }).join('')}</div></div>`;
+}
+async function tcSit(m) {
+  const r = await api('/api/casino/triple/sit', { machine: m }).catch((e) => { toast(e.message); return null; }); if (!r) return;
+  tcMachines = r.list; tc.seat = r.machine; tc.watch = null; if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
+  const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
+}
+function tcWatch(m) { tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+function tcBackToLobby() {
+  if (tc.watch) socket.emit('tc:unwatch');
+  if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
+  tc.watch = null; tc.seat = null; tc.risk = null; tc.mode = 'play'; tc.busy = false; tc.startHook = null; tc.startLabel = null;
+  const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
+}
+// Zuschauen: Ereignisse der Maschine nacheinander abspielen
+async function tcWatchRun() {
+  if (tc.wbusy) return; tc.wbusy = true;
+  while (tc.watch && tc.wq && tc.wq.length) {
+    const ev = tc.wq.shift();
+    try {
+      if (ev.type === 'spin') {
+        $('#tcOver').innerHTML = ''; tcClearLines(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
+        let shown = 0;
+        for (let i = 0; i < ev.spins.length; i++) {
+          const sp = ev.spins[i];
+          if (i > 0) { tcSetMsg('🟢 GRATIS-DREH!'); await tcSleep(600); tcClearLines(); }
+          await tcAnimate(sp.grid); tc.grid = sp.grid;
+          if (sp.full) { tcSetMsg(`👑 VOLLBILD ${TC_SYM[sp.full].toUpperCase()}!`); sfx('prestige'); await tcSleep(600); }
+          if (sp.lines.length) shown = await tcCountLines(sp.lines, shown);
+          if (sp.wheel) shown = await tcWheel(sp.wheel, sp.lines, shown);
+        }
+        tc.lastWin = ev.total; tcSync(); tcSetMsg(ev.total ? `Gewinn ${fmt(ev.total)} · entscheidet gerade …` : 'Leider nichts');
+        if (ev.risk) tcWatchLadder(ev.risk);
+      } else if (ev.type === 'risk') {
+        const r = ev.res;
+        if (ev.action === 'ladder') { if (r.steps) tcWatchLadder({ steps: r.steps, pos: r.pos, win: r.done ? r.paid : r.win }); tcSetMsg(r.ausspielung ? '🔔 AUSSPIELUNG · Gewinn weg' : r.done && r.top ? `🏆 GANZ OBEN! ${fmt(r.paid)}` : r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); sfx(r.up ? 'exact' : 'wrong'); }
+        else if (ev.action === 'card') { const c = r.card; tcSetMsg(`🃏 ${c ? esc(c.r) + c.s : ''} · ${r.right ? `Richtig! ${fmt(r.done ? r.paid : r.win)}` : 'Falsch, Gewinn weg'}`); sfx(r.right ? 'exact' : 'wrong'); if (!r.done && r.steps) tcWatchLadder(r); }
+        else if (ev.action === 'split') { tcSetMsg(`✂️ ${fmt(r.banked)} aufs Konto, weiter mit ${fmt(r.win)}`); if (r.steps) tcWatchLadder(r); }
+        else if (ev.action === 'take') { tcSetMsg(`💰 ${fmt(r.paid)} mitgenommen`); sfx('win'); }
+        if (r.done) { tc.lastWin = r.paid || 0; tcSync(); await tcSleep(1200); $('#tcOver').innerHTML = ''; }
+        else await tcSleep(300);
+      } else if (ev.type === 'left') { tcSetMsg('Der Spieler ist aufgestanden'); await tcSleep(1500); if (tc.watch) { tc.watch = null; socket.emit('tc:unwatch'); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } } }
+    } catch (e) { console.warn(e); }
+  }
+  tc.wbusy = false;
+}
+function tcWatchLadder(R) { // Leiter nur zum Ansehen, ohne Knöpfe
+  const over = $('#tcOver'); if (!over || !R || !R.steps) return; const top = R.steps.length - 1;
+  over.innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? '<b>AUSSPIELUNG</b>' : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div></div>`;
+}
 function renderTriple(box) {
+  if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
-    box.innerHTML = `<div class="tc" id="tcRoot"><div class="tc-top">
+    const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">
       <img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
       <div class="tc-machine">
         <div class="tc-nums l"><span class="n4">4</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n5">5</span></div>
@@ -2455,7 +2534,7 @@ function renderTriple(box) {
       <button class="tc-start" id="tcStart">START</button>
       <div class="tc-tools"><button class="chipbtn" id="tcTurbo">⚡ Turbo</button><button class="chipbtn ${TCM.on ? 'on' : ''}" id="tcMusic">${TCM.on ? '🎵 Musik an' : '🔇 Musik aus'}</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
     </div>`;
-    $('#tcStart').onclick = tcStartKey;
+    $('#tcStart').onclick = tcStartKey; $('#tcBack').onclick = tcBackToLobby;
     $('#tcKBet').onclick = () => { if (tc.busy || tc.risk) return; tc.bi = (tc.bi + 1) % TC_BETS.length; tcSync(); sfx('tick'); };
     $('#tcKLad').onclick = () => tc.risk && !tc.busy && tcLadderOpen();
     $('#tcKCard').onclick = () => tc.risk && !tc.busy && tcCardOpen();
@@ -2468,8 +2547,8 @@ function renderTriple(box) {
 }
 function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   if (!$('#tcRoot')) return;
-  $('#tcBal').textContent = fmt((tcg && tcg.diamonds) || 0) + ' 💎';
-  $('#tcBet').textContent = fmt(TC_BETS[tc.bi]);
+  $('#tcBal').textContent = tc.watch ? '—' : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
+  $('#tcBet').textContent = fmt(tc.watch ? (tc.wbet || 0) : TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
   $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : '5 Linien · 3 gleiche Symbole gewinnen');
   const canRisk = !!tc.risk && !tc.busy && !tc.risk.noRisk;
@@ -2501,6 +2580,7 @@ function tcAutoWindow() { // Fenster: Einsatz und Anzahl der Drehungen wählen
 }
 function tcSetMsg(t) { tc.msg = t; const m = $('#tcMsg'); if (m) m.innerHTML = t; }
 function tcStartKey() {
+  if (tc.watch) return;
   sfx('tick');
   if (tc.startHook) return tc.startHook(); // Rad beschleunigen/stoppen, Leiter anhalten
   if (tc.busy) return;
@@ -3002,9 +3082,11 @@ function tkMarkSeen() { try { const s2 = tkSeen(); for (const id of (home && hom
 function casinoOpenHtml() {
   const bj = (bjList || []).filter((t) => t.seats > 0 && t.seats < t.max);
   const pk = (pkList || []).filter((t) => t.seated > 0 && t.seated < t.max);
-  if (!bj.length && !pk.length) return '';
-  return `<h2 style="margin:14px 0 10px">Offene Casino-Tische</h2><div class="plist">
+  const tcm = (tcMachines || []).filter((m) => m.user && !(home && m.user.id === home.me.id));
+  if (!bj.length && !pk.length && !tcm.length) return '';
+  return `<h2 style="margin:14px 0 10px">Im Casino</h2><div class="plist">
     ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-pkwatchhome="${esc(t.id)}">Zuschauen</button><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></span></div>`).join('')}
+    ${tcm.map((m) => `<div class="pl" style="--c:#E0A21E"><span class="nm">🎰 Triple Crown · Maschine ${m.id}<br><small>${esc(m.user.name)} spielt gerade${m.watchers ? ` · 👀 ${m.watchers}` : ''}</small></span><button class="btn small ghost" data-tcwatchhome="${m.id}">Zuschauen</button></div>`).join('')}
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
 // Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
@@ -3471,6 +3553,14 @@ function connect() {
     const go = (ev) => { closeModal(); page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit(ev, ev === 'pk:sit' ? { table: d.table } : d.table); };
     $('#pkAcc').onclick = () => go('pk:sit'); $('#pkWatch').onclick = () => go('pk:watch');
   });
+  socket.on('tc:list', (l) => {
+    tcMachines = l || [];
+    if (tc.seat && !tcMachines.some((m) => m.id === tc.seat && m.user && home && m.user.id === home.me.id)) { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && cgame === 'triple') { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
+    if (page === 'casino' && cgame === 'triple' && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
+    if (!S && page === 'home') update();
+  });
+  socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
+  socket.on('tc:ev', (ev) => { if (!tc.watch || ev.machine !== tc.watch) return; tc.wq = tc.wq || []; tc.wq.push(ev); tcWatchRun(); });
   socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); if (!S && page === 'home') update(); });
   socket.on('bj:state', (t) => {
     const prev = bjT; bjT = t;
@@ -3521,6 +3611,7 @@ document.addEventListener('input', (e) => {
 function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
+  if (pg !== 'casino:triple' && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
 }
@@ -4391,6 +4482,9 @@ document.addEventListener('click', (e) => {
     const pid = t.dataset.sellpack, pr = prompt(`Für wie viele Diamanten willst du einen ${PACK_NAME[pid] || 'Booster'} verkaufen?`, String(((tcg.def.packs.find((x) => x.id === pid) || {}).price) || 500));
     if (pr) api('/api/tcg/sellpack', { pack: pid, price: Number(pr) }).then((st) => { tcg = st; market = null; renderCards(); toast('Booster steht jetzt in der Börse'); }).catch((e) => toast(e.message));
   }
+  else if (t.dataset.tcsit) { tcSit(Number(t.dataset.tcsit)); }
+  else if (t.dataset.tcwatch) { tcWatch(Number(t.dataset.tcwatch)); }
+  else if (t.dataset.tcwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'triple'; tc.watch = Number(t.dataset.tcwatchhome); tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }
   else if (t.dataset.pkwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:watch', t.dataset.pkwatchhome); }
   else if (t.dataset.pkjoin) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:sit', { table: t.dataset.pkjoin }); }
   else if (t.dataset.bjjoin) { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', t.dataset.bjjoin); }

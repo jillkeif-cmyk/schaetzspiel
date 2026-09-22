@@ -533,6 +533,37 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
 }
 const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: triple.riskTop(st.bet), bet: st.bet, noRisk: st.win >= triple.riskTop(st.bet) });
 const tripleBusy = new Set(); // pro Spieler immer nur eine Triple-Anfrage gleichzeitig
+// Zwei Maschinen: wer spielen will, setzt sich an eine freie. Andere können zuschauen (Socket-Raum tc<Nr>).
+const TC_MACHINES = 2, TC_IDLE = 5 * 60 * 1000;
+const tcSeats = new Map(); // Maschine -> { uid, name, last, grid }
+const tcSeatOf = (uid) => { for (const [m, st] of tcSeats) if (st.uid === uid) return m; return null; };
+const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, user: st ? { id: st.uid, name: st.name } : null, watchers: (io.sockets.adapter.rooms.get('tc' + (i + 1)) || { size: 0 }).size }; });
+const tcPush = () => io.emit('tc:list', tcList());
+const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (m) io.to('tc' + m).emit('tc:ev', { machine: m, ...ev }); };
+async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gutgeschrieben
+  const m = tcSeatOf(uid); if (!m) return;
+  const open = tripleOpen.get(uid); if (open) await tripleFinish(uid, open, open.win).catch(() => {});
+  tcSeats.delete(m); io.to('tc' + m).emit('tc:ev', { machine: m, type: 'left' }); tcPush();
+}
+setInterval(() => { for (const [, st] of tcSeats) if (Date.now() - st.last > TC_IDLE && !tripleBusy.has(st.uid)) tcRelease(st.uid).catch(() => {}); }, 30000);
+const tcSeated = (u, res) => { const m = tcSeatOf(u.id); if (!m) { res.status(403).json({ error: 'Setz dich zuerst an eine freie Maschine.' }); return null; } tcSeats.get(m).last = Date.now(); return m; };
+app.post('/api/casino/triple/sit', async (req, res) => {
+  try {
+    if (gameLocked('triple', res)) return;
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const m = Math.round(Number(req.body.machine) || 0); if (m < 1 || m > TC_MACHINES) return res.status(400).json({ error: 'Unbekannte Maschine.' });
+    const cur = tcSeatOf(u.id);
+    if (cur === m) return res.json({ machine: m, list: tcList() });
+    const st = tcSeats.get(m); if (st) return res.status(409).json({ error: `Maschine ${m} ist gerade belegt.` });
+    if (cur) await tcRelease(u.id);
+    tcSeats.set(m, { uid: u.id, name: u.name, last: Date.now(), grid: null }); tcPush();
+    res.json({ machine: m, list: tcList(), risk: tripleOpen.get(u.id) ? tripleView(tripleOpen.get(u.id)) : null });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/triple/leave', async (req, res) => {
+  try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); await tcRelease(u.id); res.json({ list: tcList() }); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 const tripleLock = (uid, res) => { if (tripleBusy.has(uid)) { res.status(429).json({ error: 'Einen Moment …' }); return false; } tripleBusy.add(uid); return true; };
 app.post('/api/casino/triple', async (req, res) => {
   try {
@@ -540,6 +571,7 @@ app.post('/api/casino/triple', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const bet = Math.round(Number(req.body.bet) || 0);
     if (!triple.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
+    if (!tcSeated(u, res)) return;
     if (!tripleLock(u.id, res)) return;
     try {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
@@ -551,6 +583,8 @@ app.post('/api/casino/triple', async (req, res) => {
     let risk = null;
     if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
     else await casinoStat(u.id, bet, 0);
+    const sm = tcSeatOf(u.id); if (sm && r.spins.length) tcSeats.get(sm).grid = r.spins[r.spins.length - 1].grid;
+    tcEmit(u.id, { type: 'spin', bet, spins: r.spins, total: r.total, risk });
     res.json({ ...r, bet, risk, diamonds: t.left });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -558,19 +592,21 @@ app.post('/api/casino/triple', async (req, res) => {
 app.post('/api/casino/triple/risk', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!tcSeated(u, res)) return;
     if (!tripleLock(u.id, res)) return;
     try {
     const st = tripleOpen.get(u.id); if (!st) return res.status(400).json({ error: 'Kein offener Gewinn.' });
     const a = String(req.body.action || '');
+    const send = (obj) => { const { diamonds, ...pub } = obj; tcEmit(u.id, { type: 'risk', action: a, res: pub }); return res.json(obj); };
     const capped = st.win >= triple.riskTop(st.bet); // Höchstgewinn erreicht: nur noch Nehmen oder Teilen
     if (capped && (a === 'ladder' || a === 'card')) return res.status(400).json({ error: `Risiko geht nur bis ${triple.RISK_TOP}-fach. Nimm den Gewinn mit.` });
-    const endWith = async (pay, extra) => { const d = await tripleFinish(u.id, st, pay); return res.json({ done: true, paid: pay, diamonds: d === null ? (await store.userById(u.id)).diamonds : d, ...extra }); };
+    const endWith = async (pay, extra) => { const d = await tripleFinish(u.id, st, pay); return send({ done: true, paid: pay, diamonds: d === null ? (await store.userById(u.id)).diamonds : d, ...extra }); };
     if (a === 'take') return endWith(st.win, {});
     if (a === 'split') { // Hälfte sicher, mit der anderen Hälfte weiter
       if (st.win < 2) return res.status(400).json({ error: 'Zu wenig zum Teilen.' });
       const half = Math.floor(st.win / 2); const d = await payOut(u.id, half); st.paid += half; st.win -= half;
       const L = triple.ladder(st.win, st.bet); st.steps = L.steps; st.pos = L.pos;
-      return res.json({ done: false, banked: half, diamonds: d, ...tripleView(st) });
+      return send({ done: false, banked: half, diamonds: d, ...tripleView(st) });
     }
     if (a === 'ladder') { // Zeiger springt zwischen der Stufe darüber und dem Feld darunter
       const top = st.steps.length - 1; if (st.pos >= top) return res.status(400).json({ error: 'Ganz oben angekommen.' });
@@ -579,7 +615,7 @@ app.post('/api/casino/triple/risk', async (req, res) => {
       st.pos = up ? st.pos + 1 : st.pos - 1; st.win = st.steps[st.pos].v;
       if (st.steps[st.pos].aus) return endWith(0, { up: false, ausspielung: true, pos: st.pos, steps: st.steps });
       if (st.pos === top) return endWith(st.win, { up: true, top: true, pos: st.pos, steps: st.steps });
-      return res.json({ done: false, up, ...tripleView(st) });
+      return send({ done: false, up, ...tripleView(st) });
     }
     if (a === 'card') { // Rot oder Schwarz: richtig verdoppelt (höchstens bis zur Risiko-Spitze), falsch ist alles weg
       const pick = req.body.color === 'black' ? 'black' : 'red', c = triple.drawCard(), right = (triple.cardRed(c) ? 'red' : 'black') === pick;
@@ -589,7 +625,7 @@ app.post('/api/casino/triple/risk', async (req, res) => {
       const top = triple.riskTop(st.bet); st.win = Math.min(top, st.win * 2);
       if (st.win >= top) return endWith(st.win, { card: c, right: true, top: true, cards: st.cards });
       const L = triple.ladder(st.win, st.bet); st.steps = L.steps; st.pos = L.pos;
-      return res.json({ done: false, card: c, right: true, ...tripleView(st) });
+      return send({ done: false, card: c, right: true, ...tripleView(st) });
     }
     res.status(400).json({ error: 'Unbekannte Aktion.' });
     } finally { tripleBusy.delete(u.id); }
@@ -1410,9 +1446,23 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); } }); // Erfolge: Ausgangsstand beim Verbinden
+io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
+function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, automatisch aufstehen
+  socket.emit('tc:list', tcList());
+  const unwatch = () => { for (let m = 1; m <= TC_MACHINES; m++) socket.leave('tc' + m); };
+  socket.on('tc:watch', (id) => {
+    const m = Math.round(Number(id) || 0); if (m < 1 || m > TC_MACHINES) return;
+    unwatch(); socket.join('tc' + m);
+    const st = tcSeats.get(m), open = st ? tripleOpen.get(st.uid) : null;
+    socket.emit('tc:snap', { machine: m, user: st ? { id: st.uid, name: st.name } : null, grid: st && st.grid, risk: open ? tripleView(open) : null });
+    tcPush();
+  });
+  socket.on('tc:unwatch', () => { unwatch(); tcPush(); });
+  socket.on('presence', (pg) => { if (String(pg) !== 'casino:triple' && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
+  socket.on('disconnect', () => { setTimeout(() => { tcPush(); if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 20000); });
+} // Erfolge: Ausgangsstand beim Verbinden
 game.hooks.progress = (id) => checkProgress(id);
-game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id));
+game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id) || (tcSeatOf(id) ? `spielt Triple Crown an Maschine ${tcSeatOf(id)}` : null));
 
 store.init().then(() => push.init(store)).then((k) => {
   console.log('Push bereit, Schlüssel endet auf …' + k.slice(-6));
