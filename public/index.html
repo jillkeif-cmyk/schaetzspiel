@@ -1655,7 +1655,7 @@ function renderRewards(box) {
   box.innerHTML = `
     <div class="rw-stats"><div><b>${fmt(cur.rounds)}</b><small>Runden</small></div><div><b>${fmt(cur.wins)}</b><small>Siege</small></div><div><b>${fmt(cur.best)}</b><small>bester Gewinn</small></div><div><b>${fmt(me.casinoXp || 0)}</b><small>Casino-XP</small></div></div>
     <h2 class="rw-h">Herausforderungen</h2>
-    <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} XP</span>` : ''}</div>`).join('')}</div>
+    <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} ${xpL(c)}</span>` : ''}</div>`).join('')}</div>
     <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
     <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
     <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
@@ -2479,7 +2479,7 @@ function showChallenge(key) {
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:86vh;overflow:auto">
     <h2>${esc(c.name)}</h2><p class="sub" style="margin-top:-6px">${esc(c.desc)} · aktuell ${fmt(c.cur)}</p>
     <b>Stufen</b>
-    <div class="ch-tiers">${c.tiers.map((t, i) => `<div class="ch-tier ${i < c.done ? 'done' : i === c.done ? 'next' : ''}"><span class="ch-n">${i + 1}</span><span class="grow">${fmt(t)}</span><span class="wp">+${fmt(c.xps[i])} XP</span>${i < c.done ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>
+    <div class="ch-tiers">${c.tiers.map((t, i) => `<div class="ch-tier ${i < c.done ? 'done' : i === c.done ? 'next' : ''}"><span class="ch-n">${i + 1}</span><span class="grow">${fmt(t)}</span><span class="wp">+${fmt(c.xps[i])} ${xpL(c)}</span>${i < c.done ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>
     ${rw.length ? `<b>Das kannst du damit freischalten</b><div class="ch-rw">${rw.map((x) => `<div class="ch-it ${x.it.unlocked ? '' : 'lk'} ${x.k === 't' ? 'wide' : ''}">${img(x)}<div><small>${kindName[x.k]}${x.it.unlocked ? ' · <span class="rw-ok">frei</span>' : ''}</small><b>${esc(x.it.name || x.it.text)}</b><small>${esc(x.it.need)}</small></div></div>`).join('')}</div>` : '<p class="sub">An dieser Herausforderung hängen nur XP.</p>'}
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -2561,7 +2561,7 @@ function showProgressToast() {
     : n.kind === 'title' ? `<img class="pt-title${n.anim ? ' a-' + n.anim : ''}" src="/emblems/title_${esc(n.id)}.webp?v=${AVER}" alt="">`
     : `<span class="pt-fr">${avatar({ ...home.me, frame: n.id, frameAnim: n.anim }, 40, false)}</span>`;
   const head = n.kind === 'challenge' ? '🏅 Herausforderung geschafft' : n.kind === 'title' ? '✨ Neuer Titel freigeschaltet' : n.kind === 'emblem' ? '✨ Neues Emblem freigeschaltet' : '✨ Neuer Rahmen freigeschaltet';
-  const sub = n.kind === 'challenge' ? `${esc(n.name)} · Stufe ${n.tier} von ${n.total}${n.xp ? ` · +${fmt(n.xp)} XP` : ''}` : esc(n.name);
+  const sub = n.kind === 'challenge' ? `${esc(n.name)} · Stufe ${n.tier} von ${n.total}${n.xp ? ` · +${fmt(n.xp)} ${n.group === 'casino' ? 'Casino-XP' : 'XP'}` : ''}` : esc(n.name);
   const e = document.createElement('div'); e.className = 'ptoast ' + (n.kind === 'title' ? 'wide' : '');
   e.innerHTML = n.kind === 'title' ? `<b>${head}</b>${pic}<span>${sub}</span>` : `${pic}<span class="grow"><b>${head}</b><span>${sub}</span></span>`;
   e.onclick = () => e.classList.add('out'); // antippen blendet sofort aus
@@ -2569,6 +2569,7 @@ function showProgressToast() {
   setTimeout(() => e.classList.add('out'), 2600);
   setTimeout(() => { e.remove(); toastBusy = false; showProgressToast(); }, 3000);
 }
+const xpL = (c) => (c && c.group === 'casino' ? 'Casino-XP' : 'XP'); // Casino-Herausforderungen zahlen auf die Casino-XP
 const CHAL_IMG = { collect_unique: 'pc_EK1', casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
 const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
 // Alle freischaltbaren Stücke mit Bedingung und Fortschritt, die fast geschafften zuerst
@@ -2605,14 +2606,14 @@ function renderChallenges() {
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
   const CIMG = CHAL_IMG;
   const row = (c) => `<div class="chal ${chalNew.has(c.key) ? 'isnew' : ''}" data-chal="${c.key}">${chalNew.has(c.key) ? '<span class="new-tag">NEUE STUFE</span>' : ''}<img class="ci ${c.done ? '' : 'none'}" src="${chalImg(c.key)}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
-      <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
+      <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} ${xpL(c)}</span>` : ''}</div></div>`;
     const CIMG2 = CHAL_IMG;
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 4);
       const newOnes = pr.challenges.filter((c) => chalNew.has(c.key));
       const newHtml = newOnes.length ? `<h2 style="margin-bottom:10px">🎉 Neu geschafft</h2><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${newOnes.map(row).join('')}</div>` : '';
-      $('#nextUp').innerHTML = newHtml + (open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '');
+      $('#nextUp').innerHTML = newHtml + (open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} ${xpL(c)}</span></div>`).join('')}</div>` : '');
     }
   const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
   setTimeout(() => document.querySelectorAll('[data-chal]').forEach((el) => { el.onclick = () => showChallenge(el.dataset.chal); }), 0);
@@ -2931,7 +2932,7 @@ function connect() {
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); if (!S && page === 'home') update(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
   socket.on('gift:new', () => { if (!S) loadHome(); });
-  socket.on('xp:paid', (r) => { toast(`✨ +${fmt(r.xp)} XP für Herausforderungen`); if (!S) loadHome(); }); // XP aus Casino-, Poker- und Karten-Herausforderungen
+  socket.on('xp:paid', (r) => { toast([r.xp ? `✨ +${fmt(r.xp)} XP` : '', r.casino ? `🎰 +${fmt(r.casino)} Casino-XP` : ''].filter(Boolean).join(' und ') + ' für Herausforderungen'); if (!S) loadHome(); if (vipD) vipD = null; }); // XP aus Casino-, Poker- und Karten-Herausforderungen
   socket.on('progress:new', (list) => { for (const n of list || []) toastQ.push(n); showProgressToast(); if (!S) loadHome().then(chalBadge); });
   socket.on('pk:emote', (d) => {
     const tb = document.querySelector('.pk-table'); if (!tb || !pkState) return;

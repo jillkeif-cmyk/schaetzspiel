@@ -441,23 +441,27 @@ async function checkProgress(uid) {
     // XP für Herausforderungen außerhalb des Quiz (Casino, Poker, Karten ...): bisher nur angezeigt, nie gutgeschrieben
     const MATCH_KEYS = new Set(['answered', 'exact', 'close', 'mc_right', 'mc_total', 'matches', 'wins', 'points', 'best_score', 'rank_points', 'best_streak', 'streak']);
     let paid = {}; try { paid = JSON.parse(u.chal_paid || '{}'); } catch (e) {}
-    let pay = 0; const payParts = [];
+    // Casino- und Poker-Herausforderungen zahlen auf die Casino-XP (VIP-Stufe), alle anderen aufs normale Level
+    let pay = 0, payCasino = 0; const payParts = [];
     for (const c of progress.challengeView(u2)) {
       if (MATCH_KEYS.has(c.key)) continue;
       const from = paid[c.key] || 0;
-      for (let t = from; t < c.done; t++) { pay += c.xps[t] || 0; payParts.push(`${c.name} ${t + 1}`); }
+      for (let t = from; t < c.done; t++) { if (c.group === 'casino') payCasino += c.xps[t] || 0; else pay += c.xps[t] || 0; payParts.push(`${c.name} ${t + 1}`); }
       if (c.done > from) paid[c.key] = c.done;
     }
-    if (pay) {
-      await store.save(uid, { xp: Math.min(progress.CAP, (Number(u.xp) || 0) + pay), chal_paid: JSON.stringify(paid) });
-      console.log(`Herausforderungs-XP: ${u.name} +${pay} (${payParts.join(', ')})`);
-      io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('xp:paid', { xp: pay, parts: payParts }); });
+    if (pay || payCasino) {
+      const upd = { chal_paid: JSON.stringify(paid) };
+      if (pay) upd.xp = Math.min(progress.CAP, (Number(u.xp) || 0) + pay);
+      if (payCasino) upd.casino_xp = (Number(u.casino_xp) || 0) + payCasino;
+      await store.save(uid, upd);
+      console.log(`Herausforderungs-XP: ${u.name} +${pay} Level, +${payCasino} Casino (${payParts.join(', ')})`);
+      io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('xp:paid', { xp: pay, casino: payCasino, parts: payParts }); });
     }
     const prev = progressSnap.get(uid);
     progressSnap.set(uid, { chal, items: new Set(items.keys()) });
     if (!prev) return; // erster Blick: nur merken
     const news = [];
-    for (const c of progress.challengeView(u2)) if (c.done > (prev.chal[c.key] || 0)) news.push({ kind: 'challenge', key: c.key, name: c.name, tier: c.done, total: c.total, xp: c.xps[c.done - 1] });
+    for (const c of progress.challengeView(u2)) if (c.done > (prev.chal[c.key] || 0)) news.push({ kind: 'challenge', key: c.key, name: c.name, tier: c.done, total: c.total, xp: c.xps[c.done - 1], group: c.group });
     for (const [k, it] of items) if (!prev.items.has(k)) news.push(it);
     if (news.length) io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('progress:new', news); });
   } catch (e) { console.error('Erfolge:', e.message); }
