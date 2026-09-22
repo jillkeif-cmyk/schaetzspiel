@@ -1130,7 +1130,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .gl-hint{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
 .info-i{color:var(--tape);font-weight:900}
 .req[data-info],.stat[data-info]{cursor:pointer}
-.stats{grid-template-columns:repeat(3,minmax(0,1fr)) !important}.stat{min-width:0}.stat span{overflow-wrap:anywhere;hyphens:auto}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr)) !important}.stat{min-width:0}.stat span{font-size:12px;overflow-wrap:normal;word-break:normal;-webkit-hyphens:auto;hyphens:auto} /* sauber trennen: Punkt-landungen statt Punktlandun-gen */
 .tk-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .tk-s{text-align:center;padding:10px 4px;border-radius:14px;background:var(--bg-deep);border-top:4px solid #8E9AA0}
 .tk-s b{display:block;font:400 26px/1 Anton,Impact,sans-serif}.tk-s small{color:var(--muted);font-size:11px;font-weight:800}
@@ -3289,7 +3289,7 @@ async function showUser(id) {
     $('#modal').innerHTML = `<div class="panel" style="gap:14px;max-height:90vh;overflow:auto">${playerCard(u, '')}
       ${vit}${sum}
       <button class="btn ghost" id="statToggle">📊 Alle Statistiken anzeigen</button>
-      <div id="statBox" hidden><div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppel-Treffer'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div></div>
+      <div id="statBox" hidden><div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppel-Treffer'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglisten\u00ADpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div></div>
       ${u.self ? '' : u.friend === 'ok' ? '' : u.friend === 'out' ? '<button class="btn ghost" disabled>Anfrage gesendet</button>' : u.friend === 'in' ? `<button class="btn" data-fr="accept" data-id="${u.id}">Anfrage annehmen</button>` : `<button class="btn" data-addfr="${u.id}">+ Als Freund hinzufügen</button>`}
       <button class="btn ghost" id="pwCancel">Schließen</button>${u.friend === 'ok' ? `<button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button>` : ''}</div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
