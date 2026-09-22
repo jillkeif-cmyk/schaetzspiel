@@ -116,6 +116,7 @@ const ITEM_GOALS = (() => {
   }
   return out;
 })();
+const DEV_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'dev').map((c) => c.id));
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
 const TOP = new Set(['ext', 'ghost']);
 async function cardStats(uid) {
@@ -123,6 +124,7 @@ async function cardStats(uid) {
   let total = 0, rare = 0, ext = 0;
   const toon = new Set(), toonExt = new Set();
   for (const r of rows) {
+    if (DEV_IDS.has(r.card_id)) continue; // Entwickler-Karten zählen für keine Herausforderung
     const n = Number(r.count) || 0;
     if (n > 0 && TOON_IDS.has(r.card_id)) { toon.add(r.card_id); if (r.variant === 'ext') toonExt.add(r.card_id); }
     total += n;
@@ -554,6 +556,7 @@ app.post('/api/tcg/buy', async (req, res) => {
     const p = tcg.PACKS[String(req.body.pack || '')];
     const n = Math.max(1, Math.min(9999, Math.round(Number(req.body.n) || 1))); // kein festes Limit mehr, begrenzt nur durch die Diamanten
     if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    if (p.hidden) return res.status(403).json({ error: 'Diesen Booster gibt es nicht im Shop.' });
     if (p.locked && !isMod(u)) return res.status(403).json({ error: 'Dieser Booster ist noch gesperrt. Bald geht es los!' });
     const cost = p.price * n, have = Number(u.diamonds) || 0;
     if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
@@ -581,7 +584,7 @@ app.post('/api/tcg/open', async (req, res) => {
 });
 
 // Doppelte Karten umwandeln
-const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500 };
+const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 2500 };
 app.post('/api/tcg/melt', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -667,7 +670,7 @@ app.post('/api/tcg/cancel', async (req, res) => {
 const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15 };
 const COLLECT = (() => {
   const v = tcg.view(); const all = [];
-  for (const c of v.cards) for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va });
+  for (const c of v.cards) if (c.set !== 'dev') for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht
   const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' ? 'ghost' : 'normal');
   const totals = { normal: 0, ext: 0, ghost: 0 }; let maxPts = 0;
   for (const e of all) { totals[group(e.variant)]++; maxPts += COLLECT_PTS[e.variant] || 1; }
@@ -698,7 +701,29 @@ app.get('/api/tcg/history', async (req, res) => {
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
-// ---------- Geschenke (Dankeschön für Support-Meldungen) ----------
+// ---------- Geschenke (Dankeschön für Support-Meldungen und vom Entwickler-Team) ----------
+app.post('/api/admin/gift', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    if (!isAdmin(u)) return res.status(403).json({ error: 'Nur der Admin verteilt Geschenke.' });
+    const dia = Math.max(0, Math.min(1000000, Math.round(Number(req.body.diamonds) || 0)));
+    const pack = tcg.PACKS[req.body.pack] ? req.body.pack : null, n = pack ? Math.max(1, Math.min(100, Math.round(Number(req.body.n) || 1))) : 0;
+    const times = Math.max(1, Math.min(20, Math.round(Number(req.body.times) || 1))); // wie oft das Geschenk verschickt wird
+    const msg = String(req.body.message || '').trim().slice(0, 200);
+    if (!dia && !pack) return res.status(400).json({ error: 'Bitte Diamanten oder einen Booster auswählen.' });
+    const ids = req.body.all ? (await store.searchUsers('', 500)).map((x) => x.id).filter((id) => id !== u.id) : [Number(req.body.id)];
+    let sent = 0;
+    for (const id of ids) {
+      const t = await store.userById(id); if (!t) continue;
+      for (let k = 0; k < times; k++) await store.giftAdd({ user_id: t.id, diamonds: dia, pack, n, reason: '', source: 'dev', message: msg });
+      push.toUser(t.id, { title: '🎁 Geschenk vom Entwickler-Team', body: msg || 'Auf deiner Startseite wartet ein Geschenk auf dich.', tag: 'gift', url: '/' }).catch(() => {});
+      io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === t.id) so.emit('gift:new'); });
+      sent++;
+    }
+    console.log(`Admin-Geschenk: ${times}× (${dia} 💎${pack ? `, ${n}× ${pack}` : ''}) an ${sent} Spieler`);
+    res.json({ ok: true, sent, times });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.post('/api/gifts/:id/claim', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -706,7 +731,7 @@ app.post('/api/gifts/:id/claim', async (req, res) => {
     let dia = Number(u.diamonds) || 0;
     if (g.diamonds) { dia += Number(g.diamonds); await store.save(u.id, { diamonds: dia }); }
     if (g.pack && g.n) await store.packAdd(u.id, g.pack, Number(g.n));
-    res.json({ ok: true, diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, total: dia });
+    res.json({ ok: true, diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, source: g.source || 'support', message: g.message || '', total: dia });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -957,7 +982,7 @@ const modView = (t) => ({ ...publicStats(t), xp: t.xp, dailyStreak: Number(t.dai
 app.get('/api/admin/users', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;
-    const list = await store.searchUsers(req.query.q, 50);
+    const list = await store.searchUsers(req.query.q, req.query.q ? 50 : 300);
     res.json({ total: await store.countUsers(), users: list.map(modView), roles: ROLES, admin: isAdmin(u) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -1024,6 +1049,19 @@ app.post('/api/admin/qsource', async (req, res) => {
     await store.setting('question_source', src);
     console.log('Fragenquelle umgestellt auf', src);
     res.json({ source: src });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
+app.post('/api/admin/pack', async (req, res) => {
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    if (!isAdmin(u)) return res.status(403).json({ error: 'Nur der Admin kann Booster verschenken.' });
+    const pid = String(req.body.pack || ''), n = Math.max(1, Math.min(100, Math.round(Number(req.body.n) || 1)));
+    if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    const t = await store.userById(Number(req.body.id)); if (!t) return res.status(404).json({ error: 'Spieler nicht gefunden.' });
+    const c = await store.packAdd(t.id, pid, n);
+    console.log(`Admin: ${n}× ${pid} an ${t.name}`);
+    res.json({ ok: true, count: c, name: tcg.PACKS[pid].name, to: t.name });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
