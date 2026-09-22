@@ -545,10 +545,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #pushbar b{display:block;font-size:15px}
 
 .badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#4FC46A;color:#08231A;font:800 13px/1 Archivo;box-shadow:0 0 10px rgba(79,196,106,.6)}
-.cardgrid button.fresh,.framegrid button.fresh,.tlist button.fresh{box-shadow:inset 0 0 0 3px #FFD23F,0 0 16px rgba(255,210,63,.55);animation:freshglow 1.6s ease-in-out infinite alternate}
-@keyframes freshglow{from{box-shadow:inset 0 0 0 3px #FFD23F,0 0 8px rgba(255,210,63,.35)}to{box-shadow:inset 0 0 0 3px #FFE88A,0 0 20px rgba(255,210,63,.75)}}
-.cardgrid button.fresh::after,.framegrid button.fresh::after{content:"NEU";position:absolute;right:4px;top:4px;padding:3px 6px;border-radius:99px;background:linear-gradient(135deg,#FFE27A,#E0A21E);color:#2A1600;font:900 10px/1 Archivo;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-.tlist button.fresh{position:relative}.tlist button.fresh::after{content:"NEU";position:absolute;right:8px;top:8px;padding:3px 7px;border-radius:99px;background:linear-gradient(135deg,#FFE27A,#E0A21E);color:#2A1600;font:900 10px/1 Archivo}
+.cardgrid button.fresh,.framegrid button.fresh,.tlist button.fresh{box-shadow:inset 0 0 0 3px #3DDC97,0 0 16px rgba(61,220,151,.55);animation:freshglow 1.6s ease-in-out infinite alternate} /* neu = grün, ausgewählt = gold */
+@keyframes freshglow{from{box-shadow:inset 0 0 0 3px #3DDC97,0 0 8px rgba(61,220,151,.35)}to{box-shadow:inset 0 0 0 3px #8CF2C4,0 0 20px rgba(61,220,151,.75)}}
+.cardgrid button.fresh::after,.framegrid button.fresh::after{content:"NEU";position:absolute;right:4px;top:4px;padding:3px 6px;border-radius:99px;background:linear-gradient(135deg,#3DDC97,#1FA35A);color:#062015;font:900 10px/1 Archivo;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.tlist button.fresh{position:relative}.tlist button.fresh::after{content:"NEU";position:absolute;right:8px;top:8px;padding:3px 7px;border-radius:99px;background:linear-gradient(135deg,#3DDC97,#1FA35A);color:#062015;font:900 10px/1 Archivo}
 .cardgrid button,.framegrid button{position:relative}
 .tlist button.fresh .why b::after{content:" NEU";color:#4FC46A;font-size:11px}
 .chalhint{display:flex;flex-direction:column;gap:8px}
@@ -1213,6 +1213,9 @@ body.no-grading .grading-only{display:none !important}
 .chipbtn.step{flex:none;min-width:64px;font-weight:900}
 .betrow{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.betin{display:flex;gap:8px;align-items:stretch}.betin input{text-align:center;font-weight:800}
 .betchips{display:flex;gap:6px;flex-wrap:wrap}.betchips .chipbtn{flex:1 1 0;min-width:0}
+.chal.isnew{position:relative;box-shadow:0 0 0 2px #3DDC97,0 0 18px rgba(61,220,151,.45)}
+.new-tag{position:absolute;top:-8px;right:10px;z-index:2;padding:3px 8px;border-radius:99px;background:linear-gradient(135deg,#3DDC97,#1FA35A);color:#062015;font:900 10px/1.2 Archivo}
+.it-row.isnew{box-shadow:0 0 0 2px #3DDC97,0 0 14px rgba(61,220,151,.4)}.it-new{display:inline;color:#3DDC97;font-weight:900}
 </style>
 </head>
 <body>
@@ -1232,7 +1235,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '28';
+const AVER = '29';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1283,7 +1286,7 @@ function seenText(u) {
 }
 const onlineText = (u) => (u.online ? (u.idle ? '😴 abwesend' + (u.act && u.act !== 'online' ? ' · ' + u.act : '') : u.act && u.act !== 'online' ? u.act : 'online') : 'zuletzt ' + seenText(u));
 const rankText = (p) => (p.prestige ? `P${p.prestige} · ` : '') + `Lv ${p.level}`;
-function closeModal() { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; }
+function closeModal() { $('#modal').classList.remove('on'); $('#modal').innerHTML = ''; $('#modal').onclick = null; }
 function askPassword(code, wrong) {
   $('#modal').innerHTML = `<form class="panel" id="pwJoin"><h2>Match ${esc(code)} ist geschützt</h2><div><label for="pwJ">Passwort</label><input class="field" id="pwJ" maxlength="20" autocomplete="off"></div><div class="err">${wrong ? 'Das Passwort stimmt nicht.' : ''}</div><button class="btn">Beitreten</button><button type="button" class="btn ghost" id="pwCancel">Abbrechen</button></form>`;
   $('#modal').classList.add('on'); $('#pwJ').focus();
@@ -2499,6 +2502,10 @@ function showGiftReveal(r) {
   $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
 function gradingVisibility() { document.body.classList.toggle('no-grading', !(home && home.me.grading)); } // Graden vorerst ausgeblendet
+// Profil nach einer Auswahl neu füllen, ohne die Seite neu aufzubauen: Scrollposition bleibt
+let userFoldAt = 0;
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('summary')) userFoldAt = Date.now(); }, true);
+function refreshProfile() { const y = window.scrollY; update(); requestAnimationFrame(() => { if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); }); }
 function chalBadge() {
   gradingVisibility();
   renderGifts();
@@ -2510,7 +2517,16 @@ function chalBadge() {
   if (!Number.isFinite(seen) || localStorage.getItem('chal_seen') === null) { seen = tot; try { localStorage.setItem('chal_seen', tot); } catch (e) {} }
   const n = Math.max(0, tot - seen); b.hidden = !n; b.textContent = n;
 }
-function chalMarkSeen() { try { localStorage.setItem('chal_seen', chalTotal()); } catch (e) {} }
+let chalNew = new Set(); // Herausforderungen mit neuer Stufe seit dem letzten Besuch
+function chalMarkSeen() {
+  try {
+    const cur = {}; for (const c of (home && home.progress && home.progress.challenges) || []) cur[c.key] = c.done || 0;
+    const prev = JSON.parse(localStorage.getItem('chal_seen_map') || 'null');
+    chalNew = new Set(prev ? Object.keys(cur).filter((k) => cur[k] > (prev[k] || 0)) : []);
+    if (!prev && Number(localStorage.getItem('chal_seen')) < chalTotal()) { /* alter Zähler ohne Einzelstand: alles mit Stufe als neu zeigen geht nicht, daher nichts markieren */ }
+    localStorage.setItem('chal_seen_map', JSON.stringify(cur)); localStorage.setItem('chal_seen', chalTotal());
+  } catch (e) {}
+}
 // Kurze, halbdurchsichtige Einblendung für neue Erfolge, eine nach der anderen
 const toastQ = []; let toastBusy = false;
 function showProgressToast() {
@@ -2539,17 +2555,18 @@ function renderItemsTab() {
   const prog = (it) => { const x = g[it.id]; if (!x) return it.unlocked ? 1 : 0; return Math.min(1, (st[x[0]] || 0) / x[1]); };
   const all = [...C.titles.map((i) => ({ ...i, k: 't', nm: i.text })), ...C.emblems.map((i) => ({ ...i, k: 'e', nm: i.name })), ...F.map((i) => ({ ...i, k: 'f', nm: i.name }))]
     .filter((i) => !i.dev && !i.event && (itKind === 'all' || i.k === itKind));
-  const open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked);
+  const sn = seenSet(), open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked).sort((a, b) => (sn.has(a.k + ':' + a.id) ? 1 : 0) - (sn.has(b.k + ':' + b.id) ? 1 : 0));
   const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${AVER}" alt="">`
     : i.k === 'e' ? `<img class="pcemb${i.anim ? ' a-' + i.anim : ''}" style="--s:48px" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
     : avatar({ ...home.me, frame: i.id, frameAnim: i.anim }, 48, false);
   const row = (i) => {
     const x = g[i.id], cur = x ? Math.min(x[1], st[x[0]] || 0) : 0, pct = Math.round(100 * prog(i));
-    return `<div class="it-row ${i.k === 't' ? 'wide' : ''} ${i.unlocked ? 'ok' : ''}" data-itk="${i.k === 't' ? 'title' : i.k === 'e' ? 'emblem' : 'frame'}" data-itid="${esc(i.id)}">
+    const isFresh = i.unlocked && !seenSet().has(i.k + ':' + i.id);
+    return `<div class="it-row ${i.k === 't' ? 'wide' : ''} ${i.unlocked ? 'ok' : ''} ${isFresh ? 'isnew' : ''}" data-itk="${i.k === 't' ? 'title' : i.k === 'e' ? 'emblem' : 'frame'}" data-itid="${esc(i.id)}">
       <div class="it-pic">${pic(i)}</div>
       <div class="grow"><b>${esc(i.nm)}</b> <small class="it-kind">${{ t: 'Titel', e: 'Emblem', f: 'Rahmen' }[i.k]}</small>
         <small>${i.secret && !i.unlocked ? 'Geheim · wird über einen Code freigeschaltet' : esc(i.need || '')}</small>
-        ${i.unlocked ? '<small class="rw-ok">✓ freigeschaltet</small>' : x ? `<div class="row" style="justify-content:space-between"><small>${fmt(cur)} von ${fmt(x[1])} ${esc(GOAL_TXT[x[0]] || '')}</small><small><b>${pct} %</b></small></div><span class="bar"><i style="width:${pct}%"></i></span>` : ''}</div></div>`;
+        ${i.unlocked ? `<small class="rw-ok">✓ freigeschaltet${isFresh ? ' · <b class="it-new">NEU</b>' : ''}</small>` : x ? `<div class="row" style="justify-content:space-between"><small>${fmt(cur)} von ${fmt(x[1])} ${esc(GOAL_TXT[x[0]] || '')}</small><small><b>${pct} %</b></small></div><span class="bar"><i style="width:${pct}%"></i></span>` : ''}</div></div>`;
   };
   box.innerHTML = `<div class="seg" style="margin:4px 0 10px">${[['all', 'Alle'], ['t', 'Titel'], ['e', 'Embleme'], ['f', 'Rahmen']].map(([k, n]) => `<button data-itkind="${k}" class="${itKind === k ? 'on' : ''}">${n}</button>`).join('')}</div>
     <p class="sub">${open.length} noch offen · ${done.length} freigeschaltet. Die, bei denen du am weitesten bist, stehen oben.</p>
@@ -2563,18 +2580,20 @@ function renderChallenges() {
   if (chTab === 'items') renderItemsTab();
   const pr = home && home.progress; if (!pr || !$('#chals')) return;
   const CIMG = CHAL_IMG;
-  const row = (c) => `<div class="chal" data-chal="${c.key}"><img class="ci ${c.done ? '' : 'none'}" src="${chalImg(c.key)}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
+  const row = (c) => `<div class="chal ${chalNew.has(c.key) ? 'isnew' : ''}" data-chal="${c.key}">${chalNew.has(c.key) ? '<span class="new-tag">NEUE STUFE</span>' : ''}<img class="ci ${c.done ? '' : 'none'}" src="${chalImg(c.key)}" alt=""><div class="cb"><div class="row"><b class="grow">${esc(c.name)}</b><span class="pips">${Array.from({ length: c.total }, (_, i) => `<i class="${i < c.done ? 'on' : ''}"></i>`).join('')}</span></div>
       <div class="row sub" style="justify-content:space-between"><span>${esc(c.desc)}</span><span>${c.goal ? fmt(Math.min(c.cur, c.goal)) + ' / ' + fmt(c.goal) : 'alle Stufen geschafft'}</span></div>${barHtml(c.cur, c.goal, !c.goal)}${c.goal ? `<span class="lv">Nächste Stufe: +${fmt(c.reward)} XP</span>` : ''}</div></div>`;
     const CIMG2 = CHAL_IMG;
     const pr2 = home && home.progress;
     if ($('#nextUp') && pr2 && pr2.challenges) {
       const open2 = pr2.challenges.filter((c) => c.goal).map((c) => ({ ...c, p: c.cur / c.goal })).sort((a2, b2) => b2.p - a2.p).slice(0, 4);
-      $('#nextUp').innerHTML = open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '';
+      const newOnes = pr.challenges.filter((c) => chalNew.has(c.key));
+      const newHtml = newOnes.length ? `<h2 style="margin-bottom:10px">🎉 Neu geschafft</h2><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${newOnes.map(row).join('')}</div>` : '';
+      $('#nextUp').innerHTML = newHtml + (open2.length ? `<h2 style="margin-bottom:10px">⚡ Kurz vor der Freischaltung</h2><div class="chalhint">${open2.map((c) => `<div class="ch"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)}</b>${esc(c.desc)} · ${fmt(c.cur)} von ${fmt(c.goal)}<span class="bar"><i style="width:${Math.min(100, Math.round(c.p * 100))}%"></i></span></span><span class="wp">+${fmt(c.reward)} XP</span></div>`).join('')}</div>` : '');
     }
   const G = [['toon', '🎩 Toon-Welt'], ['quiz', '🎯 Allgemein'], ['cards', '🃏 Sammeln'], ['casino', '🎰 Casino']];
   setTimeout(() => document.querySelectorAll('[data-chal]').forEach((el) => { el.onclick = () => showChallenge(el.dataset.chal); }), 0);
   $('#chals').innerHTML = G.map(([g, n]) => {
-    const list = pr.challenges.filter((c) => c.group === g); if (!list.length) return '';
+    const list = pr.challenges.filter((c) => c.group === g).sort((x, y) => (chalNew.has(y.key) ? 1 : 0) - (chalNew.has(x.key) ? 1 : 0)); if (!list.length) return ''; // neue Stufen zuerst
     const done = list.reduce((x, c) => x + c.done, 0), tot = list.reduce((x, c) => x + c.total, 0);
     const neu = list.some((c) => c.isNew);
     return `<div class="chgroup ${neu ? 'isnew' : ''}"><div class="chg-h"><b>${n}</b>${neu ? '<span class="nw-badge">NEU</span>' : ''}<span class="grow"></span><small>${done} / ${tot} Stufen</small></div>${list.map(row).join('')}</div>`;
@@ -3337,16 +3356,30 @@ function editShowcase() {
   const go = () => {
     const rank = (v) => (tcg.def.order || []).indexOf(v);
     const own = (tcg.cards || []).filter((r) => r.count > 0).sort((a, b) => rank(b.variant) - rank(a.variant));
-    let pick = [...((home && home.me.showcase) || [])];
-    const draw = () => {
-      $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>🏛 Vitrine</h2><p class="sub">Wähle bis zu 4 Karten, die andere in deinem Profil sehen. ${pick.length} von 4 gewählt.</p>
-        <div class="vit-pick">${own.map((r) => { const key = r.card_id + ':' + r.variant, n = pick.indexOf(key); return `<button class="vp ${n >= 0 ? 'on' : ''} r-${esc(r.variant)}" data-vp="${esc(key)}"><img src="${cardImg(r.card_id, r.variant)}" alt="">${n >= 0 ? `<span class="vp-n">${n + 1}</span>` : ''}</button>`; }).join('') || '<p class="sub">Du hast noch keine Karten.</p>'}</div>
-        <button class="btn" id="vpSave">Speichern</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
-      $('#pwCancel').onclick = closeModal;
-      document.querySelectorAll('[data-vp]').forEach((b) => { b.onclick = () => { const k2 = b.dataset.vp, n = pick.indexOf(k2); if (n >= 0) pick.splice(n, 1); else if (pick.length < 4) pick.push(k2); else return toast('Höchstens 4 Karten'); draw(); }; });
-      $('#vpSave').onclick = () => api('/api/showcase', { cards: pick }).then((r) => { if (home) home.me.showcase = r.showcase; toast('Vitrine gespeichert'); showUser(home.me.id); }).catch((er) => toast(er.message));
+    let pick = [...((home && home.me.showcase) || [])], vf = 'alle', q = '';
+    const VF = [['alle', 'Alle'], ['mythic', 'Mythisch'], ['ghost', 'Ghost'], ['ext', 'Extended'], ['legend', 'Legendär'], ['ultra', 'Ultra'], ['holo', 'Holo'], ['selten', 'Selten'], ['haeufig', 'Häufig']].filter(([k]) => k === 'alle' || own.some((r) => r.variant === k));
+    const grid = () => {
+      const list = own.filter((r) => (vf === 'alle' || r.variant === vf) && (!q || ((cardDef(r.card_id) || {}).name || '').toLowerCase().includes(q)));
+      $('#vpGrid').innerHTML = list.map((r) => { const key = r.card_id + ':' + r.variant, n = pick.indexOf(key); return `<button class="vp ${n >= 0 ? 'on' : ''} r-${esc(r.variant)}" data-vp="${esc(key)}"><img src="${cardImg(r.card_id, r.variant)}" alt="" loading="lazy">${n >= 0 ? `<span class="vp-n">${n + 1}</span>` : ''}</button>`; }).join('') || '<p class="sub">Keine Karten mit diesem Filter.</p>';
+      $('#vpCount').textContent = `${pick.length} von 4 gewählt`;
     };
-    $('#modal').classList.add('on'); draw();
+    $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto">
+      <div class="row" style="gap:8px;align-items:center"><h2 class="grow" style="margin:0">🏛 Vitrine</h2><button class="btn small" data-vpsave="1">Speichern</button></div>
+      <p class="sub" style="margin:0">Wähle bis zu 4 Karten, die andere in deinem Profil sehen. <b id="vpCount"></b></p>
+      <input class="field" id="vpQ" placeholder="🔎 Karte suchen" style="padding:8px">
+      <div class="cfilter">${VF.map(([k, n]) => `<button data-vpf="${k}" class="${vf === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+      <div class="vit-pick" id="vpGrid"></div>
+      <button class="btn" data-vpsave="1">Speichern</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    const box = $('#modal');
+    box.onclick = (e) => {
+      const b = e.target.closest('[data-vp]'); const f = e.target.closest('[data-vpf]'); const sv = e.target.closest('[data-vpsave]');
+      if (b) { const k2 = b.dataset.vp, n = pick.indexOf(k2); if (n >= 0) pick.splice(n, 1); else if (pick.length < 4) pick.push(k2); else return toast('Höchstens 4 Karten'); grid(); }
+      else if (f) { vf = f.dataset.vpf; box.querySelectorAll('[data-vpf]').forEach((x) => x.classList.toggle('on', x === f)); grid(); }
+      else if (sv) api('/api/showcase', { cards: pick }).then((r) => { box.onclick = null; if (home) home.me.showcase = r.showcase; toast('Vitrine gespeichert'); showUser(home.me.id); }).catch((er) => toast(er.message));
+    };
+    $('#vpQ').oninput = (e) => { q = e.target.value.trim().toLowerCase(); grid(); };
+    grid();
   };
   if (!tcg) loadTcg().then(go); else go();
 }
@@ -3408,7 +3441,10 @@ function update() {
   }
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
-    if ($('#cardBox') && home && home.cards) {
+    const cbSig = home && home.cards ? JSON.stringify([home.me.emblem, home.me.title, home.me.frame, home.me.presShown, home.cards.emblems.map((x) => x.unlocked ? 1 : 0).join(''), home.cards.titles.map((x) => x.unlocked ? 1 : 0).join(''), (home.frames || []).map((x) => x.unlocked ? 1 : 0).join('')]) : '';
+    if ($('#cardBox') && home && home.cards && $('#cardBox').dataset.sig !== cbSig) { // sonst bei jeder Server-Nachricht neu, dann springt die Seite
+      const cbx = $('#cardBox'); cbx.style.minHeight = cbx.offsetHeight + 'px'; cbx.dataset.sig = cbSig; // Höhe halten, bis alles neu drin ist
+      setTimeout(() => { cbx.style.minHeight = ''; }, 800);
       const C = home.cards, me = home.me;
       const lockNote = (i) => i.secret ? 'GEHEIM' : i.need;
       const curEmb = C.emblems.find((e) => e.id === me.emblem);
@@ -3450,12 +3486,16 @@ function update() {
     if (!$('#profHead') || !home) return;
     const me = home.me, pr = home.progress, st = pr.prestige;
     $('#profHead').innerHTML = playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span>${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Kein Prestige'}</span></div>`);
-    $('#nextPrestige').innerHTML = st.next ? `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">${emblem(st.next)}</span><div><p class="sub">Nächster Rang</p><h2>Prestige ${st.next} · ${esc(st.name)}</h2></div></div>
-      ${st.reqs.map((r) => `<div class="req" ${GLOSSARY[r.key] ? `data-info="${r.key}"` : ''}><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}${GLOSSARY[r.key] ? ' <span class="info-i">ⓘ</span>' : ''}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
-      <button class="btn" id="doPrestige" ${st.can ? '' : 'disabled'}>Prestige aktivieren</button><p class="sub">Level und XP starten wieder bei 1. Statistik, Herausforderungen und Rahmen bleiben.</p>`
-      : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
-    const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
-    $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
+    const prSig = JSON.stringify([me.level, me.prestige, me.presShown, me.xp, (home.progress || {}).prestige]); // Prestige-Bereich nur bei Änderungen neu
+    if ($('#nextPrestige').dataset.sig !== prSig) {
+      $('#nextPrestige').dataset.sig = prSig;
+      $('#nextPrestige').innerHTML = st.next ? `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">${emblem(st.next)}</span><div><p class="sub">Nächster Rang</p><h2>Prestige ${st.next} · ${esc(st.name)}</h2></div></div>
+        ${st.reqs.map((r) => `<div class="req" ${GLOSSARY[r.key] ? `data-info="${r.key}"` : ''}><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}${GLOSSARY[r.key] ? ' <span class="info-i">ⓘ</span>' : ''}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
+        <button class="btn" id="doPrestige" ${st.can ? '' : 'disabled'}>Prestige aktivieren</button><p class="sub">Level und XP starten wieder bei 1. Statistik, Herausforderungen und Rahmen bleiben.</p>`
+        : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
+      const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
+      $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
+    }
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
     return;
   }
@@ -3683,13 +3723,13 @@ document.addEventListener('toggle', (e) => {
       markSeen(ids);
       const b = d.querySelector('summary .badge'); if (b) b.remove();
     }
-    setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60);
+    if (Date.now() - userFoldAt < 600) setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 60); // nur wenn der Nutzer selbst aufgeklappt hat, nicht beim Neuzeichnen
   }
   else if (openFold === d.dataset.fold) openFold = '';
 }, true);
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
-  if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message)); return; }
+  if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); refreshProfile(); }).catch((er) => toast(er.message)); return; }
     const inf = e.target.closest('[data-info]'); if (inf) return showInfo(inf.dataset.info); // Begriffe erklären
     const cd = e.target.closest('[data-card]'); if (cd) return showCard(cd.dataset.card);
     const u = e.target.closest('[data-user]'); if (u) showUser(u.dataset.user); const m = e.target.closest('[data-mod]'); if (m) modEdit(m.dataset.mod, ''); return; }
@@ -3822,16 +3862,16 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'avaBtn') $('#avaFile').click();
   else if (t.dataset.frame !== undefined) {
     if (t.classList.contains('lock')) return showLocked('frame', t.dataset.frame);
-    api('/api/frame', { frame: t.dataset.frame }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
+    api('/api/frame', { frame: t.dataset.frame }).then(async () => { await loadHome(); refreshProfile(); }).catch((e) => toast(e.message));
   }
   else if (t.dataset.emb !== undefined || t.dataset.title !== undefined) {
     if (t.classList.contains('lock')) return showLocked(t.dataset.emb !== undefined ? 'emblem' : 'title', t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
     const me = home.me, cur = t.dataset.emb !== undefined ? me.emblem : (me.title || '');
     const val = (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title) === cur ? '' : (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
     const body = t.dataset.emb !== undefined ? { emblem: val, title: me.title || '' } : { emblem: me.emblem || '', title: val };
-    api('/api/card', body).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
+    api('/api/card', body).then(async () => { await loadHome(); refreshProfile(); }).catch((e) => toast(e.message));
   }
-  else if (t.id === 'cardClear') api('/api/card', { emblem: '', title: '' }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((e) => toast(e.message));
+  else if (t.id === 'cardClear') api('/api/card', { emblem: '', title: '' }).then(async () => { await loadHome(); refreshProfile(); }).catch((e) => toast(e.message));
   else if (t.dataset.color) { tagColor = t.dataset.color; document.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('on', b === t)); $('#tagIn').dispatchEvent(new Event('input')); }
   else if (t.id === 'quickOn') socket.emit('settings', { answerTime: 8 });
   else if (t.id === 'quickOff') socket.emit('settings', { answerTime: 30 });
