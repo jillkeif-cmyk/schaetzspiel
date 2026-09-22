@@ -2206,7 +2206,7 @@ const GOAL_TXT = { matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', c
 // Kleines Lexikon: was bedeuten die Begriffe, und wie erreicht man sie?
 const GLOSSARY = {
   exact: ['🎯 Punktlandung', 'Deine Schätzung trifft die Lösung genau. Das bringt 300 Punkte, die meisten, die es für eine Frage gibt.'],
-  close: ['✌️ Doppel-Treffer (×2)', 'Deine Schätzung liegt höchstens 4 % neben der Lösung. Dafür gibt es 200 Punkte, doppelt so viel wie für eine normale gute Schätzung, die höchstens 100 bringt. Beispiel: Die Lösung ist 1.000, dann zählt alles zwischen 960 und 1.040.'],
+  close: ['✌️ Doppel-Treffer (×2)', 'Deine Schätzung liegt höchstens 8 % neben der Lösung. Dafür gibt es 200 Punkte, doppelt so viel wie für eine normale gute Schätzung, die höchstens 100 bringt. Beispiel: Ist die Lösung 1.000, zählt alles zwischen 920 und 1.080. Bei Jahreszahlen gilt ein fester Bereich: ±4 Jahre bei Ereignissen ab 1900, ±7 Jahre im 19. Jahrhundert, weiter zurück entsprechend mehr.'],
   closest: ['🥇 Am nächsten dran', 'Wer in einer Frage näher an der Lösung liegt als alle anderen, bekommt 25 Extrapunkte, außer bei einer Punktlandung.'],
   points: ['⭐ Punkte', 'Pro Frage bekommst du je nach Genauigkeit bis zu 100 Punkte, einen Doppel-Treffer 200 und eine Punktlandung 300. Punkte insgesamt zählen über alle Matches.'],
   best_score: ['🏅 Punkte in einem Match', 'Deine höchste Punktzahl in einem einzigen Match.'],
@@ -2973,7 +2973,7 @@ function build() {
     <div id="players" class="plist"></div>
     <div id="cdAct"></div>
     <div id="chatBox"></div>
-    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Sehr nah dran zählt doppelt, eine Punktlandung dreifach. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
+    <div class="panel sub">Schätzfragen: je näher, desto mehr Punkte (bis 100). Höchstens 8 % daneben ist ein Doppel-Treffer mit 200 Punkten, eine Punktlandung bringt 300. Wer am nächsten liegt, bekommt 25 extra. Auswahlfragen bringen 100 Punkte.</div>`;
 
   if (S.phase === 'question') { const q = S.question; return `
     <div id="chips" class="chips mobonly"></div><div class="col">
