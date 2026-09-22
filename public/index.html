@@ -1352,6 +1352,17 @@ body.no-grading .grading-only{display:none !important}
 .tc-watchbar.mine{background:rgba(255,210,63,.12)}
 .tc.watching .tc-keys,.tc.watching .tc-start,.tc.watching #tcTurbo,.tc.watching #tcPay{display:none}
 .tc-top{position:relative}.tc-force{position:absolute;top:6px;right:6px;z-index:5;border:0;border-radius:999px;padding:5px 10px;font:800 11px/1 Archivo;background:rgba(0,0,0,.55);color:#FFE27A;box-shadow:0 0 0 1.5px rgba(255,210,63,.6)}.tc-force.on{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600}
+.cw-rou{display:flex;flex-direction:column;align-items:center;gap:12px;padding:6px 0 10px}
+.cw-wheel{width:170px;height:170px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#C8283D 0 10%,#111 0 20%,#C8283D 0 30%,#111 0 40%,#1FA35A 0 43%,#C8283D 0 53%,#111 0 63%,#C8283D 0 73%,#111 0 83%,#C8283D 0 93%,#111 0);box-shadow:0 0 0 6px #C89A3C,0 10px 30px rgba(0,0,0,.5)}
+.cw-wheel.spin{animation:cwspin .6s linear infinite}@keyframes cwspin{to{transform:rotate(360deg)}}
+.cw-ball{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:50%;font:800 13px/1 Archivo;color:#fff;background:#333;padding:0 4px}
+.cw-ball.red{background:#C8283D}.cw-ball.black{background:#111}.cw-ball.green{background:#1FA35A}
+.cw-ball.big{width:74px;height:74px;font-size:30px;box-shadow:0 0 0 4px #fff3}
+.cw-res{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.06);font-size:15px}
+.cw-res.win{background:rgba(31,163,90,.25)}.cw-res.lose{background:rgba(200,40,61,.2)}
+.cw-bets{text-align:center}.cw-bets div{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
+.cw-chip{background:rgba(255,210,63,.15);border-radius:999px;padding:4px 10px;font-size:12px}
+.cw-hist{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
 </style>
 </head>
 <body>
@@ -1371,7 +1382,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '44';
+const AVER = '45';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2061,6 +2072,7 @@ function renderCasino() {
   if (cgame === 'setup') return renderSetup(box);
   if (cgame === 'poker') return renderPoker(box);
   if (cgame === 'triple') return renderTriple(box);
+  if (cgame === 'watch') return renderCw(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
     box.innerHTML = list.length ? `<div class="plist">${list.map((u, i) => casinoRow(u, i, home.me)).join('')}</div>` : '<p class="sub">Noch hat niemand im Casino gespielt.</p>';
@@ -2448,7 +2460,34 @@ Object.keys(TC_SYM).forEach((k) => { const im = new Image(); im.src = `/tcg/tc_$
 const tcCell = (k) => `<div class="tc-cell s-${k}"></div>`;
 const tcRandSym = () => 'KSHBRTMCBRTMCCBRTM'[Math.floor(Math.random() * 18)];
 const tcSleep = (ms) => new Promise((r) => setTimeout(r, tc.turbo ? ms * 0.45 : ms));
-let tcMachines = [];
+let tcMachines = [], cwList = [], cw = null; // cw: wem man gerade bei Roulette oder Blackjack zuschaut
+const CW_RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+const cwCol = (n) => (n === 0 ? 'green' : CW_RED.has(n) ? 'red' : 'black');
+const CW_GAME = { roulette: 'Roulette', bj: 'Blackjack' };
+function cwBetTxt(b) { const n = b.numbers || []; return n.length === 1 ? `Zahl ${n[0]}` : `${n.length} Zahlen`; }
+function renderCw(box) { // Zuschauen bei Roulette oder Blackjack, nur ansehen
+  if (!cw) { cgame = 'roulette'; return renderCasino(); }
+  const head = `<div class="tc-watchbar">👀 Du schaust <b>${esc(cw.name || '')}</b> beim ${CW_GAME[cw.game] || 'Spiel'} zu <button class="btn small ghost" id="cwBack">Zurück</button></div>`;
+  let body = '';
+  if (cw.gone) body = `<div class="panel" style="text-align:center"><b>${esc(cw.name || 'Der Spieler')} spielt gerade nicht mehr.</b></div>`;
+  else if (cw.game === 'roulette') {
+    const sp = cw.spin, rolling = sp && Date.now() < cw.until;
+    const res = sp && !rolling ? `<div class="cw-res ${sp.won > sp.stake ? 'win' : sp.won ? 'even' : 'lose'}"><span class="cw-ball ${cwCol(sp.n)}">${sp.n}</span><b>${sp.won > sp.stake ? `Gewonnen +${fmt(sp.won - sp.stake)}` : sp.won ? `${fmt(sp.won)} zurück` : `Verloren −${fmt(sp.stake)}`}</b></div>` : '';
+    body = `<div class="cw-rou"><div class="cw-wheel ${rolling ? 'spin' : ''}"><span class="cw-ball big ${sp && !rolling ? cwCol(sp.n) : ''}">${sp && !rolling ? sp.n : rolling ? '…' : '?'}</span></div>${res}
+      ${sp ? `<div class="cw-bets"><small>Einsätze · ${fmt(sp.stake)} 💎</small><div>${sp.bets.map((b) => `<span class="cw-chip">${cwBetTxt(b)} · ${fmt(b.amount)}</span>`).join('')}</div></div>` : '<p class="sub" style="text-align:center">Warte auf den nächsten Dreh …</p>'}
+      ${(cw.history || []).length ? `<div class="cw-hist">${cw.history.map((n) => `<span class="cw-ball ${cwCol(n)}">${n}</span>`).join('')}</div>` : ''}</div>`;
+  } else {
+    const b = cw.bj;
+    const card = (c) => (c && c.hidden ? '<span class="pc back"><b>?</b></span>' : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
+    body = b ? `<div class="bjfelt th-gruen"><div class="bjrow"><span class="bjlab">BANK · ${b.over ? b.dealerScore : b.dealerScore + ' offen'}</span><div class="bjhand">${b.dealer.map(card).join('')}</div></div>
+      <div class="bjhands">${b.hands.map((h) => `<div class="bjh ${h.active ? 'act' : ''}"><div class="bjhand">${h.cards.map(card).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span><span class="bjchip">${fmt(h.bet)}</span></div>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')}</div></div>
+      ${b.over ? `<div class="cw-res ${cw.won > 0 ? 'win' : 'lose'}"><b>${cw.won > 0 ? `Auszahlung ${fmt(cw.won)} 💎` : 'Runde verloren'}</b></div>` : '<p class="sub" style="text-align:center">spielt gerade …</p>'}`
+      : '<p class="sub" style="text-align:center;padding:30px 0">Warte auf die nächste Runde …</p>';
+  }
+  box.innerHTML = head + body;
+  $('#cwBack').onclick = () => { socket.emit('cw:unwatch'); const g = cw && cw.game; cw = null; cgame = g === 'bj' ? 'bj' : 'roulette'; renderCards(); reportPresence(); };
+}
+function cwStart(uid, name, game) { cw = { uid, name, game }; page = 'casino'; ctab = 'casino'; cgame = 'watch'; render(); loadTcg(); socket.emit('cw:watch', uid); }
 const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}" alt="" onerror="this.style.visibility='hidden'">`;
 function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
   const me = home && home.me && home.me.id;
@@ -3086,9 +3125,11 @@ function casinoOpenHtml() {
   const bj = (bjList || []).filter((t) => t.seats > 0 && t.seats < t.max);
   const pk = (pkList || []).filter((t) => t.seated > 0 && t.seated < t.max);
   const tcm = (tcMachines || []).filter((m) => m.user && !(home && m.user.id === home.me.id));
-  if (!bj.length && !pk.length && !tcm.length) return '';
+  const cwl = (cwList || []).filter((c) => !(home && c.uid === home.me.id));
+  if (!bj.length && !pk.length && !tcm.length && !cwl.length) return '';
   return `<h2 style="margin:14px 0 10px">Im Casino</h2><div class="plist">
     ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-pkwatchhome="${esc(t.id)}">Zuschauen</button><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></span></div>`).join('')}
+    ${cwl.map((c) => `<div class="pl" style="--c:${c.game === 'bj' ? '#1FA35A' : '#C8283D'}"><span class="nm">${c.game === 'bj' ? '🃏 Blackjack' : '🎡 Roulette'}<br><small>${esc(c.name)} spielt gerade${c.watchers ? ` · 👀 ${c.watchers}` : ''}</small></span><button class="btn small ghost" data-cwwatch="${esc(String(c.uid))}">Zuschauen</button></div>`).join('')}
     ${tcm.map((m) => `<div class="pl" style="--c:#E0A21E"><span class="nm">🎰 Triple Crown · Maschine ${m.id}<br><small>${esc(m.user.name)} spielt gerade${m.watchers ? ` · 👀 ${m.watchers}` : ''}</small></span><button class="btn small ghost" data-tcwatchhome="${m.id}">Zuschauen</button></div>`).join('')}
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
@@ -3562,6 +3603,15 @@ function connect() {
     if (page === 'casino' && cgame === 'triple' && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
     if (!S && page === 'home') update();
   });
+  socket.on('cw:list', (l) => { cwList = l || []; if (!S && page === 'home') update(); });
+  socket.on('cw:snap', (sn) => { if (!cw || String(sn.uid) !== String(cw.uid)) return; if (sn.gone) cw.gone = true; else Object.assign(cw, { name: sn.name, game: sn.game, bj: sn.bj, history: sn.history, gone: false }); if (page === 'casino' && cgame === 'watch') renderCasino(); });
+  socket.on('cw:ev', (ev) => {
+    if (!cw || String(ev.uid) !== String(cw.uid)) return;
+    if (ev.type === 'left') { cw.gone = true; }
+    else if (ev.type === 'spin') { cw.spin = ev; cw.history = ev.history; cw.until = Date.now() + 3200; sfx('dart'); setTimeout(() => { if (cw && page === 'casino' && cgame === 'watch') { renderCasino(); sfx(ev.won > ev.stake ? 'exact' : 'wrong'); } }, 3250); }
+    else if (ev.type === 'state') { cw.bj = ev.state; cw.won = ev.won; sfx('dart'); }
+    if (page === 'casino' && cgame === 'watch') renderCasino();
+  });
   socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
   socket.on('tc:ev', (ev) => { if (!tc.watch || ev.machine !== tc.watch) return; tc.wq = tc.wq || []; tc.wq.push(ev); tcWatchRun(); });
   socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); if (!S && page === 'home') update(); });
@@ -3614,6 +3664,7 @@ document.addEventListener('input', (e) => {
 function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
+  if (pg !== 'casino:watch' && cw) { socket.emit('cw:unwatch'); cw = null; }
   if (pg !== 'casino:triple' && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
@@ -4485,6 +4536,7 @@ document.addEventListener('click', (e) => {
     const pid = t.dataset.sellpack, pr = prompt(`Für wie viele Diamanten willst du einen ${PACK_NAME[pid] || 'Booster'} verkaufen?`, String(((tcg.def.packs.find((x) => x.id === pid) || {}).price) || 500));
     if (pr) api('/api/tcg/sellpack', { pack: pid, price: Number(pr) }).then((st) => { tcg = st; market = null; renderCards(); toast('Booster steht jetzt in der Börse'); }).catch((e) => toast(e.message));
   }
+  else if (t.dataset.cwwatch) { const x = cwList.find((c) => String(c.uid) === t.dataset.cwwatch); if (x) cwStart(x.uid, x.name, x.game); }
   else if (t.dataset.tcsit) { tcSit(Number(t.dataset.tcsit)); }
   else if (t.dataset.tcwatch) { tcWatch(Number(t.dataset.tcwatch)); }
   else if (t.dataset.tcwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'triple'; tc.watch = Number(t.dataset.tcwatchhome); tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }

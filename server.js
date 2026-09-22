@@ -564,6 +564,16 @@ app.post('/api/casino/triple/leave', async (req, res) => {
   try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); await tcRelease(u.id); res.json({ list: tcList() }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// Zuschauen bei Roulette und Blackjack (allein): wer auf der Seite ist, sitzt am Tisch; Zuschauer im Raum cw<userId>
+const cwAt = new Map(); // userId -> { game, name }
+const cwList = () => [...cwAt.entries()].map(([uid, x]) => ({ uid, name: x.name, game: x.game, watchers: (io.sockets.adapter.rooms.get('cw' + uid) || { size: 0 }).size }));
+let cwT = null; const cwPush = () => { clearTimeout(cwT); cwT = setTimeout(() => io.emit('cw:list', cwList()), 300); };
+const cwEmit = (uid, ev) => io.to('cw' + uid).emit('cw:ev', { uid, ...ev });
+function cwSet(user, pg) {
+  const g = pg === 'casino:roulette' ? 'roulette' : pg === 'casino:bj' ? 'bj' : null, cur = cwAt.get(user.id);
+  if (g) { if (!cur || cur.game !== g) { cwAt.set(user.id, { game: g, name: user.name }); if (cur) cwEmit(user.id, { type: 'left' }); cwPush(); } }
+  else if (cur) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); }
+}
 const tcForce = new Set(); // Admin-Test: nächster Dreh wird ein Vollbild
 app.post('/api/admin/tcforce', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -676,6 +686,7 @@ app.post('/api/casino/board', async (req, res) => {
     const risk = Math.max(0, r.stake - pays[18]); // Median der 37 möglichen Ergebnisse
     await casinoStat(u.id, r.stake, r.won, risk); await bigWin(u.id, 'Roulette', r.won);
     const h = [r.n, ...(rHistory.get(u.id) || [])].slice(0, 14); rHistory.set(u.id, h);
+    cwEmit(u.id, { game: 'roulette', type: 'spin', bets: bets.map((b) => ({ numbers: b.numbers, amount: b.amount })), n: r.n, color: r.color, stake: r.stake, won: r.won, history: h });
     res.json({ ...r, diamonds: after, history: h });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -684,6 +695,7 @@ app.post('/api/casino/board', async (req, res) => {
 const BJ = casino.bj;
 const bjSend = async (res, uid, g, left) => {
   const v = BJ.view(g);
+  cwEmit(uid, { game: 'bj', type: 'state', state: v, won: g.over ? g.payout : null });
   if (g.over) {
     bjGames.delete(uid);
     const after = g.payout ? await payOut(uid, g.payout) : Number((await store.userById(uid)).diamonds) || 0;
@@ -1465,8 +1477,17 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     tcPush();
   });
   socket.on('tc:unwatch', () => { unwatch(); tcPush(); });
-  socket.on('presence', (pg) => { if (String(pg) !== 'casino:triple' && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
-  socket.on('disconnect', () => { setTimeout(() => { tcPush(); if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 20000); });
+  socket.emit('cw:list', cwList());
+  const cwLeaveAll = () => { for (const r of socket.rooms) if (String(r).startsWith('cw')) socket.leave(r); };
+  socket.on('cw:watch', (id) => {
+    const uid = String(id || ''); const x = [...cwAt.entries()].find(([k]) => String(k) === uid); cwLeaveAll();
+    if (!x) return socket.emit('cw:snap', { uid, gone: true });
+    socket.join('cw' + x[0]); const g = bjGames.get(x[0]);
+    socket.emit('cw:snap', { uid: x[0], name: x[1].name, game: x[1].game, bj: g ? BJ.view(g) : null, history: rHistory.get(x[0]) || [] }); cwPush();
+  });
+  socket.on('cw:unwatch', () => { cwLeaveAll(); cwPush(); });
+  socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:triple' && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
+  socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id)) { tcRelease(user.id).catch(() => {}); if (cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } } }, 20000); });
 } // Erfolge: Ausgangsstand beim Verbinden
 game.hooks.progress = (id) => checkProgress(id);
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id) || (tcSeatOf(id) ? `spielt Triple Crown an Maschine ${tcSeatOf(id)}` : null));
