@@ -1351,6 +1351,7 @@ body.no-grading .grading-only{display:none !important}
 .tc-watchbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(142,75,214,.25);border-radius:12px;padding:8px 10px;margin-bottom:8px;font-size:13px}
 .tc-watchbar.mine{background:rgba(255,210,63,.12)}
 .tc.watching .tc-keys,.tc.watching .tc-start,.tc.watching #tcTurbo,.tc.watching #tcPay{display:none}
+.tc-top{position:relative}.tc-force{position:absolute;top:6px;right:6px;z-index:5;border:0;border-radius:999px;padding:5px 10px;font:800 11px/1 Archivo;background:rgba(0,0,0,.55);color:#FFE27A;box-shadow:0 0 0 1.5px rgba(255,210,63,.6)}.tc-force.on{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600}
 </style>
 </head>
 <body>
@@ -1370,7 +1371,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '43';
+const AVER = '44';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2513,7 +2514,7 @@ function renderTriple(box) {
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
-    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">👑 Vollbild${tc.force ? ' AN' : ''}</button>` : ''}
       <img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
       <div class="tc-machine">
         <div class="tc-nums l"><span class="n4">4</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n5">5</span></div>
@@ -2535,6 +2536,7 @@ function renderTriple(box) {
       <div class="tc-tools"><button class="chipbtn" id="tcTurbo">⚡ Turbo</button><button class="chipbtn ${TCM.on ? 'on' : ''}" id="tcMusic">${TCM.on ? '🎵 Musik an' : '🔇 Musik aus'}</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
     </div>`;
     $('#tcStart').onclick = tcStartKey; $('#tcBack').onclick = tcBackToLobby;
+    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = '👑 Vollbild' + (tc.force ? ' AN' : ''); toast(tc.force ? 'Der nächste Dreh wird ein Vollbild.' : 'Vollbild-Test aus.'); };
     $('#tcKBet').onclick = () => { if (tc.busy || tc.risk) return; tc.bi = (tc.bi + 1) % TC_BETS.length; tcSync(); sfx('tick'); };
     $('#tcKLad').onclick = () => tc.risk && !tc.busy && tcLadderOpen();
     $('#tcKCard').onclick = () => tc.risk && !tc.busy && tcCardOpen();
@@ -2625,6 +2627,7 @@ async function tcSpin() {
   try {
     const r = await api('/api/casino/triple', { bet });
     tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tcSync();
+    if (r.forced) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '👑 Vollbild'; } }
     let shown = 0;
     for (let i = 0; i < r.spins.length; i++) {
       const sp = r.spins[i];

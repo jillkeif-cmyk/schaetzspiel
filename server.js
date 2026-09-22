@@ -564,6 +564,12 @@ app.post('/api/casino/triple/leave', async (req, res) => {
   try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); await tcRelease(u.id); res.json({ list: tcList() }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+const tcForce = new Set(); // Admin-Test: nächster Dreh wird ein Vollbild
+app.post('/api/admin/tcforce', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  if (req.body.on) tcForce.add(u.id); else tcForce.delete(u.id);
+  res.json({ on: tcForce.has(u.id) });
+});
 const tripleLock = (uid, res) => { if (tripleBusy.has(uid)) { res.status(429).json({ error: 'Einen Moment …' }); return false; } tripleBusy.add(uid); return true; };
 app.post('/api/casino/triple', async (req, res) => {
   try {
@@ -577,7 +583,8 @@ app.post('/api/casino/triple', async (req, res) => {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
     const u2 = await store.userById(u.id);
     const t = await takeBet(u2, bet, triple.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
-    const r = triple.play(bet);
+    const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
+    const r = triple.play(bet, forced);
     const fulls = r.spins.filter((x) => x.full).length;
     await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
     let risk = null;
@@ -585,7 +592,7 @@ app.post('/api/casino/triple', async (req, res) => {
     else await casinoStat(u.id, bet, 0);
     const sm = tcSeatOf(u.id); if (sm && r.spins.length) tcSeats.get(sm).grid = r.spins[r.spins.length - 1].grid;
     tcEmit(u.id, { type: 'spin', bet, spins: r.spins, total: r.total, risk });
-    res.json({ ...r, bet, risk, diamonds: t.left });
+    res.json({ ...r, bet, risk, diamonds: t.left, forced });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
