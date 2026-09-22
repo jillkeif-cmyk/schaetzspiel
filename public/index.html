@@ -1346,7 +1346,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '32';
+const AVER = '33';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1603,7 +1603,7 @@ const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 
 let vipD = null, soloIntent = false, cbetPick = '';
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
-const MAX_CBET = 250000;
+const MAX_CBET = 1000000000; // Roulette und Blackjack: nur das eigene Guthaben begrenzt
 const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
 const numAt = (c, r) => 3 * c + (3 - r);
 function boardHtml() {
@@ -1628,7 +1628,7 @@ function placeBet(nums) {
   const total = rbets.reduce((x, y) => x + y.amount, 0), have = (tcg && tcg.diamonds) || 0;
   const room = Math.max(0, Math.min(have, MAX_CBET) - total);
   const amt = rchip === 'all' ? room : Math.min(rchip, room);
-  if (amt < 10) return toast(total >= MAX_CBET ? 'Höchstens 250.000 Diamanten pro Runde.' : 'Dafür reichen deine Diamanten nicht.');
+  if (amt < 10) return toast('Dafür reichen deine Diamanten nicht.');
   if (b) b.amount += amt; else rbets.push({ key: k, numbers: nums, amount: amt });
   if (rchip === 'all') toast(`All in: ${fmt(amt)} Diamanten gesetzt`);
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
@@ -1779,6 +1779,23 @@ function claimCashback() {
   api('/api/casino/cashback', {}).then((r) => { vipD = r.vip; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; sfx('exact'); toast(`+${fmt(r.gained)} Diamanten Cashback`); renderCards(); }).catch((e) => toast(e.message));
 }
 let wheelBusy = false, wheelDeg = 0;
+function renderSetup(box) { // Casino-Einstellungen: Tischdesign, Cashback und VIP-Stufen
+  if (!vipD) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadVip(); return; }
+  const v = vipD;
+  box.innerHTML = `
+    <h2 class="rw-h">Cashback</h2>
+    <div class="panel" style="display:flex;align-items:center;gap:12px">${v.cashbackPct ? `<span class="grow">${v.cashback ? `Von gestern bekommst du <b>${fmt(v.cashback)} 💎</b> zurück (${Math.round(v.cashbackPct * 100)} % deiner Verluste).` : v.cashbackClaimed ? 'Heute schon abgeholt.' : 'Gestern gab es keine Verluste, also auch kein Cashback.'}</span>${v.cashback ? '<button class="btn small" id="cashGo">Abholen</button>' : ''}` : '<span class="grow sub">Cashback gibt es ab VIP Gold: Ein Teil deiner Verluste vom Vortag kommt zurück.</span>'}</div>
+    <h2 class="rw-h">Tischdesign</h2>
+    <div class="themes">${v.themes.map((t) => `<button class="thm th-${t.key} ${v.theme === t.key ? 'on' : ''} ${t.unlocked ? '' : 'lk'}" data-thm="${t.key}"><span class="sw"></span><b>${esc(t.name)}</b><small>${t.unlocked ? (v.theme === t.key ? 'aktiv' : 'wählen') : 'ab ' + esc(v.tiers[t.tier].name)}</small></button>`).join('')}</div>
+    <h2 class="rw-h">VIP-Stufen</h2>
+    <div class="tiers">${v.tiers.map((t, i) => `<div class="tier ${i === v.tier ? 'cur' : ''} ${i > v.tier ? 'lk' : ''}">${vipBadge(i, 46)}<div class="grow"><b>${esc(t.name)}</b><small>ab ${fmt(t.xp)} Casino-XP</small>
+      <span class="perks">🎡 ${t.spins}× drehen · ${t.cashback ? '💸 ' + Math.round(t.cashback * 100) + ' % Cashback' : 'kein Cashback'} · 🎨 ${esc(v.themes[i].name)}</span></div>${i === v.tier ? '<span class="rw-ok">du</span>' : i < v.tier ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>`;
+  if ($('#cashGo')) $('#cashGo').onclick = claimCashback;
+  box.querySelectorAll('[data-thm]').forEach((b) => { b.onclick = () => {
+    if (b.classList.contains('lk')) return toast('Dieses Design gibt es ab einer höheren VIP-Stufe.');
+    api('/api/casino/theme', { theme: b.dataset.thm }).then((v2) => { vipD = v2; renderCards(); toast('Tischdesign gewechselt'); }).catch((e) => toast(e.message));
+  }; });
+}
 function renderVip(box) {
   if (!vipD) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadVip(); return; }
   const v = vipD, N = v.wheel.length, seg = 360 / N;
@@ -1799,13 +1816,8 @@ function renderVip(box) {
     </div>
     <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} von ${v.spinsTotal} heute` : 'Morgen wieder drehen'}</button>
     <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
-    <h2 class="rw-h">Cashback</h2>
-    <div class="panel" style="display:flex;align-items:center;gap:12px">${v.cashbackPct ? `<span class="grow">${v.cashback ? `Von gestern bekommst du <b>${fmt(v.cashback)} 💎</b> zurück (${Math.round(v.cashbackPct * 100)} % deiner Verluste).` : v.cashbackClaimed ? 'Heute schon abgeholt.' : 'Gestern gab es keine Verluste, also auch kein Cashback.'}</span>${v.cashback ? '<button class="btn small" id="cashGo">Abholen</button>' : ''}` : '<span class="grow sub">Cashback gibt es ab VIP Gold: Ein Teil deiner Verluste vom Vortag kommt zurück.</span>'}</div>
-    <h2 class="rw-h">Tischdesign</h2>
-    <div class="themes">${v.themes.map((t) => `<button class="thm th-${t.key} ${v.theme === t.key ? 'on' : ''} ${t.unlocked ? '' : 'lk'}" data-thm="${t.key}"><span class="sw"></span><b>${esc(t.name)}</b><small>${t.unlocked ? (v.theme === t.key ? 'aktiv' : 'wählen') : 'ab ' + esc(v.tiers[t.tier].name)}</small></button>`).join('')}</div>
-    <h2 class="rw-h">VIP-Stufen</h2>
-    <div class="tiers">${v.tiers.map((t, i) => `<div class="tier ${i === v.tier ? 'cur' : ''} ${i > v.tier ? 'lk' : ''}">${vipBadge(i, 46)}<div class="grow"><b>${esc(t.name)}</b><small>ab ${fmt(t.xp)} Casino-XP</small>
-      <span class="perks">🎡 ${t.spins}× drehen · ${t.cashback ? '💸 ' + Math.round(t.cashback * 100) + ' % Cashback' : 'kein Cashback'} · 🎨 ${esc(v.themes[i].name)}</span></div>${i === v.tier ? '<span class="rw-ok">du</span>' : i < v.tier ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>`;
+    `;
+
   const sp = $('#lspin'); if (sp) sp.onclick = () => {
     if (wheelBusy) return; wheelBusy = true; sp.disabled = true;
     api('/api/casino/wheel', {}).then((r) => {
@@ -1822,11 +1834,6 @@ function renderVip(box) {
       }, 4400);
     }).catch((e) => { wheelBusy = false; sp.disabled = false; toast(e.message); });
   };
-  if ($('#cashGo')) $('#cashGo').onclick = claimCashback;
-  box.querySelectorAll('[data-thm]').forEach((b) => { b.onclick = () => {
-    if (b.classList.contains('lk')) return toast('Dieses Design gibt es ab einer höheren VIP-Stufe.');
-    api('/api/casino/theme', { theme: b.dataset.thm }).then((v2) => { vipD = v2; renderCards(); toast('Tischdesign gewechselt'); }).catch((e) => toast(e.message));
-  }; });
 }
 
 // ---------- Poker: Texas Hold'em ----------
@@ -1988,6 +1995,7 @@ function renderCasino() {
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
+  if (cgame === 'setup') return renderSetup(box);
   if (cgame === 'poker') return renderPoker(box);
   if (cgame === 'triple') return renderTriple(box);
   if (cgame === 'crank') {
@@ -2255,7 +2263,7 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad & VIP 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="setup" class="${cgame === 'setup' ? 'on' : ''}">⚙️ Casino-Einstellungen</button><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
@@ -2829,6 +2837,7 @@ function renderNews() {
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'vips') return `<div class="nw-embs">${b.items.map(([n, name, need]) => `<div class="nw-em"><img style="width:84px;height:84px;object-fit:contain" src="/emblems/vip${esc(n)}.webp?v=${AVER}" alt=""><b>${esc(name)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="row" style="gap:6px;flex:none">${btn.split('|').map((x, k, arr) => `<span class="btn small ${arr.length > 1 && k === 0 ? 'ghost' : ''} nw-fakebtn">${esc(x)}</span>`).join('')}</span>` : ''}</div>`).join('')}</div></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;

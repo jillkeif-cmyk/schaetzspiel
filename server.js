@@ -415,12 +415,12 @@ setInterval(async () => {
 }, 60 * 1000);
 
 // ---------- Glücksspiel ----------
-const MIN_BET = 50, MAX_BET = 250000; // Obergrenze pro Runde
+const MIN_BET = 50, MAX_BET = Infinity; // bei Roulette und Blackjack begrenzt nur das eigene Guthaben
 const bjGames = new Map(); // userId -> laufendes Blackjack-Spiel
 const takeBet = async (u, amount) => {
   const have = Number(u.diamonds) || 0;
   if (!Number.isFinite(amount) || amount < MIN_BET) return { error: `Mindestens ${MIN_BET} Diamanten.` };
-  if (amount > MAX_BET) return { error: `Höchstens ${fmtInt(MAX_BET)} Diamanten pro Runde.` };
+  if (Number.isFinite(MAX_BET) && amount > MAX_BET) return { error: `Höchstens ${fmtInt(MAX_BET)} Diamanten pro Runde.` };
   if (have < amount) return { error: 'So viele Diamanten hast du nicht.' };
   await store.save(u.id, { diamonds: have - amount });
   return { ok: true, left: have - amount };
@@ -589,7 +589,7 @@ app.post('/api/casino/board', async (req, res) => {
     const bets = (Array.isArray(req.body.bets) ? req.body.bets : []).slice(0, 60).map((b) => ({ numbers: b.numbers, amount: Math.round(Number(b.amount) || 0) }));
     if (!bets.length) return res.status(400).json({ error: 'Setz zuerst einen Chip.' });
     const total = bets.reduce((x, b) => x + b.amount, 0);
-    if (total > MAX_BET) return res.status(400).json({ error: 'Höchstens 250.000 Diamanten pro Runde.' });
+    if (Number.isFinite(MAX_BET) && total > MAX_BET) return res.status(400).json({ error: 'Einsatz zu hoch.' });
     const have = Number(u.diamonds) || 0;
     if (have < total) return res.status(400).json({ error: 'So viele Diamanten hast du nicht.' });
     const r = casino.spinBoard(bets);
