@@ -1126,6 +1126,10 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pkc.reveal{animation:pkreveal .5s cubic-bezier(.3,.7,.3,1) both}
 @keyframes pkreveal{0%{transform:rotateY(90deg) scale(1.08)}60%{transform:rotateY(-8deg) scale(1.05)}100%{transform:none}}
 .pkc.deal{animation-fill-mode:both}
+.gl-item{padding:10px 12px;border-radius:14px;background:var(--bg-deep)}.gl-item b{display:block;margin-bottom:4px}.gl-item p{margin:0;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.gl-hint{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
+.info-i{color:var(--tape);font-weight:900}
+.req[data-info],.stat[data-info]{cursor:pointer}.stat[data-info] span{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -2105,12 +2109,39 @@ function packInfo(pid) {
 }
 // Gesperrtes ansehen: echtes Bild, Animation und die Bedingung
 // Fortschritt zu einem Stück: "70 von 100 Siegen" mit Balken
-const GOAL_TXT = { matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', close: 'Doppelte', answered: 'beantwortete Fragen', mc_right: 'richtige Auswahlfragen', points: 'Punkte', best_score: 'Punkte in einem Match', best_streak: 'Siege in Folge', streak: 'Siege in Folge', rank_points: 'Weltranglistenpunkte', prestige: 'Prestige', casino_rounds: 'Casino-Runden', casino_wins: 'Casino-Siege', casino_best: 'Diamanten auf einmal', casino_xp: 'Casino-XP', cards_total: 'Karten', cards_rare: 'seltene Karten', cards_ext: 'Extended Art', toon_distinct: 'Toon-Karten', packs_opened: 'geöffnete Booster', melted: 'umgewandelte Karten', daily_streak: 'Tage in Folge', xp: 'XP', poker_hands: 'Poker-Hände', poker_wins: 'gewonnene Hände', poker_best: 'Diamanten in einem Pot', poker_allin_wins: 'gewonnene All-ins', poker_minutes: 'Minuten am Pokertisch', play_minutes: 'Minuten Spielzeit' };
+const GOAL_TXT = { matches: 'Matches', wins: 'Siege', exact: 'Punktlandungen', close: 'Doppel-Treffer', answered: 'beantwortete Fragen', mc_right: 'richtige Auswahlfragen', points: 'Punkte', best_score: 'Punkte in einem Match', best_streak: 'Siege in Folge', streak: 'Siege in Folge', rank_points: 'Weltranglistenpunkte', prestige: 'Prestige', casino_rounds: 'Casino-Runden', casino_wins: 'Casino-Siege', casino_best: 'Diamanten auf einmal', casino_xp: 'Casino-XP', cards_total: 'Karten', cards_rare: 'seltene Karten', cards_ext: 'Extended Art', toon_distinct: 'Toon-Karten', packs_opened: 'geöffnete Booster', melted: 'umgewandelte Karten', daily_streak: 'Tage in Folge', xp: 'XP', poker_hands: 'Poker-Hände', poker_wins: 'gewonnene Hände', poker_best: 'Diamanten in einem Pot', poker_allin_wins: 'gewonnene All-ins', poker_minutes: 'Minuten am Pokertisch', play_minutes: 'Minuten Spielzeit' };
+// Kleines Lexikon: was bedeuten die Begriffe, und wie erreicht man sie?
+const GLOSSARY = {
+  exact: ['🎯 Punktlandung', 'Deine Schätzung trifft die Lösung genau. Das bringt 300 Punkte, die meisten, die es für eine Frage gibt.'],
+  close: ['✌️ Doppel-Treffer (×2)', 'Deine Schätzung liegt höchstens 4 % neben der Lösung. Dafür gibt es 200 Punkte, doppelt so viel wie für eine normale gute Schätzung, die höchstens 100 bringt. Beispiel: Die Lösung ist 1.000, dann zählt alles zwischen 960 und 1.040.'],
+  closest: ['🥇 Am nächsten dran', 'Wer in einer Frage näher an der Lösung liegt als alle anderen, bekommt 25 Extrapunkte, außer bei einer Punktlandung.'],
+  points: ['⭐ Punkte', 'Pro Frage bekommst du je nach Genauigkeit bis zu 100 Punkte, einen Doppel-Treffer 200 und eine Punktlandung 300. Punkte insgesamt zählen über alle Matches.'],
+  best_score: ['🏅 Punkte in einem Match', 'Deine höchste Punktzahl in einem einzigen Match.'],
+  wins: ['🏆 Siege', 'Du gewinnst ein Match, wenn du am Ende die meisten Punkte hast. Solo-Runden zählen nicht als Sieg.'],
+  matches: ['🎮 Matches', 'Jedes Match, das du bis zum Ende spielst.'],
+  answered: ['✅ Fragen beantwortet', 'Jede Frage, auf die du eine Antwort abgibst, egal ob richtig oder nicht.'],
+  mc_right: ['🔤 Auswahlfragen richtig', 'Fragen mit vier Antworten, bei denen du die richtige gewählt hast.'],
+  best_streak: ['🔥 Siege in Folge', 'Wie viele Matches du hintereinander gewonnen hast, ohne zu verlieren.'],
+  rank_points: ['🌍 Weltranglistenpunkte (WP)', 'Gibt es nur in Ranglisten-Matches, abhängig von deiner Platzierung. Sie bestimmen deinen Platz in der Weltrangliste.'],
+  prestige: ['👑 Prestige', 'Wer Level 30 erreicht und die Bedingungen des nächsten Prestige-Rangs erfüllt, kann aufsteigen. Das Level beginnt dann wieder bei 1, dafür bekommst du ein neues Prestige-Symbol.'],
+  xp: ['✨ XP', 'Erfahrungspunkte für dein Level. Es gibt sie für Matches, Punkte, beantwortete Fragen und Herausforderungen. In der Hot Time von 20 bis 24 Uhr doppelt.'],
+};
+const STAT_INFO = { Siege: 'wins', Punktlandungen: 'exact', Doppelte: 'close', 'Doppel-Treffer': 'close', Matches: 'matches', 'Auswahl richtig': 'mc_right' };
+function showInfo(key) {
+  const g = GLOSSARY[key]; if (!g) return;
+  $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>${esc(g[0])}</h2><p style="line-height:1.5">${esc(g[1])}</p><button class="btn ghost" id="pwCancel">Verstanden</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
+function showGlossary() {
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:86vh;overflow:auto"><h2>So funktioniert's</h2>${Object.values(GLOSSARY).map(([t, d]) => `<div class="gl-item"><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join('')}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
 function goalHtml(item) {
   const g = home.me.goals && home.me.goals[item.id]; if (!g) return '';
   const [k, goal] = g, cur = Math.min(goal, (home.me.stats && home.me.stats[k]) || 0);
   const done = item.unlocked || cur >= goal, pct = Math.round(100 * cur / goal);
-  return `<div class="goalbox"><div class="row" style="justify-content:space-between"><span><b>${fmt(done ? goal : cur)}</b> von ${fmt(goal)} ${esc(GOAL_TXT[k] || k)}</span><b style="color:${done ? 'var(--ok)' : 'var(--tape)'}">${done ? '✓ geschafft' : pct + ' %'}</b></div><span class="bar"><i style="width:${done ? 100 : pct}%"></i></span></div>`;
+  const gl = GLOSSARY[k] ? `<small class="gl-hint">ⓘ ${esc(GLOSSARY[k][1])}</small>` : '';
+  return `<div class="goalbox">${gl}<div class="row" style="justify-content:space-between"><span><b>${fmt(done ? goal : cur)}</b> von ${fmt(goal)} ${esc(GOAL_TXT[k] || k)}</span><b style="color:${done ? 'var(--ok)' : 'var(--tape)'}">${done ? '✓ geschafft' : pct + ' %'}</b></div><span class="bar"><i style="width:${done ? 100 : pct}%"></i></span></div>`;
 }
 function showLocked(kind, id) {
   const C = home.cards || { emblems: [], titles: [] };
@@ -2626,7 +2657,7 @@ function build() {
 
   if (!S && page === 'challenges') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
-    <h1 style="font-size:30px">Herausforderungen</h1>
+    <div class="row"><h1 class="grow" style="font-size:30px">Herausforderungen</h1><button class="btn small ghost" id="openGlossary">ⓘ So funktioniert's</button></div>
     <div class="tabs2" id="chTabs"><button data-cht="chal" class="${chTab === 'chal' ? 'on' : ''}">🏅 Herausforderungen</button><button data-cht="items" class="${chTab === 'items' ? 'on' : ''}">✨ Titel, Embleme & Rahmen</button></div>
     <div id="chalWrap" ${chTab === 'items' ? 'hidden' : ''}><p class="sub">Jede Stufe bringt XP. Prestige und Ränge findest du weiterhin im Profil.</p>
     <div id="nextUp"></div>
@@ -2909,7 +2940,7 @@ async function showUser(id) {
   try {
     const u = (await api('/api/user/' + id)).user;
     $('#modal').innerHTML = `<div class="panel" style="gap:16px">${playerCard(u, `<div class="lvrow"><span class="wp">${fmt(u.rankPoints || 0)} WP</span><span>${esc(onlineText(u))}</span></div>`)}
-      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppelte'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
+      <div class="stats">${[[playTime(u.playMinutes), 'Spielzeit'], [shortNum(u.diamonds) + ' 💎', 'Diamanten'], [u.matches, 'Matches'], [u.wins, 'Siege'], [u.exact, 'Punktlandungen'], [u.close, 'Doppel-Treffer'], [u.mcTotal ? Math.round(100 * u.mcRight / u.mcTotal) + ' %' : '–', 'Auswahl richtig'], [u.avgDev === null ? '–' : Math.round(u.avgDev * 100) + ' %', 'Ø Abweichung'], [fmt(u.bestScore), 'Bestes Match'], [fmt(u.rankPoints || 0), 'Weltranglistenpunkte'], [u.matches ? Math.round(100 * u.wins / u.matches) + ' %' : '–', 'Siegquote']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div>
       ${u.self ? '' : u.friend === 'ok' ? '' : u.friend === 'out' ? '<button class="btn ghost" disabled>Anfrage gesendet</button>' : u.friend === 'in' ? `<button class="btn" data-fr="accept" data-id="${u.id}">Anfrage annehmen</button>` : `<button class="btn" data-addfr="${u.id}">+ Als Freund hinzufügen</button>`}
       <button class="btn ghost" id="pwCancel">Schließen</button>${u.friend === 'ok' ? `<button class="link" data-fr="remove" data-id="${u.id}" style="align-self:center">Freund entfernen</button>` : ''}</div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -3006,7 +3037,7 @@ function update() {
     const me = home.me, pr = home.progress, st = pr.prestige;
     $('#profHead').innerHTML = playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span>${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Kein Prestige'}</span></div>`);
     $('#nextPrestige').innerHTML = st.next ? `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">${emblem(st.next)}</span><div><p class="sub">Nächster Rang</p><h2>Prestige ${st.next} · ${esc(st.name)}</h2></div></div>
-      ${st.reqs.map((r) => `<div class="req"><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
+      ${st.reqs.map((r) => `<div class="req" ${GLOSSARY[r.key] ? `data-info="${r.key}"` : ''}><div class="row"><span>${r.done ? '✓ ' : ''}${esc(r.label)}${GLOSSARY[r.key] ? ' <span class="info-i">ⓘ</span>' : ''}</span><span class="sub">${r.cur} / ${r.goal}</span></div>${barHtml(r.cur, r.goal, r.done)}</div>`).join('')}
       <button class="btn" id="doPrestige" ${st.can ? '' : 'disabled'}>Prestige aktivieren</button><p class="sub">Level und XP starten wieder bei 1. Statistik, Herausforderungen und Rahmen bleiben.</p>`
       : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
     const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
@@ -3026,7 +3057,7 @@ function update() {
     const me = home && home.me;
     pushUI();
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span></div><span class="editbtn big">✏️ Profil & Spielerkarte bearbeiten</span>`) : '<span class="sub">Lädt …</span>';
-    $('#stats').innerHTML = me ? `<div class="stats">${[[playTime(me.playMinutes), 'Spielzeit'], [me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppelte'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat"><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
+    $('#stats').innerHTML = me ? `<div class="stats">${[[playTime(me.playMinutes), 'Spielzeit'], [me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppel-Treffer'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
     api('/api/daily').then((v) => {
       const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed;
@@ -3243,6 +3274,7 @@ document.addEventListener('toggle', (e) => {
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); viewKey = ''; render(); }).catch((er) => toast(er.message)); return; }
+    const inf = e.target.closest('[data-info]'); if (inf) return showInfo(inf.dataset.info); // Begriffe erklären
     const cd = e.target.closest('[data-card]'); if (cd) return showCard(cd.dataset.card);
     const u = e.target.closest('[data-user]'); if (u) showUser(u.dataset.user); const m = e.target.closest('[data-mod]'); if (m) modEdit(m.dataset.mod, ''); return; }
   if (t.closest('[data-mod]')) return modEdit(t.closest('[data-mod]').dataset.mod, '');
@@ -3329,6 +3361,8 @@ document.addEventListener('click', (e) => {
       loadFriends && loadFriends();
     }).catch((er) => toast(er.message));
   }
+  else if (t.dataset.info) { showInfo(t.dataset.info); }
+  else if (t.id === 'openGlossary') { showGlossary(); }
   else if (t.dataset.copycode) { try { navigator.clipboard.writeText(t.dataset.copycode); toast('Code kopiert: ' + t.dataset.copycode); } catch (er) { toast(t.dataset.copycode); } }
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
