@@ -1116,6 +1116,16 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .collect-chips .x{background:rgba(180,92,255,.2)}.collect-chips .g{background:rgba(230,244,255,.14)}.collect-row .wp small{font-size:12px;opacity:.8}
 .collect-bar{display:block;height:6px;border-radius:99px;background:rgba(255,255,255,.1);margin:5px 0 3px;overflow:hidden;max-width:200px}
 .collect-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#B45CFF,#FF4FA3)}
+.nw-latest{position:relative;box-shadow:inset 0 0 0 2px rgba(192,75,255,.7),0 0 26px rgba(192,75,255,.25)}
+.nw-ribbon{position:absolute;top:-10px;left:14px;padding:5px 12px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 11px/1 Archivo;letter-spacing:1.2px;box-shadow:0 4px 12px rgba(192,75,255,.5)}
+.nw-ver{display:inline-block;padding:3px 8px;border-radius:99px;background:rgba(255,210,63,.18);color:var(--tape);font:900 11px/1 Archivo;letter-spacing:.6px;margin-bottom:4px}
+.nw-older{margin:22px 0 8px;font-size:18px;color:var(--muted)}
+.nw-old{margin-bottom:10px}.nw-old summary{list-style:none;cursor:pointer;position:relative}.nw-old summary::-webkit-details-marker{display:none}
+.nw-old .nw-hero img{width:64px;height:64px}.nw-old .nw-hero h1{font-size:18px}
+.nw-open{position:absolute;right:14px;bottom:12px;font:800 12px/1 Archivo;color:var(--tape)}.nw-old[open] .nw-open{display:none}
+.pkc.reveal{animation:pkreveal .5s cubic-bezier(.3,.7,.3,1) both}
+@keyframes pkreveal{0%{transform:rotateY(90deg) scale(1.08)}60%{transform:rotateY(-8deg) scale(1.05)}100%{transform:none}}
+.pkc.deal{animation-fill-mode:both}
 </style>
 </head>
 <body>
@@ -1135,7 +1145,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '22';
+const AVER = '23';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1614,11 +1624,14 @@ const PK_C = [50, 47]; // Tischmitte
 const lerp = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
 let pkSeen = new Set(), pkHand = -1, pkPrev = null;
 // Karte: nur neu ausgeteilte Karten bekommen die Austeil-Animation
-const pkCard = (c, big, key) => {
+let pkHidden = new Map(); // war eine Karte an dieser Stelle zuletzt verdeckt? Dann wird sie umgedreht statt neu ausgeteilt
+const pkCard = (c, big, key, delay = 0) => {
   if (!c) return '';
   const fresh = key && !pkSeen.has(key); if (key) pkSeen.add(key);
-  const cls = `pkc ${big ? 'big' : ''} ${fresh ? 'deal' : ''}`;
-  return c.hidden ? `<span class="${cls} back"></span>` : `<span class="${cls} ${['♥', '♦'].includes(c.s) ? 'red' : ''}"><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>`;
+  const wasHidden = key && pkHidden.get(key) && !c.hidden; if (key) pkHidden.set(key, !!c.hidden);
+  const cls = `pkc ${big ? 'big' : ''} ${wasHidden ? 'reveal' : fresh ? 'deal' : ''}`;
+  const st = fresh && !wasHidden ? ` style="animation-delay:${delay}ms"` : ''; // austeilen nacheinander, aufdecken alle gleichzeitig
+  return c.hidden ? `<span class="${cls} back"${st}></span>` : `<span class="${cls} ${['♥', '♦'].includes(c.s) ? 'red' : ''}"${st}><b>${esc(c.r)}</b><i>${esc(c.s)}</i></span>`;
 };
 // Chipstapel: mehr Chips für mehr Diamanten, Farbe nach Größe
 // Chips nach Wert wie im echten Casino: jede Farbe eine Säule, mehr Geld = mehr und höhere Säulen
@@ -1648,7 +1661,7 @@ function renderPoker(box) {
     }
   }
   const t = pkState, meIdx = t.me, me = meIdx >= 0 ? t.seats[meIdx] : null;
-  if (t.handNo !== pkHand) { pkHand = t.handNo; pkSeen = new Set(); }
+  if (t.handNo !== pkHand) { const first = pkHand !== -1; pkHand = t.handNo; pkSeen = new Set(); pkHidden = new Map(); if (first || t.street !== 'waiting') { sfx('dart'); setTimeout(() => sfx('dart'), 220); } } // neue Hand: Austeil-Klang
   const scrollY = window.scrollY; // Position merken, damit nichts hochspringt
   const rot = (i) => (meIdx >= 0 ? (i - meIdx + t.max) % t.max : i); // eigener Platz immer unten
   const pos = (i) => PK_POS[rot(i)];
@@ -1664,7 +1677,7 @@ function renderPoker(box) {
       <div class="pk-av" ${s.bot ? '' : `data-user="${s.id}"`}>${avatar(s, 46, false)}${s.bot ? '<span class="pk-botmark">🤖</span>' : ''}${act && t.deadline ? '<span class="pk-ring"></span>' : ''}${t.dealer === i ? '<span class="pk-dealer">D</span>' : ''}</div>
       <div class="pk-plate"><b>${esc(s.name)}</b><span>${fmt(s.stack)}</span>${s.stack ? `<span class="pk-own ${x > 60 ? 'l' : ''}">${chipPile(s.stack)}</span>` : ''}</div>
       ${s.last ? `<span class="pk-last ${/Fold/.test(s.last) ? 'f' : /All/.test(s.last) ? 'a' : /Raise/.test(s.last) ? 'r' : ''}">${esc(s.last)}</span>` : ''}
-      ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c, k) => pkCard(c, false, `s${i}:${k}:${c.hidden ? 'h' : c.r + c.s}`)).join('')}</div>` : ''}
+      ${rot(i) !== 0 && s.cards.length ? `<div class="pk-hole">${s.cards.map((c, k) => pkCard(c, false, `s${i}:${k}`, rot(i) * 90 + k * 60)).join('')}</div>` : ''}
       ${s.handName && rot(i) !== 0 ? `<small class="pk-hn">${esc(s.handName)}</small>` : ''}
     </div>`;
   };
@@ -1683,12 +1696,12 @@ function renderPoker(box) {
     ${me ? `<div class="pk-emopop" id="pkEmoPop" hidden>${EMOJIS.map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div>` : ''}
     <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
       ${chipsHtml}
-      <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => pkCard(c, false, `b${k}:${c.r}${c.s}`)).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
+      <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => { if (!pkSeen.has(`b${k}:${c.r}${c.s}`)) setTimeout(() => sfx('tick'), (k % 3) * 160); return pkCard(c, false, `b${k}:${c.r}${c.s}`, (k < 3 ? k : 0) * 160); }).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
         <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable, true)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
       ${t.seats.map(seatHtml).join('')}
     </div>
     ${me ? `<div class="pk-dock">
-      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' && !t.nextIn ? 'Warte auf Mitspieler' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
+      <div class="pk-me"><div class="pk-mycards">${me.cards.map((c, k) => pkCard(c, true, `m${k}:${c.r}${c.s}`, k * 180)).join('')}</div><div class="grow"><b>${me.handName || (me.cards.length ? '' : t.street === 'waiting' && !t.nextIn ? 'Warte auf Mitspieler' : 'Nächste Hand gleich')}</b><small>Chips ${fmt(me.stack)}</small></div></div>
       <div class="pk-actions ${myTurn ? '' : 'wait'}">${myTurn ? `
         <button class="btn ghost" data-pka="fold">Fold</button>
         ${need > 0 ? `<button class="btn" data-pka="call">Call ${fmt(Math.min(need, me.stack))}</button>` : '<button class="btn" data-pka="check">Check</button>'}
@@ -1714,6 +1727,7 @@ function renderPoker(box) {
       pkAnnounce(tb, `${i === meIdx ? 'Du' : esc(s.name)} ${i === meIdx ? verb.replace('foldet', 'foldest').replace('geht', 'gehst').replace('erhöht', 'erhöhst').replace('checkt', 'checkst') : verb}`, /Fold/.test(s.last) ? 'f' : /All|Raise/.test(s.last) ? 'r' : '');
     });
   }
+  if (t.winners && t.winners.length && tb && !(pkPrev && pkPrev.winners)) sfx(t.winners.some((w) => me && w.id === me.id) ? 'exact' : 'question');
   if (t.winners && t.winners.length && tb && !(pkPrev && pkPrev.winners)) pkAnnounce(tb, t.winners.map((w) => `🏆 ${esc(w.name)} gewinnt ${fmt(w.amount)}${w.hand ? ' · ' + esc(w.hand) : ''}`).join('<br>'), 'w', 3800);
   pkPrev = { handNo: t.handNo, bets: t.seats.map((s) => (s ? s.bet : 0)), winners: !!(t.winners && t.winners.length), last: lastNow };
   box.querySelectorAll('[data-pkseat]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: t.id, seat: Number(b.dataset.pkseat) }); });
@@ -2134,7 +2148,7 @@ function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts 
 function renderNewsCard() {
   const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
   const p = newsPosts[0]; let seen = ''; try { seen = localStorage.getItem('news_seen') || ''; } catch (e) {}
-  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? '<span class="nc-corner">NEU</span>' : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
+  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? `<span class="nc-corner">${(() => { const k = newsPosts.findIndex((x) => x.id === seen); return k > 0 ? k : 1; })()} NEU</span>` : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
     <span class="nc-t"><span class="nc-tag">${esc(p.tag)}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
 }
 function renderNews() {
@@ -2154,9 +2168,12 @@ function renderNews() {
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
     return '';
   };
-  box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p) => `<article class="nw-post">
-      <div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>
-      <p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`).join('');
+  // Jedes Update ein eigener, nummerierter Block: das neueste offen, ältere zum Aufklappen
+  const N = newsPosts.length;
+  const hero = (p, i) => `<div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nw-ver">Update ${N - i}</span> <span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>`;
+  box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p, i) => i === 0
+    ? `<article class="nw-post nw-latest"><div class="nw-ribbon">NEUESTES UPDATE</div>${hero(p, i)}<p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`
+    : `${i === 1 ? '<h2 class="nw-older">Frühere Updates</h2>' : ''}<details class="nw-post nw-old"><summary>${hero(p, i)}<span class="nw-open">Anzeigen</span></summary><p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</details>`).join('');
 }
 // Detailfenster: alle Stufen mit XP und die Belohnungen, die an dieser Herausforderung hängen
 function showChallenge(key) {
