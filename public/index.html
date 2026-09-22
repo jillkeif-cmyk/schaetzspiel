@@ -1329,6 +1329,11 @@ body.no-grading .grading-only{display:none !important}
 .th-toten.bjfelt::before,.th-schatten.bjfelt::before{color:rgba(255,210,63,.55)}
 .tc-autobets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .tc-key.on{box-shadow:inset 0 3px 8px rgba(0,0,0,.5),0 0 0 3px #fff,0 0 18px rgba(140,240,120,.9);transform:translateY(2px);filter:brightness(1.15)}
+.bigava-p{gap:14px;align-items:center}.bigava{display:grid;place-items:center;padding:8px}
+.ava[data-bigava]{cursor:pointer}
+.btn.preset{width:100%;margin-bottom:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px}
+.btn.preset small{font-weight:700;font-size:11px;opacity:.85}
+.btn.preset.on{box-shadow:0 0 0 2px #FFD23F,0 0 16px rgba(255,210,63,.5)}
 </style>
 </head>
 <body>
@@ -1348,7 +1353,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '34';
+const AVER = '35';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1365,7 +1370,7 @@ function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(11, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
   const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
   const zz = p.idle ? `<span class="ava-zz" title="abwesend">😴</span>` : '';
-  return `${zz ? '<span class="ava-wrap">' : ''}<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>${zz ? zz + '</span>' : ''}`;
+  return `${zz ? '<span class="ava-wrap">' : ''}<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" data-bigava="${esc(String(p.id || ''))}" data-bigname="${esc(p.name || '')}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>${zz ? zz + '</span>' : ''}`;
 }
 const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
 function streakHtml(p) {
@@ -2355,6 +2360,14 @@ const GUIDES = {
     ['Deine Züge', 'Fold: aufgeben. Check: schieben, wenn niemand erhöht hat. Call: mitgehen. Raise: erhöhen. All-in: alles setzen.'],
     ['Hände von stark nach schwach', 'Royal Flush, Straight Flush, Vierling, Full House, Flush, Straße, Drilling, zwei Paare, ein Paar, höchste Karte.']]],
 };
+// Profilbild groß ansehen
+function showBigAva(el) {
+  const src = el.closest ? (el.closest('.ava') || el) : el;
+  const big = src.cloneNode(true); big.style.setProperty('--s', '240px'); big.removeAttribute('data-bigava');
+  el = src;
+  $('#modal').innerHTML = `<div class="panel bigava-p"><div class="bigava">${big.outerHTML}</div><h2 style="text-align:center;margin:0">${esc(el.dataset.bigname || '')}</h2><button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; sfx('tick');
+}
 function showGuide(k) {
   const g = GUIDES[k]; if (!g) return;
   $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>ⓘ So spielst du ${esc(g[0])}</h2>${g[1].map(([t, d]) => `<div class="gl-item"><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join('')}<button class="btn ghost" id="pwCancel">Verstanden</button></div>`;
@@ -3853,6 +3866,7 @@ function showEmote(pid, i) {
   sfx('emote');
 }
 function barHtml(cur, goal, done) { return `<div class="bar ${done ? 'done' : ''}"><i style="width:${goal ? Math.min(100, 100 * cur / goal) : 100}%"></i></div>`; }
+const PRESET = { answerTime: 20, maxQuestions: 25, pointLimit: 2000, countdown: 60 }; // Standard-Einstellung
 const OPTS = { pointLimit: ['Punktelimit', [500, 1000, 2000, 3000, 4000], ''], maxQuestions: ['Höchstens Fragen', [15, 25, 40], ''], countdown: ['Countdown vor dem Start', [30, 60, 120], ' s'], answerTime: ['Zeit pro Schätzfrage', [8, 20, 30, 45], ' s'] };
 
 function update() {
@@ -4033,7 +4047,10 @@ function update() {
     document.querySelectorAll('#waitOff, #waitOn').forEach((b) => { b.disabled = gr; b.classList.toggle('on', gr ? b.id === 'waitOff' : (b.id === 'waitOn') === !!S.waitAi); });
     $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Fast alle Fragen sind dann frisch. Es wird bis zu drei Mal versucht und notfalls mehrere Minuten gewartet.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
-    $('#settings').innerHTML = Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
+    const isPreset = Object.entries(PRESET).every(([k, v]) => S.settings[k] === v);
+    $('#settings').innerHTML = `<button class="btn preset ${isPreset ? 'on' : ''}" id="presetBtn">⭐ Standard<small>20 s · 25 Fragen · 2.000 Punkte · 60 s Countdown</small></button>`
+      + Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
+    $('#presetBtn').onclick = () => { socket.emit('settings', { ...PRESET }); sfx('tick'); toast('Standard eingestellt'); };
     return;
   }
   if (S.phase === 'lobby') {
@@ -4186,6 +4203,8 @@ document.addEventListener('click', (e) => {
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); refreshProfile(); }).catch((er) => toast(er.message)); return; }
     const inf = e.target.closest('[data-info]'); if (inf) return showInfo(inf.dataset.info); // Begriffe erklären
     const cd = e.target.closest('[data-card]'); if (cd) return showCard(cd.dataset.card);
+    const av = e.target.closest('[data-bigava]'); // Profilbild groß ansehen
+    if (av && (av.closest('#modal') || av.closest('#unlock') || !av.closest('[data-user]'))) return showBigAva(av);
     const u = e.target.closest('[data-user]'); if (u) showUser(u.dataset.user); const m = e.target.closest('[data-mod]'); if (m) modEdit(m.dataset.mod, ''); return; }
   if (t.closest('[data-mod]')) return modEdit(t.closest('[data-mod]').dataset.mod, '');
   if (t.dataset.dia) {
