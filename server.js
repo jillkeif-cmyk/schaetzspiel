@@ -629,6 +629,18 @@ app.post('/api/tcg/sell', async (req, res) => {
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// Preisübersicht für eine Karte oder einen Booster: Händlerwert, bisherige Verkäufe, aktive Angebote
+app.get('/api/tcg/price', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const cid = String(req.query.card || ''), v = String(req.query.variant || '');
+    const sales = (await store.tradesFor(cid, v)).sort((a, b) => a.created - b.created);
+    const listings = (await store.marketList()).filter((m) => m.card_id === cid && m.variant === v).map((m) => ({ id: m.id, price: Number(m.price), mine: m.seller === u.id })).sort((a, b) => a.price - b.price);
+    const avg = sales.length ? Math.round(sales.reduce((x, s) => x + s.price, 0) / sales.length) : null;
+    res.json({ melt: cid === 'pack' ? null : (MELT[v] || 0), sales: sales.map((s) => ({ price: s.price, at: s.created })), avg, last: sales.length ? sales[sales.length - 1].price : null, low: listings.length ? listings[0].price : null, listings });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 app.post('/api/tcg/sellpack', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
