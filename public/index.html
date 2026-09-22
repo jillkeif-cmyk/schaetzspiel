@@ -2209,7 +2209,7 @@ function renderNews() {
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
-    if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="btn small nw-fakebtn">${esc(btn)}</span>` : ''}</div>`).join('')}</div></div>`;
+    if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="row" style="gap:6px;flex:none">${btn.split('|').map((x, k, arr) => `<span class="btn small ${arr.length > 1 && k === 0 ? 'ghost' : ''} nw-fakebtn">${esc(x)}</span>`).join('')}</span>` : ''}</div>`).join('')}</div></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
@@ -2256,7 +2256,7 @@ function casinoOpenHtml() {
   const pk = (pkList || []).filter((t) => t.seated > 0 && t.seated < t.max);
   if (!bj.length && !pk.length) return '';
   return `<h2 style="margin:14px 0 10px">Offene Casino-Tische</h2><div class="plist">
-    ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></div>`).join('')}
+    ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-pkwatchhome="${esc(t.id)}">Zuschauen</button><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></span></div>`).join('')}
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
 // Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
@@ -3446,6 +3446,7 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.info) { showInfo(t.dataset.info); }
+  else if (t.dataset.pkwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:watch', t.dataset.pkwatchhome); }
   else if (t.dataset.pkjoin) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:sit', { table: t.dataset.pkjoin }); }
   else if (t.dataset.bjjoin) { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', t.dataset.bjjoin); }
   else if (t.id === 'openGlossary') { showGlossary(); }
