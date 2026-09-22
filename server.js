@@ -418,9 +418,9 @@ setInterval(async () => {
 // ---------- Glücksspiel ----------
 const MIN_BET = 50, MAX_BET = Infinity; // bei Roulette und Blackjack begrenzt nur das eigene Guthaben
 const bjGames = new Map(); // userId -> laufendes Blackjack-Spiel
-const takeBet = async (u, amount) => {
+const takeBet = async (u, amount, min = MIN_BET) => { // min: Triple Crown erlaubt kleinere Einsätze ab 10
   const have = Number(u.diamonds) || 0;
-  if (!Number.isFinite(amount) || amount < MIN_BET) return { error: `Mindestens ${MIN_BET} Diamanten.` };
+  if (!Number.isFinite(amount) || amount < min) return { error: `Mindestens ${min} Diamanten.` };
   if (Number.isFinite(MAX_BET) && amount > MAX_BET) return { error: `Höchstens ${fmtInt(MAX_BET)} Diamanten pro Runde.` };
   if (have < amount) return { error: 'So viele Diamanten hast du nicht.' };
   await store.save(u.id, { diamonds: have - amount });
@@ -544,7 +544,7 @@ app.post('/api/casino/triple', async (req, res) => {
     try {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
     const u2 = await store.userById(u.id);
-    const t = await takeBet(u2, bet); if (t.error) return res.status(400).json({ error: t.error });
+    const t = await takeBet(u2, bet, triple.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
     const r = triple.play(bet);
     const fulls = r.spins.filter((x) => x.full).length;
     await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
