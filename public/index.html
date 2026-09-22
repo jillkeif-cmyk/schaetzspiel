@@ -596,9 +596,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #opener .slot.r-ultra::after,#opener .slot.r-legend::after{box-shadow:0 0 0 3px rgba(255,255,255,.95),0 0 44px rgba(255,240,180,.95)}
 #opener .slot.r-ext::after{box-shadow:0 0 0 3px rgba(255,170,60,1),0 0 54px rgba(255,140,30,.95)}
 #opener .slot.r-ghost::after{box-shadow:0 0 0 3px rgba(255,255,255,1),0 0 70px rgba(200,235,255,1)}
-#opener .slot.r-ghost{animation:flip .55s cubic-bezier(.2,.9,.3,1) both, shake .5s ease-out both}
+#opener .slot.r-ghost{animation:flip .55s cubic-bezier(.2,.9,.3,1) var(--d) both, shake .5s ease-out calc(var(--d) + .6s) none}
 .cbadge.ghost{background:linear-gradient(120deg,#FFFFFF,#CFE6F5);color:#0A2530;box-shadow:0 0 14px rgba(220,245,255,.95)}
-#opener .slot.r-ultra,#opener .slot.r-legend,#opener .slot.r-ext{animation:flip .55s cubic-bezier(.2,.9,.3,1) both, shake .5s ease-out both}
+#opener .slot.r-ultra,#opener .slot.r-legend,#opener .slot.r-ext{animation:flip .55s cubic-bezier(.2,.9,.3,1) var(--d) both, shake .5s ease-out calc(var(--d) + .6s) none} /* erst umdrehen, dann rütteln */
 @keyframes glowin{from{opacity:0}to{opacity:1}}
 @keyframes shake{0%,100%{}30%{transform:translateY(-6px) scale(1.04)}60%{transform:translateY(2px) scale(1)}}
 @keyframes flip{0%{transform:rotateY(90deg) translateY(30px);opacity:0}100%{transform:none;opacity:1}}
@@ -1975,7 +1975,7 @@ function renderCards() {
   } else if (ctab === 'inventar') {
     box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar</span></span>
-      <button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button></div>`).join('')
+      <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button><button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button></span></div>`).join('')
       : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>';
   } else if (ctab === 'shop') {
     box.innerHTML = tcg.def.packs.map((p) => `<button class="packcard ${p.locked ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
@@ -1984,16 +1984,24 @@ function renderCards() {
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    box.innerHTML = market.listings.length ? `<div class="cgrid">${market.listings.map((l) => `<figure><img loading="lazy" src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
+    const packsL = market.listings.filter((l) => l.cardId === 'pack'), cardsL = market.listings.filter((l) => l.cardId !== 'pack');
+    const seg = `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button></div>`;
+    if (mKind === 'packs') {
+      box.innerHTML = seg + (packsL.length ? packsL.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
+        ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="btn small" data-mbuy="${l.id}">Kaufen</button>`}</div>`).join('')
+        : '<p class="sub">Gerade bietet niemand Booster an. Stell selbst welche ein, über „Verkaufen“ im Reiter Booster.</p>');
+      return;
+    }
+    box.innerHTML = seg + (cardsL.length ? `<div class="cgrid">${cardsL.map((l) => `<figure><img loading="lazy" src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
-      : '<p class="sub">Gerade bietet niemand etwas an. Stell selbst etwas ein, über „Verkaufen“ in der Sammlung.</p>';
+      : '<p class="sub">Gerade bietet niemand Karten an. Stell selbst welche ein, über „Verkaufen“ in der Sammlung.</p>');
   } else if (ctab === 'verlauf') {
     box.innerHTML = `<p class="sub" style="margin-bottom:10px">Alle Käufe und Verkäufe in der Börse, die neuesten zuerst. Tippe auf einen Namen für das Profil.</p><div id="tradeHist"><p class="sub">Lädt …</p></div>`;
     api('/api/tcg/history').then((r) => {
       const el = $('#tradeHist'); if (!el) return;
       const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `vor ${Math.max(1, m)} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} Tagen`; };
-      el.innerHTML = (r.trades || []).length ? `<div class="thist">${r.trades.map((x) => `<div class="th-row"><img src="${cardImg(x.card_id, x.variant)}" data-card="${esc(x.card_id)}:${esc(x.variant)}" alt=""><span class="grow"><b>${esc(cardDef(x.card_id) ? cardDef(x.card_id).name : x.card_id)}</b><small>${esc(varName(x.variant))} · ${ago(x.created)}</small><small><span class="th-u" data-user="${x.seller}">${esc(x.seller_name)}</span> → <span class="th-u" data-user="${x.buyer}">${esc(x.buyer_name)}</span></small></span><span class="dia th-p">${D} ${fmt(x.price)}</span></div>`).join('')}</div>` : '<p class="sub">Noch wurde nichts verkauft.</p>';
+      el.innerHTML = (r.trades || []).length ? `<div class="thist">${r.trades.map((x) => `<div class="th-row">${x.card_id === 'pack' ? `<img src="/tcg/pack_${esc(x.variant)}.webp?v=${AVER}" alt="">` : `<img src="${cardImg(x.card_id, x.variant)}" data-card="${esc(x.card_id)}:${esc(x.variant)}" alt="">`}<span class="grow"><b>${x.card_id === 'pack' ? esc(PACK_NAME[x.variant] || 'Booster') : esc(cardDef(x.card_id) ? cardDef(x.card_id).name : x.card_id)}</b><small>${x.card_id === 'pack' ? 'Booster' : esc(varName(x.variant))} · ${ago(x.created)}</small><small><span class="th-u" data-user="${x.seller}">${esc(x.seller_name)}</span> → <span class="th-u" data-user="${x.buyer}">${esc(x.buyer_name)}</span></small></span><span class="dia th-p">${D} ${fmt(x.price)}</span></div>`).join('')}</div>` : '<p class="sub">Noch wurde nichts verkauft.</p>';
     }).catch(() => {});
   } else if (ctab === 'melt') {
     const melt = (tcg.def.melt) || {};
@@ -2120,15 +2128,15 @@ function packInfo(pid) {
     <div class="cgrid">${top.map((x) => `<figure><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}</figcaption></figure>`).join('')}</div>
     <b>Chancen pro Karte</b>
     <div class="parts">${Object.entries(p.odds).map(([k, o]) => `<div><span>${esc(varName(k))}</span><span>${(o * 100).toFixed(1).replace('.', ',')} %</span></div>`).join('')}</div>
-    <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" max="20" value="1" aria-label="Anzahl">
+    <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
       <button class="chipbtn" id="packMax">Max</button></div>
     ${p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : '<button class="btn" id="packBuy">Kaufen</button>'}
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
-  const maxN = Math.max(1, Math.min(20, Math.floor(((tcg && tcg.diamonds) || 0) / p.price)));
+  const maxN = Math.max(1, Math.min(9999, Math.floor(((tcg && tcg.diamonds) || 0) / p.price)));
   $('#packMax').onclick = () => { $('#packN').value = maxN; };
   $('#packBuy').onclick = () => {
-    const n = Math.max(1, Math.min(20, Math.round(Number($('#packN').value) || 1)));
+    const n = Math.max(1, Math.min(9999, Math.round(Number($('#packN').value) || 1)));
     api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Booster gekauft'); }).catch((e) => toast(e.message));
   };
 }
@@ -2385,6 +2393,7 @@ function renderHot() {
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
 // ---------- Support-Tickets ----------
+let mKind = 'cards';
 let tkCat = 'Fehler', tkImage = null, tkD = null, tkFilter = 'open', tkNewIds = new Set();
 const TK_ICON = { Fehler: '🐞', Account: '👤', Wunsch: '💡' };
 const TK_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
@@ -3456,6 +3465,11 @@ document.addEventListener('click', (e) => {
     }).catch((er) => toast(er.message));
   }
   else if (t.dataset.info) { showInfo(t.dataset.info); }
+  else if (t.dataset.mkind) { mKind = t.dataset.mkind; renderCards(); }
+  else if (t.dataset.sellpack) {
+    const pid = t.dataset.sellpack, pr = prompt(`Für wie viele Diamanten willst du einen ${PACK_NAME[pid] || 'Booster'} verkaufen?`, String(((tcg.def.packs.find((x) => x.id === pid) || {}).price) || 500));
+    if (pr) api('/api/tcg/sellpack', { pack: pid, price: Number(pr) }).then((st) => { tcg = st; market = null; renderCards(); toast('Booster steht jetzt in der Börse'); }).catch((e) => toast(e.message));
+  }
   else if (t.dataset.pkwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:watch', t.dataset.pkwatchhome); }
   else if (t.dataset.pkjoin) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:sit', { table: t.dataset.pkjoin }); }
   else if (t.dataset.bjjoin) { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', t.dataset.bjjoin); }

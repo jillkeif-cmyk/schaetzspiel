@@ -552,7 +552,7 @@ app.post('/api/tcg/buy', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const p = tcg.PACKS[String(req.body.pack || '')];
-    const n = Math.max(1, Math.min(20, Math.round(Number(req.body.n) || 1))); // passt zum Max-Knopf im Shop
+    const n = Math.max(1, Math.min(9999, Math.round(Number(req.body.n) || 1))); // kein festes Limit mehr, begrenzt nur durch die Diamanten
     if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
     if (p.locked && !isMod(u)) return res.status(403).json({ error: 'Dieser Booster ist noch gesperrt. Bald geht es los!' });
     const cost = p.price * n, have = Number(u.diamonds) || 0;
@@ -629,13 +629,25 @@ app.post('/api/tcg/sell', async (req, res) => {
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+app.post('/api/tcg/sellpack', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const pid = String(req.body.pack || ''), price = Math.max(10, Math.min(1000000, Math.round(Number(req.body.price) || 0)));
+    if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Diesen Booster gibt es nicht.' });
+    const own = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
+    if (!own || own.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
+    await store.packAdd(u.id, pid, -1);
+    await store.marketAdd({ seller: u.id, card_id: 'pack', variant: pid, price });
+    res.json(await tcgState(await store.userById(u.id)));
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.post('/api/tcg/cancel', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const row = await store.marketGet(req.body.id);
     if (!row || row.seller !== u.id) return res.status(403).json({ error: 'Das ist nicht dein Angebot.' });
     await store.marketDrop(row.id);
-    await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    if (row.card_id === 'pack') await store.packAdd(u.id, row.variant, 1); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -751,10 +763,11 @@ app.post('/api/tcg/market/buy', async (req, res) => {
     await store.marketDrop(row.id);
     await store.save(u.id, { diamonds: have - price });
     if (seller) await store.save(seller.id, { diamonds: (Number(seller.diamonds) || 0) + price });
-    await store.cardAdd(u.id, row.card_id, row.variant, 1);
-    const cdef = tcg.view().cards.find((c) => c.id === row.card_id), vname = tcg.view().names[row.variant] || row.variant;
+    const isPack = row.card_id === 'pack';
+    if (isPack) await store.packAdd(u.id, row.variant, 1); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
+    const cdef = isPack ? { name: (tcg.PACKS[row.variant] || {}).name || 'Booster' } : tcg.view().cards.find((c) => c.id === row.card_id), vname = isPack ? 'Booster' : tcg.view().names[row.variant] || row.variant;
     await store.tradeLog({ seller: row.seller, seller_name: seller ? seller.name : '?', buyer: u.id, buyer_name: u.name, card_id: row.card_id, variant: row.variant, price }).catch((e) => console.error('Verlauf:', e.message));
-    push.toUser(row.seller, { title: '💎 Karte verkauft', body: `Deine Karte „${cdef ? cdef.name : row.card_id}“ (${vname}) wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.`, tag: 'market', url: '/' }).catch(() => {});
+    push.toUser(row.seller, { title: isPack ? '💎 Booster verkauft' : '💎 Karte verkauft', body: isPack ? `Dein ${cdef.name} wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.` : `Deine Karte „${cdef ? cdef.name : row.card_id}“ (${vname}) wurde für ${price.toLocaleString('de-DE')} 💎 an ${u.name} verkauft.`, tag: 'market', url: '/' }).catch(() => {});
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
