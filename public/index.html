@@ -1130,6 +1130,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .gl-hint{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
 .info-i{color:var(--tape);font-weight:900}
 .req[data-info],.stat[data-info]{cursor:pointer}.stat[data-info] span{white-space:nowrap}
+.tk-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tk-s{text-align:center;padding:10px 4px;border-radius:14px;background:var(--bg-deep);border-top:4px solid #8E9AA0}
+.tk-s b{display:block;font:400 26px/1 Anton,Impact,sans-serif}.tk-s small{color:var(--muted);font-size:11px;font-weight:800}
+.tk-s.st-eingereicht{border-top-color:#5AA9FF}.tk-s.st-in-Bearbeitung{border-top-color:#FFB24A}.tk-s.st-abgeschlossen{border-top-color:#3DDC97}.tk-s.st-abgelehnt{border-top-color:#E05252}
+.tk{position:relative}.tk.isnew{box-shadow:0 0 0 2px #C04BFF,0 0 16px rgba(192,75,255,.35)}
+.tk-new{position:absolute;top:-8px;right:10px;padding:4px 8px;border-radius:99px;background:linear-gradient(135deg,#FF4FA3,#C04BFF);color:#fff;font:900 10.5px/1 Archivo}
+.tk-reply{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border-left:3px solid var(--tape)}.tk-reply small{color:var(--tape);font-weight:800}.tk-reply p{margin:4px 0 0;font-size:13.5px;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -2226,7 +2233,16 @@ function showChallenge(key) {
 }
 // Geschaffte Stufen, die man noch nicht angesehen hat
 const chalTotal = () => ((home && home.progress && home.progress.challenges) || []).reduce((x, c) => x + (c.done || 0), 0);
+// Offene Tickets, die man noch nicht angesehen hat
+const tkSeen = () => { try { return new Set(JSON.parse(localStorage.getItem('tk_seen') || '[]')); } catch (e) { return new Set(); } };
+function tkBadgeUpdate() {
+  const b = document.getElementById('tkBadge'); if (!b || !home) return;
+  const seen = tkSeen(), n = (home.me.openTickets || []).filter((id) => !seen.has(id)).length;
+  b.hidden = !n; b.textContent = n || '';
+}
+function tkMarkSeen() { try { const s2 = tkSeen(); for (const id of (home && home.me.openTickets) || []) s2.add(id); localStorage.setItem('tk_seen', JSON.stringify([...s2].slice(-300))); } catch (e) {} }
 function chalBadge() {
+  tkBadgeUpdate();
   const cb = document.getElementById('casBadge'); // offene Glücksrad-Drehungen am Casino-Knopf
   if (cb && home) { const n = home.me.wheelLeft || 0; cb.hidden = !n; cb.textContent = n || ''; }
   const b = document.getElementById('chalBadge'); if (!b || !home) return;
@@ -2319,7 +2335,7 @@ function renderHot() {
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
 // ---------- Support-Tickets ----------
-let tkCat = 'Fehler', tkImage = null, tkD = null;
+let tkCat = 'Fehler', tkImage = null, tkD = null, tkFilter = 'open', tkNewIds = new Set();
 const TK_ICON = { Fehler: '🐞', Account: '👤', Wunsch: '💡' };
 const TK_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
 function loadTickets() { api('/api/tickets').then((d) => { tkD = d; renderTickets(); }).catch((e) => toast(e.message)); bindTicketForm(); }
@@ -2346,14 +2362,30 @@ function bindTicketForm() {
 function renderTickets() {
   const el = $('#tkList'); if (!el || !tkD) return;
   const ago = (t) => new Date(t).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  el.innerHTML = tkD.tickets.length ? tkD.tickets.map((t) => `<div class="tk st-${t.status.replace(/ /g, '-')}">
+  const cnt = (st2) => tkD.tickets.filter((t) => t.status === st2).length;
+  const isOpen = (t) => t.status === 'eingereicht' || t.status === 'in Bearbeitung';
+  const list = tkD.tickets.filter((t) => tkFilter === 'all' || (tkFilter === 'open' ? isOpen(t) : !isOpen(t)));
+  const summary = `<div class="tk-sum">${[['eingereicht', '🔵', 'eingereicht'], ['in Bearbeitung', '🟠', 'in Arbeit'], ['abgeschlossen', '🟢', 'erledigt'], ['abgelehnt', '🔴', 'abgelehnt']].map(([k, i, n]) => `<div class="tk-s st-${k.replace(/ /g, '-')}"><b>${cnt(k)}</b><small>${i} ${n}</small></div>`).join('')}</div>
+    <div class="seg" style="margin:8px 0 10px">${[['open', `Offen (${tkD.tickets.filter(isOpen).length})`], ['done', 'Erledigt'], ['all', 'Alle']].map(([k, n]) => `<button data-tkf="${k}" class="${tkFilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  el.innerHTML = summary + (list.length ? list.map((t) => `<div class="tk st-${t.status.replace(/ /g, '-')} ${tkNewIds.has(t.id) ? 'isnew' : ''}">${tkNewIds.has(t.id) ? '<span class="tk-new">NEU</span>' : ''}
       <div class="tk-h"><span class="tk-ic">${TK_ICON[t.category] || '🎫'}</span><span class="grow"><b>${esc(t.title)}</b><small>#${t.id} · ${esc(t.category)} · <span class="th-u" data-user="${t.user_id}">${esc(t.user_name)}</span> · ${ago(t.created)}</small></span><span class="tk-st">${esc(t.status)}</span></div>
       ${t.text ? `<p class="tk-t">${esc(t.text)}</p>` : ''}
       ${t.hasImage ? `<button class="mini" data-tkimg="${t.id}">🖼 Screenshot ansehen</button>` : ''}
-      ${t.handler && t.status !== 'eingereicht' ? `<small class="sub">bearbeitet von ${esc(t.handler)}</small>` : ''}
+      ${t.reply ? `<div class="tk-reply"><small>💬 Antwort von ${esc(t.handler || 'dem Team')}</small><p>${esc(t.reply)}</p></div>` : t.handler && t.status !== 'eingereicht' ? `<small class="sub">bearbeitet von ${esc(t.handler)}</small>` : ''}
       ${tkD.canManage ? `<div class="tk-act">${TK_STATES.map((s2) => `<button class="mini ${t.status === s2 ? 'go' : ''}" data-tkst="${t.id}" data-st="${s2}">${s2}</button>`).join('')}</div>` : ''}
-    </div>`).join('') : '<p class="sub">Noch keine Tickets. Du kannst das erste einreichen.</p>';
-  el.querySelectorAll('[data-tkst]').forEach((b) => { b.onclick = () => api('/api/tickets/' + b.dataset.tkst + '/status', { status: b.dataset.st }).then((d) => { tkD = d; renderTickets(); toast('Status: ' + b.dataset.st); }).catch((e) => toast(e.message)); });
+    </div>`).join('') : `<p class="sub">${tkFilter === 'open' ? 'Gerade ist nichts offen. 🎉' : 'Hier ist noch nichts.'}</p>`);
+  el.querySelectorAll('[data-tkf]').forEach((b) => { b.onclick = () => { tkFilter = b.dataset.tkf; renderTickets(); }; });
+  el.querySelectorAll('[data-tkst]').forEach((b) => { b.onclick = () => {
+    const st2 = b.dataset.st, need = st2 === 'abgeschlossen' || st2 === 'abgelehnt';
+    const send = (reply) => api('/api/tickets/' + b.dataset.tkst + '/status', { status: st2, reply }).then((d) => { tkD = d; closeModal(); renderTickets(); toast('Status: ' + st2); }).catch((e) => toast(e.message));
+    if (st2 === 'eingereicht') return send('');
+    $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>${st2 === 'abgelehnt' ? '🔴 Ticket ablehnen' : st2 === 'abgeschlossen' ? '🟢 Ticket abschließen' : '🟠 In Bearbeitung nehmen'}</h2>
+      <p class="sub">${need ? 'Schreib kurz dazu, was erledigt wurde oder warum abgelehnt. Der Ersteller bekommt die Antwort als Nachricht.' : 'Optional: eine kurze Nachricht an den Ersteller.'}</p>
+      <textarea class="field" id="tkReply" rows="4" maxlength="1000" placeholder="${st2 === 'abgelehnt' ? 'Warum abgelehnt?' : st2 === 'abgeschlossen' ? 'Was wurde gemacht?' : 'Zum Beispiel: Schaue ich mir heute an'}"></textarea>
+      <button class="btn" id="tkOk">${st2 === 'abgelehnt' ? 'Ablehnen' : st2 === 'abgeschlossen' ? 'Abschließen' : 'Übernehmen'}</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; setTimeout(() => $('#tkReply').focus(), 50);
+    $('#tkOk').onclick = () => { const r = $('#tkReply').value.trim(); if (need && r.length < 3) return toast('Bitte eine kurze Antwort schreiben.'); send(r); };
+  }; });
   el.querySelectorAll('[data-tkimg]').forEach((b) => { b.onclick = async () => {
     try {
       const r = await fetch('/api/tickets/' + b.dataset.tkimg + '/image', { headers: { authorization: 'Bearer ' + token } }); if (!r.ok) throw new Error('Bild nicht gefunden');
@@ -2731,7 +2763,7 @@ function build() {
 
     <div hidden><h2 style="margin-bottom:10px">Weltrangliste</h2><div id="world" class="plist"></div></div>
     <div id="newPlayers"></div>
-    <button class="panel row" id="openSupport" style="gap:12px;text-align:left"><span style="font-size:32px;width:46px;text-align:center">🎫</span><span class="grow"><b>Support & Feedback</b><br><span class="sub">Fehler melden, Account-Hilfe, Wünsche und Ideen</span></span></button>
+    <button class="panel row" id="openSupport" style="gap:12px;text-align:left"><span style="font-size:32px;width:46px;text-align:center">🎫</span><span class="grow"><b>Support & Feedback</b><br><span class="sub">Fehler melden, Account-Hilfe, Wünsche und Ideen</span></span><span class="cnt-badge" id="tkBadge" hidden></span></button>
     <div hidden><h2 style="margin-bottom:10px">Bestenliste</h2>
       <div class="tabs small" id="boardTabs"><button data-board="points">Nach Punkten</button><button data-board="rank">Nach Rang</button></div>
       <div id="board" class="plist" style="margin-top:10px"></div></div></div>`;
@@ -3339,7 +3371,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.id === 'openChallenges') { page = 'challenges'; chalMarkSeen(); render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }
-  else if (t.id === 'openSupport') { page = 'support'; render(); }
+  else if (t.id === 'openSupport') { page = 'support'; tkNewIds = new Set((home.me.openTickets || []).filter((id) => !tkSeen().has(id))); tkMarkSeen(); render(); }
   else if (t.dataset.rt) { rtab = t.dataset.rt; if (rtab === 'cards') collectD = null; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }

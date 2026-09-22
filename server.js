@@ -138,7 +138,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -686,7 +686,7 @@ app.post('/api/tickets', async (req, res) => {
     if (req.body.image) { image = String(req.body.image); if (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > 1400000) return res.status(400).json({ error: 'Das Bild ist zu groß oder kein Bild.' }); }
     const t = await store.ticketAdd({ user_id: u.id, user_name: u.name, category, title, text, image });
     // Admin und Co-Admins bekommen Bescheid
-    for (const x of await store.searchUsers('', 200).catch(() => [])) if (isMod(x) && x.id !== u.id) push.toUser(x.id, { title: '🎫 Neues Ticket', body: `${u.name}: ${title}`, tag: 'ticket', url: '/' }).catch(() => {});
+    for (const x of await store.searchUsers('', 200).catch(() => [])) if (isAdmin(x) && x.id !== u.id) push.toUser(x.id, { title: '🎫 Neues Ticket', body: `${u.name}: ${title}`, tag: 'ticket', url: '/' }).catch(() => {}); // nur der Admin bekommt Bescheid
     res.json({ ok: true, id: t.id, tickets: await store.tickets(), canManage: isMod(u) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -696,9 +696,11 @@ app.post('/api/tickets/:id/status', async (req, res) => {
     if (!isMod(u)) return res.status(403).json({ error: 'Nur das Entwicklerteam kann Tickets bearbeiten.' });
     const status = String(req.body.status || '');
     if (!TICKET_STATES.includes(status)) return res.status(400).json({ error: 'Unbekannter Status.' });
-    const t = await store.ticketStatus(req.params.id, status, u.name);
+    const reply = String(req.body.reply || '').trim().slice(0, 1000);
+    if ((status === 'abgeschlossen' || status === 'abgelehnt') && reply.length < 3) return res.status(400).json({ error: 'Bitte schreib kurz dazu, was erledigt wurde oder warum abgelehnt.' });
+    const t = await store.ticketStatus(req.params.id, status, u.name, reply || null);
     if (!t) return res.status(404).json({ error: 'Dieses Ticket gibt es nicht.' });
-    if (t.user_id !== u.id) push.toUser(t.user_id, { title: '🎫 Dein Ticket', body: `„${t.title}“ ist jetzt: ${status}`, tag: 'ticket', url: '/' }).catch(() => {});
+    if (t.user_id !== u.id) push.toUser(t.user_id, { title: '🎫 Dein Ticket', body: `„${t.title}“ ist jetzt: ${status}${reply ? ' · ' + reply.slice(0, 80) : ''}`, tag: 'ticket', url: '/' }).catch(() => {});
     res.json({ tickets: await store.tickets(), canManage: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
