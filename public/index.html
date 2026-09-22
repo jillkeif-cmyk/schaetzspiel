@@ -1141,6 +1141,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .nw-rows{margin:10px 0;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}.nw-rows-t{display:block;color:var(--muted);font-weight:800;margin:0 0 8px 4px}.nw-fakebtn{pointer-events:none}
 .ava-wrap{position:relative;display:inline-block;flex:none}.ava-zz{position:absolute;right:-6px;top:-8px;font-size:16px;z-index:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));animation:zzfloat 2.4s ease-in-out infinite}
 @keyframes zzfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.giftcard{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;margin-bottom:10px;background:linear-gradient(135deg,rgba(255,79,163,.28),rgba(255,210,63,.18));box-shadow:inset 0 0 0 2px rgba(255,210,63,.7),0 0 22px rgba(255,160,60,.3);animation:codeglow 2.2s ease-in-out infinite alternate}
+.gift-ic{font-size:36px;animation:zzfloat 1.8s ease-in-out infinite}.giftcard b{display:block}.giftcard small{display:block;font-size:13px;line-height:1.4;color:var(--paper)}.giftcard small b{display:inline;color:var(--tape)}
+.tk-gift{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(255,210,63,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.4)}.tk-gift small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -2256,7 +2259,29 @@ function casinoOpenHtml() {
     ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></div>`).join('')}
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
+// Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
+const PACK_NAME = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster', toon: 'Toon-Welt-Booster' };
+function renderGifts() {
+  const el = $('#giftBox'); if (!el || !home) return;
+  const g = home.me.gifts || [];
+  el.innerHTML = g.map((x) => `<div class="giftcard"><span class="gift-ic">🎁</span><span class="grow"><b>Dankeschön vom Support</b>
+    <small>Aufgrund deiner Support-Meldung „${esc(x.reason || '')}“ erhältst du ${[x.diamonds ? `<b>${fmt(x.diamonds)} 💎</b>` : '', x.pack ? `<b>${x.n}× ${esc(PACK_NAME[x.pack] || x.pack)}</b>` : ''].filter(Boolean).join(' und ')}.</small></span>
+    <button class="btn small" data-gift="${x.id}">Einfordern</button></div>`).join('');
+  el.querySelectorAll('[data-gift]').forEach((b) => { b.onclick = () => { b.disabled = true; api('/api/gifts/' + b.dataset.gift + '/claim', {}).then(async (r) => { showGiftReveal(r); if (tcg) tcg.diamonds = r.total; await loadHome(); }).catch((e) => { b.disabled = false; toast(e.message); }); }; });
+}
+function showGiftReveal(r) {
+  const u = $('#unlock');
+  u.innerHTML = `<div class="rays"></div><div class="in cr">
+    <p class="sub">Dankeschön vom Support</p><h1 class="cr-code" style="font-size:30px">Danke für deine Meldung!</h1>
+    <p class="sub">„${esc(r.reason || '')}“</p>
+    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.pack ? `<div class="cr-grid"><div class="cr-item" style="--d:0"><img src="/tcg/pack_${esc(r.pack)}.webp?v=${AVER}" alt="" style="width:110px"><b>${r.n}× ${esc(r.packName)}</b><small>liegt in deinem Inventar</small></div></div>` : ''}
+    <button class="btn" id="unlockOk" style="min-width:220px">Danke!</button></div>`;
+  u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
+  $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
+}
 function chalBadge() {
+  renderGifts();
   tkBadgeUpdate();
   const cb = document.getElementById('casBadge'); // offene Glücksrad-Drehungen am Casino-Knopf
   if (cb && home) { const n = home.me.wheelLeft || 0; cb.hidden = !n; cb.textContent = n || ''; }
@@ -2392,11 +2417,14 @@ function renderTickets() {
   el.querySelectorAll('[data-tkf]').forEach((b) => { b.onclick = () => { tkFilter = b.dataset.tkf; renderTickets(); }; });
   el.querySelectorAll('[data-tkst]').forEach((b) => { b.onclick = () => {
     const st2 = b.dataset.st, need = st2 === 'abgeschlossen' || st2 === 'abgelehnt';
-    const send = (reply) => api('/api/tickets/' + b.dataset.tkst + '/status', { status: st2, reply }).then((d) => { tkD = d; closeModal(); renderTickets(); toast('Status: ' + st2); }).catch((e) => toast(e.message));
+    const send = (reply) => api('/api/tickets/' + b.dataset.tkst + '/status', { status: st2, reply, reward: $('#tkGD') ? { diamonds: Number($('#tkGD').value) || 0, pack: $('#tkGP').value, n: Number($('#tkGN').value) || 1 } : null }).then((d) => { tkD = d; closeModal(); renderTickets(); toast('Status: ' + st2); }).catch((e) => toast(e.message));
     if (st2 === 'eingereicht') return send('');
     $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>${st2 === 'abgelehnt' ? '🔴 Ticket ablehnen' : st2 === 'abgeschlossen' ? '🟢 Ticket abschließen' : '🟠 In Bearbeitung nehmen'}</h2>
       <p class="sub">${need ? 'Schreib kurz dazu, was erledigt wurde oder warum abgelehnt. Der Ersteller bekommt die Antwort als Nachricht.' : 'Optional: eine kurze Nachricht an den Ersteller.'}</p>
       <textarea class="field" id="tkReply" rows="4" maxlength="1000" placeholder="${st2 === 'abgelehnt' ? 'Warum abgelehnt?' : st2 === 'abgeschlossen' ? 'Was wurde gemacht?' : 'Zum Beispiel: Schaue ich mir heute an'}"></textarea>
+      ${st2 === 'abgeschlossen' && home.me.admin ? `<div class="tk-gift"><b>🎁 Dankeschön (optional)</b><small>Nur der Ersteller sieht es auf seiner Startseite und kann es einfordern.</small>
+        <label class="row" style="gap:8px;margin:0"><span class="grow">💎 Diamanten</span><input class="field" id="tkGD" inputmode="numeric" placeholder="0" style="width:110px;padding:8px"></label>
+        <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="tkGP" style="width:auto;padding:8px"><option value="">keiner</option><option value="standard">Standard</option><option value="premium">Premium</option><option value="ghost">Geister</option><option value="toon">Toon-Welt</option></select><input class="field" id="tkGN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl"></label></div>` : ''}
       <button class="btn" id="tkOk">${st2 === 'abgelehnt' ? 'Ablehnen' : st2 === 'abgeschlossen' ? 'Abschließen' : 'Übernehmen'}</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; setTimeout(() => $('#tkReply').focus(), 50);
     $('#tkOk').onclick = () => { const r = $('#tkReply').value.trim(); if (need && r.length < 3) return toast('Bitte eine kurze Antwort schreiben.'); send(r); };
@@ -2614,6 +2642,7 @@ function connect() {
   });
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); if (!S && page === 'home') update(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
+  socket.on('gift:new', () => { if (!S) loadHome(); });
   socket.on('progress:new', (list) => { for (const n of list || []) toastQ.push(n); showProgressToast(); if (!S) loadHome().then(chalBadge); });
   socket.on('pk:emote', (d) => {
     const tb = document.querySelector('.pk-table'); if (!tb || !pkState) return;
@@ -2757,6 +2786,7 @@ function build() {
   if (!S) return `<div class="col">
     <div class="brand"><img src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1></div>
     <div id="pushbar" hidden></div>
+    <div id="giftBox"></div>
     <div id="newsCard"></div>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>

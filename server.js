@@ -138,7 +138,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -674,6 +674,18 @@ app.get('/api/tcg/history', async (req, res) => {
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// ---------- Geschenke (Dankeschön für Support-Meldungen) ----------
+app.post('/api/gifts/:id/claim', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const g = await store.giftClaim(req.params.id, u.id); if (!g) return res.status(400).json({ error: 'Dieses Geschenk gibt es nicht mehr.' });
+    let dia = Number(u.diamonds) || 0;
+    if (g.diamonds) { dia += Number(g.diamonds); await store.save(u.id, { diamonds: dia }); }
+    if (g.pack && g.n) await store.packAdd(u.id, g.pack, Number(g.n));
+    res.json({ ok: true, diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, total: dia });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+
 // ---------- Support-Tickets ----------
 const TICKET_CATS = ['Fehler', 'Account', 'Wunsch'], TICKET_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
 app.get('/api/tickets', async (req, res) => {
@@ -712,7 +724,17 @@ app.post('/api/tickets/:id/status', async (req, res) => {
     if ((status === 'abgeschlossen' || status === 'abgelehnt') && reply.length < 3) return res.status(400).json({ error: 'Bitte schreib kurz dazu, was erledigt wurde oder warum abgelehnt.' });
     const t = await store.ticketStatus(req.params.id, status, u.name, reply || null);
     if (!t) return res.status(404).json({ error: 'Dieses Ticket gibt es nicht.' });
-    if (t.user_id !== u.id) push.toUser(t.user_id, { title: '🎫 Dein Ticket', body: `„${t.title}“ ist jetzt: ${status}${reply ? ' · ' + reply.slice(0, 80) : ''}`, tag: 'ticket', url: '/' }).catch(() => {});
+    // Dankeschön als Geschenk: nur der Admin, nur beim Abschließen
+    const rw = req.body.reward || {};
+    const gDia = Math.max(0, Math.min(100000, Math.round(Number(rw.diamonds) || 0)));
+    const gPack = tcg.PACKS[rw.pack] ? rw.pack : null, gN = gPack ? Math.max(1, Math.min(10, Math.round(Number(rw.n) || 1))) : 0;
+    let gift = null;
+    if (status === 'abgeschlossen' && isAdmin(u) && t.user_id !== u.id && (gDia || gPack)) gift = await store.giftAdd({ user_id: t.user_id, diamonds: gDia, pack: gPack, n: gN, reason: t.title });
+    if (t.user_id !== u.id) {
+      const thanks = status === 'abgeschlossen' ? `Dein Ticket „${t.title}“ wurde abgeschlossen. Vielen Dank für deine Meldung!${gift ? ' 🎁 Als Dankeschön wartet ein Geschenk auf dich.' : ''}` : `„${t.title}“ ist jetzt: ${status}${reply ? ' · ' + reply.slice(0, 80) : ''}`;
+      push.toUser(t.user_id, { title: status === 'abgeschlossen' ? '🎫 Danke für deine Meldung!' : '🎫 Dein Ticket', body: thanks, tag: 'ticket', url: '/' }).catch(() => {});
+      io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === t.user_id) so.emit('gift:new'); });
+    }
     res.json({ tickets: await store.tickets(), canManage: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
