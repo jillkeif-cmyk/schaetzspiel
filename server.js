@@ -95,14 +95,14 @@ app.post('/api/login', async (req, res) => {
 const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
-  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
+  const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'slot_full', 'slot_best', 'slot_spins', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
   const items = [...cards.EMBLEMS.map((i) => ['e', i]), ...cards.TITLES.map((i) => ['t', i]), ...frames.FRAMES.map((i) => ['f', i])].filter(([, i]) => i.cond && !i.secret && !i.dev && !i.event);
   const out = {};
   for (const c of progress.challengeView({})) out[c.key] = items.filter(([, i]) => { try { return !i.cond(base) && i.cond({ ...base, [c.key]: 1e12 }); } catch (e) { return false; } }).map(([k, i]) => k + ':' + i.id);
   return out;
 })();
 // Zu jedem Titel, Emblem und Rahmen: welche Kennzahl, welcher Zielwert? Per Suche aus der Bedingung ermittelt
-const GOAL_KEYS = ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes'];
+const GOAL_KEYS = ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'collect_unique', 'slot_full', 'slot_best', 'slot_spins', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes'];
 const ITEM_GOALS = (() => {
   const base = Object.fromEntries(GOAL_KEYS.map((k) => [k, 0]));
   const items = [...cards.EMBLEMS, ...cards.TITLES, ...frames.FRAMES].filter((i) => i.cond && !i.secret && !i.dev && !i.event);
@@ -467,6 +467,13 @@ async function checkProgress(uid) {
   } catch (e) { console.error('Erfolge:', e.message); }
 }
 
+const BIGWIN_MIN = 50000; // ab so vielen Diamanten Gewinn sehen es alle, die online sind
+const bigWin = async (uid, game, won) => {
+  if (won < BIGWIN_MIN) return;
+  const u = await store.userById(uid).catch(() => null); if (!u) return;
+  io.emit('bigwin', { id: uid, name: u.name, game, amount: Math.round(won) });
+  console.log(`Großer Gewinn: ${u.name} ${won} bei ${game}`);
+};
 const casinoStat = async (uid, stake, won, risk = stake) => {
   const u = await store.userById(uid); if (!u) return;
   const net = won - stake;
@@ -497,7 +504,10 @@ const tripleOpen = new Map(); // offener Gewinn auf der Risikoleiter je Spieler
 async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde für Casino-XP verbuchen
   let dia = null;
   if (extraPay > 0) dia = await payOut(uid, extraPay);
-  await casinoStat(uid, st.bet, st.paid + (extraPay || 0));
+  await casinoStat(uid, st.bet, st.paid + (extraPay || 0)); await bigWin(uid, 'Triple Crown', st.paid + (extraPay || 0));
+  const won = st.paid + (extraPay || 0);
+  const u0 = await store.userById(uid).catch(() => null);
+  if (u0 && won > (Number(u0.slot_best) || 0)) await store.save(uid, { slot_best: Math.round(won) }); // bester Einzelgewinn
   tripleOpen.delete(uid);
   return dia;
 }
@@ -511,6 +521,8 @@ app.post('/api/casino/triple', async (req, res) => {
     const u2 = await store.userById(u.id);
     const t = await takeBet(u2, bet); if (t.error) return res.status(400).json({ error: t.error });
     const r = triple.play(bet);
+    const fulls = r.spins.filter((x) => x.full).length;
+    await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
     let risk = null;
     if (r.total > 0) { const L = triple.ladder(r.total); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
     else await casinoStat(u.id, bet, 0);
@@ -530,15 +542,14 @@ app.post('/api/casino/triple/risk', async (req, res) => {
       const L = triple.ladder(st.win); st.steps = L.steps; st.pos = L.pos;
       return res.json({ done: false, banked: half, diamonds: d, ...tripleView(st) });
     }
-    if (a === 'ladder') { // Es blinken eine höhere und eine tiefere Stufe; die Ausspielung beendet das Risiko
+    if (a === 'ladder') { // Zeiger springt zwischen der Stufe darüber und dem Feld darunter
       const top = st.steps.length - 1; if (st.pos >= top) return res.status(400).json({ error: 'Ganz oben angekommen.' });
-      const li = triple.lowIndex(st.pos), low = st.steps[li].v, high = st.steps[st.pos + 1].v;
-      const up = triple.riskWins(triple.chance(low, st.win, high));
-      st.pos = up ? st.pos + 1 : li; st.win = st.steps[st.pos].v;
-      if (st.steps[st.pos].aus) return endWith(st.win, { up, ausspielung: true, pos: st.pos, steps: st.steps, low: li });
-      if (st.pos === 0) return endWith(0, { up: false, lost: true, pos: 0, steps: st.steps, low: li });
-      if (st.pos === top) return endWith(st.win, { up: true, top: true, pos: st.pos, steps: st.steps, low: li });
-      return res.json({ done: false, up, low: li, ...tripleView(st) });
+      const lowStep = st.steps[st.pos - 1] || { v: 0, aus: true }, high = st.steps[st.pos + 1].v;
+      const up = triple.riskWins(triple.chance(lowStep.v, st.win, high));
+      st.pos = up ? st.pos + 1 : st.pos - 1; st.win = st.steps[st.pos].v;
+      if (st.steps[st.pos].aus) return endWith(0, { up: false, ausspielung: true, pos: st.pos, steps: st.steps });
+      if (st.pos === top) return endWith(st.win, { up: true, top: true, pos: st.pos, steps: st.steps });
+      return res.json({ done: false, up, ...tripleView(st) });
     }
     if (a === 'card') { // Rot oder Schwarz: richtig verdoppelt (höchstens bis zur Risiko-Spitze), falsch ist alles weg
       const pick = req.body.color === 'black' ? 'black' : 'red', c = triple.drawCard(), right = (triple.cardRed(c) ? 'red' : 'black') === pick;
@@ -565,7 +576,7 @@ app.post('/api/casino/roulette', async (req, res) => {
     const r = casino.spin(kind, number);
     const won = Math.round(amount * r.pay);
     const after = won ? await payOut(u.id, won) : t.left;
-    await casinoStat(u.id, amount, won);
+    await casinoStat(u.id, amount, won); await bigWin(u.id, 'Roulette', won);
     res.json({ ...r, amount, won, diamonds: after });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -587,7 +598,7 @@ app.post('/api/casino/board', async (req, res) => {
     await store.save(u.id, { diamonds: after });
     const pays = Array.from({ length: 37 }, (_, n) => bets.reduce((x, b) => x + (b.numbers.includes(n) ? Math.round(b.amount * 36 / b.numbers.length) : 0), 0)).sort((a, b) => a - b);
     const risk = Math.max(0, r.stake - pays[18]); // Median der 37 möglichen Ergebnisse
-    await casinoStat(u.id, r.stake, r.won, risk);
+    await casinoStat(u.id, r.stake, r.won, risk); await bigWin(u.id, 'Roulette', r.won);
     const h = [r.n, ...(rHistory.get(u.id) || [])].slice(0, 14); rHistory.set(u.id, h);
     res.json({ ...r, diamonds: after, history: h });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -600,7 +611,7 @@ const bjSend = async (res, uid, g, left) => {
   if (g.over) {
     bjGames.delete(uid);
     const after = g.payout ? await payOut(uid, g.payout) : Number((await store.userById(uid)).diamonds) || 0;
-    await casinoStat(uid, g.staked, g.payout);
+    await casinoStat(uid, g.staked, g.payout); await bigWin(uid, 'Blackjack', g.payout);
     return res.json({ ...v, won: g.payout, diamonds: after });
   }
   res.json({ ...v, diamonds: left != null ? left : Number((await store.userById(uid)).diamonds) || 0 });
@@ -1351,7 +1362,7 @@ const bjTables = require('./lib/bjtables')(io, store, casinoStat, push);
 // Poker: vorerst nur für das Entwicklerteam, bis 'poker_open' gesetzt ist
 // Poker zählt als Casino, gibt aber 25 % mehr XP, weil gegen echte Spieler gespielt wird
 const pokerStat = async (uid, stake, won, info = {}) => {
-  await casinoStat(uid, stake, won);
+  await casinoStat(uid, stake, won); await bigWin(uid, 'Poker', won);
   const u = await store.userById(uid); if (!u) return;
   const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1);
   const net = won - stake;

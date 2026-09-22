@@ -1317,6 +1317,16 @@ body.no-grading .grading-only{display:none !important}
 .tc-ls.cur::before{content:"✦";position:absolute;right:10px;color:#fff;animation:tcspark 1s ease-in-out infinite}.tc-ls.cur::before{left:10px;right:auto}
 @keyframes tcspark{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1.2)}}
 .guide-btn{align-self:flex-start;margin:0 0 8px;background:rgba(90,169,255,.16) !important;color:#BFE0FF !important}
+.bigwin{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;align-items:center;gap:2px;max-width:94vw;padding:9px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,210,63,.96),rgba(224,162,30,.96));color:#2A1600;font:800 13px/1.3 Archivo;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:bwin .45s cubic-bezier(.2,1.4,.4,1)}
+.bigwin b{font-weight:900}.bigwin.out{animation:bwout .5s forwards}
+@keyframes bwin{from{transform:translate(-50%,-70px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes bwout{to{transform:translate(-50%,-70px);opacity:0}}
+.th-obsidian .sw,.bjfelt.th-obsidian,.rboard.th-obsidian{--f1:#2B2540;--f2:#191428;--f3:#0B0814;--rim:#120C1E;--edge:#A472FF}
+.th-purpur .sw,.bjfelt.th-purpur,.rboard.th-purpur{--f1:#6A1E8C;--f2:#3F1055;--f3:#230730;--rim:#2A0C38;--edge:#FFB84A}
+.th-geist .sw,.bjfelt.th-geist,.rboard.th-geist{--f1:#432F6E;--f2:#261A45;--f3:#120C24;--rim:#1B1233;--edge:#C9A8FF}
+.th-schatten .sw,.bjfelt.th-schatten,.rboard.th-schatten{--f1:#33234F;--f2:#1C1230;--f3:#0A0616;--rim:#0E0820;--edge:#E0C27A}
+.th-toten .sw,.bjfelt.th-toten,.rboard.th-toten{--f1:#4A2E7A;--f2:#26123F;--f3:#0D0518;--rim:#1A0C2B;--edge:#FFD23F}
+.th-toten.bjfelt::before,.th-schatten.bjfelt::before{color:rgba(255,210,63,.55)}
 </style>
 </head>
 <body>
@@ -1336,7 +1346,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '30';
+const AVER = '31';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1753,7 +1763,7 @@ function renderRewards(box) {
   box.querySelectorAll('[data-chal]').forEach((b) => { b.onclick = () => showChallenge(b.dataset.chal); });
 }
 
-const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(5, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(5, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
+const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(10, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(10, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
 function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
 function renderVipHead() {
   const h = $('#vipHead'); if (!h || !vipD) return;
@@ -1969,6 +1979,7 @@ function renderPoker(box) {
 
 function renderCasino() {
   const box = $('#cgame'); if (!box) return;
+  const keepY = window.scrollY; requestAnimationFrame(() => { if (Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY); }); // Bildschirm bleibt stehen
   const gb = document.getElementById('guideBtn'); if (gb) { gb.hidden = !GUIDES[cgame]; gb.dataset.guide = cgame; gb.textContent = GUIDES[cgame] ? `ⓘ So spielst du ${GUIDES[cgame][0].replace(/^\S+\s/, '')}` : ''; }
   app.classList.toggle('pk-on', cgame === 'poker' && !!pkState && pkState.me >= 0); // Tischmodus: alles passt auf den Bildschirm
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
@@ -2244,19 +2255,7 @@ function renderCards() {
     };
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
-      <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
-        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
-      <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
-      <div id="cgame"></div>
-      `;
-    renderCasino();
-  } else {
-    if (!trades) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    const one = (t2, mine) => `<div class="pl" style="--c:var(--line)"><span class="nm"><b>${esc(t2.fromName)}</b><br><span class="lv">gibt ${esc(cardDef(t2.give.card).name)} (${esc(varName(t2.give.variant))}) · will ${esc(cardDef(t2.want.card).name)} (${esc(varName(t2.want.variant))})</span></span>
-      ${mine ? '<span class="sub">offen</span>' : `<button class="mini go" data-tacc="${t2.id}">Annehmen</button><button class="mini" data-tdec="${t2.id}">Nein</button>`}</div>`;
+    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad & VIP 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="triple" class="${cgame === 'triple' ? 'on' : ''} tc-tab">👑 Triple Crown</button><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>`;
     box.innerHTML = `<h2 style="margin-bottom:8px">Angebote an dich</h2><div class="plist">${trades.incoming.length ? trades.incoming.map((t2) => one(t2, false)).join('') : '<p class="sub">Keine offenen Angebote.</p>'}</div>
       <h2 style="margin:16px 0 8px">Deine Angebote</h2><div class="plist">${trades.outgoing.length ? trades.outgoing.map((t2) => one(t2, true)).join('') : '<p class="sub">Du hast nichts angeboten.</p>'}</div>
       <button class="btn ghost" id="newTrade" style="margin-top:12px">Tausch anbieten</button>`;
@@ -2313,7 +2312,7 @@ const GUIDES = {
     ['Bedienung', 'Einsatz wählt den Betrag, START dreht die Walzen. Auto dreht von selbst weiter und nimmt Gewinne sofort mit, nochmal Auto stoppt. Turbo macht alles schneller.'],
     ['Gewinne', 'Krone 150-fach, Sieben 40-fach, Hufeisen 12-fach, Blitz, Herz, Stern und Mond je 8-fach. Chip gibt den Einsatz zurück plus einen Gratis-Dreh. Die genauen Beträge zu deinem Einsatz stehen unter „Gewinne“.'],
     ['Vollbild und Rewin-Rad', 'Zeigen alle 9 Felder Blitz, Herz, Stern oder Mond, gewinnen alle 5 Linien. Dann startet das Rad mit 12 Feldern, in Runde 1 mit nur einem Stop. Landet das Licht auf Rewin, wird das Vollbild nochmal gezählt, und es kommt ein Stop-Feld dazu. START beschleunigt das Licht, nochmal START bremst es ab. Wo es landet, ist Zufall, im Schnitt gibt es knapp drei Rewins.'],
-    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Es blinken abwechselnd eine höhere und eine tiefere Stufe, START hält an. Unten geht es nur eine Stufe zurück, weiter oben fällt man tiefer. Mitten in der Leiter sitzt die Ausspielung: Wer dort landet, bekommt den Betrag ausgezahlt und das Risiko ist vorbei. Ganz unten auf der 0 ist der Gewinn weg. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
+    ['Risiko nach einem Gewinn', 'START nimmt den Gewinn mit. Risiko Leiter: Es blinken abwechselnd die Stufe darüber und das Feld darunter, START hält an. Unter deiner Stufe steht die Ausspielung: Landet der Zeiger dort, ist der ganze Gewinn weg. Du musst das Risiko aber nie annehmen, Nehmen geht immer. Risiko Karte: Tippe Rot oder Schwarz, richtig verdoppelt, falsch ist alles weg. Teilen legt die Hälfte sicher zur Seite, mit dem Rest geht es weiter.'],
     ['Fair', 'Alles wird auf dem Server ausgelost. Die Auszahlungsquote liegt bei rund 96 %, die Chancen beim Riskieren sind genau fair.']]],
   roulette: ['🎡 Roulette', [
     ['Ziel', 'Die Kugel landet auf einer Zahl von 0 bis 36. Du setzt vorher darauf, wo sie landet.'],
@@ -2507,14 +2506,14 @@ function tcRunLight(targetSeg) { // Licht läuft um, beschleunigt, bremst ab und
   });
 }
 // Risikoleiter: senkrechte Stufen, ganz oben Ausspielung. Risiko: das Licht taktet zwischen oben und unten, START hält an.
-const tcLow = (pos) => Math.max(0, pos - (1 + Math.floor(pos / 3))); // wie tief es zurückgeht
+const tcLow = (pos) => Math.max(0, pos - 1); // eine Stufe zurück, unten die Ausspielung
 function tcLadderOpen() {
   tc.mode = 'ladder'; tcSync();
   const draw = () => {
     const R = tc.risk, top = R.steps.length - 1;
     // Goldene Leiter in der Mitte: jede Stufe breiter als die darunter, ganz oben die Ausspielung
     // Goldene Leiter: unten 0, mittendrin die AUSSPIELUNG (dort wird ausgezahlt und das Risiko endet)
-    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? `<small>AUSSPIELUNG</small><b>${fmt(st.v)}</b>` : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div>
+    $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? `<b>AUSSPIELUNG</b>` : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div>
       <div class="tc-lbtns"><button class="btn tc-riskbtn" id="tcLRisk" ${R.pos >= top ? 'disabled' : ''}>Risiko<small>${R.pos < top ? Math.round(100 * (R.win - R.steps[tcLow(R.pos)].v) / (R.steps[R.pos + 1].v - R.steps[tcLow(R.pos)].v)) + ' % hoch' : ''}</small></button><button class="btn ghost" id="tcLSplit">Teilen<small>${fmt(Math.floor(R.win / 2))} sicher</small></button><button class="btn ghost" id="tcLCard">Karte</button><button class="btn" id="tcLTake">Nehmen</button></div></div>`;
     $('#tcLRisk').onclick = ladderRisk; $('#tcLTake').onclick = async () => { await tcTakeQuiet(); tcSetMsg(`💰 ${fmt(tc.lastWin)} gutgeschrieben`); };
     $('#tcLSplit').onclick = () => tcSplit(draw); $('#tcLCard').onclick = tcCardOpen;
@@ -2528,9 +2527,9 @@ function tcLadderOpen() {
       const r = await api('/api/casino/triple/risk', { action: 'ladder' }).catch((e) => { toast(e.message); return null; }); if (!r) return;
       if (r.done) { tc.risk = null; tc.mode = 'play'; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
         const cell = $('#tcLs' + r.pos); if (cell) cell.classList.add('cur');
-        if (r.ausspielung) { tcSetMsg(`🔔 AUSSPIELUNG · ${fmt(r.paid)} Diamanten, das Risiko ist vorbei`); sfx('prestige'); }
+        if (r.ausspielung) { tcSetMsg('🔔 AUSSPIELUNG · der ganze Gewinn ist weg'); sfx('wrong'); }
         else if (r.top) { tcSetMsg(`🏆 GANZ OBEN! ${fmt(r.paid)} Diamanten`); sfx('prestige'); }
-        else { tcSetMsg('💥 Ganz nach unten · der Gewinn ist weg'); sfx('wrong'); }
+        else { tcSetMsg('💥 Verloren'); sfx('wrong'); }
         setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1800); tcSync(); return; }
       tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos }; sfx(r.up ? 'exact' : 'wrong'); tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); tcSync(); draw();
     };
@@ -2935,7 +2934,7 @@ function showProgressToast() {
   setTimeout(() => { e.remove(); toastBusy = false; showProgressToast(); }, 3000);
 }
 const xpL = (c) => (c && c.group === 'casino' ? 'Casino-XP' : 'XP'); // Casino-Herausforderungen zahlen auf die Casino-XP
-const CHAL_IMG = { collect_unique: 'pc_EK1', casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
+const CHAL_IMG = { slot_full: 'pc_ES1', slot_best: 'pc_ES2', collect_unique: 'pc_EK1', casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
 const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
 // Alle freischaltbaren Stücke mit Bedingung und Fortschritt, die fast geschafften zuerst
 let chTab = 'chal', itKind = 'all';
@@ -3297,6 +3296,13 @@ function connect() {
   socket.on('bj:list', (l) => { bjList = l || []; if (page === 'casino' && cgame === 'tables') renderCasino(); if (!S && page === 'home') update(); });
   socket.on('pk:state', (t) => { pkState = t; if (page === 'casino' && cgame === 'poker') renderCasino(); });
   socket.on('gift:new', () => { if (!S) loadHome(); });
+  socket.on('bigwin', (b) => { // großer Casino-Gewinn von jemandem, der gerade online ist
+    if (!b || b.id === (home && home.me.id)) return;
+    const el = document.createElement('div'); el.className = 'bigwin';
+    el.innerHTML = `<b>💰 ${esc(b.name)}</b><span>hat gerade <b>${fmt(b.amount)} 💎</b> bei ${esc(b.game)} gewonnen</span>`;
+    document.body.appendChild(el); sfx('sent');
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 600); }, 5200);
+  });
   socket.on('xp:paid', (r) => { toast([r.xp ? `✨ +${fmt(r.xp)} XP` : '', r.casino ? `🎰 +${fmt(r.casino)} Casino-XP` : ''].filter(Boolean).join(' und ') + ' für Herausforderungen'); if (!S) loadHome(); if (vipD) vipD = null; }); // XP aus Casino-, Poker- und Karten-Herausforderungen
   socket.on('progress:new', (list) => { for (const n of list || []) toastQ.push(n); showProgressToast(); if (!S) loadHome().then(chalBadge); });
   socket.on('pk:emote', (d) => {
