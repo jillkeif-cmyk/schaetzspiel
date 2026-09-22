@@ -1210,6 +1210,9 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .slabgrid.four{grid-template-columns:repeat(2,1fr)}
 .vpg{position:relative;border-radius:14px}.vpg.on{box-shadow:0 0 0 3px var(--tape)}.vpg .slab{pointer-events:none}
 body.no-grading .grading-only{display:none !important}
+.chipbtn.step{flex:none;min-width:64px;font-weight:900}
+.betrow{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.betin{display:flex;gap:8px;align-items:stretch}.betin input{text-align:center;font-weight:800}
+.betchips{display:flex;gap:6px;flex-wrap:wrap}.betchips .chipbtn{flex:1 1 0;min-width:0}
 </style>
 </head>
 <body>
@@ -2138,8 +2141,8 @@ function renderCards() {
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px"><button data-cg="roulette" class="${cgame === 'roulette' ? 'on' : ''}">Roulette</button><button data-cg="bj" class="${cgame === 'bj' ? 'on' : ''}">Blackjack</button><button data-cg="tables" class="${cgame === 'tables' ? 'on' : ''}">Blackjack-Tische 👥</button>${home && home.me && home.me.pokerOk ? `<button data-cg="poker" class="${cgame === 'poker' ? 'on' : ''}">Poker ♠️</button>` : ''}<button data-cg="rewards" class="${cgame === 'rewards' ? 'on' : ''}">Belohnungen 🏆</button><button data-cg="vip" class="${cgame === 'vip' ? 'on' : ''}">Glücksrad 🎡${(vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : ''}</button><button data-cg="crank" class="${cgame === 'crank' ? 'on' : ''}">Rangliste 📊</button></div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="row" style="gap:8px;margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz">
-        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -2953,13 +2956,13 @@ function reportPresence() {
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
 }
-let builtKey = '';
+let builtKey = '', pageFilled = '';
 function render() {
   setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   const keepY = window.scrollY, samePage = key === builtKey; // war vorher dieselbe Seite zu sehen?
   if (key !== viewKey) {
-    const same = samePage; viewKey = key; builtKey = key;
+    const same = samePage; viewKey = key; builtKey = key; pageFilled = ''; // neu aufgebaute Seite muss wieder gefüllt werden
     app.className = 'v-' + (!token ? 'auth' : !S ? page : S.phase); app.innerHTML = build(); bind();
     window.scrollTo(0, same ? keepY : 0); // gleiche Seite neu gezeichnet: Position bleiben
   }
@@ -3388,12 +3391,21 @@ function update() {
     tray.classList.toggle('dim', near);
   } else tray.classList.remove('dim');
   if (!token) return;
-  if (!S && page === 'support') { loadTickets(); return; }
-  if (!S && page === 'admin') { loadAdmin(); return; }
-  if (!S && page === 'challenges') { renderChallenges(); return; }
-  if (!S && page === 'news') { renderNews(); return; }
-  if (!S && page === 'ranks') { renderRanks(); return; }
-  if (!S && (page === 'cards' || page === 'casino')) { renderCards(); return; }
+  // Diese Seiten werden beim Öffnen einmal gefüllt und danach nur bei echten Änderungen neu gezeichnet.
+  // Früher geschah das bei jeder Server-Nachricht (jemand kommt online, eine Lobby geht auf ...),
+  // dadurch sprang die Seite und Eingaben wie ein eigener Blackjack-Einsatz wurden zurückgesetzt.
+  if (!S && ['support', 'admin', 'challenges', 'news', 'ranks', 'cards', 'casino'].includes(page)) {
+    const pk = page + '|' + viewKey, ready = page === 'cards' || page === 'casino' ? !!tcg : !!home;
+    if (pageFilled === pk) return;
+    if (ready) pageFilled = pk;
+    if (page === 'support') loadTickets();
+    else if (page === 'admin') loadAdmin();
+    else if (page === 'challenges') renderChallenges();
+    else if (page === 'news') renderNews();
+    else if (page === 'ranks') renderRanks();
+    else renderCards();
+    return;
+  }
   if (!S && page === 'profile') {
     if ($('#mute')) { $('#mute').textContent = muted ? 'Ton ist aus' : 'Ton ist an'; if (document.activeElement !== $('#volume')) $('#volume').value = Math.round(vol * 100); $('#volume').disabled = muted; }
     if ($('#cardBox') && home && home.cards) {
@@ -3653,6 +3665,7 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('submit', (e) => { if (e.target.id !== 'adminForm') return; e.preventDefault(); api('/api/admin/reset', { name: $('#adName').value, password: $('#adPass').value }).then((r) => { toast('Neues Passwort für ' + r.name + ' gesetzt'); e.target.reset(); }).catch((er) => toast(er.message)); });
 document.addEventListener('input', (e) => {
   if (e.target.id !== 'cbAmount') return;
+  const nv = Math.round(Number(e.target.value) || 0); if (nv > 0) cbet = Math.min(MAX_CBET, nv); // eigener Betrag bleibt gespeichert
   cbetPick = String(Number(e.target.value) || '');
   document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x.dataset.cbet === cbetPick));
 });
@@ -3790,6 +3803,11 @@ document.addEventListener('click', (e) => {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
   else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
+  else if (t.dataset.cbstep) { // Einsatz in 100er-Schritten ändern, ohne zu tippen
+    cbet = Math.max(50, Math.min(MAX_CBET, Math.round((Number(($('#cbAmount') || {}).value) || cbet) + Number(t.dataset.cbstep))));
+    cbetPick = String(cbet); const el = $('#cbAmount'); if (el) el.value = cbet;
+    document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x.dataset.cbet === cbetPick));
+  }
   else if (t.dataset.cbet) { cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
