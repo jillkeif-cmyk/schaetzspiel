@@ -13,7 +13,7 @@ def R(s, w=600, wd=95):
     except Exception: pass
     return f
 PAPER = (246, 238, 222); GOLD = (255, 200, 90); ORANGE = (255, 140, 40)
-LABEL = {'haeufig': 'HÄUFIG', 'selten': 'SELTEN', 'holo': 'HOLO', 'ultra': 'ULTRA RARE', 'legend': 'LEGENDÄR', 'ext': 'EXTENDED ART', 'ghost': 'GHOST RARE'}
+LABEL = {'haeufig': 'HÄUFIG', 'selten': 'SELTEN', 'holo': 'HOLO', 'ultra': 'ULTRA RARE', 'legend': 'LEGENDÄR', 'ext': 'EXTENDED ART', 'ghost': 'GHOST RARE', 'mythic': 'MYTHISCH'}
 
 _cache = {}
 def load_frame(path):
@@ -56,7 +56,7 @@ def prism(size, strength=1.0, shift=0.0):
 def frame_layer(F, rar, opacity=1.0, shift=0.0):
     col = F['img'].copy()
     if rar == 'haeufig': col = ImageEnhance.Color(col).enhance(.55)
-    if rar in ('ultra', 'legend', 'ghost', 'ext'): col = ImageChops.screen(col, prism((F['W'], F['H']), .5 if rar != 'ghost' else .4, shift + .2))
+    if rar in ('ultra', 'legend', 'ghost', 'ext', 'mythic'): col = ImageChops.screen(col, prism((F['W'], F['H']), .5 if rar != 'ghost' else .4, shift + .2))
     if rar == 'ghost': col = ImageEnhance.Brightness(ImageEnhance.Color(col).enhance(.3)).enhance(1.35)
     lay = col.convert('RGBA'); al = F['alpha']
     if opacity < 1: al = al.point(lambda v: int(v * opacity))
@@ -99,8 +99,8 @@ def build(frame, art, out=None, *, name, theme, rar, lvl, atk, dfs, effect, trib
         card = Image.alpha_composite(card, frame_layer(F, rar, 1, shift))
     d = ImageDraw.Draw(card)
     nx0, ny0, nx1, ny1 = NAME; nh = ny1 - ny0
-    lab = LABEL['ext' if extended else rar]; lf = R(max(14, int(nh * .38)), 900, 80); lw = d.textlength(lab, font=lf)
-    plate = GOLD if rar in ('legend', 'ultra') or extended else (226, 238, 246) if rar == 'ghost' else (120, 70, 150)
+    lab = LABEL['ext' if extended and rar != 'mythic' else rar]; lf = R(max(14, int(nh * .38)), 900, 80); lw = d.textlength(lab, font=lf)
+    plate = GOLD if rar in ('legend', 'ultra', 'mythic') or extended else (226, 238, 246) if rar == 'ghost' else (120, 70, 150)
     d.rounded_rectangle([nx1 - lw - 30, ny0 + nh * .18, nx1 - 8, ny1 - nh * .18], radius=8, fill=plate)
     d.text((nx1 - lw - 19, ny0 + nh * .5), lab, font=lf, fill=(20, 8, 24) if plate != (120, 70, 150) else (250, 236, 255), anchor='lm')
     f = A(int(nh * .72))

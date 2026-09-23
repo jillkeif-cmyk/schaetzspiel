@@ -619,12 +619,17 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #cardview .tilt{position:relative;width:min(78vw,340px);transform-style:preserve-3d;border-radius:16px;touch-action:none;cursor:grab;will-change:transform}
 #cardview .tilt.grab{cursor:grabbing}
 #cardview .tilt img{width:100%;height:auto;display:block;border-radius:16px;box-shadow:0 26px 50px rgba(0,0,0,.65)}
-#cardview .sheen{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:screen;opacity:.85;
-  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,rgba(140,220,255,.5) 50%,rgba(255,160,230,.4) 55%,transparent 70%);
-  background-size:260% 260%;background-position:var(--sx,50%) var(--sy,50%)}
-#cardview .rain{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:color-dodge;opacity:.45;
-  background:repeating-linear-gradient(115deg,rgba(255,0,120,.22) 0 8px,rgba(0,220,255,.22) 8px 16px,rgba(255,220,0,.2) 16px 24px);
-  background-size:220% 220%;background-position:var(--sx,50%) var(--sy,50%)}
+#cardview .sheen{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:soft-light;opacity:.75;
+  background:radial-gradient(circle at var(--sx,50%) var(--sy,50%),rgba(255,255,255,.75) 0%,rgba(255,255,255,.18) 22%,transparent 48%)}
+/* Holo-Folie: weicher Regenbogen, der beim Kippen wandert, plus feiner Glitzer nur dort, wo das Licht hinfällt */
+#cardview .rain{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:color-dodge;opacity:.3;
+  background:linear-gradient(125deg,rgba(255,0,132,.55) 0%,rgba(252,164,0,.5) 14%,rgba(255,255,0,.4) 28%,rgba(0,255,138,.45) 42%,rgba(0,207,255,.55) 57%,rgba(204,76,250,.55) 72%,rgba(255,0,132,.55) 86%,rgba(252,164,0,.5) 100%);
+  background-size:320% 320%;background-position:var(--sx,50%) var(--sy,50%);filter:saturate(1.15) blur(.3px)}
+#cardview .rain::after{content:'';position:absolute;inset:0;border-radius:16px;mix-blend-mode:screen;opacity:.9;
+  background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 .9px,transparent 1.6px),radial-gradient(circle,rgba(255,240,200,.8) 0 .7px,transparent 1.3px),radial-gradient(circle,rgba(200,240,255,.85) 0 .8px,transparent 1.4px);
+  background-size:9px 11px,13px 7px,17px 19px;background-position:0 0,4px 6px,9px 3px;
+  -webkit-mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 25%,transparent 55%);mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 25%,transparent 55%)}
+#cardview .tilt.v-holo .rain{opacity:.38}#cardview .tilt.v-ultra .rain,#cardview .tilt.v-legend .rain{opacity:.32}#cardview .tilt.v-ext .rain,#cardview .tilt.v-mythic .rain{opacity:.26}
 #cardview .meta{max-width:min(90vw,420px);text-align:center;color:var(--muted);font-size:14.5px}
 #cardview .meta b{display:block;color:var(--paper);font:800 20px/1.2 Archivo;font-stretch:82%;margin-bottom:4px}
 #cardview .miss2{margin-top:6px;color:#FFB3AC;font-weight:700}
@@ -3296,7 +3301,7 @@ function passGot(r, title) { // Belohnungs-Einblendung
   u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
 async function passAct(path, body, title) { const r = await api(path, body).catch((e) => { toast(e.message); return null; }); if (r) passGot(r, title); return r; }
-const DUPE_MELT = { legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 2500 };
+const DUPE_MELT = { legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 1500 };
 function dupeSellDialog() { // Doppelte ab Legendär auf die Börse, eine Karte bleibt immer
   if (!tcg || !tcg.def) return toast('Karten laden noch …');
   const owned = (id, v) => { const x = (tcg.cards || []).find((c) => c.card_id === id && c.variant === v); return x ? Number(x.count) || 0 : 0; };
@@ -3833,7 +3838,7 @@ function showCard(key) {
   const c = cardDef(cid); if (!c) return;
   const n = owned(cid, v);
   const el = $('#cardview');
-  el.innerHTML = `<div class="stage"><div class="tilt" id="tiltc"><img loading="lazy" src="${cardImg(cid, v)}" alt="">
+  el.innerHTML = `<div class="stage"><div class="tilt v-${esc(v)}" id="tiltc"><img loading="lazy" src="${cardImg(cid, v)}" alt="">
       ${['holo', 'ultra', 'ext', 'legend', 'mythic'].includes(v) ? '<span class="sheen"></span><span class="rain"></span>' : ''}${v === 'mythic' ? '<span class="myth-aura"></span>' : ''}</div>
     <div class="meta"><b>${esc(c.name)}</b>${esc(varName(v))} · ${esc(c.theme)} · ${c.lvl} Sterne · ATK ${fmt(c.atk)} / DEF ${fmt(c.def)}
       <br>${esc(c.effect)}${n ? `<br><span style="color:var(--ok);font-weight:700">Du hast sie ${n}×</span>` : '<div class="miss2">Fehlt dir noch</div>'}</div>
