@@ -1550,7 +1550,7 @@ body.halloween .sr-beam{background:linear-gradient(180deg,rgba(255,190,110,.28),
 body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .sr-btns{display:flex;gap:10px;margin-top:18px;z-index:2}.sr-close{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom))}
 .sr-studio.star .sr-cap small{color:#FFD23F}
-.sr-rays{position:absolute;left:50%;top:40%;width:170vmax;height:170vmax;margin:-85vmax;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.2) 0 6deg,transparent 6deg 16deg);animation:srrays 16s linear infinite;pointer-events:none;opacity:0;transition:opacity .6s}
+.sr-rays{position:absolute;left:50%;top:40%;width:120vmax;height:120vmax;margin:-60vmax;will-change:transform;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.2) 0 6deg,transparent 6deg 16deg);animation:srrays 24s linear infinite;pointer-events:none;opacity:0;transition:opacity .6s;-webkit-mask-image:radial-gradient(closest-side,#000 30%,transparent 100%);mask-image:radial-gradient(closest-side,#000 30%,transparent 100%)}
 .sr-studio.star .sr-rays{opacity:1}@keyframes srrays{to{transform:rotate(360deg)}}
 .sr-studio.r-mythic .sr-rays,.sr-studio.r-ghost .sr-rays{background:repeating-conic-gradient(from 0deg,rgba(255,79,163,.16) 0 5deg,rgba(90,169,255,.15) 5deg 10deg,transparent 10deg 18deg)}
 .pk-view{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:inherit;font:700 11px Archivo;padding:0}
@@ -1593,7 +1593,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '91';
+const AVER = '92';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2732,7 +2732,8 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
     card.style.transform = `translateY(${Math.sin(t * 1.2) * 5}px) rotateY(${ry}deg) rotateX(${rx}deg)`; card.style.setProperty('--gl', (50 + ry * 3.5).toFixed(1) + '%'); raf2 = requestAnimationFrame(idle); };
   const fill = () => {
     const c = cards[i], def = tcg.def.cards.find((x) => x.id === c.id) || { name: '' }, last = i === cards.length - 1, left = (tcg.packs.find((x) => x.pack_id === pid) || {}).count;
-    card.querySelector('img').src = cardImg(c.id, c.variant); el.querySelector('.sr-refl img').src = cardImg(c.id, c.variant); card.querySelector('img').dataset.card = c.id + ':' + c.variant;
+    const ni = new Image(); ni.alt = ''; ni.src = cardImg(c.id, c.variant); ni.dataset.card = c.id + ':' + c.variant; card.querySelector('img').replaceWith(ni); // neues Bild statt src tauschen: Safari zeigt sonst kurz das alte
+    const nr = new Image(); nr.alt = ''; nr.src = ni.src; el.querySelector('.sr-refl img').replaceWith(nr);
     studio.className = `sr-studio r-${c.variant} ${top(c.variant) ? 'star' : ''}`;
     cap.querySelector('small').textContent = `${i + 1} / ${cards.length} · ${varName(c.variant)}`; cap.querySelector('b').textContent = def.name;
     $('#srBtns').innerHTML = last ? `${left ? `<button class="btn" id="srNext">Nächsten öffnen (${left})</button>` : ''}<button class="btn ghost" id="srDone">Fertig</button>` : '<button class="btn" id="srMore">Nächste Karte ›</button>';
@@ -2743,7 +2744,8 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
     if (c.variant === 'mythic' || c.variant === 'ghost') setTimeout(() => { if (el.classList.contains('on') && cards[i] === c) packHighlight(c.variant, cardImg(c.id, c.variant)); }, 1300);
   };
   const enter = (first) => { card.parentNode.classList.remove('out'); card.parentNode.classList.add(first ? 'rise' : 'slidein'); cap.classList.add('show'); setTimeout(() => { card.parentNode.classList.remove('rise', 'slidein'); busy = false; }, first ? 1300 : 800); };
-  function next() { if (busy) return; busy = true; card.parentNode.classList.add('out'); cap.classList.remove('show'); setTimeout(() => { i++; fill(); enter(false); }, 420); }
+  function next() { if (busy || i >= cards.length - 1) return; busy = true; card.parentNode.classList.add('out'); cap.classList.remove('show'); setTimeout(() => { i++; fill(); const im = card.querySelector('img'); Promise.race([im.decode ? im.decode().catch(() => {}) : Promise.resolve(), new Promise((ok) => setTimeout(ok, 700))]).then(() => enter(false)); }, 420); }
+  card.onclick = (e) => { e.stopPropagation(); next(); }; // Tipp auf die Karte blättert weiter
   fill(); raf2 = requestAnimationFrame(idle); requestAnimationFrame(() => { studio.querySelector('.sr-white').classList.add('fade'); enter(true); });
 }
 async function openPack(pid) {
