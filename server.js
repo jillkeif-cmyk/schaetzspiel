@@ -687,8 +687,10 @@ async function checkProgress(uid) {
       const upd = { chal_paid: JSON.stringify(paid) };
       if (pay) upd.xp = Math.min(progress.CAP, (Number(u.xp) || 0) + pay);
       if (payCasino) upd.casino_xp = (Number(u.casino_xp) || 0) + payCasino;
+      if (payCasino && kpass.active()) upd.pass_cxp = (Number(u.pass_cxp) || 0) + payCasino; // zählt auch für den Casino-Strang
       await store.save(uid, upd);
       console.log(`Herausforderungs-XP: ${u.name} +${pay} Level, +${payCasino} Casino (${payParts.join(', ')})`);
+      if (payCasino) store.userById(uid).then((f) => { if (f) io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('me:cxp', { cxp: Number(f.casino_xp) || 0, pcxp: Number(f.pass_cxp) || 0, tier: vip.tierIndex(Number(f.casino_xp) || 0) }); }); }).catch(() => {});
       io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('xp:paid', { xp: pay, casino: payCasino, parts: payParts }); });
     }
     const prev = progressSnap.get(uid);
@@ -741,6 +743,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp'),
     ...(kpass.active() ? { pass_cxp: (Number(u.pass_cxp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp') } : {}), // Casino-Strang im Kronen-Pass
   });
+  store.userById(uid).then((f) => { if (f) io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('me:cxp', { cxp: Number(f.casino_xp) || 0, pcxp: Number(f.pass_cxp) || 0, tier: vip.tierIndex(Number(f.casino_xp) || 0) }); }); }).catch(() => {}); // Casino-XP sofort live anzeigen
   setTimeout(() => checkProgress(uid), 400);
 };
 const payOut = async (uid, n) => {

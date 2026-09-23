@@ -1588,6 +1588,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .pglow.p12::before{content:"";position:absolute;inset:-22%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(180,92,255,.6),rgba(255,210,63,.25) 45%,transparent 70%);filter:blur(7px);animation:masterglow 2.6s ease-in-out infinite alternate}
 .rank.hr{box-shadow:inset 0 0 0 1.5px rgba(180,92,255,.7)}.rank.hr.locked{filter:grayscale(.85);opacity:.6;cursor:pointer}
 .nw-redeem{display:flex!important;flex-direction:column;align-items:center;gap:8px;text-align:center}.nw-redeem .nw-code-c{font-size:26px!important;letter-spacing:2px!important;word-break:break-all;max-width:100%}.nw-redeem .btn{min-width:200px;font-size:17px}.nw-redeem p{margin:0}
+.cas-next{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.cas-next b{display:block;font:800 13px/1.2 Archivo;color:#7CF0A8}.cas-next .pc-bar{margin:5px 0 3px}.cas-next small{margin:0!important}
+.cas-mini{display:block;width:80%;height:5px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.cas-mini b{display:block;height:100%;background:linear-gradient(90deg,#7CF0A8,#1FA35A)}
 </style>
 </head>
 <body>
@@ -1607,7 +1609,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '97';
+const AVER = '98';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3537,8 +3539,8 @@ function renderPass() {
         <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}</div>
         <button data-passinfo="${x.t}:prem" class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}">${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</button></div>`; }).join('')}</div>
     </div><div class="ps-casino" ${passTab === 'casino' ? '' : 'hidden'}>${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
-      return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP${nx ? ` · nächste Stufe bei ${fmt(nx.need)}` : ' · alles erreicht!'}</small></div></div>
-      <div class="cas-track">${c.tiers.map((x) => { const rd = !LOCK && x.reached && !x.got; return `<div class="cas-row ${x.reached && !LOCK ? 'reached' : ''} ${[5, 10, 15, 20].includes(x.t) ? 'big' : ''}"><div class="cas-num"><span>${x.t}</span><small>${fmt(x.need)}</small></div><button data-passinfo="${x.t}:casino" class="ps-cell cas ${x.got ? 'got' : rd ? 'ready' : ''}">${passRw(x.rw, true)}${x.got ? '<span class="psk-ok">✓</span>' : rd ? '<span class="ps-claim">Abholen</span>' : ''}</button></div>`; }).join('')}</div>`; })() : ''}
+      return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP gesammelt</small>${nx ? (() => { const prev = nx.t > 1 ? c.tiers[nx.t - 2].need : 0, p2 = Math.max(0, Math.min(100, Math.round(100 * (c.xp - prev) / (nx.need - prev)))); return `<div class="cas-next"><b>Bis Stufe ${nx.t}: ${fmt(c.xp)} / ${fmt(nx.need)}</b><span class="pc-bar"><i style="width:${p2}%"></i></span><small>noch ${fmt(nx.need - c.xp)} Casino-XP</small></div>`; })() : '<small>🏆 Alles erreicht!</small>'}</div></div>
+      <div class="cas-track">${c.tiers.map((x) => { const rd = !LOCK && x.reached && !x.got; return `<div class="cas-row ${x.reached && !LOCK ? 'reached' : ''} ${[5, 10, 15, 20].includes(x.t) ? 'big' : ''}"><div class="cas-num"><span>${x.t}</span><small>${fmt(x.need)}</small>${!x.reached && (x.t === 1 || c.tiers[x.t - 2].reached) ? `<i class="cas-mini"><b style="width:${Math.max(3, Math.min(100, Math.round(100 * (c.xp - (x.t > 1 ? c.tiers[x.t - 2].need : 0)) / (x.need - (x.t > 1 ? c.tiers[x.t - 2].need : 0)))))}%"></b></i>` : ''}</div><button data-passinfo="${x.t}:casino" class="ps-cell cas ${x.got ? 'got' : rd ? 'ready' : ''}">${passRw(x.rw, true)}${x.got ? '<span class="psk-ok">✓</span>' : rd ? '<span class="ps-claim">Abholen</span>' : ''}</button></div>`; }).join('')}</div>`; })() : ''}
     </div><div class="ps-bank panel" ${passTab === 'casino' ? 'hidden' : ''}><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
     <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino-XP zählen für den Casino-Strang.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
   const now = box.querySelector('.ps-now'); if (now && !renderPass.scrolled) { renderPass.scrolled = true; setTimeout(() => now.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250); }
@@ -3550,7 +3552,7 @@ function passInfo(t, track) { // Vorschau einer Belohnung: groß, bewegte Items 
   const can = v.mode === 'on' && x.reached && !got && (track === 'free' || track === 'casino' || v.prem);
   const big = [];
   if (rw.item) big.push(rw.kind === 'title' ? `<img class="pi-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><b>Titel „${esc(rw.name)}“</b>` : `<img class="pi-emb ${rw.kind === 'frame' ? 'spin' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><b>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</b>`);
-  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>`);
+  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>${rw.item2 === 'EC5' ? '<small>Auch als Prestige-Logo nutzbar, egal welcher Prestige-Rang: eine Alternative zu deinen Prestige-Logos, steht in der Auswahl neben Master.</small>' : ''}`);
   if (rw.pack) { const pk = (tcg && tcg.def && tcg.def.packs || []).find((p) => p.id === rw.pack); big.push(`<img class="pi-pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><b>${PACK_NAME[rw.pack] || 'Booster'}</b><small>${pk ? pk.cards + ' Karten' + (rw.pack === 'gn' && !(home && home.gnOpen) ? ' · öffnen kannst du ihn ab der Freischaltung des Sets' : ' · im Shop ' + fmt(pk.price) + ' 💎') : ''}</small>`); }
   if (rw.box) big.push(`<img class="pi-emb" src="/news/pass_box.webp?v=${AVER}" alt=""><b>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</b><small>Wird beim Öffnen ausgelost, zum Beispiel: ${BOX_TXT[rw.box].join(' · ')}</small>`);
   if (rw.spin) big.push(`<img class="pi-emb" src="/news/gluecksrad.webp?v=${AVER}" alt=""><b>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</b><small>Zusätzlich zu deinen täglichen Drehs, verfallen nicht</small>`);
@@ -4334,6 +4336,12 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  let cxpT = 0;
+  socket.on('me:cxp', (d) => { // nach jeder Casino-Runde: Casino-XP, VIP-Stufe und Casino-Strang live nachziehen
+    if (home && home.me) { home.me.casinoXp = d.cxp; home.me.casinoTier = d.tier; }
+    if (passV && passV.casino) { passV.casino.xp = d.pcxp; passV.casino.tiers.forEach((x) => { x.reached = d.pcxp >= x.need; }); if (page === 'pass') renderPass(); }
+    clearTimeout(cxpT); cxpT = setTimeout(() => { if (page === 'casino') loadVip(); }, 800);
+  });
   socket.on('banner:changed', () => { loadHome(); });
   socket.on('pot:update', (d) => { if (home) home.potions = d.potions; (d.ended || []).forEach((t) => toast(`🧪 Dein ${POT_T[t]}-Trank ist abgelaufen`)); if (!S && page === 'home') update(); if (page === 'cards' && ctab === 'traenke') renderCards(); });
   socket.on('admin:note', (m) => { toast(m); sfx('exact'); });
@@ -5321,7 +5329,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openPass' || t.closest('#openPass')) { page = 'pass'; renderPass.scrolled = false; render(); loadPass(); }
-  else if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei (2,5 Mio Casino-XP).'); }
+  else if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); }
   else if (t.dataset.nwredeem) { const c = t.dataset.nwredeem; t.disabled = true; api('/api/redeem', { code: c }).then(async (r) => { showCodeReveal(r); t.textContent = '✓ Eingelöst'; await loadHome(); }).catch((e) => { toast(e.message); t.textContent = /schon eingelöst/.test(e.message) ? '✓ Schon eingelöst' : 'Einlösen'; t.disabled = /schon eingelöst/.test(e.message); }); }
   else if (t.dataset.pstab) { passTab = t.dataset.pstab; renderPass(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   else if (t.dataset.passinfo) { const [tt, tr] = t.dataset.passinfo.split(':'); passInfo(Number(tt), tr); }
