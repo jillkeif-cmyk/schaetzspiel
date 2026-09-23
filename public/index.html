@@ -1488,7 +1488,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '58';
+const AVER = '60';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1946,6 +1946,7 @@ const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(10, t ||
 function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
 function renderVipHead() {
   const h = $('#vipHead'); if (!h || !vipD) return;
+  if (cgame === 'watch') { h.innerHTML = ''; return; } // beim Zuschauen nur das Spiel des anderen
   const t = vipD.tiers[vipD.tier], nx = vipD.next;
   const pct = nx ? Math.round(100 * (vipD.xp - t.xp) / (nx.xp - t.xp)) : 100;
   h.innerHTML = `<div class="viphead vt${vipD.tier}">${vipBadge(vipD.tier, 58)}<div class="grow"><b>VIP ${esc(t.name)}</b>
@@ -2452,8 +2453,8 @@ function renderCards() {
       .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label, extra || '')).join('');
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
@@ -2578,21 +2579,54 @@ function renderCw(box) { // Zuschauen bei Roulette oder Blackjack, nur ansehen
   let body = '';
   if (cw.gone) body = `<div class="panel" style="text-align:center"><b>${esc(cw.name || 'Der Spieler')} spielt gerade nicht mehr.</b></div>`;
   else if (cw.game === 'roulette') {
-    const sp = cw.spin, rolling = sp && Date.now() < cw.until;
-    const res = sp && !rolling ? `<div class="cw-res ${sp.won > sp.stake ? 'win' : sp.won ? 'even' : 'lose'}"><span class="cw-ball ${cwCol(sp.n)}">${sp.n}</span><b>${sp.won > sp.stake ? `Gewonnen +${fmt(sp.won - sp.stake)}` : sp.won ? `${fmt(sp.won)} zurück` : `Verloren −${fmt(sp.stake)}`}</b></div>` : '';
-    body = `<div class="cw-rou"><div class="cw-wheel ${rolling ? 'spin' : ''}"><span class="cw-ball big ${sp && !rolling ? cwCol(sp.n) : ''}">${sp && !rolling ? sp.n : rolling ? '…' : '?'}</span></div>${res}
-      ${sp ? `<div class="cw-bets"><small>Einsätze · ${fmt(sp.stake)} 💎</small><div>${sp.bets.map((b) => `<span class="cw-chip">${cwBetTxt(b)} · ${fmt(b.amount)}</span>`).join('')}</div></div>` : '<p class="sub" style="text-align:center">Warte auf den nächsten Dreh …</p>'}
-      ${(cw.history || []).length ? `<div class="cw-hist">${cw.history.map((n) => `<span class="cw-ball ${cwCol(n)}">${n}</span>`).join('')}</div>` : ''}</div>`;
+    if ($('#cwRou') && box.contains($('#cwRou'))) { cwRouParts(); return; } // Rad bleibt stehen, nur Tableau und Verlauf erneuern
+    const nums = CW_W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
+    box.innerHTML = head + `<div id="cwRou"><div class="wheelwrap"><span class="pointer"></span>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(CW_W, RED)}"></span>${nums}</div>
+        <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
+        <div class="ballnum" id="ballnum">${cw.spin ? cw.spin.n : '–'}</div></div>
+      <div class="rhist" id="cwHist"></div>
+      <div class="rboard th-${THEME_OF()}"><div class="rgrid" id="cwBoard" style="pointer-events:none"></div></div>
+      <p class="sub center" id="cwStake" style="margin:8px 0"></p><p class="sub" id="cwRes" style="text-align:center;margin-top:6px"></p></div>`;
+    $('#cwBack').onclick = cwBackFn;
+    if (cw.spin) { const w = $('#wheel'); w.style.transition = 'none'; w.style.transform = `rotate(${360 - CW_W.indexOf(cw.spin.n) * (360 / 37)}deg)`; }
+    cwRouParts(); return;
   } else {
     const b = cw.bj;
     const card = (c) => (c && c.hidden ? '<span class="pc back"><b>?</b></span>' : `<span class="pc ${['♥', '♦'].includes(c.s) ? 'red' : ''}"><b>${esc(c.r)}</b><span class="suit">${esc(c.s)}</span><b class="bot">${esc(c.r)}</b></span>`);
-    body = b ? `<div class="bjfelt th-gruen"><div class="bjrow"><span class="bjlab">BANK · ${b.over ? b.dealerScore : b.dealerScore + ' offen'}</span><div class="bjhand">${b.dealer.map(card).join('')}</div></div>
+    body = b ? `<div class="bjfelt th-${THEME_OF()}"><span class="shoe"></span><div class="bjrow"><span class="bjlab">BANK · ${b.over ? b.dealerScore : b.dealerScore + ' offen'}</span><div class="bjhand">${b.dealer.map(card).join('')}</div></div>
       <div class="bjhands">${b.hands.map((h) => `<div class="bjh ${h.active ? 'act' : ''}"><div class="bjhand">${h.cards.map(card).join('')}</div><div class="row" style="gap:6px"><span class="bjscore">${h.score}</span><span class="bjchip">${fmt(h.bet)}</span></div>${h.result ? `<span class="bjres">${esc(h.result)}</span>` : ''}</div>`).join('')}</div></div>
       ${b.over ? `<div class="cw-res ${cw.won > 0 ? 'win' : 'lose'}"><b>${cw.won > 0 ? `Auszahlung ${fmt(cw.won)} 💎` : 'Runde verloren'}</b></div>` : '<p class="sub" style="text-align:center">spielt gerade …</p>'}`
       : '<p class="sub" style="text-align:center;padding:30px 0">Warte auf die nächste Runde …</p>';
   }
   box.innerHTML = head + body;
-  $('#cwBack').onclick = () => { socket.emit('cw:unwatch'); const g = cw && cw.game; cw = null; cgame = g === 'bj' ? 'bj' : 'roulette'; renderCards(); reportPresence(); };
+  $('#cwBack').onclick = cwBackFn;
+}
+const CW_W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+function cwBackFn() { socket.emit('cw:unwatch'); const g = cw && cw.game; cw = null; cgame = g === 'bj' ? 'bj' : 'roulette'; renderCards(); reportPresence(); }
+function cwRouParts() { // Tableau mit den Chips des Spielers, Verlauf, Einsatz
+  const sp = cw && cw.spin, bets = sp ? sp.bets.map((b) => ({ numbers: b.numbers, amount: b.amount, key: b.numbers.slice().sort((a, c) => a - c).join(',') })) : [];
+  const keep = rbets, keepF = rsplitFirst; rbets = bets; rsplitFirst = null; const html = boardHtml(); rbets = keep; rsplitFirst = keepF;
+  const bd = $('#cwBoard'); if (bd) bd.innerHTML = html;
+  const h = $('#cwHist'); if (h) h.innerHTML = (cw.history || []).map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>';
+  const st = $('#cwStake'); if (st) st.innerHTML = sp ? `Einsatz: <b>${fmt(sp.stake)}</b> 💎 auf ${bets.length} ${bets.length === 1 ? 'Feld' : 'Felder'}` : 'Warte auf den nächsten Dreh …';
+}
+function cwRouSpin(ev) { // gleiche Animation wie beim Spieler selbst
+  cw.spin = ev; cw.history = ev.history;
+  if (!(page === 'casino' && cgame === 'watch') || !$('#cwRou')) { renderCasino(); return; }
+  cwRouParts(); const res = $('#cwRes'); if (res) res.textContent = '';
+  const wheel = $('#wheel'), ball = $('#ballnum'), track = $('#balltrack'), idx = CW_W.indexOf(ev.n);
+  wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)'; void wheel.offsetWidth; wheel.style.transition = '';
+  wheel.style.transform = `rotate(${360 * 6 + (360 - idx * (360 / 37))}deg)`;
+  if (track) { track.hidden = false; track.classList.remove('drop'); track.style.transition = 'none'; track.style.transform = 'rotate(0deg)'; void track.offsetWidth; track.style.transition = ''; track.style.transform = 'rotate(-2880deg)'; requestAnimationFrame(() => track.classList.add('drop')); }
+  ball.textContent = '…'; ball.className = 'ballnum'; sfx('dart');
+  setTimeout(() => {
+    if (!cw || !$('#cwRou')) return;
+    ball.textContent = ev.n; ball.className = 'ballnum ' + ev.color;
+    const win = ev.won > 0; if (win) { $('.wheelwrap').classList.add('winflash'); setTimeout(() => $('.wheelwrap') && $('.wheelwrap').classList.remove('winflash'), 1300); }
+    const r = $('#cwRes'); if (r) r.innerHTML = ev.won > ev.stake ? `<b style="color:#7CF0A8">${esc(cw.name)} gewinnt +${fmt(ev.won - ev.stake)} 💎</b>` : ev.won ? `${fmt(ev.won)} 💎 zurück` : `<b style="color:#FF8A8A">Verloren −${fmt(ev.stake)} 💎</b>`;
+    sfx(ev.won > ev.stake ? 'exact' : 'wrong');
+  }, 4700);
 }
 function cwStart(uid, name, game) { cw = { uid, name, game }; page = 'casino'; ctab = 'casino'; cgame = 'watch'; render(); loadTcg(); socket.emit('cw:watch', uid); }
 const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}" alt="" onerror="this.style.visibility='hidden'">`;
@@ -3883,7 +3917,7 @@ function connect() {
   socket.on('cw:ev', (ev) => {
     if (!cw || String(ev.uid) !== String(cw.uid)) return;
     if (ev.type === 'left') { cw.gone = true; }
-    else if (ev.type === 'spin') { cw.spin = ev; cw.history = ev.history; cw.until = Date.now() + 3200; sfx('dart'); setTimeout(() => { if (cw && page === 'casino' && cgame === 'watch') { renderCasino(); sfx(ev.won > ev.stake ? 'exact' : 'wrong'); } }, 3250); }
+    else if (ev.type === 'spin') { cwRouSpin(ev); return; }
     else if (ev.type === 'state') { cw.bj = ev.state; cw.won = ev.won; sfx('dart'); }
     if (page === 'casino' && cgame === 'watch') renderCasino();
   });
