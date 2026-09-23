@@ -1590,6 +1590,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .nw-redeem{display:flex!important;flex-direction:column;align-items:center;gap:8px;text-align:center}.nw-redeem .nw-code-c{font-size:26px!important;letter-spacing:2px!important;word-break:break-all;max-width:100%}.nw-redeem .btn{min-width:200px;font-size:17px}.nw-redeem p{margin:0}
 .cas-next{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.cas-next b{display:block;font:800 13px/1.2 Archivo;color:#7CF0A8}.cas-next .pc-bar{margin:5px 0 3px}.cas-next small{margin:0!important}
 .cas-mini{display:block;width:80%;height:5px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.cas-mini b{display:block;height:100%;background:linear-gradient(90deg,#7CF0A8,#1FA35A)}
+.potcard .pot-ic{width:84px;height:84px}
 </style>
 </head>
 <body>
@@ -1609,7 +1610,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '98';
+const AVER = '99';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1704,6 +1705,16 @@ function sfx(name) {
   if (actx.state !== 'running') { try { actx.resume().catch(() => {}); } catch (e) {} } // hängende Tonausgabe anstoßen
   try {
     if (name === 'tick') tone(880, 0, 0.07, 'square', 0.05);
+    // Booster-Showroom: dezente Effekte
+    const whoosh = (dur, f0, f1, v, t0 = 0) => { const n = Math.floor(actx.sampleRate * dur), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      const sc = actx.createBufferSource(); sc.buffer = b; const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4; const g = actx.createGain(), t = actx.currentTime + t0;
+      bp.frequency.setValueAtTime(f0, t); bp.frequency.exponentialRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + dur * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      sc.connect(bp).connect(g).connect(master); sc.start(t); sc.stop(t + dur + 0.05); };
+    if (name === 'srspin') { whoosh(0.9, 250, 1800, 0.16); whoosh(0.9, 1800, 400, 0.14, 0.95); tone(196, 0, 1.8, 'sine', 0.05); }
+    if (name === 'srglow') [523, 659, 784, 988, 1175, 1568].forEach((f, i) => tone(f, i * 0.09, 0.6, 'triangle', 0.035));
+    if (name === 'srtear') { for (let i = 0; i < 7; i++) { const t0 = i * 0.045 + Math.random() * 0.02; const n = Math.floor(actx.sampleRate * 0.04), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / n); const sc = actx.createBufferSource(); sc.buffer = b; const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500 + Math.random() * 2500; const g = actx.createGain(); g.gain.value = 0.12; sc.connect(hp).connect(g).connect(master); sc.start(actx.currentTime + t0); } tone(110, 0.02, 0.25, 'sine', 0.12); }
+    if (name === 'srflash') { [784, 1175, 1568].forEach((f) => tone(f, 0, 1.4, 'sine', 0.05)); whoosh(0.7, 3000, 800, 0.08); }
+    if (name === 'srcard') whoosh(0.35, 600, 2600, 0.1);
     if (name === 'question') { tone(523, 0, 0.12); tone(784, 0.1, 0.18); }
     if (name === 'sent') tone(660, 0, 0.1, 'sine');
     if (name === 'emote') { tone(880, 0, 0.06, 'sine', 0.08); tone(1320, 0.05, 0.09, 'sine', 0.07); }
@@ -2497,7 +2508,9 @@ function renderCards() {
     box.innerHTML = potionsHtml();
   } else if (ctab === 'shop') {
     const disps = tcg.def.packs.filter((p) => p.display && !p.off);
-    box.innerHTML = disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden && !p.offsale).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+    const pots = tcg.def.packs.filter((p) => p.potion && !p.off && p.price > 0);
+    const potShop = pots.length ? `<h3 class="inv-h">🧪 Tränke</h3>` + pots.map((p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + '<h3 class="inv-h">📦 Booster</h3>' : '';
+    box.innerHTML = potShop + disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden && !p.offsale).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`).join('')
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
@@ -2725,16 +2738,17 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
   if (!pk) { el.classList.remove('on'); return; }
   stage.insertAdjacentHTML('beforeend', `<div class="sr-tear t"><img src="${src}" alt=""></div><div class="sr-tear u"><img src="${src}" alt=""></div>`);
   const glow = stage.querySelector('.sr-glow'), bloom = el.querySelector('.sr-bloom');
-  sfx('tick');
+  sfx('srspin'); let glowSnd = false;
   // 1) Drehen: langsam an, zwei volle Umdrehungen, weich aus; in der zweiten Hälfte leuchtet der Booster immer stärker
   await new Promise((ok) => { const T = 2600, t0 = performance.now(); const step = (now) => { const x = Math.min(1, (now - t0) / T), e = easeIO(x);
       const ang = -30 + e * 750, lift = Math.sin(x * Math.PI) * -18, sc = 0.86 + e * 0.18, lum = Math.max(0, (x - 0.45) / 0.55);
       const tx = Math.sin(x * Math.PI * 2) * 6; pk.style.transform = `translateY(${lift}px) scale(${sc}) rotateY(${ang}deg) rotateX(${tx}deg)`;
       pk.style.setProperty('--gl', ((((ang % 360) + 360) % 360) / 3.6 * 1.4 - 20).toFixed(1) + '%');
+      if (lum > 0.05 && !glowSnd) { glowSnd = true; sfx('srglow'); }
       pk._lum = 1 + lum * 1.1; srLight(pk, ang, tx); glow.style.opacity = (lum * 0.95).toFixed(2); glow.style.transform = `scale(${0.6 + lum * 0.9})`;
       if (x < 1 && !skip) requestAnimationFrame(step); else ok(); }; requestAnimationFrame(step); });
   // 2) Hülle klappt weich auf, Licht breitet sich von der Mitte aus
-  stage.classList.add('tear'); sfx('dartbest'); try { navigator.vibrate && navigator.vibrate(25); } catch (e) {}
+  stage.classList.add('tear'); sfx('srtear'); setTimeout(() => sfx('srflash'), 280); try { navigator.vibrate && navigator.vibrate(25); } catch (e) {}
   bloom.classList.add('on');
   await new Promise((ok) => setTimeout(ok, skip ? 250 : 950));
   el.onclick = null;
@@ -2753,7 +2767,7 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
     studio.className = `sr-studio r-${c.variant} ${top(c.variant) ? 'star' : ''}`;
     cap.querySelector('small').textContent = `${i + 1} / ${cards.length} · ${varName(c.variant)}`; cap.querySelector('b').textContent = def.name;
     $('#srBtns').innerHTML = last ? `${left ? `<button class="btn" id="srNext">Nächsten öffnen (${left})</button>` : ''}<button class="btn ghost" id="srDone">Fertig</button>` : '<button class="btn" id="srMore">Nächste Karte ›</button>';
-    sfx(top(c.variant) ? 'exact' : c.variant === 'holo' ? 'dartbest' : 'dart'); if (top(c.variant)) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e) {}
+    sfx('srcard'); if (top(c.variant)) setTimeout(() => sfx('exact'), 250); else if (c.variant === 'holo') setTimeout(() => sfx('dartbest'), 200); if (top(c.variant)) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e) {}
     if ($('#srMore')) $('#srMore').onclick = next;
     if ($('#srDone')) $('#srDone').onclick = () => { cancelAnimationFrame(raf2); el.classList.remove('on'); el.innerHTML = ''; renderCards(); };
     if ($('#srNext')) $('#srNext').onclick = () => { cancelAnimationFrame(raf2); openPack(pid); };
@@ -3360,14 +3374,14 @@ function sellCard(key) {
 
 function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
-  if (p.display) { // Display: einfach, nur kaufen
-    const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = base.locked;
-    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt=""><span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.</span></span></div>
+  if (p.display || p.potion) { // Display oder Trank: einfach, nur kaufen
+    const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = !!base.locked;
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
       <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
       ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
     $('#packN').oninput = () => { const b = $('#packBuy'); if (b && !b.disabled) b.textContent = `Kaufen · ${fmt(Math.max(1, Math.round(Number($('#packN').value) || 1)) * p.price)} 💎`; };
-    if (!locked && !p.soldout) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Display gekauft'); }).catch((e) => toast(e.message)); };
+    if (!locked && !p.soldout) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + (p.potion ? ' Trank gekauft' : ' Display gekauft')); if (p.potion) { ctab = 'traenke'; renderCards(); } }).catch((e) => toast(e.message)); };
     return;
   }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
@@ -4001,11 +4015,11 @@ function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenz
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="chipbtn ${p.offsale ? 'on-miss' : ''}" data-f="offsale">${p.offsale ? '🙈 Nicht im Verkauf' : 'Im Verkauf'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`).join(''); bind(); };
   const send = (row, soldout, offsale) => { const id = row.dataset.sp, pk = tcg.def.packs.find((x) => x.id === id); if (offsale === undefined) offsale = !!pk.offsale; api('/api/admin/shop', { pack: id, price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, soldout, offsale, note: row.querySelector('[data-f=note]').value }).then((r) => { const p = tcg.def.packs.find((x) => x.id === id); Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout, offsale: r.offsale, note: r.note }); toast(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}${r.offsale ? ' · nicht im Verkauf' : ''}`); draw(); }).catch((e) => toast(e.message)); };
   const bind = () => box.querySelectorAll('[data-sp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.sp); row.querySelector('[data-f=save]').onclick = () => send(row, !!p.soldout); row.querySelector('[data-f=soldout]').onclick = () => send(row, !p.soldout); row.querySelector('[data-f=offsale]').onclick = () => send(row, !!p.soldout, !p.offsale); });
-  const drawDisp = () => { const dd = tcg.def.packs.filter((p) => p.display); box.insertAdjacentHTML('beforeend', dd.map((p) => `<div class="shop-adm" data-dp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>🗃 ${esc(p.name)}</b> <small>${p.size} Booster</small>
-      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price}" data-f="dprice"></label></div>
+  const drawDisp = () => { const dd = tcg.def.packs.filter((p) => p.display || p.potion); box.insertAdjacentHTML('beforeend', dd.map((p) => `<div class="shop-adm" data-dp="${p.id}">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt="">`}<div class="grow"><b>${p.potion ? '🧪' : '🗃'} ${esc(p.name)}</b> <small>${p.potion ? '60 Min' : p.size + ' Booster'}</small>
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price || ''}" placeholder="noch kein Preis" data-f="dprice"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${p.stock === null || p.stock === undefined ? '' : p.stock}" data-f="dstock"></label></div>
       <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Release am 31.10. um 18 Uhr" value="${esc(p.note || '')}" data-f="dnote"></label>
       <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '🙈 Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="dsold">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="dsave">Speichern</button></div></div></div>`).join(''));
-    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on, soldout = !!p.soldout) => api('/api/admin/display', { pack: p.id, on, soldout, price: Number(row.querySelector('[data-f=dprice]').value), note: row.querySelector('[data-f=dnote]').value }).then((r) => { p.off = !r.on; p.price = r.price; p.note = r.note; p.soldout = r.soldout; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${fmt(r.price)} 💎`); draw(); drawDisp(); }).catch((e) => toast(e.message));
+    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on, soldout = !!p.soldout) => api('/api/admin/display', { pack: p.id, on, soldout, price: Number(row.querySelector('[data-f=dprice]').value), stock: row.querySelector('[data-f=dstock]').value, note: row.querySelector('[data-f=dnote]').value }).then((r) => { p.off = !r.on; p.price = r.price; p.note = r.note; p.soldout = r.soldout; p.stock = r.stock; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${r.price ? fmt(r.price) + ' 💎' : 'kein Preis'}${r.stock === null ? '' : ' · ' + r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}`); draw(); drawDisp(); }).catch((e) => toast(e.message));
       row.querySelector('[data-f=don]').onclick = () => send(p.off); row.querySelector('[data-f=dsold]').onclick = () => send(!p.off, !p.soldout); row.querySelector('[data-f=dsave]').onclick = () => send(!p.off); }); };
   if (!tcg) loadTcg().then(() => { draw(); drawDisp(); }).catch(() => {}); else { draw(); drawDisp(); }
 }
