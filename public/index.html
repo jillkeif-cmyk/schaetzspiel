@@ -1500,7 +1500,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '62';
+const AVER = '63';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1531,7 +1531,7 @@ function playerCard(p, extra) {
       <div class="trow">${avatar(p, 56)}${p.title ? titleHtml(p) : '<span class="sub grow" style="font-size:13px">Kein Titel</span>'}
         ${p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
       <div class="lvrow"><span class="num" style="font-size:16px;color:var(--paper)">Lv ${p.level}</span><span class="bar"><i style="width:${Math.round(lv * 100)}%"></i></span><span>${p.max ? 'max' : fmt(p.into) + ' / ' + fmt(p.next) + ' XP'}</span></div>
-      ${p.xpCap ? `<div class="lvsub">${p.max ? `<b>${fmt(p.xpTotal)} XP</b> · Level 30 erreicht${(p.prestige || 0) < 11 ? ' · Prestige möglich' : ''}` : `<b>${fmt(p.xpTotal)}</b> von ${fmt(p.xpCap)} XP bis Level 30 · noch ${fmt(p.next - p.into)} bis Lv ${p.level + 1}`}</div>` : ''}
+      ${p.xpCap ? `<div class="lvsub">${p.max ? `<b>${fmt(p.xpTotal)} XP</b> · Level 30 erreicht${home && home.me && p.id === home.me.id && home.progress && home.progress.prestige ? (home.progress.prestige.can ? ' · Prestige möglich' : home.progress.prestige.next ? ' · für Prestige fehlt noch etwas' : '') : ''}` : `<b>${fmt(p.xpTotal)}</b> von ${fmt(p.xpCap)} XP bis Level 30 · noch ${fmt(p.next - p.into)} bis Lv ${p.level + 1}`}</div>` : ''}
       ${extra || ''}</div>
     ${streakHtml(p)}</div>`;
 }
