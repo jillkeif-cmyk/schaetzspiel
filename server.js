@@ -323,6 +323,9 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS.filter((p) => !p.requi
 const kpass = require('./lib/pass');
 const boost = require('./lib/boost');
 const potions = require('./lib/potions');
+const trophies = require('./lib/trophies');
+let trophySel = [];
+store.setting('trophies').then((v) => { if (v) trophySel = JSON.parse(v); }).catch(() => {});
 const mkKind = (row) => (row.card_id === 'pack' ? (String(row.variant).startsWith('disp_') ? 'displays' : 'packs') : row.card_id === 'graded' ? 'graded' : 'cards');
 const mkNotify = (row) => io.emit('market:new', { kind: mkKind(row), seller: row.seller, at: Date.now() }); // neues Börsen-Angebot: Zähler bei den anderen hochsetzen
 const note = (t) => { const c = store.ctx.getStore(); if (c) c.note = t; }; // Klartext fürs Guthaben-Protokoll
@@ -1583,6 +1586,12 @@ app.post('/api/admin/banner', async (req, res) => {
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
 });
+app.get('/api/admin/trophies', async (req, res) => { const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' }); res.json({ lib: trophies.LIB, sel: trophySel }); });
+app.post('/api/admin/trophies', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  trophySel = (Array.isArray(req.body.ids) ? req.body.ids : []).map(String).filter((id) => trophies.byId(id)).slice(0, 12);
+  await store.setting('trophies', JSON.stringify(trophySel)); res.json({ sel: trophySel });
+});
 app.get('/api/admin/codes', async (req, res) => { const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' }); res.json({ codes: Object.entries(adminCodes).map(([code, c]) => ({ code, ...c, text: rewardText(c.reward) })).reverse() }); });
 app.post('/api/admin/codes', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -1676,7 +1685,8 @@ async function profileExtras(o) {
   const gl = await store.gradedOf(o.id).catch(() => []);
   const gIds = new Set(gl.map((g) => g.id));
   const showG = []; for (const id of String(o.showcase_g || '').split(',').map(Number).filter((id) => gIds.has(id)).slice(0, 4)) showG.push(await gView(gl.find((g) => g.id === id)));
-  return { showcase, showcaseG: showG, gradedCount: gl.length, collect: { unique, total: COLLECT.total }, vipTier: ti, vipName: vip.TIERS[ti].name };
+  const tr = isAdmin(o) ? trophySel.map(trophies.byId).filter(Boolean) : null; // Trophäen-Vitrine nur beim Admin
+  return { trophies: tr, showcase, showcaseG: showG, gradedCount: gl.length, collect: { unique, total: COLLECT.total }, vipTier: ti, vipName: vip.TIERS[ti].name };
 }
 app.post('/api/showcase', async (req, res) => {
   try {

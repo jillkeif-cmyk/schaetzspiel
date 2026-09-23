@@ -1609,6 +1609,9 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .tier[data-zoom]{cursor:pointer}.zoom-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;overflow:hidden}.zoom-box img{position:relative;width:min(70vw,300px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.6));animation:zoomin .35s cubic-bezier(.2,.9,.3,1.2)}.zoom-box b{position:relative;font:900 22px/1.1 Archivo}.zoom-box small{position:relative;color:#cfe}.zoom-box .btn{position:relative;width:100%}
 .zoom-rays{position:absolute;left:50%;top:38%;width:600px;height:600px;margin:-300px;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.13) 0 10deg,transparent 10deg 24deg);animation:srrays 20s linear infinite;-webkit-mask-image:radial-gradient(closest-side,#000 25%,transparent 100%);mask-image:radial-gradient(closest-side,#000 25%,transparent 100%)}
 @keyframes zoomin{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.troph{margin-bottom:12px;padding:12px;border-radius:18px;background:linear-gradient(160deg,rgba(255,210,63,.14),rgba(40,20,10,.35));box-shadow:inset 0 0 0 2px #FFD23F,0 0 22px rgba(255,190,40,.3)}.troph .vit-h b{color:#FFD23F}
+.tr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tr-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:0;border-radius:14px;background:radial-gradient(circle at 50% 35%,rgba(255,230,160,.18),rgba(0,0,0,.25));color:#fff;text-align:center}.tr-item img{width:100%;height:84px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.6))}.tr-item b{font:800 12.5px/1.2 Archivo}.tr-item small{font-size:10.5px;color:#FFE27A}
+.tr-lib{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}.tr-pick{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(255,255,255,.05)}.tr-pick img{width:90px;height:50px;object-fit:contain}.tr-pick b{display:block;font:800 13px Archivo}.tr-pick small{color:#cfe}
 </style>
 </head>
 <body>
@@ -1628,7 +1631,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '109';
+const AVER = '110';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4933,7 +4936,8 @@ async function showUser(id) {
     const slots = [0, 1, 2, 3].map((k) => u.showcase && u.showcase[k]);
     const gv = u.showcaseG || [];
     const vitG = `<div class="vit vit-g"><div class="vit-h"><b>🏅 Gegradete Karten</b>${u.self ? '<button class="link" id="vitEditG">bearbeiten</button>' : ''}</div>${gv.length ? `<div class="slabgrid four">${gv.map((x) => slabHtml(x)).join('')}</div>` : `<small class="sub">${u.self ? (u.gradedCount ? 'Stell deine gegradeten Karten aus: tippe auf „bearbeiten“.' : 'Du hast noch keine gegradeten Karten.') : 'Hat keine gegradeten Karten ausgestellt.'}</small>`}</div>`;
-    const vit = (home && home.me.grading ? vitG : '') + `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
+    const tro = u.trophies ? `<div class="troph"><div class="vit-h"><b>🏆 Trophäen</b>${u.self ? '<button class="link" id="trEdit">bearbeiten</button>' : ''}</div>${u.trophies.length ? `<div class="tr-grid">${u.trophies.map((x) => `<button class="tr-item" data-zoom="${esc(x.img)}" data-zoomt="${esc(x.name)}" data-zooms="${esc(x.sub)}"><img src="${esc(x.img)}?v=${AVER}" alt="" onerror="this.style.opacity=.15"><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></button>`).join('')}</div>` : `<small class="sub">${u.self ? 'Tippe auf „bearbeiten“ und stell Stücke aus deiner Trophäen-Bibliothek aus.' : 'Noch nichts ausgestellt.'}</small>`}</div>` : '';
+    const vit = tro + (home && home.me.grading ? vitG : '') + `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
       if (!key) return `<div class="vit-slot empty">${u.self ? '+' : ''}</div>`;
       const [cid, v] = key.split(':');
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
@@ -5452,6 +5456,13 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
   else if (e.target.closest && e.target.closest('[data-zoom]')) { const z = e.target.closest('[data-zoom]'); zoomImg(z.dataset.zoom, z.dataset.zoomt || '', z.dataset.zooms || ''); }
+  else if (t.id === 'trEdit') { api('/api/admin/trophies').then((r) => { const sel = new Set(r.sel);
+      $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>🏆 Trophäen-Bibliothek</h2><p class="sub" style="margin:0">Wähle, was in deinem Profil ausgestellt wird. Alle können es sehen und groß ansehen.</p>
+        <div class="tr-lib">${r.lib.map((x) => `<label class="tr-pick"><input type="checkbox" value="${esc(x.id)}" ${sel.has(x.id) ? 'checked' : ''}><img src="${esc(x.img)}?v=${AVER}" alt="" onerror="this.style.opacity=.15"><span><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></span></label>`).join('')}</div>
+        <button class="btn" id="trSave">Speichern</button><button class="btn ghost" id="trX">Abbrechen</button></div>`;
+      $('#modal').classList.add('on'); $('#trX').onclick = closeModal;
+      $('#trSave').onclick = () => api('/api/admin/trophies', { ids: [...document.querySelectorAll('.tr-pick input:checked')].map((i) => i.value) }).then(() => { closeModal(); toast('🏆 Trophäen gespeichert'); if (home && home.me) showUser(home.me.id); }).catch((e) => toast(e.message));
+    }).catch((e) => toast(e.message)); }
   else if (t.id === 'turboTg') { try { localStorage.setItem('turbo_open', turboOn() ? '0' : '1'); } catch (e2) {} sfx('tick'); renderCards(); }
   else if (t.dataset.potuse) { const id = t.dataset.potuse, d = tcg.def.packs.find((x) => x.id === id); if (confirm(`${d.name} aktivieren? Er läuft ab jetzt 60 Minuten (läuft schon einer, wird er um 60 Minuten verlängert).`)) api('/api/potion/use', { id }).then((r) => { tcg = r; if (home) home.potions = r.potions; toast('🧪 ' + d.name + ' aktiv'); sfx('exact'); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.6); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
