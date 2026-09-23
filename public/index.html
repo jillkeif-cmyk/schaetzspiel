@@ -1520,7 +1520,7 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '70';
+const AVER = '71';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3659,6 +3659,19 @@ function loadLedger() {
   }).catch((e) => { out.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
 }
 const pt0 = () => { const b = document.querySelector('[data-pmode]'); if (!b || b.dataset.bound) return false; b.dataset.bound = 1; return true; };
+function renderStaffBoxes() {
+    if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
+      $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+        <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
+        <div id="modList" class="plist"></div>
+        <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
+      modLoad('');
+    }
+    if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>🔑 Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off" autocapitalize="off"><div id="adSug" class="lg-sug"></div><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
+    const an = $('#adName'); if (an && !an.oninput) an.oninput = () => { const q = an.value.trim().toLowerCase(), box = $('#adSug'); if (!q || !adminUsers) { box.innerHTML = ''; return; }
+      box.innerHTML = adminUsers.filter((u) => u.name.toLowerCase().includes(q)).sort((a, b) => (b.name.toLowerCase().startsWith(q) - a.name.toLowerCase().startsWith(q)) || a.name.localeCompare(b.name)).slice(0, 8).map((u) => `<button type="button" data-adpick="${esc(u.name)}">${esc(u.name)}</button>`).join('');
+      box.querySelectorAll('[data-adpick]').forEach((b) => { b.onclick = () => { an.value = b.dataset.adpick; box.innerHTML = ''; $('#adPass').focus(); }; }); };
+}
 function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenzt), Ausverkauft
   const box = $('#shopRows'); if (!box) return;
   const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
@@ -3669,6 +3682,7 @@ function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenz
   if (!tcg) loadTcg().then(draw).catch(() => {}); else draw();
 }
 function loadAdmin() {
+  renderStaffBoxes();
   const pmInfo = (v) => { const i = $('#pmInfo'); if (i) i.innerHTML = `Aktuell: <b>${v.mode === 'on' ? '✅ an' : v.mode === 'locked' ? '🔒 gesperrt' : '⛔ aus'}</b>${v.mode === 'locked' && v.unlockAt ? ` · schaltet sich ${passWhen(v.unlockAt)} von selbst frei` : ''}. Gesperrt: sichtbar mit Hinweis, nichts abholbar, keine Pass-XP. Aus: komplett ausgeblendet.`; };
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
@@ -4149,6 +4163,8 @@ function build() {
   if (!S && page === 'admin') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Admin</h1>
+    <div id="adminBox"></div>
+    <div id="modBox"></div>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" id="boostBox"><b>⚡ Doppel-XP-Aktion</b><small style="display:block;color:#cfe">Unabhängig von der Hot Time. Aktiv wird sie allen auf der Startseite angezeigt</small>
       <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[['xp', '⭐ Level-XP'], ['cxp', '🎰 Casino-XP'], ['pxp', '👑 Pass-XP']].map(([k, l]) => `<button class="chipbtn ${home && home.boost && home.boost[k] ? 'on-miss' : ''}" data-boost="${k}">${l}</button>`).join('')}<button class="chipbtn" data-boost="all">Alle an</button><button class="chipbtn" data-boost="none">Alle aus</button></div></div>
@@ -4217,8 +4233,7 @@ function build() {
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
     <div class="panel" id="notifBox" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
-    <div id="modBox"></div>
-    <div id="adminBox"></div>
+    ${home && home.me && home.me.admin ? '' : '<div id="modBox"></div>'}
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Prestige-Ränge</h2><div id="ranks" class="ranks"></div></div>
     </div>`;
@@ -4637,14 +4652,7 @@ function update() {
       $('#tagForm').onsubmit = (e) => { e.preventDefault(); api('/api/tag', { tag: $('#tagIn').value, color: tagColor }).then(async () => { toast('Clan-Tag gespeichert'); await loadHome(); }).catch((er) => toast(er.message)); };
     }
     if ($('#notifBox')) $('#notifBox').innerHTML = `<div class="row"><b class="grow">Benachrichtigungen</b><button class="btn small" id="${pushState === 'on' ? 'pushOff' : 'pushOn'}" style="min-width:104px">${pushState === 'on' ? 'Ausschalten' : 'Einschalten'}</button></div><p class="sub">${pushState === 'on' ? 'Dieses Gerät bekommt Einladungen und Neuigkeiten.' : 'Auf dem iPhone nur möglich, wenn die App auf dem Homescreen liegt.'}</p>`;
-    if ($('#modBox') && home && home.me.mod && !$('#modPanel')) {
-      $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-        <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
-        <div id="modList" class="plist"></div>
-        <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
-      modLoad('');
-    }
-    if (home && home.me.admin && !$('#adminForm')) $('#adminBox').innerHTML = `<form id="adminForm" class="panel" style="display:flex;flex-direction:column;gap:10px"><b>Admin: Passwort eines Spielers neu setzen</b><input class="field" id="adName" placeholder="Spielername" autocomplete="off"><input class="field" id="adPass" placeholder="Neues Passwort (mind. 6 Zeichen)" autocomplete="off"><button class="btn small" style="width:100%">Passwort setzen</button></form>`;
+    if (!(home && home.me.admin)) renderStaffBoxes(); // Mods ohne Admin-Menü behalten das Mod-Menü im Profil
     if (!$('#profHead') || !home) return;
     const me = home.me, pr = home.progress, st = pr.prestige;
     $('#profHead').innerHTML = playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span><span>${me.prestige ? 'Prestige ' + me.prestige + ' · ' + esc(pr.names[me.prestige]) : 'Kein Prestige'}</span></div>`);

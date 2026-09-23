@@ -146,6 +146,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Börse: bis 5.000 Angebote, Filter „Meine Angebote“, „Alle zurücknehmen“ (/api/tcg/cancel-all). Roulette-Chips bis 100k.
 - Tickets: Push an den Admin mit Protokoll („Ticket-Push an …: N Gerät(e)“), live Hinweis + roter Zähler offener Tickets am Support-Knopf (nur Mods/Admin).
 
+- Admin-Menü enthält jetzt auch Passwort-Reset (mit Namensvorschlägen) und Mod-Menü; im Profil des Admins sind sie weg (Mods ohne Admin behalten das Mod-Menü im Profil). Funktion renderStaffBoxes().
 - Shop-Steuerung (Admin „🛒 Shop-Steuerung“, Setting shop_cfg): je Booster Preis, Bestand (leer = unbegrenzt, zählt bei Käufen runter, 0 = ausverkauft), Ausverkauft-Knopf. Shop zeigt „Nur noch X Stück“ bzw. „Ausverkauft“.
 
 ## Davor live gegangen (Version 67)
