@@ -1557,6 +1557,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .pk-see{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:6px 11px;border-radius:99px;font:800 12px/1 Archivo;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 .sr-tile{position:absolute;left:0;top:0;transform-origin:50% 50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;background-repeat:no-repeat;will-change:filter}
 .sr-floor{border-top:0!important;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.28) 40%,rgba(0,0,0,.6))!important}
+.ct-shopbig{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px;padding:13px 16px;border-radius:18px;text-align:left;color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E 55%,#E39A12);box-shadow:0 8px 22px rgba(255,190,40,.35),inset 0 1px 0 rgba(255,255,255,.6);position:relative}
+.ct-shopbig .csb-ic{font-size:30px}.ct-shopbig b{display:block;font:900 20px/1.1 Archivo}.ct-shopbig small{display:block;font:700 12.5px/1.2 Archivo;opacity:.75}.ct-shopbig .csb-go{font:900 26px/1 Archivo;opacity:.7}
+.ct-shopbig.on{box-shadow:0 0 0 3px #fff,0 8px 26px rgba(255,190,40,.55)}
+.ct-new{position:absolute;top:-9px;right:14px;padding:4px 10px;border-radius:99px;font:900 11px/1 Archivo;letter-spacing:.4px;color:#fff;background:linear-gradient(135deg,#FF4FA3,#B45CFF);box-shadow:0 0 14px rgba(255,79,163,.6);animation:psglow 1.8s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -1576,7 +1580,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '78';
+const AVER = '79';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2429,6 +2433,8 @@ function renderCards() {
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
+  const sbig = document.querySelector('.ct-shopbig'); if (sbig) sbig.classList.toggle('on', ctab === 'shop');
+  const cn = $('#ctNew'); if (cn) { const nw = (tcg.def.packs || []).filter((p) => p.isNew && !p.hidden); cn.hidden = !nw.length; cn.textContent = nw.length ? 'NEU: ' + nw.map((p) => p.name.replace('-Booster', '')).join(', ') : 'NEU'; }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
     const all = [];
@@ -4412,7 +4418,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="shop">Shop</button><button data-ct="boerse">Börse</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
+    <button class="ct-shopbig" data-ct="shop"><span class="csb-ic">🛒</span><span class="grow"><b>Shop</b><small>Booster kaufen</small></span><span class="ct-new" id="ctNew" hidden>NEU</span><span class="csb-go">›</span></button><div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="boerse">Börse</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
