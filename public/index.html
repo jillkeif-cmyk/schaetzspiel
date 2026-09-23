@@ -1614,7 +1614,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '102';
+const AVER = '103';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2061,16 +2061,20 @@ const CASINO_GOALS = {
   f21: ['wins', 25], fL1: ['best', 100000], fL3: ['rounds', 5000], fL5: ['wins', 1200],
   EC1: 'code', EC2: 'code', EC3: 'code', TC1: 'code', TC2: 'code', TC3: 'code', fC1: 'code', fC2: 'code', fC3: 'code',
   TP1: ['pwins', 25], TP2: ['pallin', 20], TP3: ['pwins', 800], EP1: ['phands', 50], EP2: ['pbest', 5000], EP3: ['pbest', 60000],
+  // Casino-Strang im Kronen-Pass (Casino-XP dieser Saison, abholen im Pass)
+  TX1: ['pcxp', 205000], TX2: ['pcxp', 720000], TX3: ['pcxp', 1490000], TX4: ['pcxp', 2500000],
+  EX1: ['pcxp', 80000], EX2: ['pcxp', 480000], EX3: ['pcxp', 1150000], EX4: ['pcxp', 2070000], EX5: ['pcxp', 2500000],
 };
-const STAT_TXT = { rounds: 'Runden gespielt', wins: 'Runden gewonnen', best: 'Diamanten auf einmal', phands: 'Poker-Hände', pwins: 'gewonnene Pots', pbest: 'Diamanten in einem Pot', pallin: 'gewonnene All-ins' };
+const STAT_TXT = { rounds: 'Runden gespielt', wins: 'Runden gewonnen', best: 'Diamanten auf einmal', phands: 'Poker-Hände', pwins: 'gewonnene Pots', pbest: 'Diamanten in einem Pot', pallin: 'gewonnene All-ins' , pcxp: 'Casino-XP im Casino-Strang' };
 function renderRewards(box) {
   const me = home.me, C = home.cards;
-  const cur = { rounds: me.casinoRounds || 0, wins: me.casinoWins || 0, best: me.casinoBest || 0 };
+  const cur = { rounds: me.casinoRounds || 0, wins: me.casinoWins || 0, best: me.casinoBest || 0, pcxp: (passV && passV.casino ? passV.casino.xp : me.passCxp) || 0 };
   const prog = (id, unlocked) => {
     const g = CASINO_GOALS[id];
     if (unlocked) return '<span class="rw-ok">✓ Freigeschaltet</span>';
     if (g === 'code') return '<span class="rw-code">🔑 Nur mit Aktionscode</span>';
     const [k, goal] = g, v = Math.min(cur[k], goal);
+    if (k === 'pcxp' && v >= goal) return '<span class="rw-ok">🎁 Erreicht, im Kronen-Pass (Casino-Strang) abholen</span>';
     return `<span class="rw-need">${fmt(v)} / ${fmt(goal)} ${STAT_TXT[k]}</span><span class="bar"><i style="width:${Math.round(100 * v / goal)}%"></i></span>`;
   };
   const needTxt = (it) => (CASINO_GOALS[it.id] === 'code' ? 'Teil des Casino-Pakets, freigeschaltet mit dem Code GAMBLER' : it.need);
@@ -4390,7 +4394,7 @@ function connect() {
   socket.on('market:new', (d) => { if (!home || !home.me || d.seller === home.me.id) return; home.mkTimes = home.mkTimes || {}; (home.mkTimes[d.kind] = home.mkTimes[d.kind] || []).unshift(d.at); mkBadges(); });
   let cxpT = 0;
   socket.on('me:cxp', (d) => { // nach jeder Casino-Runde: Casino-XP, VIP-Stufe und Casino-Strang live nachziehen
-    if (home && home.me) { home.me.casinoXp = d.cxp; home.me.casinoTier = d.tier; }
+    if (home && home.me) { home.me.casinoXp = d.cxp; home.me.casinoTier = d.tier; home.me.passCxp = d.pcxp; }
     if (passV && passV.casino) { passV.casino.xp = d.pcxp; passV.casino.tiers.forEach((x) => { x.reached = d.pcxp >= x.need; }); if (page === 'pass') renderPass(); }
     clearTimeout(cxpT); cxpT = setTimeout(() => { if (page === 'casino') loadVip(); }, 800);
   });
