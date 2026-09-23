@@ -1612,6 +1612,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .troph{margin-bottom:12px;padding:12px;border-radius:18px;background:linear-gradient(160deg,rgba(255,210,63,.14),rgba(40,20,10,.35));box-shadow:inset 0 0 0 2px #FFD23F,0 0 22px rgba(255,190,40,.3)}.troph .vit-h b{color:#FFD23F}
 .tr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tr-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:0;border-radius:14px;background:radial-gradient(circle at 50% 35%,rgba(255,230,160,.18),rgba(0,0,0,.25));color:#fff;text-align:center}.tr-item img{width:100%;height:84px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.6))}.tr-item b{font:800 12.5px/1.2 Archivo}.tr-item small{font-size:10.5px;color:#FFE27A}
 .tr-lib{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}.tr-pick{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(255,255,255,.05)}.tr-pick img{width:90px;height:50px;object-fit:contain}.tr-pick b{display:block;font:800 13px Archivo}.tr-pick small{color:#cfe}
+#layer2{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,10,14,.78);backdrop-filter:blur(3px)}#layer2.on{display:flex}#layer2>.panel{width:100%;max-width:440px;max-height:90vh;overflow:auto}
 </style>
 </head>
 <body>
@@ -1631,7 +1632,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '111';
+const AVER = '112';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2831,9 +2832,14 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
   card.onclick = (e) => { e.stopPropagation(); next(); }; // Tipp auf die Karte blättert weiter
   fill(); raf2 = requestAnimationFrame(idle); requestAnimationFrame(() => { studio.querySelector('.sr-white').classList.add('fade'); enter(true); });
 }
+function layer(html) { // zweite Ebene über dem offenen Fenster: Schließen führt zurück, das Fenster darunter bleibt
+  let L = document.getElementById('layer2'); if (!L) { L = document.createElement('div'); L.id = 'layer2'; document.body.appendChild(L); L.addEventListener('click', (e) => { if (e.target === L) closeLayer(); }); }
+  L.innerHTML = html; L.classList.add('on'); return L;
+}
+function closeLayer() { const L = document.getElementById('layer2'); if (L) { L.classList.remove('on'); L.innerHTML = ''; } }
 function zoomImg(src, title, sub) { // Abzeichen oder Emblem groß ansehen (bewegte Bilder laufen mit)
-  $('#modal').innerHTML = `<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${AVER}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`;
-  $('#modal').classList.add('on'); $('#zoomX').onclick = closeModal; sfx('tick');
+  layer(`<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${AVER}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`);
+  $('#zoomX').onclick = closeLayer; sfx('tick');
 }
 const turboOn = () => { try { return localStorage.getItem('turbo_open') === '1'; } catch (e) { return false; } };
 function openTurbo(pid, r) { // Turbo: kurz drehen, aufreißen, alle Karten auf einmal
@@ -4678,6 +4684,7 @@ function build() {
     <div id="profHead"></div>
     <div class="panel" id="nextPrestige" style="display:flex;flex-direction:column;gap:14px"></div>
     <div><input type="file" id="avaFile" accept="image/*" hidden><button class="btn ghost" id="avaBtn">Profilbild ändern</button></div>
+${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="gap:12px"><span style="font-size:30px">🏆</span><span class="grow"><b>Trophäen</b><br><span class="sub">Sonder-Stücke im gold umrandeten Fenster deines Profils, für alle sichtbar</span></span><button class="btn small" id="trEdit">Bearbeiten</button></div>' : ''}
     <div class="panel row" style="gap:12px"><span style="font-size:30px">🏛</span><span class="grow"><b>Vitrine</b><br><span class="sub">Bis zu 4 Karten, die andere in deinem Profil sehen</span></span><button class="btn small" id="vitEditP">Bearbeiten</button></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
     <div class="panel" id="notifBox" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -5457,11 +5464,11 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
   else if (e.target.closest && e.target.closest('[data-zoom]')) { const z = e.target.closest('[data-zoom]'); zoomImg(z.dataset.zoom, z.dataset.zoomt || '', z.dataset.zooms || ''); }
   else if (t.id === 'trEdit') { api('/api/admin/trophies').then((r) => { const sel = new Set(r.sel);
-      $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>🏆 Trophäen-Bibliothek</h2><p class="sub" style="margin:0">Wähle, was in deinem Profil ausgestellt wird. Alle können es sehen und groß ansehen.</p>
+      layer(`<div class="panel" style="gap:10px"><h2>🏆 Trophäen-Bibliothek</h2><p class="sub" style="margin:0">Wähle, was in deinem Profil ausgestellt wird. Alle können es sehen und groß ansehen.</p>
         <div class="tr-lib">${r.lib.map((x) => `<label class="tr-pick"><input type="checkbox" value="${esc(x.id)}" ${sel.has(x.id) ? 'checked' : ''}><img src="${esc(x.img)}?v=${AVER}" alt="" onerror="this.style.opacity=.15"><span><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></span></label>`).join('')}</div>
-        <button class="btn" id="trSave">Speichern</button><button class="btn ghost" id="trX">Abbrechen</button></div>`;
-      $('#modal').classList.add('on'); $('#trX').onclick = closeModal;
-      $('#trSave').onclick = () => api('/api/admin/trophies', { ids: [...document.querySelectorAll('.tr-pick input:checked')].map((i) => i.value) }).then(() => { closeModal(); toast('🏆 Trophäen gespeichert'); if (home && home.me) showUser(home.me.id); }).catch((e) => toast(e.message));
+        <button class="btn" id="trSave">Speichern</button><button class="btn ghost" id="trX">Abbrechen</button></div>`);
+      $('#trX').onclick = closeLayer;
+      $('#trSave').onclick = () => api('/api/admin/trophies', { ids: [...document.querySelectorAll('.tr-pick input:checked')].map((i) => i.value) }).then(() => { closeLayer(); toast('🏆 Trophäen gespeichert'); if ($('#modal').classList.contains('on') && home && home.me) showUser(home.me.id); }).catch((e) => toast(e.message));
     }).catch((e) => toast(e.message)); }
   else if (t.id === 'turboTg') { try { localStorage.setItem('turbo_open', turboOn() ? '0' : '1'); } catch (e2) {} sfx('tick'); renderCards(); }
   else if (t.dataset.potuse) { const id = t.dataset.potuse, d = tcg.def.packs.find((x) => x.id === id); if (confirm(`${d.name} aktivieren? Er läuft ab jetzt 60 Minuten (läuft schon einer, wird er um 60 Minuten verlängert).`)) api('/api/potion/use', { id }).then((r) => { tcg = r; if (home) home.potions = r.potions; toast('🧪 ' + d.name + ' aktiv'); sfx('exact'); renderCards(); }).catch((e) => toast(e.message)); }
