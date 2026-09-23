@@ -1584,6 +1584,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ps-tabs button.cas.on{background:linear-gradient(135deg,rgba(124,240,168,.3),rgba(142,75,214,.35));box-shadow:inset 0 0 0 2px #7CF0A8,0 0 18px rgba(124,240,168,.35)}
 .ps-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#FF4FA3;box-shadow:0 0 8px #FF4FA3}
 .ps-casino .cas-head{margin-top:0}
+.ava.t12{--fc:#B45CFF;box-shadow:0 0 0 calc(var(--s)*.065) var(--fc),0 0 0 calc(var(--s)*.1) var(--bg-deep),0 0 0 calc(var(--s)*.125) #FFD23F;animation:avaglow 2.4s ease-in-out infinite alternate}.ava.t12 .emb{width:62%;height:62%;right:-22%;bottom:-22%}
+.pglow.p12::before{content:"";position:absolute;inset:-22%;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(180,92,255,.6),rgba(255,210,63,.25) 45%,transparent 70%);filter:blur(7px);animation:masterglow 2.6s ease-in-out infinite alternate}
+.rank.hr{box-shadow:inset 0 0 0 1.5px rgba(180,92,255,.7)}.rank.hr.locked{filter:grayscale(.85);opacity:.6;cursor:pointer}
+.nw-redeem{display:flex!important;flex-direction:column;align-items:center;gap:8px;text-align:center}.nw-redeem .nw-code-c{font-size:26px!important;letter-spacing:2px!important;word-break:break-all;max-width:100%}.nw-redeem .btn{min-width:200px;font-size:17px}.nw-redeem p{margin:0}
 </style>
 </head>
 <body>
@@ -1603,7 +1607,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '96';
+const AVER = '97';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1615,9 +1619,9 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" src="/emblems/p${t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img class="embimg" src="/emblems/${t === 12 ? 'pc_EC5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
-  const t = Math.max(0, Math.min(11, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
+  const t = Math.max(0, Math.min(12, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
   const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
   const zz = p.idle ? `<span class="ava-zz" title="abwesend">😴</span>` : '';
   return `${zz ? '<span class="ava-wrap">' : ''}<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" data-bigava="${esc(String(p.id || ''))}" data-bigname="${esc(p.name || '')}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>${zz ? zz + '</span>' : ''}`;
@@ -3644,6 +3648,7 @@ function renderNews() {
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'vips') return `<div class="nw-embs">${b.items.map(([n, name, need]) => `<div class="nw-em"><img style="width:84px;height:84px;object-fit:contain" src="/emblems/vip${esc(n)}.webp?v=${AVER}" alt=""><b>${esc(name)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="row" style="gap:6px;flex:none">${btn.split('|').map((x, k, arr) => `<span class="btn small ${arr.length > 1 && k === 0 ? 'ghost' : ''} nw-fakebtn">${esc(x)}</span>`).join('')}</span>` : ''}</div>`).join('')}</div></div>`;
+    if (b.type === 'redeem') return `<div class="nw-code nw-redeem"><span class="nw-code-l">🎁 Geschenk-Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-nwredeem="${esc(b.code)}">Einlösen</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
@@ -4831,7 +4836,7 @@ async function showUser(id) {
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
     }).join('')}</div>${!u.showcase || !u.showcase.length ? `<small class="sub">${u.self ? 'Stell deine liebsten Karten aus: im Profil unter „Vitrine“.' : 'Hier ist noch nichts ausgestellt.'}</small>` : ''}</div>`;
     const sum = `<div class="psum">
-      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(11, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img src="/emblems/p${t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
+      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(12, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img src="/emblems/p${t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
       <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
       <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
       <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div>
@@ -5004,6 +5009,7 @@ function update() {
         : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
       const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
       $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
+      + (() => { const hr = String(me.unlocks || (home.cards && home.cards.emblems && home.cards.emblems.some((e) => e.id === 'EC5' && e.unlocked) ? 'EC5' : '')).includes('EC5'); return `<div class="rank hr ${hr ? 'pick' : 'locked'} ${shown === 12 ? 'sel' : ''}" ${hr ? 'data-pres="12"' : 'data-hrlock="1"'}>${emblem(12)}Highroller</div>`; })()
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
     }
     return;
@@ -5315,6 +5321,8 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openPass' || t.closest('#openPass')) { page = 'pass'; renderPass.scrolled = false; render(); loadPass(); }
+  else if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei (2,5 Mio Casino-XP).'); }
+  else if (t.dataset.nwredeem) { const c = t.dataset.nwredeem; t.disabled = true; api('/api/redeem', { code: c }).then(async (r) => { showCodeReveal(r); t.textContent = '✓ Eingelöst'; await loadHome(); }).catch((e) => { toast(e.message); t.textContent = /schon eingelöst/.test(e.message) ? '✓ Schon eingelöst' : 'Einlösen'; t.disabled = /schon eingelöst/.test(e.message); }); }
   else if (t.dataset.pstab) { passTab = t.dataset.pstab; renderPass(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   else if (t.dataset.passinfo) { const [tt, tr] = t.dataset.passinfo.split(':'); passInfo(Number(tt), tr); }
   else if (t.dataset.passclaim) { const c = t; passAct('/api/pass/claim', { tier: Number(c.dataset.passclaim), track: c.dataset.track }, `Stufe ${c.dataset.passclaim} abgeholt!`); }

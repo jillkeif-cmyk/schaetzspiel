@@ -48,7 +48,8 @@ setInterval(() => hits.clear(), 3600000).unref();
 const TAG_COLORS = ['cyan', 'blau', 'rot', 'gruen', 'gelb', 'lila', 'orange', 'pink', 'weiss', 'rainbow'];
 const RESERVED_TAGS = ['dev', 'admin', 'mod', 'staff', 'owner', 'system', 'claude', 'anthropic'];
 
-const shownPrestige = (u) => { const pr = Math.max(0, Math.min(progress.MAX_PRESTIGE, Number(u.prestige) || 0)), ps = Number(u.pres_shown) || 0; return ps === -1 ? 0 : ps > 0 ? Math.min(ps, pr) : pr; };
+const hasHighroller = (u) => String(u.unlocks || '').split(',').includes('EC5'); // Sonderlogo 12 aus dem Casino-Strang
+const shownPrestige = (u) => { const pr = Math.max(0, Math.min(progress.MAX_PRESTIGE, Number(u.prestige) || 0)), ps = Number(u.pres_shown) || 0; return ps === -1 ? 0 : ps === 12 && hasHighroller(u) ? 12 : ps > 0 ? Math.min(ps, pr) : pr; };
 const isAdmin = (u) => !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME;
 const isMod = (u) => isAdmin(u) || u.role === 'coadmin';
 const ROLES = ['', 'coadmin', 'supporter'];
@@ -189,7 +190,8 @@ app.post('/api/prestige-icon', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const n = Math.round(Number(req.body.n));
-    if (!Number.isFinite(n) || n < -1 || n > u.prestige) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
+    if (n === 12 && !hasHighroller(u)) return res.status(403).json({ error: 'Das Highroller-Logo gibt es auf Stufe 20 im Casino-Strang des Kronen-Passes.' });
+    if (!Number.isFinite(n) || n < -1 || (n > u.prestige && n !== 12)) return res.status(403).json({ error: 'Diesen Rang hast du noch nicht erreicht.' });
     await store.save(u.id, { pres_shown: n });
     res.json({ presShown: n === -1 ? 0 : n });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -1538,7 +1540,9 @@ app.post('/api/card', async (req, res) => {
 
 // Code einlösen
 let adminCodes = {}; // CODE -> { reward, max, until, note, used: [{ id, name, at }] }
-store.setting('admin_codes').then((v) => { if (v) adminCodes = JSON.parse(v); }).catch(() => {});
+store.setting('admin_codes').then(async (v) => { if (v) adminCodes = JSON.parse(v);
+  if (!adminCodes.GEISTERJACKPOT) { adminCodes.GEISTERJACKPOT = { reward: { dia: 10000, items: [] }, max: 0, until: 0, note: 'Update 12', used: [], created: Date.now() }; await saveCodes(); } // Code aus Update 12
+}).catch(() => {});
 const saveCodes = () => store.setting('admin_codes', JSON.stringify(adminCodes));
 let banner = { on: false };
 store.setting('banner').then((v) => { if (v) banner = JSON.parse(v); }).catch(() => {});
