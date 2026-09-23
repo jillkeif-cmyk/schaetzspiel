@@ -978,7 +978,17 @@ app.post('/api/tcg/buy', async (req, res) => {
     if (p.stock !== null && p.stock !== undefined && n > p.stock) return res.status(400).json({ error: p.stock ? `Nur noch ${p.stock} Stück verfügbar.` : 'Dieser Booster ist ausverkauft.' });
     const cost = p.price * n, have = Number(u.diamonds) || 0;
     if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
-    if (p.stock !== null && p.stock !== undefined) { p.stock -= n; if (p.stock <= 0) { p.stock = 0; p.soldout = true; } saveShop().catch(() => {}); io.emit('shop:changed'); } // Bestand sofort abziehen
+    let soldOutNow = false;
+    if (p.stock !== null && p.stock !== undefined) { p.stock -= n; if (p.stock <= 0) { p.stock = 0; p.soldout = true; soldOutNow = true; } saveShop().catch(() => {}); io.emit('shop:changed'); } // Bestand sofort abziehen
+    if (soldOutNow) { // nur der Admin erfährt, wer den letzten Artikel gekauft hat
+      console.log(`Ausverkauft: ${p.name}, letzter Kauf von ${u.name} (${n} Stück)`);
+      store.userByName(ADMIN_NAME).then((adm) => {
+        if (!adm) return;
+        const msg = `${u.name} hat die letzten ${n > 1 ? n + ' Stück' : 'Stück'} gekauft.`;
+        push.toUser(adm.id, { title: `⛔ ${p.name} ausverkauft`, body: msg, tag: 'soldout-' + p.id, url: '/' }).catch(() => {});
+        io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === adm.id) so.emit('admin:note', `⛔ ${p.name} ausverkauft: ${msg}`); });
+      }).catch(() => {});
+    }
     await store.save(u.id, { diamonds: have - cost });
     await store.packAdd(u.id, p.id, n);
     res.json(await tcgState(await store.userById(u.id)));
