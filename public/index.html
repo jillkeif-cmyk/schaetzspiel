@@ -1595,6 +1595,17 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .shop-hero{display:flex;align-items:center;gap:10px;margin-bottom:12px}.shop-hero .dia{margin-left:auto;font:800 15px Archivo}
 .shop-sign{display:flex;align-items:center;gap:10px;flex:1;padding:10px 14px;border-radius:16px;background:linear-gradient(135deg,#FFE27A,#F5B82E 55%,#E39A12);color:#2A1B00;box-shadow:0 8px 20px rgba(255,190,40,.3)}.shop-sign span{font-size:28px}.shop-sign b{display:block;font:900 20px/1 Archivo}.shop-sign small{font:700 11.5px Archivo;opacity:.75}
 .shop-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;position:sticky;top:0;z-index:3;padding:6px 0;background:var(--bg-deep, #0b2f35)}.shop-sec{font:900 17px/1 Archivo;color:#FFD23F;margin:14px 0 10px}
+.inv-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.inv-top .sub{font-size:12px}
+.turbo-tg{padding:7px 13px;border-radius:99px;border:0;font:900 13.5px Archivo;color:#cfe;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}.turbo-tg.on{color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E);box-shadow:0 0 14px rgba(255,210,63,.55)}
+#turbo{position:fixed;inset:0;z-index:95;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px 12px calc(20px + env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 40%,#2a1540,#07040d 75%)}#turbo.on{display:flex}
+.tb-stage{position:relative;perspective:900px}.tb-pack{width:min(52vw,230px);animation:tbspin .65s cubic-bezier(.5,0,.3,1) both;filter:drop-shadow(0 20px 40px rgba(0,0,0,.7))}
+@keyframes tbspin{0%{transform:rotateY(0) scale(.85)}70%{transform:rotateY(540deg) scale(1.05)}100%{transform:rotateY(720deg) scale(1)}}
+.tb-stage.burst .tb-pack{animation:tbburst .4s ease-in forwards}@keyframes tbburst{to{transform:scale(1.35);opacity:0;filter:brightness(3) blur(6px)}}
+.tb-flash{position:absolute;inset:-60%;border-radius:50%;background:radial-gradient(circle,#fff,rgba(255,230,160,.6) 30%,transparent 65%);opacity:0;pointer-events:none}.tb-stage.burst .tb-flash{animation:tbflash .45s ease-out forwards}@keyframes tbflash{0%{opacity:0;transform:scale(.3)}40%{opacity:1}100%{opacity:0;transform:scale(1.6)}}
+.tb-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:560px}.tb-card{position:relative;margin:0;text-align:center;animation:tbin .45s cubic-bezier(.2,.8,.2,1) var(--d) both}.tb-card img{width:100%;border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.6)}
+.tb-card.top img{box-shadow:0 0 0 2px #FFD23F,0 0 26px rgba(255,210,63,.7)}.tb-card figcaption{margin-top:6px}.tb-card b{display:block;font:800 12px/1.2 Archivo}.tb-card small{font-size:10.5px;color:#cfe}
+@keyframes tbin{from{opacity:0;transform:translateY(40px) rotateY(90deg) scale(.8)}to{opacity:1;transform:none}}
+.tb-btns{display:flex;gap:8px;width:100%;max-width:420px}.tb-btns .btn{flex:1}
 </style>
 </head>
 <body>
@@ -2523,7 +2534,7 @@ function renderCards() {
   } else if (ctab === 'inventar') {
     const defOf = (id) => tcg.def.packs.find((x) => x.id === id) || {};
     const invD = tcg.packs.filter((p) => defOf(p.pack_id).display), invB = tcg.packs.filter((p) => !defOf(p.pack_id).display && !defOf(p.pack_id).potion);
-    box.innerHTML = (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = `<div class="inv-top"><span class="grow sub">${turboOn() ? 'Turbo: Booster öffnen in 2 Sekunden, alle Karten auf einmal' : ''}</span><button class="turbo-tg ${turboOn() ? 'on' : ''}" id="turboTg">⚡ Turbo ${turboOn() ? 'an' : 'aus'}</button></div>` + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
@@ -2814,6 +2825,25 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
   card.onclick = (e) => { e.stopPropagation(); next(); }; // Tipp auf die Karte blättert weiter
   fill(); raf2 = requestAnimationFrame(idle); requestAnimationFrame(() => { studio.querySelector('.sr-white').classList.add('fade'); enter(true); });
 }
+const turboOn = () => { try { return localStorage.getItem('turbo_open') === '1'; } catch (e) { return false; } };
+function openTurbo(pid, r) { // Turbo: kurz drehen, aufreißen, alle Karten auf einmal
+  const TOP = ['ultra', 'ext', 'legend', 'ghost', 'mythic'];
+  let el = document.getElementById('turbo'); if (!el) { el = document.createElement('div'); el.id = 'turbo'; document.body.appendChild(el); }
+  el.innerHTML = `<div class="tb-stage"><img class="tb-pack" src="/tcg/pack_${esc(pid)}.webp?v=${AVER}" alt=""><div class="tb-flash"></div></div>`;
+  el.classList.add('on'); sfx('srcard');
+  setTimeout(() => { sfx('srtear'); el.querySelector('.tb-stage').classList.add('burst'); }, 650);
+  setTimeout(() => {
+    sfx('srflash'); const best = r.pulled.some((c) => TOP.includes(c.variant));
+    if (best) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e) {}
+    const left = (tcg.packs.find((x) => x.pack_id === pid) || {}).count || 0;
+    el.innerHTML = `<div class="tb-cards">${r.pulled.map((c, i) => `<figure class="tb-card ${TOP.includes(c.variant) ? 'top' : ''}" style="--d:${i * 110}ms"><img src="${cardImg(c.id, c.variant)}" data-card="${c.id}:${c.variant}" alt="">${badge(c.variant)}<figcaption><b>${esc((tcg.def.cards.find((x) => x.id === c.id) || {}).name || '')}</b><small>${esc(varName(c.variant))}</small></figcaption></figure>`).join('')}</div>
+      <div class="tb-btns">${left ? `<button class="btn" id="tbNext">⚡ Nächsten öffnen (${left})</button>` : ''}<button class="btn ghost" id="tbDone">Fertig</button></div>`;
+    r.pulled.forEach((c, i) => setTimeout(() => sfx(TOP.includes(c.variant) ? 'exact' : 'srcard'), i * 110 + 150));
+    const close = () => { el.classList.remove('on'); el.innerHTML = ''; renderCards(); };
+    $('#tbDone').onclick = close;
+    if ($('#tbNext')) $('#tbNext').onclick = () => { el.classList.remove('on'); el.innerHTML = ''; openPack(pid); };
+  }, 1050);
+}
 async function openPack(pid) {
   pid_last = pid;
   try {
@@ -2830,6 +2860,7 @@ async function openPack(pid) {
       Promise.all(r.pulled.map((c) => new Promise((ok) => { const im = new Image(); im.onload = im.onerror = ok; im.src = cardImg(c.id, c.variant); }))),
       new Promise((ok) => setTimeout(ok, 2500)),
     ]);
+    if (turboOn()) { $('#opener').classList.remove('on'); return openTurbo(pid, r); }
     if (openStyle() === 'showroom') { $('#opener').classList.remove('on'); return openShowroom(pid, r); }
     // ein Ton je Karte, gute Karten klingen anders
     r.pulled.forEach((c, i) => setTimeout(() => {
@@ -5410,6 +5441,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
+  else if (t.id === 'turboTg') { try { localStorage.setItem('turbo_open', turboOn() ? '0' : '1'); } catch (e2) {} sfx('tick'); renderCards(); }
   else if (t.dataset.potuse) { const id = t.dataset.potuse, d = tcg.def.packs.find((x) => x.id === id); if (confirm(`${d.name} aktivieren? Er läuft ab jetzt 60 Minuten (läuft schon einer, wird er um 60 Minuten verlängert).`)) api('/api/potion/use', { id }).then((r) => { tcg = r; if (home) home.potions = r.potions; toast('🧪 ' + d.name + ' aktiv'); sfx('exact'); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.6); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.packview || t.closest('[data-packview]')) packView((t.dataset.packview ? t : t.closest('[data-packview]')).dataset.packview);
