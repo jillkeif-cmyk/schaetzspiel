@@ -143,13 +143,22 @@ async function cardStats(uid) {
   return out;
 }
 
+// Jahreszeiten-Look (zum Beispiel Halloween), im Admin-Menü schaltbar, geht live an alle
+let siteTheme = '';
+store.setting('site_theme').then((v) => { siteTheme = v || ''; }).catch(() => {});
+app.post('/api/admin/theme', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  siteTheme = ['halloween'].includes(String(req.body.theme)) ? String(req.body.theme) : '';
+  await store.setting('site_theme', siteTheme); io.emit('theme', siteTheme); console.log(`Look: ${siteTheme || 'normal'} durch ${u.name}`);
+  res.json({ theme: siteTheme });
+});
 app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ theme: siteTheme, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
