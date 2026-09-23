@@ -1109,7 +1109,7 @@
   "effect": "Diese Karte ist unzerstörbar, solange du eine andere Gruselnacht-Karte liegen hast.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 064 / 100",
-  "prompt": "an undead lich king with a glowing crown and a staff with a skull"
+  "prompt": "a towering undead lich king on a floating throne of skulls, a storm of screaming souls swirling around him, crown of icy blue fire, frozen cathedral ruins"
  },
  {
   "id": "gn_b15",
@@ -1130,8 +1130,8 @@
  },
  {
   "id": "gn_b16",
-  "name": "Knochengolem",
-  "theme": "Tod",
+  "name": "Zombie-Rex",
+  "theme": "Dino",
   "frame": "B",
   "group": "haeufig",
   "variants": [
@@ -1143,7 +1143,7 @@
   "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
   "tribute": "",
   "num": "GN 066 / 100",
-  "prompt": "a golem made of bones and skulls with glowing green eyes"
+  "prompt": "a colossal undead Tyrannosaurus rex zombie with rotting flesh and exposed ribs bursting out of a bubbling tar pit, roaring"
  },
  {
   "id": "gn_b17",
@@ -1198,7 +1198,7 @@
  },
  {
   "id": "gn_b20",
-  "name": "Grabräuber-Skelett",
+  "name": "Zombie-Horde",
   "theme": "Tod",
   "frame": "B",
   "group": "haeufig",
@@ -1211,7 +1211,7 @@
   "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
   "tribute": "",
   "num": "GN 070 / 100",
-  "prompt": "a sneaky skeleton thief with a sack of gold in a crypt"
+  "prompt": "a horde of rotting zombies clawing their way out of cracked graves, hands reaching from the earth"
  },
  {
   "id": "gn_b21",
@@ -1339,8 +1339,8 @@
  },
  {
   "id": "gn_b28",
-  "name": "Totengräber",
-  "theme": "Tod",
+  "name": "Werwolf-Zombie",
+  "theme": "Monster",
   "frame": "B",
   "group": "selten",
   "variants": [
@@ -1353,7 +1353,7 @@
   "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
   "tribute": "",
   "num": "GN 078 / 100",
-  "prompt": "a tall grim gravedigger with a skull-topped shovel in the rain"
+  "prompt": "a half-rotten undead werewolf howling in a graveyard under a blood red moon"
  },
  {
   "id": "gn_b29",
@@ -1429,8 +1429,8 @@
  },
  {
   "id": "gn_b33",
-  "name": "Totenmaske",
-  "theme": "Tod",
+  "name": "Voodoo-Priester",
+  "theme": "Magie",
   "frame": "B",
   "group": "selten",
   "variants": [
@@ -1443,7 +1443,7 @@
   "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
   "tribute": "Beschwörung: 1 Tribut",
   "num": "GN 083 / 100",
-  "prompt": "a floating ornate death mask with glowing green eyes"
+  "prompt": "a voodoo priest with skull face paint, top hat, glowing voodoo dolls floating around him and candles"
  },
  {
   "id": "gn_b34",
@@ -1501,8 +1501,8 @@
  },
  {
   "id": "gn_b37",
-  "name": "Knochenschlange",
-  "theme": "Tod",
+  "name": "Raptor-Skelette",
+  "theme": "Dino",
   "frame": "B",
   "group": "legend",
   "variants": [
@@ -1515,12 +1515,12 @@
   "effect": "Alle gegnerischen Karten verlieren 500 DEF, solange diese Karte liegt.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 087 / 100",
-  "prompt": "a giant serpent made of vertebrae coiling around a tomb"
+  "prompt": "a pack of undead velociraptor skeletons with glowing eyes hunting through a dark museum hall"
  },
  {
   "id": "gn_b38",
-  "name": "Kerzengeist",
-  "theme": "Geister",
+  "name": "Puppenspieler",
+  "theme": "Grusel",
   "frame": "B",
   "group": "legend",
   "variants": [
@@ -1533,7 +1533,7 @@
   "effect": "Diese Karte kann zweimal pro Zug angreifen.",
   "tribute": "Beschwörung: 1 Tribut",
   "num": "GN 088 / 100",
-  "prompt": "a small ghost made of candle smoke above a candelabra"
+  "prompt": "a sinister puppet master controlling creepy marionette dolls with glowing strings in an old theater"
  },
  {
   "id": "gn_b39",
@@ -1591,7 +1591,7 @@
  },
  {
   "id": "gn_b42",
-  "name": "Gespensterturm",
+  "name": "Geisterkrake",
   "theme": "Geister",
   "frame": "B",
   "group": "legend",
@@ -1605,12 +1605,12 @@
   "effect": "Wenn diese Karte beschworen wird: Zerstöre 1 gegnerische Karte mit weniger als 2000 ATK.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 092 / 100",
-  "prompt": "a crooked haunted tower with ghosts spiraling around it"
+  "prompt": "a giant spectral kraken with glowing tentacles dragging a sinking ship into a stormy sea"
  },
  {
   "id": "gn_b43",
-  "name": "Schädelkrähe",
-  "theme": "Tod",
+  "name": "Vampirgräfin",
+  "theme": "Monster",
   "frame": "B",
   "group": "ultra",
   "variants": [
@@ -1622,7 +1622,7 @@
   "effect": "Wenn diese Karte angreift, kann der Gegner keine Effekte aktivieren.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 093 / 100",
-  "prompt": "a crow with a skull face perched on a withered branch"
+  "prompt": "an elegant vampire countess in a crimson gown with bats, drinking from a golden goblet in a gothic castle"
  },
  {
   "id": "gn_b44",
@@ -1660,8 +1660,8 @@
  },
  {
   "id": "gn_b46",
-  "name": "Knochenkoloss",
-  "theme": "Tod",
+  "name": "Totenmammut",
+  "theme": "Dino",
   "frame": "B",
   "group": "ultra",
   "variants": [
@@ -1673,7 +1673,7 @@
   "effect": "Einmal pro Duell: Tausche die ATK und DEF aller Karten auf dem Feld.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 096 / 100",
-  "prompt": "a colossal giant made of thousands of bones towering over a city"
+  "prompt": "an undead woolly mammoth skeleton with frozen fur, ice crystals and green soul fire in its eyes"
  },
  {
   "id": "gn_b47",
@@ -1728,7 +1728,7 @@
  },
  {
   "id": "gn_b50",
-  "name": "Totenfürst",
+  "name": "Auferstehung",
   "theme": "Tod",
   "frame": "B",
   "group": "mythic",
@@ -1742,6 +1742,6 @@
   "effect": "Einmal pro Duell: Hole alle deine zerstörten Karten auf die Hand.",
   "tribute": "Beschwörung: 2 Tribute",
   "num": "GN 100 / 100",
-  "prompt": "the lord of the dead on a throne of bones with a flaming crown"
+  "prompt": "a towering necromancer overlord raising an army of skeletons, zombies and a zombie dinosaur from a cracked graveyard, green lightning storm, apocalyptic sky"
  }
 ]
