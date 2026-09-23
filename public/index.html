@@ -1503,10 +1503,15 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 .shop-adm{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;background:rgba(255,255,255,.04)}.shop-adm img{width:48px;flex:none}.shop-adm label{display:flex;flex-direction:column;font-size:11px;color:#cfe;gap:2px}.shop-adm .field{width:110px;padding:7px}
 /* ---- Showroom ---- */
 #showroom{position:fixed;inset:0;z-index:40;display:none}#showroom.on{display:block}
-.sr-studio{position:absolute;inset:0;overflow:hidden;background:radial-gradient(55% 40% at 50% -6%,rgba(235,242,255,.30),transparent 72%),linear-gradient(180deg,#161B23 0%,#0B0E14 58%,#050609 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;perspective:1200px}
+.sr-studio{position:absolute;inset:0;overflow:hidden;background:radial-gradient(70% 55% at 50% 30%,#1D232D 0%,#10141B 55%,#07090D 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;perspective:1200px}
 .sr-glass{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 25%),linear-gradient(90deg,rgba(140,180,220,.07),transparent 28%,transparent 72%,rgba(140,180,220,.07));-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 60%,transparent 64%);mask-image:linear-gradient(180deg,#000 0%,#000 60%,transparent 64%)}
-.sr-beam{position:absolute;top:-4%;left:50%;width:120vw;height:80%;transform:translateX(-50%);pointer-events:none;clip-path:polygon(43% 0,57% 0,82% 100%,18% 100%);background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(220,235,255,.08) 55%,rgba(255,255,255,0));filter:blur(8px);animation:srbeam 6s ease-in-out infinite}
-@keyframes srbeam{50%{opacity:.8}}
+.sr-beam{position:absolute;top:-12%;left:50%;width:110vw;max-width:620px;height:95%;transform:translateX(-50%);pointer-events:none;background:radial-gradient(38% 100% at 50% 0%,rgba(236,243,255,.34),rgba(220,232,255,.12) 45%,rgba(255,255,255,0) 72%);-webkit-mask-image:linear-gradient(90deg,transparent 8%,#000 34%,#000 66%,transparent 92%);mask-image:linear-gradient(90deg,transparent 8%,#000 34%,#000 66%,transparent 92%);filter:blur(22px);animation:srbeam 7s ease-in-out infinite}
+.sr-beam.b2{width:60vw;max-width:340px;background:radial-gradient(30% 100% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,0) 70%);filter:blur(14px);animation-duration:9s;animation-delay:-3s}
+@keyframes srbeam{50%{opacity:.78;transform:translateX(-50%) scaleX(1.04)}}
+.sr-dust{position:absolute;inset:0;pointer-events:none}.sr-dust i{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.55);filter:blur(.6px);animation:srdust 10s ease-in-out infinite}
+@keyframes srdust{0%,100%{transform:translate(0,0);opacity:0}20%{opacity:.8}50%{transform:translate(14px,-26px);opacity:.5}80%{opacity:.7}}
+.sr-bokeh{position:absolute;inset:0;pointer-events:none}.sr-bokeh img{position:absolute;width:30vw;max-width:170px;filter:blur(14px) brightness(.55);opacity:.5}
+.sr-bokeh .bk0{left:-6%;top:22%}.sr-bokeh .bk1{right:-8%;top:18%}.sr-bokeh .bk2{left:14%;top:52%;width:18vw;opacity:.3}.sr-bokeh .bk3{right:12%;top:55%;width:17vw;opacity:.3}
 .sr-floor{position:absolute;left:-10%;right:-10%;bottom:0;height:38%;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(0,0,0,.25) 45%,rgba(0,0,0,.6))}
 .sr-spot{position:absolute;left:50%;top:6%;width:70vw;max-width:360px;height:70px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(235,242,255,.35),rgba(235,242,255,.08) 60%,transparent)}
 body.halloween .sr-studio{background:radial-gradient(55% 40% at 50% -6%,rgba(255,170,80,.30),transparent 72%),linear-gradient(180deg,#24122E 0%,#12081A 58%,#07030A 100%)}
@@ -1550,6 +1555,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .sr-studio.r-mythic .sr-rays,.sr-studio.r-ghost .sr-rays{background:repeating-conic-gradient(from 0deg,rgba(255,79,163,.16) 0 5deg,rgba(90,169,255,.15) 5deg 10deg,transparent 10deg 18deg)}
 .pk-view{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:inherit;font:700 11px Archivo;padding:0}
 .pk-see{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:6px 11px;border-radius:99px;font:800 12px/1 Archivo;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.sr-tile{position:absolute;left:0;top:0;transform-origin:50% 50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;background-repeat:no-repeat;will-change:filter}
+.sr-floor{border-top:0!important;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.28) 40%,rgba(0,0,0,.6))!important}
 </style>
 </head>
 <body>
@@ -1569,7 +1576,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '74';
+const AVER = '75';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2595,18 +2602,49 @@ async function srPackData(pid) { // Bild laden, sichtbare Fläche und Randfarben
   return (srCache[pid] = { src, W, H, x0: x0 / W * 100, x1: (x1 + 1) / W * 100, y0: y0 / H * 100, y1: (y1 + 1) / H * 100,
     L: strip(x0 + inset, y0, 1, y1 - y0), R: strip(x1 - inset, y0, 1, y1 - y0), T: strip(x0, y0 + inset, x1 - x0, 1), B: strip(x0, y1 - inset, x1 - x0, 1) });
 }
-async function srBuildPack(host, pid) { // echter Körper: Vorder- und Rückseite, zwei Seitenwände, Deckel oben und unten
-  const d = await srPackData(pid), D = 22;
+// Kissenform: viele kleine Flächen folgen einer gewölbten Oberfläche; das Licht wird je Fläche berechnet
+const SR_COLS = 9, SR_ROWS = 12;
+async function srBuildPack(host, pid) {
+  const d = await srPackData(pid);
   host.style.aspectRatio = `${d.W} / ${d.H}`;
-  const hw = d.x1 - d.x0, hh = d.y1 - d.y0, face = (back) => `<div class="sr-face ${back ? 'b' : 'f'}" style="transform:${back ? 'rotateY(180deg) ' : ''}translateZ(${D / 2}px)"><img src="${d.src}" alt=""><i class="sr-pillow" style="${srMask(d.src)}"></i><i class="sr-gloss" style="${srMask(d.src)}"></i></div>`;
-  host.innerHTML = `<div class="sr-glow"></div><div class="sr-pack" style="--lum:1">${face(false)}${face(true)}
-    <div class="sr-side" style="left:calc(${d.x0}% - ${D / 2}px);top:${d.y0}%;width:${D}px;height:${hh}%;background-image:url(${d.L});transform:rotateY(-90deg)"></div>
-    <div class="sr-side" style="left:calc(${d.x1}% - ${D / 2}px);top:${d.y0}%;width:${D}px;height:${hh}%;background-image:url(${d.R});transform:rotateY(90deg)"></div>
-    <div class="sr-side cap" style="left:${d.x0}%;top:calc(${d.y0}% - ${D / 2}px);width:${hw}%;height:${D}px;background-image:url(${d.T});transform:rotateX(90deg)"></div>
-    <div class="sr-side cap" style="left:${d.x0}%;top:calc(${d.y1}% - ${D / 2}px);width:${hw}%;height:${D}px;background-image:url(${d.B});transform:rotateX(-90deg)"></div></div>`;
-  return host.querySelector('.sr-pack');
+  await new Promise((ok) => requestAnimationFrame(ok));
+  const W = host.clientWidth, H = host.clientHeight, B = Math.max(12, W * 0.12); // halbe Dicke in der Mitte
+  const bx0 = d.x0 / 100 * W, bx1 = d.x1 / 100 * W, by0 = d.y0 / 100 * H, by1 = d.y1 / 100 * H;
+  const zf = (x, y) => { const u = Math.min(1, Math.abs(((x - bx0) / (bx1 - bx0)) * 2 - 1)), v = (y - by0) / (by1 - by0);
+    const sx = Math.pow(Math.max(0, Math.cos(u * Math.PI / 2)), 0.65), ramp = (t) => { t = Math.min(1, Math.max(0, t / 0.13)); return t * t * (3 - 2 * t); };
+    return B * sx * ramp(v) * ramp(1 - v); };
+  const tw = W / SR_COLS, th = H / SR_ROWS, tiles = [];
+  let html = '<div class="sr-glow"></div><div class="sr-pack">';
+  for (const back of [false, true]) for (let r = 0; r < SR_ROWS; r++) for (let c = 0; c < SR_COLS; c++) {
+    const cx = (c + 0.5) * tw, cy = (r + 0.5) * th, e = 1.5, z = zf(cx, cy);
+    const dzx = (zf(cx + e, cy) - zf(cx - e, cy)) / (2 * e), dzy = (zf(cx, cy + e) - zf(cx, cy - e)) / (2 * e);
+    const sg = back ? -1 : 1, nrm = (v) => { const l = Math.hypot(...v); return v.map((a) => a / l); };
+    const Tx = nrm([back ? -1 : 1, 0, back ? dzx : dzx * sg]);
+    const N = nrm(back ? [-dzx, -dzy, -1] : [-dzx, -dzy, 1]);
+    const Ty = [N[1] * Tx[2] - N[2] * Tx[1], N[2] * Tx[0] - N[0] * Tx[2], N[0] * Tx[1] - N[1] * Tx[0]];
+    const m = [Tx[0], Tx[1], Tx[2], 0, Ty[0], Ty[1], Ty[2], 0, N[0], N[1], N[2], 0, cx - tw / 2, cy - th / 2, z * sg, 1].map((v) => +v.toFixed(4));
+    const bxp = back ? -(W - cx - tw / 2) : -(cx - tw / 2);
+    html += `<i class="sr-tile ${back ? 'b' : ''}" style="width:${(tw + 1.2).toFixed(1)}px;height:${(th + 1.2).toFixed(1)}px;background-image:url(${d.src});background-size:${W}px ${H}px;background-position:${bxp.toFixed(1)}px ${-(cy - th / 2).toFixed(1)}px;transform:matrix3d(${m.join(',')})"></i>`;
+    tiles.push(N);
+  }
+  host.innerHTML = html + '</div>';
+  const pk = host.querySelector('.sr-pack'); pk._tiles = [...pk.querySelectorAll('.sr-tile')].map((el, k) => ({ el, n: tiles[k], back: el.classList.contains('b') }));
+  pk._lum = 1; srLight(pk, 0, 0); return pk;
 }
-const SR_ROOM = '<div class="sr-glass"></div><div class="sr-beam"></div><div class="sr-floor"><i class="sr-spot"></i></div>';
+// Licht von oben vorne: Grundhelligkeit + weiches Streulicht + Glanzpunkt, je nach Drehung neu
+const SR_L = (() => { const v = [0.25, -0.75, 0.62], l = Math.hypot(...v); return v.map((a) => a / l); })();
+const SR_H = (() => { const v = [SR_L[0], SR_L[1], SR_L[2] + 1], l = Math.hypot(...v); return v.map((a) => a / l); })();
+function srLight(pk, angDeg, tiltDeg) {
+  if (!pk || !pk._tiles) return;
+  const a = angDeg * Math.PI / 180, t = tiltDeg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), ct = Math.cos(t), st = Math.sin(t), lum = pk._lum || 1;
+  for (const T of pk._tiles) {
+    let [x, y, z] = T.n; const x1 = x * ca + z * sa, z1 = -x * sa + z * ca; const y2 = y * ct - z1 * st, z2 = y * st + z1 * ct;
+    const dif = Math.max(0, x1 * SR_L[0] + y2 * SR_L[1] + z2 * SR_L[2]), spc = Math.pow(Math.max(0, x1 * SR_H[0] + y2 * SR_H[1] + z2 * SR_H[2]), 36);
+    const b = ((T.back ? 0.32 : 0.42) + dif * 0.72 + spc * 1.35) * lum;
+    T.el.style.filter = `brightness(${b.toFixed(3)})`;
+  }
+}
+const SR_ROOM = `<div class="sr-bokeh">${['standard', 'toon', 'ghost', 'premium'].map((p, k) => `<img class="bk${k}" src="/tcg/pack_${p}.webp?v=${AVER}" alt="">`).join('')}</div><div class="sr-glass"></div><div class="sr-beam"></div><div class="sr-beam b2"></div><div class="sr-dust">${Array.from({ length: 16 }, (_, k) => `<i style="left:${(38 + (k * 37) % 26)}%;top:${(8 + (k * 53) % 60)}%;animation-delay:-${(k * 1.3) % 9}s;animation-duration:${8 + (k % 5) * 2}s"></i>`).join('')}</div><div class="sr-floor"><i class="sr-spot"></i></div>`;
 function srShell(inner, cls) { const el = $('#showroom'); el.innerHTML = `<div class="sr-studio ${cls || ''}">${SR_ROOM}${inner}</div>`; el.classList.add('on'); return el; }
 function packView(pid) { // Booster frei drehen: ziehen dreht, loslassen dreht mit Schwung weiter
   const p = (tcg.def.packs || []).find((x) => x.id === pid); closeModal();
@@ -2614,7 +2652,7 @@ function packView(pid) { // Booster frei drehen: ziehen dreht, loslassen dreht m
   let raf = 0; $('#srClose').onclick = () => { cancelAnimationFrame(raf); el.classList.remove('on'); el.innerHTML = ''; };
   srBuildPack($('#srStage'), pid).then((pk) => { let ang = -25, vel = 0.4, drag = false, lx = 0, t0 = performance.now();
   const tick = (now) => { const t = (now - t0) / 1000; if (!drag) { ang += vel; vel += (0.4 - vel) * 0.015; }
-    pk.style.transform = `translateY(${Math.sin(t * 1.3) * 6}px) rotateY(${ang}deg) rotateX(${Math.sin(t * 0.8) * 5}deg)`;
+    const tx = Math.sin(t * 0.8) * 5; pk.style.transform = `translateY(${Math.sin(t * 1.3) * 6}px) rotateY(${ang}deg) rotateX(${tx}deg)`; srLight(pk, ang, tx);
     pk.style.setProperty('--gl', (((ang % 360) + 360) % 360 / 3.6 * 1.4 - 20).toFixed(1) + '%'); raf = requestAnimationFrame(tick); };
   const st = $('#srStage');
   st.onpointerdown = (e) => { drag = true; lx = e.clientX; st.setPointerCapture(e.pointerId); };
@@ -2635,9 +2673,9 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
   // 1) Drehen: langsam an, zwei volle Umdrehungen, weich aus; in der zweiten Hälfte leuchtet der Booster immer stärker
   await new Promise((ok) => { const T = 2600, t0 = performance.now(); const step = (now) => { const x = Math.min(1, (now - t0) / T), e = easeIO(x);
       const ang = -30 + e * 750, lift = Math.sin(x * Math.PI) * -18, sc = 0.86 + e * 0.18, lum = Math.max(0, (x - 0.45) / 0.55);
-      pk.style.transform = `translateY(${lift}px) scale(${sc}) rotateY(${ang}deg) rotateX(${Math.sin(x * Math.PI * 2) * 6}deg)`;
+      const tx = Math.sin(x * Math.PI * 2) * 6; pk.style.transform = `translateY(${lift}px) scale(${sc}) rotateY(${ang}deg) rotateX(${tx}deg)`;
       pk.style.setProperty('--gl', ((((ang % 360) + 360) % 360) / 3.6 * 1.4 - 20).toFixed(1) + '%');
-      pk.style.setProperty('--lum', (1 + lum * 0.9).toFixed(3)); glow.style.opacity = (lum * 0.95).toFixed(2); glow.style.transform = `scale(${0.6 + lum * 0.9})`;
+      pk._lum = 1 + lum * 1.1; srLight(pk, ang, tx); glow.style.opacity = (lum * 0.95).toFixed(2); glow.style.transform = `scale(${0.6 + lum * 0.9})`;
       if (x < 1 && !skip) requestAnimationFrame(step); else ok(); }; requestAnimationFrame(step); });
   // 2) Hülle klappt weich auf, Licht breitet sich von der Mitte aus
   stage.classList.add('tear'); sfx('dartbest'); try { navigator.vibrate && navigator.vibrate(25); } catch (e) {}
