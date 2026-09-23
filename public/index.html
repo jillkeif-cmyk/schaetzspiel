@@ -1584,7 +1584,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '86';
+const AVER = '87';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2524,7 +2524,7 @@ function renderCards() {
     const total = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra) * (melt[d.v] || 40), 0);
     const count = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra), 0);
     const myDisp = tcg.packs.filter((p) => (tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display && p.count > 0);
-    const dispHtml = myDisp.length ? `<h2 style="margin:4px 0 8px;font-size:18px">🗃 Displays umwandeln</h2>${myDisp.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), val = Math.round(d.price * 0.25), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(d.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${fmt(val)} 💎<br>Tipp: Öffnen bringt ${d.size} Booster</span></span>${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small ghost" data-meltdisp="${esc(d.id)}">Umwandeln</button>`}</div>`; }).join('')}` : '';
+    const dispHtml = myDisp.length ? `<h2 style="margin:4px 0 8px;font-size:18px">🗃 Displays umwandeln</h2>${myDisp.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), val = Math.round(d.price * 0.6), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(d.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${fmt(val)} 💎<br>Tipp: Öffnen bringt ${d.size} Booster</span></span>${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small ghost" data-meltdisp="${esc(d.id)}">Umwandeln</button>`}</div>`; }).join('')}` : '';
     if (!dupes.length) { box.innerHTML = dispHtml + '<p class="sub">Du hast keine doppelten Karten.</p>'; return; }
     const groups = order.map((v) => [v, dupes.filter((d) => d.v === v)]).filter(([, l]) => l.length);
     box.innerHTML = dispHtml + `<p class="sub" style="margin-bottom:8px">Tippe eine Karte an, um sie zum Umwandeln auszuwählen. Jeder Tipp nimmt eine mehr. Von jeder Karte bleibt immer eine erhalten.</p>
@@ -5239,7 +5239,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
-  else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.25); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
+  else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.6); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.packview || t.closest('[data-packview]')) packView((t.dataset.packview ? t : t.closest('[data-packview]')).dataset.packview);
   else if (t.dataset.pack) packInfo(t.dataset.pack);
   else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));

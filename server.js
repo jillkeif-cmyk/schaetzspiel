@@ -1011,8 +1011,8 @@ app.post('/api/tcg/open', async (req, res) => {
 
 // Doppelte Karten umwandeln
 const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 1500 };
-// Displays umwandeln: bringt ein Viertel des Shop-Preises
-const dispMelt = (p) => Math.round((p.price || 0) * 0.25);
+// Displays umwandeln: bringt 60 % des Shop-Preises
+const dispMelt = (p) => Math.round((p.price || 0) * 0.6);
 app.post('/api/tcg/meltdisplay', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
