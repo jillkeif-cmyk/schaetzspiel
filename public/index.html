@@ -1404,6 +1404,28 @@ body.no-grading .grading-only{display:none !important}
 .ps-lock{position:absolute;top:4px;right:6px;font-size:13px}
 .ps-now{display:flex;align-items:center;gap:8px;margin:4px 0}.ps-now::before,.ps-now::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#FFD23F,transparent)}.ps-now span{font:800 11px/1 Archivo;color:#FFD23F;letter-spacing:1px;text-transform:uppercase}
 .ps-bank{display:flex;gap:10px;align-items:center;margin-top:14px}.ps-bank img{width:52px}.ps-bank small{display:block;color:#C9B8F0;font-size:11.5px}
+.ps-halloween{position:absolute;inset:-70px -16px -40px -16px;pointer-events:none;z-index:-1;overflow:hidden;border-radius:0;background:radial-gradient(120% 55% at 50% 0%,#4A1A5E 0%,#241030 40%,#12081A 75%,#0C0612 100%)}
+.ps-halloween::after{content:'';position:absolute;left:-10%;right:-10%;bottom:0;height:35%;background:radial-gradient(60% 100% at 50% 100%,rgba(255,106,0,.18),transparent 70%)}
+#passBody{position:relative;isolation:isolate}
+.ps-bat{position:absolute;left:var(--x);top:var(--y);width:calc(46px*var(--s));opacity:.55;animation:psbat var(--d) ease-in-out infinite alternate}
+.ps-bat svg{width:100%;fill:#0A0410;filter:drop-shadow(0 0 6px rgba(255,140,40,.35))}
+@keyframes psbat{0%{transform:translate(0,0) scaleY(1)}25%{transform:translate(18px,-10px) scaleY(.6)}50%{transform:translate(36px,4px) scaleY(1)}75%{transform:translate(20px,12px) scaleY(.6)}100%{transform:translate(-10px,-6px) scaleY(1)}}
+.ps-web{position:absolute;top:60px;width:130px;height:130px;stroke:rgba(230,220,255,.22);stroke-width:1;fill:none}.ps-web.l{left:0}.ps-web.r{right:0;transform:scaleX(-1)}
+.ps-status{background:linear-gradient(180deg,rgba(255,122,24,.16),rgba(142,75,214,.14))!important;box-shadow:inset 0 0 0 1.5px rgba(255,140,40,.45)!important}
+.ps-tier{background:linear-gradient(180deg,#FFB547,#FF6A00)!important}
+.ps-row.reached .ps-num span:not(.pump){background:linear-gradient(180deg,#FFB547,#FF6A00);color:#2A0E00}
+.ps-num .pump{position:relative;width:44px!important;height:44px!important;clip-path:none!important;background:none!important;display:grid;place-items:center}
+.ps-num .pump img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:grayscale(.8) brightness(.55)}
+.ps-num .pump.lit img{filter:drop-shadow(0 0 10px rgba(255,140,40,.9));animation:pspump 2.4s ease-in-out infinite}
+.ps-num .pump b{position:relative;font:900 13px/1 Archivo;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;margin-top:6px}
+@keyframes pspump{50%{filter:drop-shadow(0 0 16px rgba(255,160,40,1)) brightness(1.15)}}
+.ps-now::before,.ps-now::after{background:linear-gradient(90deg,transparent,#FF8A1F,transparent)!important}.ps-now span{color:#FFB547!important}
+.ps-cell.prem{background:linear-gradient(180deg,rgba(142,75,214,.34),rgba(255,106,0,.1))!important}
+.ps-cell.ready{box-shadow:inset 0 0 0 2px #FFB547,0 0 18px rgba(255,140,40,.55)!important}
+.ps-claim{background:#FF6A00!important}
+.ps-task.ready{box-shadow:inset 0 0 0 1.5px #FFB547!important}
+.passcard{background:linear-gradient(135deg,rgba(255,106,0,.28),rgba(142,75,214,.4))!important}
+.passcard::after{content:'🎃';position:absolute;right:10px;bottom:6px;font-size:22px;opacity:.9;animation:pspump 2.4s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -1423,7 +1445,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '46';
+const AVER = '47';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3110,7 +3132,8 @@ function renderPass() {
   if (!passV) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadPass(); return; }
   const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
   const next = v.tier >= v.tiersN ? '' : `noch ${fmt(v.perTier - v.into)} Pass-XP bis Stufe ${v.tier + 1}`;
-  box.innerHTML = `<div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">⏳ ${passLeft(v)}</span></div>
+  const bats = Array.from({ length: 7 }, (_, i) => `<span class="ps-bat" style="--x:${(i * 37) % 100}%;--y:${10 + (i * 23) % 70}%;--d:${6 + i % 4}s;--s:${0.6 + (i % 3) * 0.25}">${'<svg viewBox="0 0 64 32"><path d="M32 12c2-4 5-6 8-6-1 3 0 5 2 6 3-4 8-6 14-5-4 2-6 6-6 10-4-2-8-2-11 1-2-2-4-3-7-2-3-1-5 0-7 2-3-3-7-3-11-1 0-4-2-8-6-10 6-1 11 1 14 5 2-1 3-3 2-6 3 0 6 2 8 6z"/></svg>'}</span>`).join('');
+  box.innerHTML = `<div class="ps-halloween">${bats}<svg class="ps-web l" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg><svg class="ps-web r" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg></div><div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">⏳ ${passLeft(v)}</span></div>
     <div class="ps-status panel">
       <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
       ${v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · mindestens 22.500 💎 zurück</small></button>`}
@@ -3123,7 +3146,7 @@ function renderPass() {
       const fr = x.reached && !x.gotFree, pr = x.reached && v.prem && !x.gotPrem, cur = x.t === v.tier + 1;
       return `${cur ? '<div class="ps-now"><span>Du bist hier</span></div>' : ''}<div class="ps-row ${x.reached ? 'reached' : ''} ${[10, 20, 30].includes(x.t) ? 'big' : ''}">
         <${fr ? 'button' : 'div'} class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}" ${fr ? `data-passclaim="${x.t}" data-track="free"` : ''}>${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</${fr ? 'button' : 'div'}>
-        <div class="ps-num"><span>${x.t}</span></div>
+        <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}</div>
         <${pr ? 'button' : 'div'} class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}" ${pr ? `data-passclaim="${x.t}" data-track="prem"` : ''}>${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</${pr ? 'button' : 'div'}></div>`; }).join('')}</div>
     <div class="ps-bank panel"><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
     <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino zählt nicht.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
