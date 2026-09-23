@@ -1575,6 +1575,9 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .lg-note{display:block;margin-top:2px;font-size:12px;color:#FFE27A;line-height:1.3;white-space:normal}
 .ct-pot{display:inline-flex!important;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(180,120,255,.35),rgba(90,169,255,.25))!important;box-shadow:inset 0 0 0 1.5px rgba(200,160,255,.7)!important;color:#fff!important}.ct-pot img{width:20px;height:20px;object-fit:contain}.ct-pot.on{background:linear-gradient(135deg,#C9A2FF,#7FB6FF)!important;color:#1A0B26!important}
 .pot-head{display:flex;align-items:center;gap:6px;margin:4px 0 12px;padding:12px 14px;border-radius:16px;background:radial-gradient(circle at 20% 50%,rgba(180,120,255,.3),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(200,160,255,.35)}.pot-head img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}.pot-head div{margin-left:8px}.pot-head b{display:block;font:900 20px/1.1 Archivo}.pot-head small{color:#dcd0ff}
+.cas-head{display:flex;gap:12px;align-items:center;margin:18px 0 8px;background:linear-gradient(135deg,rgba(124,240,168,.16),rgba(142,75,214,.22))!important;box-shadow:inset 0 0 0 1.5px rgba(124,240,168,.5)!important}.cas-head img{width:64px;height:64px}.cas-head b{font:900 18px/1.1 Archivo}.cas-head small{display:block;color:#cfe;font-size:12px;margin-top:3px}
+.cas-track{display:flex;flex-direction:column;gap:6px}.cas-row{display:grid;grid-template-columns:74px 1fr;gap:6px;align-items:stretch}.cas-num{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.05)}.cas-num span{font:900 18px/1 Archivo}.cas-num small{font-size:10.5px;color:#9fe3bf;margin-top:2px}
+.cas-row.reached .cas-num{background:linear-gradient(180deg,#7CF0A8,#1FA35A);color:#062414}.cas-row.reached .cas-num small{color:#062414}.cas-row:not(.reached) .ps-cell{opacity:.55}.cas-row.big .ps-cell.cas{background:linear-gradient(180deg,rgba(124,240,168,.22),rgba(142,75,214,.25));box-shadow:inset 0 0 0 1.5px rgba(124,240,168,.6)}
 </style>
 </head>
 <body>
@@ -1594,7 +1597,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '93';
+const AVER = '95';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3509,7 +3512,7 @@ function renderPass() {
     <div class="ps-status panel">
       <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
       ${LOCK ? `<div class="ps-lockbar">🔒 <b>Noch gesperrt</b><span>${v.unlockAt ? 'Freischaltung ' + passWhen(v.unlockAt) : 'Die Freischaltung kommt bald. Schau dich schon mal um!'}</span></div>` : v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
-      ${v.claimable ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${v.claimable})</button>` : ''}
+      ${(() => { const n = v.claimable + (v.casino && !LOCK ? v.casino.tiers.filter((x) => x.reached && !x.got).length : 0); return n ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${n})</button>` : ''; })()}
     </div>
     <h2 style="margin:14px 0 8px">📅 Wochenaufgaben</h2>
     <div class="ps-tasks">${v.tasks.map((t) => `<div class="ps-task ${t.claimed ? 'done' : t.have >= t.goal ? 'ready' : ''}"><div class="grow"><b>${esc(t.text)}</b><span class="pc-bar"><i style="width:${Math.round(100 * t.have / t.goal)}%"></i></span><small>${t.have} / ${t.goal} · +${fmt(t.xp)} Pass-XP</small></div>${t.claimed ? '<span class="psk-ok">✓</span>' : t.have >= t.goal ? `<button class="btn small" data-passtask="${t.id}">Abholen</button>` : ''}</div>`).join('')}</div>
@@ -3520,15 +3523,18 @@ function renderPass() {
         <button data-passinfo="${x.t}:free" class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}">${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</button>
         <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}</div>
         <button data-passinfo="${x.t}:prem" class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}">${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</button></div>`; }).join('')}</div>
+    ${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
+      return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP${nx ? ` · nächste Stufe bei ${fmt(nx.need)}` : ' · alles erreicht!'}</small></div></div>
+      <div class="cas-track">${c.tiers.map((x) => { const rd = !LOCK && x.reached && !x.got; return `<div class="cas-row ${x.reached && !LOCK ? 'reached' : ''} ${[5, 10, 15, 20].includes(x.t) ? 'big' : ''}"><div class="cas-num"><span>${x.t}</span><small>${fmt(x.need)}</small></div><button data-passinfo="${x.t}:casino" class="ps-cell cas ${x.got ? 'got' : rd ? 'ready' : ''}">${passRw(x.rw, true)}${x.got ? '<span class="psk-ok">✓</span>' : rd ? '<span class="ps-claim">Abholen</span>' : ''}</button></div>`; }).join('')}</div>`; })() : ''}
     <div class="ps-bank panel"><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
-    <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino zählt nicht.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
+    <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino-XP zählen für den Casino-Strang.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
   const now = box.querySelector('.ps-now'); if (now && !renderPass.scrolled) { renderPass.scrolled = true; setTimeout(() => now.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250); }
 }
 const BOX_TXT = { small: ['500 bis 2.000 💎', '2 Glücksrad-Drehs', 'Standard-Booster', 'Premium-Booster'], big: ['2.000 bis 8.000 💎', '5 Glücksrad-Drehs', 'Geister-Booster', 'Toon-Welt-Booster', 'Premium-Booster + 3 Drehs'] };
 function passInfo(t, track) { // Vorschau einer Belohnung: groß, bewegte Items bewegt
-  const v = passV; if (!v) return; const x = v.tiers[t - 1]; if (!x) return;
-  const rw = track === 'prem' ? x.prem : x.free, got = track === 'prem' ? x.gotPrem : x.gotFree;
-  const can = v.mode === 'on' && x.reached && !got && (track === 'free' || v.prem);
+  const v = passV; if (!v) return; const x = track === 'casino' ? { ...v.casino.tiers[t - 1], reached: v.casino.tiers[t - 1].reached } : v.tiers[t - 1]; if (!x) return;
+  const rw = track === 'casino' ? x.rw : track === 'prem' ? x.prem : x.free, got = track === 'casino' ? x.got : track === 'prem' ? x.gotPrem : x.gotFree;
+  const can = v.mode === 'on' && x.reached && !got && (track === 'free' || track === 'casino' || v.prem);
   const big = [];
   if (rw.item) big.push(rw.kind === 'title' ? `<img class="pi-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><b>Titel „${esc(rw.name)}“</b>` : `<img class="pi-emb ${rw.kind === 'frame' ? 'spin' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><b>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</b>`);
   if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>`);
@@ -3538,9 +3544,9 @@ function passInfo(t, track) { // Vorschau einer Belohnung: groß, bewegte Items 
   if (rw.xp) big.push(`<img class="pi-emb" src="/news/pass_xp.webp?v=${AVER}" alt=""><b>${fmt(rw.xp)} Bonus-XP</b><small>für dein Level</small>`);
   if (rw.cxp) big.push(`<img class="pi-emb" src="/news/pass_cxp.webp?v=${AVER}" alt=""><b>${fmt(rw.cxp)} Casino-XP</b><small>für deine VIP-Stufe</small>`);
   if (rw.dia) big.push(`<img class="pi-emb" src="/tcg/diamonds.webp?v=${AVER}" alt=""><b>${fmt(rw.dia)} Diamanten</b>`);
-  $('#modal').innerHTML = `<div class="panel pi-box"><small class="pi-tag">${track === 'prem' ? '👑 PREMIUM' : 'GRATIS'} · Stufe ${t}</small>
+  $('#modal').innerHTML = `<div class="panel pi-box"><small class="pi-tag">${track === 'casino' ? `🎰 CASINO-STRANG · Stufe ${t} · ${fmt(x.need)} Casino-XP` : `${track === 'prem' ? '👑 PREMIUM' : 'GRATIS'} · Stufe ${t}`}</small>
     <div class="pi-items">${big.map((b) => `<div class="pi-it">${b}</div>`).join('')}</div>
-    <p class="sub" style="text-align:center">${got ? '✓ Schon abgeholt' : can ? 'Bereit zum Abholen!' : v.mode !== 'on' ? '🔒 Der Pass ist noch gesperrt' : !x.reached ? `Erreichbar ab Stufe ${t}` : 'Nur mit Premium'}</p>
+    <p class="sub" style="text-align:center">${got ? '✓ Schon abgeholt' : can ? 'Bereit zum Abholen!' : v.mode !== 'on' ? '🔒 Der Pass ist noch gesperrt' : !x.reached ? (track === 'casino' ? `Erreichbar ab ${fmt(x.need)} Casino-XP (du hast ${fmt(v.casino.xp)})` : `Erreichbar ab Stufe ${t}`) : 'Nur mit Premium'}</p>
     ${can ? `<button class="btn" id="piClaim">Abholen</button>` : ''}<button class="btn ghost" id="piClose">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#piClose').onclick = closeModal;
   if (can) $('#piClaim').onclick = () => { closeModal(); passAct('/api/pass/claim', { tier: t, track }, `Stufe ${t} abgeholt!`); };

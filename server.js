@@ -426,12 +426,18 @@ app.post('/api/pass/claim', async (req, res) => { // tier: Zahl oder 'all'; trac
     try {
       const u = await passUser(await store.userById(u0.id));
       const tier = kpass.tierOf(u.pass_xp), prem = !!Number(u.pass_prem), cf = kpass.set(u.pass_cf), cp = kpass.set(u.pass_cp);
-      const want = req.body.tier === 'all' ? Array.from({ length: tier }, (_, i) => i + 1) : [Math.round(Number(req.body.tier) || 0)];
+      const want = req.body.track === 'casino' ? [] : req.body.tier === 'all' ? Array.from({ length: tier }, (_, i) => i + 1) : [Math.round(Number(req.body.tier) || 0)];
       const track = String(req.body.track || 'both'), save = {}, got = { dia: 0, packs: [], items: [], spins: 0, xp: 0, cxp: 0, boxes: [] };
       for (const t of want) {
         if (t < 1 || t > tier) continue;
         if (track !== 'prem' && !cf.has(String(t))) { await passGive(u, kpass.FREE[t], save, got); cf.add(String(t)); }
         if (track !== 'free' && prem && !cp.has(String(t))) { await passGive(u, kpass.PREM[t], save, got); cp.add(String(t)); }
+      }
+      if (track === 'casino' || req.body.tier === 'all') { // Casino-Strang: nach Casino-XP dieser Saison
+        const cc = kpass.set(u.pass_cc), cx = Number(u.pass_cxp) || 0;
+        const cw = req.body.tier === 'all' ? Array.from({ length: kpass.CAS_TIERS }, (_, i) => i + 1) : [Math.round(Number(req.body.tier) || 0)];
+        for (const t of cw) if (t >= 1 && t <= kpass.CAS_TIERS && cx >= kpass.casNeed(t) && !cc.has(String(t))) { await passGive(u, kpass.CASINO[t], save, got); cc.add(String(t)); }
+        save.pass_cc = [...cc].join(',');
       }
       save.pass_cf = [...cf].join(','); save.pass_cp = [...cp].join(',');
       await store.save(u.id, save); Object.assign(u, save);
@@ -731,6 +737,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
     casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp'),
+    ...(kpass.active() ? { pass_cxp: (Number(u.pass_cxp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp') } : {}), // Casino-Strang im Kronen-Pass
   });
   setTimeout(() => checkProgress(uid), 400);
 };
@@ -1874,6 +1881,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   const net = won - stake;
   await store.save(uid, {
     casino_xp: (Number(u.casino_xp) || 0) + bonus,
+    ...(kpass.active() ? { pass_cxp: (Number(u.pass_cxp) || 0) + bonus } : {}), // Poker zählt auch für den Casino-Strang
     poker_hands: (Number(u.poker_hands) || 0) + 1,
     poker_wins: (Number(u.poker_wins) || 0) + (won > 0 ? 1 : 0),
     poker_best: Math.max(Number(u.poker_best) || 0, won > 0 ? won : 0),
