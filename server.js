@@ -330,11 +330,14 @@ app.post('/api/admin/boost', async (req, res) => {
 });
 store.setting('pass_per_tier').then((v) => { if (v) kpass.setPerTier(v); }).catch(() => {});
 store.setting('pass_mode').then((v) => { if (v) { const x = JSON.parse(v); kpass.setMode(x.mode, x.unlockAt); } }).catch(() => {});
+// Pass-Start: Wochenaufgaben zählen erst ab hier. Fehlt der Wert (erster Start nach diesem Update), beginnt die Zählung jetzt für alle neu
+store.setting('pass_epoch').then(async (v) => { if (v) kpass.setEpoch(v); else { kpass.setEpoch(Date.now()); await store.setting('pass_epoch', String(kpass.epoch())); console.log('Kronen-Pass: Wochenaufgaben zählen ab jetzt neu'); } }).catch(() => {});
 const passClosed = (res) => { if (kpass.active()) return false; const st = kpass.state(); res.status(403).json({ error: st === 'locked' ? (kpass.unlockAt() ? `Der Kronen-Pass wird am ${new Date(kpass.unlockAt()).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} Uhr freigeschaltet.` : 'Der Kronen-Pass ist gerade gesperrt.') : 'Den Kronen-Pass gibt es gerade nicht.' }); return true; };
 const passBusy = new Set();
 async function passUser(u) { // Saison und Wochenstart nachziehen
   const upd = kpass.norm(u), wk = kpass.weekId();
-  if (!String(u.pass_wk || '').startsWith(wk + '|')) upd.pass_wk = wk + '|' + JSON.stringify({ matches: Number(u.matches) || 0, wins: Number(u.wins) || 0, exact: Number(u.exact) || 0 });
+  const pre = wk + '@' + kpass.epoch() + '|'; // Startwert nur, solange der Pass läuft; bei neuem Pass-Start neu
+  if (kpass.active() && kpass.epoch() && !String(u.pass_wk || '').startsWith(pre)) upd.pass_wk = pre + JSON.stringify({ matches: Number(u.matches) || 0, wins: Number(u.wins) || 0, exact: Number(u.exact) || 0 });
   if (Object.keys(upd).length) { await store.save(u.id, upd); Object.assign(u, upd); }
   return u;
 }
@@ -416,7 +419,7 @@ app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt 
       if (!kpass.active()) return res.status(400).json({ error: 'Die Saison ist vorbei.' });
       const v = kpass.view(u), t = v.tasks.find((x) => x.id === String(req.body.id));
       if (!t || t.claimed || t.have < t.goal) return res.status(400).json({ error: 'Noch nicht geschafft.' });
-      const wk = kpass.weekId(), done = kpass.set(u.pass_wdone); for (const k of [...done]) if (!k.startsWith(wk)) done.delete(k); done.add(wk + ':' + t.id);
+      const wk = kpass.weekId() + '@' + kpass.epoch(), done = kpass.set(u.pass_wdone); for (const k of [...done]) if (!k.startsWith(wk + ':')) done.delete(k); done.add(wk + ':' + t.id);
       const save = { pass_xp: (Number(u.pass_xp) || 0) + t.xp, pass_wdone: [...done].join(',') };
       await store.save(u.id, save); Object.assign(u, save);
       res.json({ ...kpass.view(u), gotXp: t.xp });
@@ -441,7 +444,9 @@ app.get('/api/admin/casinoban', async (req, res) => {
 });
 app.post('/api/admin/passmode', async (req, res) => { // Pass an, gesperrt (mit Freischaltzeit) oder aus
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const wasOn = kpass.state() === 'on';
   const r = kpass.setMode(String(req.body.mode || 'on'), req.body.unlockAt ? Date.parse(req.body.unlockAt) || Number(req.body.unlockAt) : 0);
+  if (!wasOn && kpass.state() === 'on') { kpass.setEpoch(Date.now()); await store.setting('pass_epoch', String(kpass.epoch())); } // Pass geht an: Wochenaufgaben zählen ab jetzt
   await store.setting('pass_mode', JSON.stringify(r)); console.log(`Kronen-Pass: ${r.mode}${r.unlockAt ? ' bis ' + new Date(r.unlockAt).toISOString() : ''} durch ${u.name}`); res.json(r);
 });
 app.post('/api/admin/passtier', async (req, res) => { // Pass-Tempo: XP pro Stufe
