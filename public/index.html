@@ -1561,6 +1561,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ct-shopbig .csb-ic{font-size:30px}.ct-shopbig b{display:block;font:900 20px/1.1 Archivo}.ct-shopbig small{display:block;font:700 12.5px/1.2 Archivo;opacity:.75}.ct-shopbig .csb-go{font:900 26px/1 Archivo;opacity:.7}
 .ct-shopbig.on{box-shadow:0 0 0 3px #fff,0 8px 26px rgba(255,190,40,.55)}
 .ct-new{position:absolute;top:-9px;right:14px;padding:4px 10px;border-radius:99px;font:900 11px/1 Archivo;letter-spacing:.4px;color:#fff;background:linear-gradient(135deg,#FF4FA3,#B45CFF);box-shadow:0 0 14px rgba(255,79,163,.6);animation:psglow 1.8s ease-in-out infinite}
+.pk-more{border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}.pk-more>summary{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;font:800 15px/1 Archivo;cursor:pointer;list-style:none}.pk-more>summary::-webkit-details-marker{display:none}.pk-more>summary small{color:#9fe3bf;font-weight:800}.pk-more[open]>summary{border-bottom:1px solid rgba(255,255,255,.08)}.pk-more>*:not(summary){margin:10px 12px}
 </style>
 </head>
 <body>
@@ -1580,7 +1581,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '81';
+const AVER = '83';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3338,6 +3339,10 @@ function packInfo(pid) {
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:90vh;overflow:auto">
     <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<button class="pk-view" data-packview="${esc(p.id)}" title="Ansehen"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt=""><span>👀 Ansehen</span></button>
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span></span></div>
+    <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
+      <button class="chipbtn" id="packMax">Max</button></div>
+    ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}
+    <details class="pk-more"><summary><span>📊 Chancen & alle Karten</span><small>${haveN} / ${pool.length}</small></summary>
     ${stars.length ? `<b>✨ Die Stars in diesem Booster</b>
     <div class="pk-stars">${stars.map((x) => { const n = owned(x.c.id, x.v); return `<figure class="${n ? 'have' : ''}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))} · ${n ? `<span class="pk-yes">✓ hast du${n > 1 ? ' ' + n + '×' : ''}</span>` : '<span class="pk-no">fehlt dir</span>'}</figcaption></figure>`; }).join('')}</div>${moreUltra ? `<small class="sub">Wische zur Seite · ${moreUltra} weitere Ultra Rares findest du unten</small>` : '<small class="sub">Wische zur Seite</small>'}` : ''}
     <div class="pk-sum"><b>${haveN} von ${pool.length}</b> Karten aus diesem Booster hast du schon<span class="collect-bar" style="max-width:none"><i style="width:${Math.round(100 * haveN / Math.max(1, pool.length))}%"></i></span></div>
@@ -3345,13 +3350,12 @@ function packInfo(pid) {
     ${byVar.map(([v, list]) => { const h = list.filter((x) => owned(x.c.id, x.v)).length; return `<details class="pk-fold"><summary><span class="grow">${badge(v)} ${esc(varName(v))} <small>${list.length} Karten</small></span><span class="pk-cnt ${h === list.length ? 'full' : ''}">${h} / ${list.length}</span></summary><div class="pk-grid">${list.map(thumb).join('')}</div></details>`; }).join('')}
     <b>Chancen pro Karte</b>
     <div class="parts">${Object.entries(p.odds).map(([k, o]) => `<div><span>${esc(varName(k))}</span><span>${(o * 100).toFixed(1).replace('.', ',')} %</span></div>`).join('')}</div>
-    <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
-      <button class="chipbtn" id="packMax">Max</button></div>
-    ${p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : '<button class="btn" id="packBuy">Kaufen</button>'}
+    </details>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   const maxN = Math.max(1, Math.min(9999, Math.floor(((tcg && tcg.diamonds) || 0) / p.price)));
-  $('#packMax').onclick = () => { $('#packN').value = maxN; };
+  const upd = () => { const b = $('#packBuy'); if (!b || b.disabled) return; const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); b.textContent = `Kaufen · ${fmt(n * p.price)} 💎`; };
+  $('#packMax').onclick = () => { $('#packN').value = maxN; upd(); }; $('#packN').oninput = upd;
   $('#packBuy').onclick = () => {
     const n = Math.max(1, Math.min(9999, Math.round(Number($('#packN').value) || 1)));
     api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Booster gekauft'); }).catch((e) => toast(e.message));
@@ -4251,7 +4255,12 @@ function connect() {
   });
   socket.on('tc:list', (l) => {
     tcMachines = l || [];
-    if (tc.seat && !tcMachines.some((m) => m.id === tc.seat && m.user && home && m.user.id === home.me.id)) { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && cgame === 'triple') { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
+    if (tc.seat && !tcMachines.some((m) => m.id === tc.seat && m.user && home && m.user.id === home.me.id)) {
+      const mine = tcMachines.find((m) => m.id === tc.seat);
+      if (mine && !mine.user) { // Server hat den Platz vergessen (Neustart, Verbindung weg): still wieder hinsetzen
+        api('/api/casino/triple/sit', { machine: tc.seat }).then((r) => { tcMachines = r.list; }).catch(() => {});
+      } else { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && cgame === 'triple') { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
+    }
     if (page === 'casino' && cgame === 'triple' && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
     if (!S && page === 'home') update();
   });

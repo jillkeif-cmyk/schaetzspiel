@@ -146,7 +146,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Doppel-XP-Aktion (lib/boost.js, Setting boost): Level-XP, Casino-XP, Pass-XP einzeln schaltbar, Banner auf der Startseite.
 - Verlauf im Admin-Menü: Diamanten, XP, Casino-XP, Pass-XP (Tabelle ledger, Spalte kind: dia/xp/cxp/pxp).
 - Börse: bis 5.000 Angebote, Filter „Meine Angebote“, „Alle zurücknehmen“ (/api/tcg/cancel-all). Roulette-Chips bis 100k.
-- Triple Crown Plätze: bei Verbindungsabbruch 3 Min reserviert; jede Dreh-/Risiko-Anfrage schickt machine mit, tcSeated setzt automatisch wieder hin, wenn frei (z. B. nach Neustart/Deploy); sonst klare Meldung und zurück zur Auswahl.
+- Triple Crown Plätze: Client setzt sich bei tc:list mit freier eigener Maschine still wieder hin (statt „aufgestanden“). Bei Verbindungsabbruch 3 Min reserviert; jede Dreh-/Risiko-Anfrage schickt machine mit, tcSeated setzt automatisch wieder hin, wenn frei (z. B. nach Neustart/Deploy); sonst klare Meldung und zurück zur Auswahl.
 - Kronen-Pass Wochenaufgaben: zählen erst ab Pass-Start (Setting pass_epoch, wird beim Einschalten neu gesetzt; beim ersten Start nach Einführung = Reset für alle). Aufgaben: 25 Matches (2.500), 8 Siege (2.500), 5 Punktlandungen (3.000).
 - Tickets: offen = nur „eingereicht“ und „in Bearbeitung“ (openTicketCount), Zähler aktualisiert sich live bei Statuswechsel (ticket:count).
 - Tickets: Push an den Admin mit Protokoll („Ticket-Push an …: N Gerät(e)“), live Hinweis + roter Zähler offener Tickets am Support-Knopf (nur Mods/Admin).
