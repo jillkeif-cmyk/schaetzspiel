@@ -1397,7 +1397,7 @@ body.no-grading .grading-only{display:none !important}
 .ps-cell.locked .pr-ico,.ps-cell.locked .pr-title,.ps-cell.locked .pr-dia{filter:saturate(.5) brightness(.8)}
 .ps-cell small{font-size:10.5px;line-height:1.15;color:#E8DDFF}
 .pr-dia{display:flex;align-items:center;gap:3px;font:800 14px/1 Archivo;color:#fff}.pr-dia img{width:20px}
-.pr-ico{width:46px;height:46px;object-fit:contain}.pr-ico.pack{width:34px;height:46px}.pr-ico.frame{width:52px;height:52px}
+.pr-ico{width:46px;height:46px;object-fit:contain}.pr-ico.pack{width:34px;height:46px}.pr-ico.box{width:54px;height:54px;filter:drop-shadow(0 0 8px rgba(255,140,40,.7))}.pr-ico.frame{width:52px;height:52px}
 .pr-title{width:100%;max-width:150px;border-radius:6px}
 .psk-ok{position:absolute;top:4px;right:6px;color:#7CF0A8;font:900 14px/1 Archivo}
 .ps-claim{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:#1FA35A;color:#fff;font:800 10px/1 Archivo;padding:4px 8px;border-radius:99px}
@@ -1445,7 +1445,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '47';
+const AVER = '48';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3123,7 +3123,11 @@ function passRw(rw, prem) { // eine Belohnung als Kachel
   const parts = [];
   if (rw.item) parts.push(rw.kind === 'title' ? `<img class="pr-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><small>Titel „${esc(rw.name)}“</small>` : `<img class="pr-ico ${rw.kind === 'frame' ? 'frame' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><small>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</small>`);
   if (rw.item2) parts.push(`<img class="pr-ico" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><small>Emblem „${esc(rw.name2)}“</small>`);
+  if (rw.box) parts.push(`<img class="pr-ico box" src="/news/pass_box.webp?v=${AVER}" alt=""><small>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</small>`);
   if (rw.pack) parts.push(`<img class="pr-ico pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><small>${PACK_NAME[rw.pack] || 'Booster'}</small>`);
+  if (rw.spin) parts.push(`<img class="pr-ico" src="/news/gluecksrad.webp?v=${AVER}" alt=""><small>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</small>`);
+  if (rw.xp) parts.push(`<img class="pr-ico" src="/news/pass_xp.webp?v=${AVER}" alt=""><small>${fmt(rw.xp)} Bonus-XP</small>`);
+  if (rw.cxp) parts.push(`<img class="pr-ico" src="/news/pass_cxp.webp?v=${AVER}" alt=""><small>${fmt(rw.cxp)} Casino-XP</small>`);
   if (rw.dia) parts.push(`<span class="pr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(rw.dia)}</span>`);
   return parts.join('');
 }
@@ -3136,7 +3140,7 @@ function renderPass() {
   box.innerHTML = `<div class="ps-halloween">${bats}<svg class="ps-web l" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg><svg class="ps-web r" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg></div><div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">⏳ ${passLeft(v)}</span></div>
     <div class="ps-status panel">
       <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
-      ${v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · mindestens 22.500 💎 zurück</small></button>`}
+      ${v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
       ${v.claimable ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${v.claimable})</button>` : ''}
     </div>
     <h2 style="margin:14px 0 8px">📅 Wochenaufgaben</h2>
@@ -3155,12 +3159,15 @@ function renderPass() {
 function passGot(r, title) { // Belohnungs-Einblendung
   passV = r; if (home) home.me.diamonds = r.diamonds ?? home.me.diamonds; if (tcg && r.diamonds != null) tcg.diamonds = r.diamonds;
   renderPass(); renderPassCard();
-  const g = r.got; if (!g || (!g.dia && !g.packs.length && !g.items.length)) return;
+  const g = r.got; if (!g || (!g.dia && !g.packs.length && !g.items.length && !g.spins && !g.xp && !g.cxp)) return;
   sfx('prestige');
   const u = $('#unlock');
   u.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Kronen-Pass</p><h1 class="cr-code" style="font-size:30px">${title}</h1>
     ${g.dia ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(g.dia)}</b><span>Diamanten</span></div>` : ''}
+    ${g.boxes && g.boxes.length ? `<img src="/news/pass_box.webp?v=${AVER}" alt="" style="width:110px;margin:-6px 0 -10px;filter:drop-shadow(0 0 18px rgba(255,140,40,.8))"><p class="sub">🎃 ${g.boxes.length > 1 ? g.boxes.length + ' Kürbis-Überraschungen geöffnet' : 'Kürbis-Überraschung geöffnet'}</p>` : ''}
     ${g.packs.length ? `<p class="sub">📦 ${g.packs.map((p) => PACK_NAME[p] || p).join(', ')} liegen im Inventar</p>` : ''}
+    ${g.spins ? `<p class="sub">🎡 ${g.spins} Glücksrad-${g.spins > 1 ? 'Drehs' : 'Dreh'} gutgeschrieben</p>` : ''}
+    ${g.xp || g.cxp ? `<p class="sub">⭐ ${g.xp ? `+${fmt(g.xp)} Bonus-XP` : ''}${g.xp && g.cxp ? ' · ' : ''}${g.cxp ? `+${fmt(g.cxp)} Casino-XP` : ''}</p>` : ''}
     ${g.items.length ? `<p class="sub">✨ Neu: ${g.items.map(esc).join(', ')}</p>` : ''}
     <button class="btn" id="unlockOk" style="min-width:220px">Super!</button></div>`;
   u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };

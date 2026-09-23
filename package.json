@@ -2,11 +2,11 @@
   "name": "schaetzspiel",
   "version": "1.0.0",
   "private": true,
-  "description": "Multiplayer-Schätzspiel für bis zu 6 Spieler",
+  "description": "Multiplayer-Sch\u00e4tzspiel f\u00fcr bis zu 6 Spieler",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/sim.js"
+    "test": "node test/sim.js && node test/race.js"
   },
   "engines": {
     "node": ">=18"

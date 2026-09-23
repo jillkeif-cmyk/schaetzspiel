@@ -223,7 +223,7 @@ function vipView(u) {
   const used = u.wheel_day === today ? Number(u.wheel_used) || 0 : 0;
   return {
     xp, tier: ti, tiers: vip.TIERS, next: nx, cashback, cashbackPct: t.cashback, cashbackClaimed: u.cash_claimed === today,
-    spinsLeft: Math.max(0, t.spins - used), spinsTotal: t.spins, wheel: vip.WHEEL.map((f) => f.label),
+    spinsLeft: Math.max(0, t.spins - used) + (Number(u.wheel_bonus) || 0), spinsTotal: t.spins, spinsBonus: Number(u.wheel_bonus) || 0, wheel: vip.WHEEL.map((f) => f.label),
     themes: vip.THEMES.map((th) => ({ ...th, unlocked: ti >= th.tier })), theme: u.casino_theme || 'gruen',
   };
 }
@@ -249,7 +249,8 @@ app.post('/api/casino/wheel', async (req, res) => {
     if (!v.spinsLeft) return res.status(400).json({ error: 'Für heute hast du keine Drehung mehr. Morgen geht es weiter.' });
     const r = vip.spinWheel();
     const today = daily.dayKey();
-    const save = { wheel_day: today, wheel_used: (u.wheel_day === today ? Number(u.wheel_used) || 0 : 0) + 1 };
+    const usedToday = u.wheel_day === today ? Number(u.wheel_used) || 0 : 0, t = vip.TIERS[vip.tierIndex(Number(u.casino_xp) || 0)];
+    const save = usedToday < t.spins ? { wheel_day: today, wheel_used: usedToday + 1 } : { wheel_bonus: Math.max(0, (Number(u.wheel_bonus) || 0) - 1) }; // erst die täglichen, dann die Bonusdrehs
     if (r.dia) save.diamonds = (Number(u.diamonds) || 0) + r.dia;
     await store.save(u.id, save);
     if (r.pack) await store.packAdd(u.id, r.pack, 1);
@@ -298,7 +299,12 @@ async function passUser(u) { // Saison und Wochenstart nachziehen
 }
 async function passGive(u, rw, save, got) { // eine Belohnung gutschreiben
   if (!rw) return;
-  if (rw.dia) { save.diamonds = (save.diamonds ?? (Number(u.diamonds) || 0)) + rw.dia; got.dia += rw.dia; }
+  if (rw.box) { const inner = kpass.openBox(rw.box); got.boxes.push(rw.box); await passGive(u, inner, save, got); }
+  const num = (k) => (save[k] ?? (Number(u[k]) || 0));
+  if (rw.dia) { save.diamonds = num('diamonds') + rw.dia; got.dia += rw.dia; }
+  if (rw.spin) { save.wheel_bonus = num('wheel_bonus') + rw.spin; got.spins += rw.spin; }
+  if (rw.xp) { save.xp = Math.min(progress.CAP, num('xp') + rw.xp); got.xp += rw.xp; }
+  if (rw.cxp) { save.casino_xp = num('casino_xp') + rw.cxp; got.cxp += rw.cxp; }
   if (rw.pack) { await store.packAdd(u.id, rw.pack, 1); got.packs.push(rw.pack); }
   for (const [id, name] of [[rw.item, rw.name], [rw.item2, rw.name2]]) if (id) {
     const un = new Set(String(save.unlocks ?? u.unlocks ?? '').split(',').filter(Boolean)); un.add(id); save.unlocks = [...un].join(','); got.items.push(name);
@@ -331,7 +337,7 @@ app.post('/api/pass/claim', async (req, res) => { // tier: Zahl oder 'all'; trac
       const u = await passUser(await store.userById(u0.id));
       const tier = kpass.tierOf(u.pass_xp), prem = !!Number(u.pass_prem), cf = kpass.set(u.pass_cf), cp = kpass.set(u.pass_cp);
       const want = req.body.tier === 'all' ? Array.from({ length: tier }, (_, i) => i + 1) : [Math.round(Number(req.body.tier) || 0)];
-      const track = String(req.body.track || 'both'), save = {}, got = { dia: 0, packs: [], items: [] };
+      const track = String(req.body.track || 'both'), save = {}, got = { dia: 0, packs: [], items: [], spins: 0, xp: 0, cxp: 0, boxes: [] };
       for (const t of want) {
         if (t < 1 || t > tier) continue;
         if (track !== 'prem' && !cf.has(String(t))) { await passGive(u, kpass.FREE[t], save, got); cf.add(String(t)); }
@@ -353,7 +359,7 @@ app.post('/api/pass/bank', async (req, res) => {
       const add = kpass.bankOf(u.pass_xp) - (Number(u.pass_bank) || 0); if (add <= 0) return res.status(400).json({ error: 'Im Tresor ist gerade nichts Neues.' });
       const save = { diamonds: (Number(u.diamonds) || 0) + add, pass_bank: kpass.bankOf(u.pass_xp) };
       await store.save(u.id, save); Object.assign(u, save);
-      res.json({ ...kpass.view(u), got: { dia: add, packs: [], items: [] }, diamonds: u.diamonds });
+      res.json({ ...kpass.view(u), got: { dia: add, packs: [], items: [], spins: 0, xp: 0, cxp: 0, boxes: [] }, diamonds: u.diamonds });
     } finally { passBusy.delete(u0.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
