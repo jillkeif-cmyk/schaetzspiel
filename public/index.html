@@ -1563,6 +1563,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ct-new{position:absolute;top:-9px;right:14px;padding:4px 10px;border-radius:99px;font:900 11px/1 Archivo;letter-spacing:.4px;color:#fff;background:linear-gradient(135deg,#FF4FA3,#B45CFF);box-shadow:0 0 14px rgba(255,79,163,.6);animation:psglow 1.8s ease-in-out infinite}
 .pk-more{border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}.pk-more>summary{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;font:800 15px/1 Archivo;cursor:pointer;list-style:none}.pk-more>summary::-webkit-details-marker{display:none}.pk-more>summary small{color:#9fe3bf;font-weight:800}.pk-more[open]>summary{border-bottom:1px solid rgba(255,255,255,.08)}.pk-more>*:not(summary){margin:10px 12px}
 .inv-h{font:800 16px/1 Archivo;margin:6px 0 10px;color:#FFD23F}.dispcard>img{width:96px!important;flex:none}
+.pk-note{margin:6px 0 0;padding:6px 10px;border-radius:10px;font:700 12.5px/1.3 Archivo;color:#FFE27A;background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.35)}.shop-adm .field.wide{width:100%}
 </style>
 </head>
 <body>
@@ -1582,7 +1583,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '84';
+const AVER = '85';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2467,9 +2468,9 @@ function renderCards() {
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
   } else if (ctab === 'shop') {
     const disps = tcg.def.packs.filter((p) => p.display && !p.off);
-    box.innerHTML = disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal</p></span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
-      <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p><span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`).join('')
+      <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`).join('')
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
@@ -3328,7 +3329,7 @@ function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
   if (p.display) { // Display: einfach, nur kaufen
     const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = base.locked;
-    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt=""><span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span><br><span class="sub">${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.</span></span></div>
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt=""><span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.</span></span></div>
       <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
       ${locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -3359,7 +3360,7 @@ function packInfo(pid) {
   const thumb = (x) => { const n = owned(x.c.id, x.v); return `<button class="pk-th ${n ? 'have' : ''}" data-card="${x.c.id}:${x.v}" title="${esc(x.c.name)}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" alt="">${n ? `<span class="pk-ok">✓${n > 1 ? n : ''}</span>` : ''}</button>`; };
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:90vh;overflow:auto">
     <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<button class="pk-view" data-packview="${esc(p.id)}" title="Ansehen"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt=""><span>👀 Ansehen</span></button>
-      <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span></span></div>
+      <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></div>
     <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
       <button class="chipbtn" id="packMax">Max</button></div>
     ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}
@@ -3899,13 +3900,15 @@ function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenz
   const box = $('#shopRows'); if (!box) return;
   const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price}" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${p.stock === null || p.stock === undefined ? '' : p.stock}" data-f="stock"></label></div>
+      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Nachschub kommt am 30.10." value="${esc(p.note || '')}" data-f="note"></label>
       <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`).join(''); bind(); };
-  const send = (row, soldout) => { const id = row.dataset.sp; api('/api/admin/shop', { pack: id, price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, soldout }).then((r) => { const p = tcg.def.packs.find((x) => x.id === id); Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout }); toast(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}`); draw(); }).catch((e) => toast(e.message)); };
+  const send = (row, soldout) => { const id = row.dataset.sp; api('/api/admin/shop', { pack: id, price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, soldout, note: row.querySelector('[data-f=note]').value }).then((r) => { const p = tcg.def.packs.find((x) => x.id === id); Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout, note: r.note }); toast(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}`); draw(); }).catch((e) => toast(e.message)); };
   const bind = () => box.querySelectorAll('[data-sp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.sp); row.querySelector('[data-f=save]').onclick = () => send(row, !!p.soldout); row.querySelector('[data-f=soldout]').onclick = () => send(row, !p.soldout); });
   const drawDisp = () => { const dd = tcg.def.packs.filter((p) => p.display); box.insertAdjacentHTML('beforeend', dd.map((p) => `<div class="shop-adm" data-dp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>🗃 ${esc(p.name)}</b> <small>${p.size} Booster</small>
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price}" data-f="dprice"></label></div>
+      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Release am 31.10. um 18 Uhr" value="${esc(p.note || '')}" data-f="dnote"></label>
       <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '⛔ Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="btn small" data-f="dsave">Speichern</button></div></div></div>`).join(''));
-    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on) => api('/api/admin/display', { pack: p.id, on, price: Number(row.querySelector('[data-f=dprice]').value) }).then((r) => { p.off = !r.on; p.price = r.price; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${fmt(r.price)} 💎`); draw(); drawDisp(); }).catch((e) => toast(e.message));
+    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on) => api('/api/admin/display', { pack: p.id, on, price: Number(row.querySelector('[data-f=dprice]').value), note: row.querySelector('[data-f=dnote]').value }).then((r) => { p.off = !r.on; p.price = r.price; p.note = r.note; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${fmt(r.price)} 💎`); draw(); drawDisp(); }).catch((e) => toast(e.message));
       row.querySelector('[data-f=don]').onclick = () => send(p.off); row.querySelector('[data-f=dsave]').onclick = () => send(!p.off); }); };
   if (!tcg) loadTcg().then(() => { draw(); drawDisp(); }).catch(() => {}); else { draw(); drawDisp(); }
 }
