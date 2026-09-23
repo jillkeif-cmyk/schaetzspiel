@@ -624,12 +624,13 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 /* Holo-Folie: weicher Regenbogen, der beim Kippen wandert, plus feiner Glitzer nur dort, wo das Licht hinfällt */
 #cardview .rain{position:absolute;inset:0;border-radius:16px;pointer-events:none;mix-blend-mode:color-dodge;opacity:.3;
   background:linear-gradient(125deg,rgba(255,0,132,.55) 0%,rgba(252,164,0,.5) 14%,rgba(255,255,0,.4) 28%,rgba(0,255,138,.45) 42%,rgba(0,207,255,.55) 57%,rgba(204,76,250,.55) 72%,rgba(255,0,132,.55) 86%,rgba(252,164,0,.5) 100%);
-  background-size:320% 320%;background-position:var(--sx,50%) var(--sy,50%);filter:saturate(1.15) blur(.3px)}
+  background-size:170% 170%;background-position:var(--sx,50%) var(--sy,50%);filter:saturate(1.1) blur(.3px);
+  -webkit-mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 35%,rgba(0,0,0,.18) 75%);mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 35%,rgba(0,0,0,.18) 75%)}
 #cardview .rain::after{content:'';position:absolute;inset:0;border-radius:16px;mix-blend-mode:screen;opacity:.9;
   background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 .9px,transparent 1.6px),radial-gradient(circle,rgba(255,240,200,.8) 0 .7px,transparent 1.3px),radial-gradient(circle,rgba(200,240,255,.85) 0 .8px,transparent 1.4px);
   background-size:9px 11px,13px 7px,17px 19px;background-position:0 0,4px 6px,9px 3px;
   -webkit-mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 25%,transparent 55%);mask-image:radial-gradient(circle at var(--sx,50%) var(--sy,50%),#000 0%,rgba(0,0,0,.55) 25%,transparent 55%)}
-#cardview .tilt.v-holo .rain{opacity:.38}#cardview .tilt.v-ultra .rain,#cardview .tilt.v-legend .rain{opacity:.32}#cardview .tilt.v-ext .rain,#cardview .tilt.v-mythic .rain{opacity:.26}
+#cardview .tilt.v-holo .rain{opacity:.42}#cardview .tilt.v-ultra .rain,#cardview .tilt.v-legend .rain{opacity:.36}#cardview .tilt.v-ext .rain,#cardview .tilt.v-mythic .rain{opacity:.3}
 #cardview .meta{max-width:min(90vw,420px);text-align:center;color:var(--muted);font-size:14.5px}
 #cardview .meta b{display:block;color:var(--paper);font:800 20px/1.2 Archivo;font-stretch:82%;margin-bottom:4px}
 #cardview .miss2{margin-top:6px;color:#FFB3AC;font-weight:700}
