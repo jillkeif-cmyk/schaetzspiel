@@ -172,7 +172,8 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    potions.load(u);
+    res.json({ banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -316,6 +317,41 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS.filter((p) => !p.requi
 // Kronen-Pass
 const kpass = require('./lib/pass');
 const boost = require('./lib/boost');
+const potions = require('./lib/potions');
+// ---------- Belohnungen (Codes, Banner): Diamanten + beliebige Items (Booster, Displays, Tränke) ----------
+const cleanReward = (rw) => { rw = rw || {}; const items = (Array.isArray(rw.items) ? rw.items : []).map((x) => ({ id: String(x.id || ''), n: Math.max(1, Math.min(1000, Math.round(Number(x.n) || 1))) })).filter((x) => tcg.PACKS[x.id]); return { dia: Math.max(0, Math.min(10000000, Math.round(Number(rw.dia) || 0))), items }; };
+const rewardText = (rw) => [rw.dia ? `${rw.dia.toLocaleString('de-DE')} 💎` : '', ...rw.items.map((x) => `${x.n}× ${tcg.PACKS[x.id].name}`)].filter(Boolean).join(', ');
+async function grantReward(uid, rw) {
+  const u = await store.userById(uid); if (!u) return;
+  if (rw.dia) await store.save(uid, { diamonds: (Number(u.diamonds) || 0) + rw.dia });
+  for (const x of rw.items) await store.packAdd(uid, x.id, x.n);
+}
+// ---------- Tränke: 60 Minuten App-Zeit, die Uhr läuft nur, solange der Spieler online ist ----------
+app.post('/api/potion/use', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const it = potions.ITEMS[String(req.body.id || '')]; if (!it) return res.status(400).json({ error: 'Unbekannter Trank.' });
+    const have = ((await store.packsOf(u.id)).find((x) => x.pack_id === it.id) || {}).count || 0;
+    if (!have) return res.status(400).json({ error: 'Du hast diesen Trank nicht.' });
+    potions.load(u); const cur = { ...potions.get(u.id) };
+    if (cur[it.type] && cur[it.type].left > 0) return res.status(400).json({ error: `Für ${potions.TYPES[it.type]} läuft schon ein Trank (noch ${Math.ceil(cur[it.type].left / 60000)} Min).` });
+    cur[it.type] = { m: it.mult, left: potions.DUR }; potions.set(u.id, cur);
+    await store.packAdd(u.id, it.id, -1); await store.save(u.id, { pot_active: JSON.stringify(cur) });
+    console.log(`Trank: ${u.name} nutzt ${it.name}`);
+    res.json({ ...(await tcgState(await store.userById(u.id))), potions: cur });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+const POT_TICK = 15000;
+setInterval(async () => {
+  for (const [uid, o] of potions.all()) {
+    if (!game.online.has(uid)) continue; // App zu: Zeit pausiert
+    const next = {}; let ended = [];
+    for (const [t, v] of Object.entries(o)) { const left = v.left - POT_TICK; if (left > 0) next[t] = { m: v.m, left }; else ended.push(t); }
+    potions.set(uid, next);
+    store.save(uid, { pot_active: JSON.stringify(next) }).catch(() => {});
+    io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('pot:update', { potions: next, ended }); });
+  }
+}, POT_TICK);
 store.setting('boost').then((v) => { if (v) boost.set(JSON.parse(v)); }).catch(() => {});
 let openStyleV = 'showroom';
 store.setting('open_style').then((v) => { if (v) openStyleV = v; }).catch(() => {});
@@ -685,7 +721,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
-    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1),
+    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp'),
   });
   setTimeout(() => checkProgress(uid), 400);
 };
@@ -1002,6 +1038,7 @@ app.post('/api/tcg/open', async (req, res) => {
     const pid = String(req.body.pack || '');
     if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Unbekannter Booster.' });
     const P = tcg.PACKS[pid];
+    if (P.potion) return res.status(400).json({ error: 'Tränke werden aktiviert, nicht geöffnet.' });
     if ((pid === 'gn' || P.of === 'gn') && !gnOpen && !isMod(u)) return res.status(403).json({ error: 'Gruselnacht-Booster lassen sich erst öffnen, wenn das Set freigeschaltet ist. Heb ihn solange auf!' });
     const mine = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
     if (!mine || mine.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
@@ -1206,6 +1243,7 @@ app.post('/api/tcg/sellpack', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const pid = String(req.body.pack || ''), price = Math.max(10, Math.min(1000000, Math.round(Number(req.body.price) || 0)));
     if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Diesen Booster gibt es nicht.' });
+    if (tcg.PACKS[pid].potion) return res.status(400).json({ error: 'Tränke kann man nicht an der Börse verkaufen.' });
     if ((pid === 'gn' || tcg.PACKS[pid].of === 'gn') && !gnOpen) return res.status(403).json({ error: 'Gruselnacht-Booster können erst nach der Freischaltung an der Börse gehandelt werden.' });
     const own = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
     if (!own || own.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
@@ -1477,9 +1515,64 @@ app.post('/api/card', async (req, res) => {
 });
 
 // Code einlösen
+let adminCodes = {}; // CODE -> { reward, max, until, note, used: [{ id, name, at }] }
+store.setting('admin_codes').then((v) => { if (v) adminCodes = JSON.parse(v); }).catch(() => {});
+const saveCodes = () => store.setting('admin_codes', JSON.stringify(adminCodes));
+let banner = { on: false };
+store.setting('banner').then((v) => { if (v) banner = JSON.parse(v); }).catch(() => {});
+const bannerFor = (u) => { if (!banner.on) return null; if (!banner.all && !(banner.ids || []).includes(u.id)) return null; const done = (banner.claimed || []).some((x) => x.id === u.id); if (banner.reward && done) return null; return { id: banner.id, text: banner.text, reward: banner.reward ? rewardText(banner.reward) : '', claimable: !!banner.reward }; };
+app.post('/api/banner/claim', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const b = bannerFor(u); if (!b || !b.claimable || String(req.body.id) !== String(banner.id)) return res.status(400).json({ error: 'Nichts einzulösen.' });
+    banner.claimed = banner.claimed || []; banner.claimed.push({ id: u.id, name: u.name, at: Date.now() }); await store.setting('banner', JSON.stringify(banner));
+    await grantReward(u.id, banner.reward);
+    res.json({ ok: true, text: rewardText(banner.reward), diamonds: (await store.userById(u.id)).diamonds });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.get('/api/admin/banner', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const users = await store.searchUsers('', 1000).catch(() => []), claimed = banner.claimed || [];
+  const targets = banner.all ? users : users.filter((x) => (banner.ids || []).includes(x.id));
+  res.json({ banner: { ...banner, rewardText: banner.reward ? rewardText(banner.reward) : '' }, claimed, open: targets.filter((x) => !claimed.some((c) => c.id === x.id)).map((x) => x.name) });
+});
+app.post('/api/admin/banner', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  if (req.body.off) { banner.on = false; await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed'); return res.json({ ok: true }); }
+  const text = String(req.body.text || '').trim().slice(0, 300); if (!text) return res.status(400).json({ error: 'Bitte einen Text eingeben.' });
+  const reward = req.body.reward ? cleanReward(req.body.reward) : null;
+  const ids = []; if (!req.body.all) for (const n of (req.body.names || [])) { const t = await store.userByName(String(n)); if (t) ids.push(t.id); }
+  if (!req.body.all && !ids.length) return res.status(400).json({ error: 'Bitte Spieler auswählen oder „Alle“.' });
+  banner = { on: true, id: Date.now(), text, reward: reward && (reward.dia || reward.items.length) ? reward : null, all: !!req.body.all, ids, claimed: [] };
+  await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
+  console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
+  res.json({ ok: true });
+});
+app.get('/api/admin/codes', async (req, res) => { const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' }); res.json({ codes: Object.entries(adminCodes).map(([code, c]) => ({ code, ...c, text: rewardText(c.reward) })).reverse() }); });
+app.post('/api/admin/codes', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  if (req.body.delete) { delete adminCodes[String(req.body.delete).toUpperCase()]; await saveCodes(); return res.json({ ok: true }); }
+  const reward = cleanReward(req.body.reward); if (!reward.dia && !reward.items.length) return res.status(400).json({ error: 'Bitte mindestens eine Belohnung wählen.' });
+  let code = String(req.body.code || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  if (!code) code = Array.from({ length: 8 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+  if (code.length < 4) return res.status(400).json({ error: 'Der Code braucht mindestens 4 Zeichen.' });
+  if (adminCodes[code]) return res.status(400).json({ error: 'Diesen Code gibt es schon.' });
+  adminCodes[code] = { reward, max: Math.max(0, Math.round(Number(req.body.max) || 0)), until: req.body.until ? Date.parse(req.body.until) || 0 : 0, note: String(req.body.note || '').slice(0, 80), used: [], created: Date.now() };
+  await saveCodes(); console.log(`Code erstellt: ${code} (${rewardText(reward)}) durch ${u.name}`); res.json({ code, text: rewardText(reward) });
+});
 app.post('/api/redeem', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const ac = adminCodes[String(req.body.code || '').trim().toUpperCase()];
+    if (ac) { // Code aus dem Admin-Menü
+      const code = String(req.body.code).trim().toUpperCase();
+      if (ac.until && Date.now() > ac.until) return res.status(400).json({ error: 'Dieser Code ist abgelaufen.' });
+      if (ac.used.some((x) => x.id === u.id)) return res.status(400).json({ error: 'Diesen Code hast du schon eingelöst.' });
+      if (ac.max && ac.used.length >= ac.max) return res.status(400).json({ error: 'Dieser Code wurde schon zu oft eingelöst.' });
+      ac.used.push({ id: u.id, name: u.name, at: Date.now() }); await saveCodes();
+      await grantReward(u.id, ac.reward);
+      return res.json({ reward: rewardText(ac.reward), diamonds: ac.reward.dia || 0, code, items: { emblems: [], titles: [], frames: [] } });
+    }
     const r = cards.redeem(u, req.body.code);
     if (!r.ok) return res.status(400).json({ error: r.error });
     const save = { codes: r.codes };
@@ -1762,7 +1855,7 @@ const bjTables = require('./lib/bjtables')(io, store, casinoStat, push, () => lo
 const pokerStat = async (uid, stake, won, info = {}) => {
   await casinoStat(uid, stake, won); await bigWin(uid, 'Poker', won);
   const u = await store.userById(uid); if (!u) return;
-  const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1);
+  const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp');
   const net = won - stake;
   await store.save(uid, {
     casino_xp: (Number(u.casino_xp) || 0) + bonus,
@@ -1774,7 +1867,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { socket.emit('ver', APP_VER); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next));
+io.on('connection', (socket) => { socket.emit('ver', APP_VER); if (socket.data.user) store.userById(socket.data.user.id).then((u) => potions.load(u)).catch(() => {}); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next));
   socket.use(async (pk, next) => { // Casino-Sperre auch für Poker, Blackjack-Tische und Zuschauen
     if (!/^(pk:|bj:|cw:watch)/.test(String(pk[0])) || !socket.data.user) return next();
     const u = await store.userById(socket.data.user.id).catch(() => null), b = casinoBan(u);

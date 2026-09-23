@@ -1565,6 +1565,12 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .inv-h{font:800 16px/1 Archivo;margin:6px 0 10px;color:#FFD23F}.dispcard>img{width:96px!important;flex:none}
 .pk-note{margin:6px 0 0;padding:6px 10px;border-radius:10px;font:700 12.5px/1.3 Archivo;color:#FFE27A;background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.35)}.shop-adm .field.wide{width:100%}
 .ct-boerse{background:linear-gradient(135deg,#1FA35A,#0E7A6A)!important;color:#fff!important;box-shadow:0 0 0 1.5px #7CF0A8,0 4px 14px rgba(31,163,90,.4)!important}.ct-boerse.on{background:linear-gradient(135deg,#7CF0A8,#1FA35A)!important;color:#08241A!important}
+.pot-ic{position:relative;display:inline-block;width:64px;height:64px;flex:none}.pot-ic img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}.pot-ic b{position:absolute;right:-4px;bottom:-2px;padding:2px 7px;border-radius:99px;font:900 13px/1.2 Archivo;color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E);box-shadow:0 0 10px rgba(255,210,63,.6)}
+.pot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.pot-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:radial-gradient(circle at 50% 30%,rgba(180,120,255,.18),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);text-align:center}.pot-card b{font:800 12.5px/1.1 Archivo}.pot-card small{font-size:11px;color:#cfe}.pot-card.empty{filter:grayscale(1);opacity:.45}.pot-card .pot-on{color:#7CF0A8;font-weight:800}
+.pot-bar{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(180,120,255,.25),rgba(90,169,255,.18));box-shadow:inset 0 0 0 1.5px rgba(200,160,255,.6)}.pot-bar .pot-ic{width:40px;height:40px}.pot-bar b{display:block;font:800 14px/1.2 Archivo}.pot-bar small{font-size:12px;color:#dde}
+.ann{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(255,79,163,.25),rgba(255,181,71,.2));box-shadow:inset 0 0 0 2px rgba(255,140,120,.7),0 0 20px rgba(255,79,163,.25)}.ann-ic{font-size:28px}.ann p{margin:0;font:800 15px/1.35 Archivo;white-space:pre-wrap}.ann small{display:block;margin-top:4px;color:#FFE27A;font-weight:800}
+.rb{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(255,255,255,.04)}#codeAdm label:not(.row),#banAdm label:not(.row),.rb label{font-size:12px;color:#cfe;display:flex;flex-direction:column;gap:3px}.rb-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rb-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:rgba(255,210,63,.15);font:700 12.5px Archivo}.rb-chip button{background:none;border:0;color:#FF8A8A;font-weight:900}
+.code-row{display:flex;flex-direction:column;gap:4px;padding:10px 12px}
 </style>
 </head>
 <body>
@@ -1584,7 +1590,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '88';
+const AVER = '89';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2462,8 +2468,11 @@ function renderCards() {
         <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : x.c.set === 'gn' && gnSoon ? '<br>🎃 bald erhältlich' : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
-    const invD = tcg.packs.filter((p) => (tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display), invB = tcg.packs.filter((p) => !(tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display);
-    box.innerHTML = (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    const defOf = (id) => tcg.def.packs.find((x) => x.id === id) || {};
+    const invD = tcg.packs.filter((p) => defOf(p.pack_id).display), invB = tcg.packs.filter((p) => !defOf(p.pack_id).display && !defOf(p.pack_id).potion);
+    const act = (home && home.potions) || {};
+    const potHtml = `<h3 class="inv-h">🧪 Tränke</h3><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft 60 Minuten App-Zeit, nur solange die App offen ist.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].left > 0; return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft · noch ${Math.ceil(act[t].left / 60000)} Min</small>` : on && n ? `<small>wartet, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
+    box.innerHTML = potHtml + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
@@ -3899,6 +3908,58 @@ function renderStaffBoxes() {
       box.innerHTML = adminUsers.filter((u) => u.name.toLowerCase().includes(q)).sort((a, b) => (b.name.toLowerCase().startsWith(q) - a.name.toLowerCase().startsWith(q)) || a.name.localeCompare(b.name)).slice(0, 8).map((u) => `<button type="button" data-adpick="${esc(u.name)}">${esc(u.name)}</button>`).join('');
       box.querySelectorAll('[data-adpick]').forEach((b) => { b.onclick = () => { an.value = b.dataset.adpick; box.innerHTML = ''; $('#adPass').focus(); }; }); };
 }
+const POT_T = { xp: 'Level-XP', cxp: 'Casino-XP', pxp: 'Pass-XP' };
+const potImg = (id) => { const m = /^pot_(xp|cxp|pxp)(\d)$/.exec(id); return m ? `<span class="pot-ic"><img src="/tcg/pot_${m[1]}.webp?v=${AVER}" alt=""><b>×${m[2]}</b></span>` : ''; };
+function rewardBuilder(pre) { // Diamanten + beliebig viele Items (Booster, Displays, Tränke)
+  const opts = (tcg && tcg.def ? tcg.def.packs : []).filter((p) => p.id !== 'secret').map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  return `<div class="rb" id="${pre}"><label>💎 Diamanten <input class="field" type="number" min="0" data-rb="dia" placeholder="0"></label>
+    <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><select class="field" data-rb="sel" style="flex:1;min-width:160px">${opts}</select><input class="field" type="number" min="1" value="1" data-rb="n" style="width:70px"><button class="chipbtn" type="button" data-rb="add">+ Hinzufügen</button></div>
+    <div class="rb-list" data-rb="list"></div></div>`;
+}
+function rbBind(pre) { const box = $('#' + pre); if (!box) return; box._items = []; const draw = () => { box.querySelector('[data-rb=list]').innerHTML = box._items.map((x, i) => `<span class="rb-chip">${x.n}× ${esc((tcg.def.packs.find((p) => p.id === x.id) || {}).name || x.id)} <button type="button" data-rbdel="${i}">✕</button></span>`).join(''); box.querySelectorAll('[data-rbdel]').forEach((b) => { b.onclick = () => { box._items.splice(Number(b.dataset.rbdel), 1); draw(); }; }); };
+  box.querySelector('[data-rb=add]').onclick = () => { const id = box.querySelector('[data-rb=sel]').value, n = Math.max(1, Math.round(Number(box.querySelector('[data-rb=n]').value) || 1)); const f = box._items.find((x) => x.id === id); if (f) f.n += n; else box._items.push({ id, n }); draw(); }; draw(); }
+const rbValue = (pre) => { const box = $('#' + pre); return { dia: Math.max(0, Math.round(Number(box.querySelector('[data-rb=dia]').value) || 0)), items: box._items || [] }; };
+function drawCodesAdmin() {
+  const box = $('#codeAdm'); if (!box) return;
+  const go = () => {
+    box.innerHTML = `<div class="panel" style="gap:8px;display:flex;flex-direction:column"><b>Neuen Code erstellen</b>
+      <label>Code (leer = zufällig) <input class="field" id="ncCode" maxlength="20" placeholder="z. B. GRUSEL10K" autocapitalize="characters"></label>
+      ${rewardBuilder('ncRw')}
+      <div class="row" style="gap:6px;flex-wrap:wrap"><label>Max. Einlösungen <input class="field" type="number" min="0" id="ncMax" placeholder="unbegrenzt" style="width:120px"></label><label>Gültig bis <input class="field" type="datetime-local" id="ncUntil"></label></div>
+      <label>Notiz (nur für dich) <input class="field" id="ncNote" maxlength="80"></label>
+      <button class="btn small" id="ncGo">Code erstellen</button></div><div id="ncList" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>`;
+    rbBind('ncRw');
+    $('#ncGo').onclick = () => api('/api/admin/codes', { code: $('#ncCode').value, reward: rbValue('ncRw'), max: $('#ncMax').value, until: $('#ncUntil').value, note: $('#ncNote').value }).then((r) => { toast(`🎟 ${r.code}: ${r.text}`); go(); }).catch((e) => toast(e.message));
+    api('/api/admin/codes').then((r) => { $('#ncList').innerHTML = r.codes.length ? r.codes.map((c) => `<div class="panel code-row"><div class="row"><b class="grow" style="font:900 17px/1 Archivo;letter-spacing:1px">${esc(c.code)}</b><button class="mini" data-cdel="${esc(c.code)}">Löschen</button></div><small>${esc(c.text)}${c.note ? ' · ' + esc(c.note) : ''}</small><small>${c.used.length}${c.max ? ' / ' + c.max : ''} eingelöst${c.until ? ' · gültig bis ' + new Date(c.until).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}</small>${c.used.length ? `<details><summary><small>Wer hat eingelöst?</small></summary><small>${c.used.map((x) => esc(x.name)).join(', ')}</small></details>` : ''}</div>`).join('') : '<small class="sub">Noch keine Codes.</small>';
+      box.querySelectorAll('[data-cdel]').forEach((b) => { b.onclick = () => { if (confirm(`Code ${b.dataset.cdel} löschen?`)) api('/api/admin/codes', { delete: b.dataset.cdel }).then(go).catch((e) => toast(e.message)); }; }); }).catch(() => {});
+  };
+  if (!tcg) loadTcg().then(go); else go();
+}
+function drawBannerAdmin() {
+  const box = $('#banAdm'); if (!box) return;
+  const go = () => api('/api/admin/banner').then((r) => { const b = r.banner || {};
+    box.innerHTML = `<div class="panel" style="gap:8px;display:flex;flex-direction:column">
+      <div class="row"><b class="grow">Status</b><span class="adm-st ${b.on ? 'on' : ''}">${b.on ? 'aktiv' : 'aus'}</span></div>
+      ${b.on ? `<p class="sub" style="margin:0">„${esc(b.text || '')}“${b.rewardText ? ' · 🎁 ' + esc(b.rewardText) : ''} · ${b.all ? 'für alle' : 'für ausgewählte Spieler'}</p>
+        ${b.reward ? `<details open><summary><b>✅ Eingelöst (${r.claimed.length})</b></summary><small>${r.claimed.map((x) => esc(x.name)).join(', ') || 'noch niemand'}</small></details><details><summary><b>⏳ Noch nicht (${r.open.length})</b></summary><small>${r.open.map(esc).join(', ') || 'alle haben eingelöst'}</small></details>` : ''}
+        <button class="btn small ghost" id="bnOff">Banner ausschalten</button>` : ''}
+      <b style="margin-top:6px">${b.on ? 'Neuen Banner setzen (ersetzt den aktuellen)' : 'Banner einschalten'}</b>
+      <textarea class="field" id="bnText" maxlength="300" rows="3" placeholder="z. B. Heute 20 Uhr: Halloween-Turnier!"></textarea>
+      <label class="row" style="gap:8px;margin:0;flex-direction:row;align-items:center"><input type="checkbox" id="bnRwOn"> <span>Mit Belohnung und „Einlösen“-Knopf</span></label>
+      <div id="bnRwBox" hidden>${rewardBuilder('bnRw')}</div>
+      <div class="seg"><button data-bnt="all" class="on">👥 Alle</button><button data-bnt="some">🎯 Bestimmte Spieler</button></div>
+      <div id="bnSome" hidden><input class="field" id="bnName" placeholder="Name eintippen" autocomplete="off"><div id="bnSug" class="lg-sug"></div><div class="rb-list" id="bnNames"></div></div>
+      <button class="btn small" id="bnGo">Banner aktivieren</button></div>`;
+    rbBind('bnRw'); let all = true; const names = [];
+    const drawN = () => { $('#bnNames').innerHTML = names.map((n, i) => `<span class="rb-chip">${esc(n)} <button type="button" data-bnd="${i}">✕</button></span>`).join(''); box.querySelectorAll('[data-bnd]').forEach((x) => { x.onclick = () => { names.splice(Number(x.dataset.bnd), 1); drawN(); }; }); };
+    $('#bnRwOn').onchange = (e) => { $('#bnRwBox').hidden = !e.target.checked; };
+    box.querySelectorAll('[data-bnt]').forEach((x) => { x.onclick = () => { all = x.dataset.bnt === 'all'; box.querySelectorAll('[data-bnt]').forEach((y) => y.classList.toggle('on', y === x)); $('#bnSome').hidden = all; }; });
+    $('#bnName').oninput = () => { const q = $('#bnName').value.trim().toLowerCase(); $('#bnSug').innerHTML = !q || !adminUsers ? '' : adminUsers.filter((u) => u.name.toLowerCase().includes(q) && !names.includes(u.name)).slice(0, 8).map((u) => `<button type="button" data-bnpick="${esc(u.name)}">${esc(u.name)}</button>`).join(''); box.querySelectorAll('[data-bnpick]').forEach((y) => { y.onclick = () => { names.push(y.dataset.bnpick); $('#bnName').value = ''; $('#bnSug').innerHTML = ''; drawN(); }; }); };
+    if ($('#bnOff')) $('#bnOff').onclick = () => api('/api/admin/banner', { off: true }).then(() => { toast('Banner aus'); go(); });
+    $('#bnGo').onclick = () => api('/api/admin/banner', { text: $('#bnText').value, reward: $('#bnRwOn').checked ? rbValue('bnRw') : null, all, names }).then(() => { toast('📢 Banner aktiv'); go(); }).catch((e) => toast(e.message));
+  }).catch((e) => toast(e.message));
+  if (!tcg) loadTcg().then(go); else go();
+}
 function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenzt), Ausverkauft
   const box = $('#shopRows'); if (!box) return;
   const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
@@ -3921,6 +3982,8 @@ function loadAdmin() {
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
+  const bb3 = $('#banBox2'); if (bb3 && !bb3.dataset.bound) { bb3.dataset.bound = 1; bb3.ontoggle = () => { if (bb3.open) drawBannerAdmin(); }; }
+  const cb3 = $('#codeBox'); if (cb3 && !cb3.dataset.bound) { cb3.dataset.bound = 1; cb3.ontoggle = () => { if (cb3.open) drawCodesAdmin(); }; }
   const sb = $('#shopBox'); if (sb && !sb.dataset.bound) { sb.dataset.bound = 1; sb.ontoggle = () => { if (sb.open) drawShopAdmin(); }; }
   document.querySelectorAll('[data-ostyle]').forEach((b) => { if (b.onclick) return; b.onclick = () => api('/api/admin/openstyle', { style: b.dataset.ostyle }).then((r) => { if (home) home.openStyle = r.style; document.querySelectorAll('[data-ostyle]').forEach((x) => x.classList.toggle('on-miss', x.dataset.ostyle === r.style)); toast('Booster öffnen: ' + (r.style === 'showroom' ? 'Showroom' : 'Klassisch')); }).catch((e) => toast(e.message)); });
   const gt = $('#gnToggle'); if (gt && !gt.onclick) gt.onclick = () => { const open = !(home && home.gnOpen); if (open && !confirm('Gruselnacht-Set jetzt für alle freigeben? Booster wird kaufbar, die Karten zählen zur Sammlung und das Update erscheint.')) return; api('/api/admin/gnopen', { open }).then((r) => { if (home) home.gnOpen = r.open; gt.textContent = r.open ? 'Sperren' : 'Freigeben'; toast(r.open ? '🎃 Gruselnacht freigeschaltet' : 'Gruselnacht gesperrt'); }).catch((e) => toast(e.message)); };
@@ -4240,6 +4303,8 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('banner:changed', () => { loadHome(); });
+  socket.on('pot:update', (d) => { if (home) home.potions = d.potions; (d.ended || []).forEach((t) => toast(`🧪 Dein ${POT_T[t]}-Trank ist abgelaufen`)); if (!S && page === 'home') update(); if (page === 'cards' && ctab === 'inventar') renderCards(); });
   socket.on('admin:note', (m) => { toast(m); sfx('exact'); });
   socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
@@ -4409,6 +4474,8 @@ function build() {
     <h1 style="font-size:30px">Admin</h1>
     <div id="adminBox"></div>
     <div id="modBox"></div>
+    <details class="panel lg-box" id="banBox2"><summary><b>📢 Ankündigungsbanner</b><small> · Text auf der Startseite, optional mit Belohnung</small></summary><div id="banAdm" style="margin-top:10px"></div></details>
+    <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
     <div class="panel lg-box" id="boostBox"><b>⚡ Doppel-XP-Aktion</b><small style="display:block;color:#cfe">Unabhängig von der Hot Time. Aktiv wird sie allen auf der Startseite angezeigt</small>
@@ -4489,6 +4556,7 @@ function build() {
     <div id="giftBox"></div>
     <div id="newsCard"></div>
     <div id="passCard"></div>
+    <div id="annBar"></div>
     <div id="boostBar"></div>
     <button class="panel pcard" id="openProfile"></button>
     <div id="presHint"></div>
@@ -4945,6 +5013,9 @@ function update() {
         ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
     const bb2 = $('#boostBar'); if (bb2) { const b = home && home.boost, on = b && [b.xp && '⭐ Level-XP', b.cxp && '🎰 Casino-XP', b.pxp && '👑 Pass-XP'].filter(Boolean); bb2.innerHTML = on && on.length ? `<div class="boost-bar"><span class="bb-ic">⚡</span><span class="grow"><b>Doppel-XP-Aktion läuft!</b><small>${on.join(' · ')} zählen gerade doppelt</small></span></div>` : ''; }
+    const ab = $('#annBar'); if (ab) { const b = home && home.banner; ab.innerHTML = b ? `<div class="ann"><span class="ann-ic">📢</span><div class="grow"><p>${esc(b.text)}</p>${b.claimable ? `<small>🎁 ${esc(b.reward)}</small>` : ''}</div>${b.claimable ? `<button class="btn small" id="annClaim" data-id="${b.id}">Einlösen</button>` : ''}</div>` : '';
+      const ac = $('#annClaim'); if (ac) ac.onclick = () => api('/api/banner/claim', { id: ac.dataset.id }).then((r) => { toast('🎁 ' + r.text); sfx('exact'); loadHome().then(() => { if (tcg) loadTcg(); }); }).catch((e) => toast(e.message)); }
+    const pots = home && home.potions ? Object.entries(home.potions).filter(([, v]) => v.left > 0) : []; if (bb2) bb2.insertAdjacentHTML('beforeend', pots.map(([t, v]) => `<div class="pot-bar">${potImg('pot_' + t + v.m)}<span class="grow"><b>${POT_T[t]} ×${v.m} aktiv</b><small>noch ${Math.ceil(v.left / 60000)} Min App-Zeit</small></span></div>`).join(''));
     const sp = $('#openSupport'); if (sp) { const n = (home && home.openTickets) || 0; let bd = sp.querySelector('.sup-badge'); if (n) { if (!bd) { bd = document.createElement('span'); bd.className = 'sup-badge'; sp.appendChild(bd); } bd.textContent = n > 99 ? '99+' : n; } else if (bd) bd.remove(); }
     const ph = $('#presHint'); if (ph) { const can = home && home.progress && home.progress.prestige && home.progress.prestige.can; ph.innerHTML = can ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang. Jetzt aufsteigen</small></span><span>›</span></button>` : ''; }
     if (newsPosts) renderNewsCard(); else loadNews();
@@ -5240,6 +5311,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
+  else if (t.dataset.potuse) { const id = t.dataset.potuse, d = tcg.def.packs.find((x) => x.id === id); if (confirm(`${d.name} aktivieren? Er läuft 60 Minuten App-Zeit.`)) api('/api/potion/use', { id }).then((r) => { tcg = r; if (home) home.potions = r.potions; toast('🧪 ' + d.name + ' aktiv'); sfx('exact'); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.6); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.packview || t.closest('[data-packview]')) packView((t.dataset.packview ? t : t.closest('[data-packview]')).dataset.packview);
   else if (t.dataset.pack) packInfo(t.dataset.pack);
