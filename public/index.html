@@ -1478,6 +1478,9 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 @media (min-width:1000px){.hw-ghost.g1{right:4vw;width:80px}.hw-pump{width:56px}}
 .lg-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.lg-sug:empty{display:none}.lg-sug button{border:0;border-radius:99px;padding:7px 12px;font:700 13px/1 Archivo;background:rgba(255,210,63,.15);color:#FFE27A;box-shadow:inset 0 0 0 1px rgba(255,210,63,.4)}
 .lvsub{font-size:11.5px;color:#cfd8da;margin-top:4px}.lvsub b{color:var(--paper)}
+.pres-hint{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:16px;text-align:left;background:linear-gradient(135deg,rgba(255,210,63,.3),rgba(255,138,31,.2));box-shadow:inset 0 0 0 2px #FFD23F,0 0 18px rgba(255,210,63,.35);animation:psglow 2s ease-in-out infinite}
+.pres-hint>span:first-child{font-size:28px}.pres-hint b{display:block;font:800 16px/1.2 Archivo;color:#FFE27A}.pres-hint small{display:block;font-size:12px;color:#f1e6c8}
+.pres-flash{box-shadow:0 0 0 3px #FFD23F,0 0 30px rgba(255,210,63,.6)!important;transition:box-shadow .4s}
 </style>
 </head>
 <body>
@@ -1497,7 +1500,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '61';
+const AVER = '62';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4108,6 +4111,7 @@ function build() {
   if (!S && page === 'profile') return `<div class="col">
     <div class="row"><button class="link" id="back" style="padding-left:0">← Zurück</button><span class="grow"></span><button class="link" id="logout">Abmelden</button></div>
     <div id="profHead"></div>
+    <div class="panel" id="nextPrestige" style="display:flex;flex-direction:column;gap:14px"></div>
     <div><input type="file" id="avaFile" accept="image/*" hidden><button class="btn ghost" id="avaBtn">Profilbild ändern</button></div>
     <div class="panel row" style="gap:12px"><span style="font-size:30px">🏛</span><span class="grow"><b>Vitrine</b><br><span class="sub">Bis zu 4 Karten, die andere in deinem Profil sehen</span></span><button class="btn small" id="vitEditP">Bearbeiten</button></div>
     <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><b class="grow">Ton</b><button class="btn small" id="mute" style="min-width:92px"></button></div><div class="row"><span class="sub">leise</span><input type="range" id="volume" min="0" max="100" step="5" class="grow" aria-label="Lautstärke" style="accent-color:#FFD23F;height:32px"><span class="sub">laut</span></div></div>
@@ -4115,7 +4119,6 @@ function build() {
     <div class="panel" id="cardBox" style="display:flex;flex-direction:column;gap:14px"></div>
     <div id="modBox"></div>
     <div id="adminBox"></div>
-    <div class="panel" id="nextPrestige" style="display:flex;flex-direction:column;gap:14px"></div>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Prestige-Ränge</h2><div id="ranks" class="ranks"></div></div>
     </div>`;
@@ -4127,6 +4130,7 @@ function build() {
     <div id="newsCard"></div>
     <div id="passCard"></div>
     <button class="panel pcard" id="openProfile"></button>
+    <div id="presHint"></div>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -4586,6 +4590,7 @@ function update() {
       np.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Neue Spieler</h2><div class="plist">${list.slice(0, 2).map(rowNP).join('')}</div>
         ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
+    const ph = $('#presHint'); if (ph) { const can = home && home.progress && home.progress.prestige && home.progress.prestige.can; ph.innerHTML = can ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang. Jetzt aufsteigen</small></span><span>›</span></button>` : ''; }
     if (newsPosts) renderNewsCard(); else loadNews();
     if (!passV || Date.now() - (loadPass.t || 0) > 60000) { loadPass.t = Date.now(); loadPass(); } else renderPassCard();
     const cs = $('#chalSub'), prg = home && home.progress;
@@ -4711,7 +4716,7 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>${v < 0 ? '−' + fmt(-v) : '+' + fmt(v)}</span></div>`).join('')}</div>${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      <div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>${v < 0 ? '−' + fmt(-v) : '+' + fmt(v)}</span></div>`).join('')}</div>${x.pass && x.pass.gain ? `<div class="row" style="justify-content:space-between;font-size:13.5px"><span>👑 Kronen-Pass</span><span>+${fmt(x.pass.gain)} Pass-XP${x.pass.tierAfter > x.pass.tierBefore ? ` · Stufe ${x.pass.tierAfter}!` : ''}</span></div>` : ''}${x.canPrestige ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang erreicht</small></span><span>›</span></button>` : ''}${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished' && $('#dropBox')) {
     const dr = S.drops || [];
     const key = S.code + ':' + dr.length;
@@ -4959,6 +4964,10 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'waitOff') socket.emit('settings', { waitAi: false });
   else if (t.id === 'accPub') { privMode = false; socket.emit('settings', { password: '' }); }
   else if (t.id === 'accPriv') { privMode = true; update(); $('#pwInput').focus(); }
+  else if (t.id === 'goPrestige' || t.closest('#goPrestige')) {
+    page = 'profile'; render();
+    setTimeout(() => { const b = $('#nextPrestige'); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.classList.add('pres-flash'); setTimeout(() => b.classList.remove('pres-flash'), 2600); } }, 350);
+  }
   else if (t.id === 'doPrestige') { if (confirm('Prestige aktivieren? Level und XP starten wieder bei 1.')) api('/api/prestige', {}).then(async (r) => { await loadHome(); showUnlock(r.prestige, home.progress.names[r.prestige]); }).catch((e) => toast(e.message)); }
   else if (t.id === 'share') { const url = location.origin + '/?join=' + S.code; (navigator.share ? navigator.share({ title: 'Schätzspiel', text: 'Spiel mit! Code ' + S.code, url }) : navigator.clipboard.writeText(url).then(() => toast('Link kopiert'))).catch(() => {}); }
 });
