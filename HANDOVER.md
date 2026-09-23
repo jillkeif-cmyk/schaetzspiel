@@ -154,6 +154,8 @@ damit Karten jederzeit neu gerendert werden können.
 - Admin-Menü enthält jetzt auch Passwort-Reset (mit Namensvorschlägen) und Mod-Menü; im Profil des Admins sind sie weg (Mods ohne Admin behalten das Mod-Menü im Profil). Funktion renderStaffBoxes().
 - Booster-Showroom v3 (Zweig showroom-v2, noch nicht live): Kissenform aus 9x12 Kacheln je Seite (srBuildPack, matrix3d je Kachel), Licht je Kachel und Bild berechnet (srLight: Streulicht + Glanzpunkt, Licht von oben), weicher Lichtstrahl, Staub, verschwommene Booster im Hintergrund, Leuchten über --lum statt Filter (Filter auf preserve-3d macht in Safari alles flach!), dunkler Glasraum mit Licht von oben, Spiegelung der Karte.
 - Booster-Showroom (openShowroom, packView): 3D-Drehung mit Glanz, Aufreißen, Blitz, Karten einzeln auf Podest; im Shop „👀 Ansehen“. Admin „🎬 Booster öffnen: Darstellung“ Showroom/Klassisch (Setting open_style, Standard showroom).
+- Displays: PACKS.disp_gn (24 Gruselnacht-Booster, display:true, of:'gn', hidden, off). Admin schaltet im Shop-Steuerungs-Panel an/aus + Preis (Setting display_cfg, Standard aus, 60.000). Öffnen legt size Booster ins Inventar. Inventar-Kategorie „🗃 Displays“, Börse eigener Reiter „Displays“. Vor Gruselnacht-Freigabe gesperrt wie der Booster.
+- Fragen-Befüllung: Anzeige zeigt jetzt „bereit · alle Kategorien am Ziel“ / „pausiert · unter Ziel“ / „KI-Schlüssel fehlt“ und ob die 80-%-Automatik an ist.
 - Shop-Steuerung (Admin „🛒 Shop-Steuerung“, Setting shop_cfg): je Booster Preis, Bestand (leer = unbegrenzt, zählt bei Käufen runter, 0 = ausverkauft), Ausverkauft-Knopf. Shop zeigt „Nur noch X Stück“ bzw. „Ausverkauft“.
 
 ## Davor live gegangen (Version 67)

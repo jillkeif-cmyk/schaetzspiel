@@ -1562,6 +1562,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ct-shopbig.on{box-shadow:0 0 0 3px #fff,0 8px 26px rgba(255,190,40,.55)}
 .ct-new{position:absolute;top:-9px;right:14px;padding:4px 10px;border-radius:99px;font:900 11px/1 Archivo;letter-spacing:.4px;color:#fff;background:linear-gradient(135deg,#FF4FA3,#B45CFF);box-shadow:0 0 14px rgba(255,79,163,.6);animation:psglow 1.8s ease-in-out infinite}
 .pk-more{border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}.pk-more>summary{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;font:800 15px/1 Archivo;cursor:pointer;list-style:none}.pk-more>summary::-webkit-details-marker{display:none}.pk-more>summary small{color:#9fe3bf;font-weight:800}.pk-more[open]>summary{border-bottom:1px solid rgba(255,255,255,.08)}.pk-more>*:not(summary){margin:10px 12px}
+.inv-h{font:800 16px/1 Archivo;margin:6px 0 10px;color:#FFD23F}.dispcard>img{width:96px!important;flex:none}
 </style>
 </head>
 <body>
@@ -1581,7 +1582,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '83';
+const AVER = '84';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2459,28 +2460,32 @@ function renderCards() {
         <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : x.c.set === 'gn' && gnSoon ? '<br>🎃 bald erhältlich' : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
-    box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    const invD = tcg.packs.filter((p) => (tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display), invB = tcg.packs.filter((p) => !(tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display);
+    box.innerHTML = (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
-      : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>';
+      : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
   } else if (ctab === 'shop') {
-    box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+    const disps = tcg.def.packs.filter((p) => p.display && !p.off);
+    box.innerHTML = disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal</p></span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p><span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`).join('')
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
-    const packsL = market.listings.filter((l) => l.cardId === 'pack'), gradL = market.listings.filter((l) => l.cardId === 'graded' && l.graded), cardsL = market.listings.filter((l) => l.cardId !== 'pack' && l.cardId !== 'graded');
+    const isDisp = (l) => String(l.variant).startsWith('disp_'), dispL = market.listings.filter((l) => l.cardId === 'pack' && isDisp(l));
+    const packsL = market.listings.filter((l) => l.cardId === 'pack' && !isDisp(l)), gradL = market.listings.filter((l) => l.cardId === 'graded' && l.graded), cardsL = market.listings.filter((l) => l.cardId !== 'pack' && l.cardId !== 'graded');
     const dupeBtn = `<button class="mk-dupes" id="mkDupes"><span class="mk-dupes-ic">📤</span><span class="grow"><b>Doppelte hochladen</b><small>Alle doppelten Karten ab Legendär mit einem Klick zum Umwandlungspreis einstellen</small></span><span>›</span></button>`;
-    const seg = dupeBtn + `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
+    const seg = dupeBtn + `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${dispL.length ? `<button data-mkind="displays" class="${mKind === 'displays' ? 'on' : ''}">🗃 Displays (${dispL.length})</button>` : ''}${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
     if (mKind === 'graded') {
       box.innerHTML = seg + (gradL.length ? `<div class="slabgrid">${gradL.map((l) => `<div class="mk-slab">${slabHtml(l.graded)}<div class="row" style="justify-content:space-between;align-items:center;margin-top:6px"><span><b>${D} ${fmt(l.price)}</b><br><small class="sub">von ${esc(l.seller)} · ${l.graded.pop.by[l.graded.grade]}× in dieser Note</small></span>${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurück</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</div></div>`).join('')}</div>`
         : '<p class="sub">Gerade bietet niemand gegradete Karten an. Deine eigenen verkaufst du im Reiter „🏅 Gegradet“.</p>');
       box.querySelectorAll('[data-slab]').forEach((el) => { el.onclick = () => { const l = gradL.find((x) => x.graded.id === Number(el.dataset.slab)); if (l) showSlab(l.graded); }; });
       return;
     }
-    if (mKind === 'packs') {
-      box.innerHTML = seg + (packsL.length ? packsL.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
+    if (mKind === 'packs' || mKind === 'displays') {
+      const lst = mKind === 'displays' ? dispL : packsL;
+      box.innerHTML = seg + (lst.length ? lst.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
         ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="btn small" data-mbuy="${l.id}">Kaufen</button>`}</div>`).join('')
         : '<p class="sub">Gerade bietet niemand Booster an. Stell selbst welche ein, über „Verkaufen“ im Reiter Booster.</p>');
       return;
@@ -2729,6 +2734,12 @@ async function openPack(pid) {
   pid_last = pid;
   try {
     const r = await api('/api/tcg/open', { pack: pid });
+    if (r.display) { // Display: Booster ins Inventar, kurze Einblendung
+      tcg = r.state; sfx('exact'); try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {}
+      const u = $('#unlock'); u.innerHTML = `<div class="rays"></div><div class="in"><p class="sub">Display geöffnet</p><img src="/tcg/pack_${esc(pid)}.webp?v=${AVER}" alt="" style="width:170px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))"><h1 style="margin:6px 0">+${r.added} Booster</h1><p class="sub">${esc(PACK_NAME[r.of] || 'Booster')} liegen jetzt in deinem Inventar</p><button class="btn" id="unlockOk" style="min-width:220px">Zu den Boostern</button></div>`;
+      u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; ctab = 'inventar'; renderCards(); };
+      return;
+    }
     tcg = r.state; if (home) home.me.diamonds = r.state.diamonds;
     // Bilder erst laden, dann aufdecken: sonst dreht sich die Karte und das Bild ploppt danach nochmal auf
     await Promise.race([
@@ -3315,6 +3326,16 @@ function sellCard(key) {
 
 function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
+  if (p.display) { // Display: einfach, nur kaufen
+    const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = base.locked;
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt=""><span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span><br><span class="sub">${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.</span></span></div>
+      <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
+      ${locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+    $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+    $('#packN').oninput = () => { const b = $('#packBuy'); if (b && !b.disabled) b.textContent = `Kaufen · ${fmt(Math.max(1, Math.round(Number($('#packN').value) || 1)) * p.price)} 💎`; };
+    if (!locked) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + ' Display gekauft'); }).catch((e) => toast(e.message)); };
+    return;
+  }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   // die drei stärksten Karten, die aus diesem Booster kommen können
   const rank = tcg.def.order || [];
@@ -3643,7 +3664,7 @@ function casinoOpenHtml() {
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
 // Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
-const PACK_NAME = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster', toon: 'Toon-Welt-Booster', secret: '???-Booster' , gn: 'Gruselnacht-Booster' };
+const PACK_NAME = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster', toon: 'Toon-Welt-Booster', secret: '???-Booster' , gn: 'Gruselnacht-Booster', disp_gn: 'Gruselnacht-Display' };
 function renderGifts() {
   const el = $('#giftBox'); if (!el || !home) return;
   const g = home.me.gifts || [];
@@ -3881,7 +3902,12 @@ function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenz
       <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`).join(''); bind(); };
   const send = (row, soldout) => { const id = row.dataset.sp; api('/api/admin/shop', { pack: id, price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, soldout }).then((r) => { const p = tcg.def.packs.find((x) => x.id === id); Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout }); toast(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}`); draw(); }).catch((e) => toast(e.message)); };
   const bind = () => box.querySelectorAll('[data-sp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.sp); row.querySelector('[data-f=save]').onclick = () => send(row, !!p.soldout); row.querySelector('[data-f=soldout]').onclick = () => send(row, !p.soldout); });
-  if (!tcg) loadTcg().then(draw).catch(() => {}); else draw();
+  const drawDisp = () => { const dd = tcg.def.packs.filter((p) => p.display); box.insertAdjacentHTML('beforeend', dd.map((p) => `<div class="shop-adm" data-dp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>🗃 ${esc(p.name)}</b> <small>${p.size} Booster</small>
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price}" data-f="dprice"></label></div>
+      <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '⛔ Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="btn small" data-f="dsave">Speichern</button></div></div></div>`).join(''));
+    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on) => api('/api/admin/display', { pack: p.id, on, price: Number(row.querySelector('[data-f=dprice]').value) }).then((r) => { p.off = !r.on; p.price = r.price; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${fmt(r.price)} 💎`); draw(); drawDisp(); }).catch((e) => toast(e.message));
+      row.querySelector('[data-f=don]').onclick = () => send(p.off); row.querySelector('[data-f=dsave]').onclick = () => send(!p.off); }); };
+  if (!tcg) loadTcg().then(() => { draw(); drawDisp(); }).catch(() => {}); else { draw(); drawDisp(); }
 }
 function loadAdmin() {
   renderStaffBoxes();
@@ -3939,9 +3965,9 @@ function renderAdmin() {
       <p class="sub">${d.source === 'pool' ? 'Runden nehmen Fragen aus dem Pool, die keiner der Mitspieler je hatte. Reicht der Pool nicht, wird der Rest live erstellt.' : 'Jede Runde wird live erstellt. Die neuen Fragen wandern trotzdem automatisch in den Pool.'}</p>
     </div>
     <div class="panel adm">
-      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? 'pausiert' : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
+      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? (d.aiOk === false ? 'aus · KI-Schlüssel fehlt' : d.themes.some((t) => t.count < t.target) ? 'pausiert · Kategorien unter dem Ziel' : 'bereit · alle Kategorien am Ziel') : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
       <div class="row" style="gap:8px;flex-wrap:wrap">
-        <button class="btn small" id="admStart" ${d.running ? 'disabled' : ''}>▶ Starten</button>
+        <button class="btn small ${d.running ? 'ghost' : ''}" id="admStart" ${d.running ? 'disabled' : ''}>▶ Bis zum Ziel füllen</button>
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
         <label class="row" style="gap:6px;margin:0"><span class="sub">Standard-Ziel</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
       </div>
@@ -3949,6 +3975,7 @@ function renderAdmin() {
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Nachdenken</span><div class="seg"><button data-admeff="low" class="${d.effort === 'low' ? 'on' : ''}">wenig · günstig</button><button data-admeff="medium" class="${d.effort === 'medium' ? 'on' : ''}">mittel</button><button data-admeff="high" class="${d.effort === 'high' ? 'on' : ''}">viel · teuer</button></div></div>
       ${d.batchStatus ? `<p class="sub">📦 Sammelauftrag läuft: ${esc(d.batchStatus)}. Ergebnisse kommen meist nach einigen Minuten, spätestens nach 24 Stunden.</p>` : ''}
       <label class="row" style="gap:8px;margin:0"><input type="checkbox" id="admAuto" ${d.auto ? 'checked' : ''}> <span>Automatisch nachfüllen, wenn die aktivsten Spieler 80 % einer Kategorie gesehen haben</span></label>
+      <p class="sub" style="margin:0">${d.auto ? '🤖 <b style="color:#7CF0A8">Automatik an:</b> prüft alle 15 Minuten und füllt bei Bedarf selbst nach, auch wenn oben „bereit“ oder „pausiert“ steht.' : '🤖 Automatik aus: nachgefüllt wird nur, wenn du oben startest.'}${!d.running && !d.themes.some((t) => t.count < t.target) ? ' „Bis zum Ziel füllen“ hat gerade nichts zu tun, weil alle Kategorien ihr Ziel erreicht haben.' : ''}</p>
       <div class="adm-kpi"><div><b>${fmt(d.distinct || tot)}</b><small>verschiedene Fragen</small></div><div><b>${fmt(d.made)}</b><small>erstellt seit Neustart</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert seit Neustart</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Tokens seit Neustart</small></div></div>
       <p class="sub">Im Pool liegen ${fmt(tot)} spielbare Fragen, davon ${fmt(d.distinct || tot)} inhaltlich verschieden. ${fmt(d.blocked || 0)} sind gesperrt (Klassiker, Lösung in der Frage oder abgeschnittene Antworten). Gleiche Fragen in anderer Formulierung gelten als gesehen, sobald man eine davon hatte.</p>
       <p class="sub">Tokens dieser Befüllung: ${fmt(tk.input)} Eingabe, ${fmt(tk.output)} Ausgabe in ${fmt(tk.calls)} Anfragen${d.made ? ` · etwa ${fmt(Math.round(tk.output / Math.max(1, d.made)))} Ausgabe-Tokens pro Frage` : ''}.</p>
