@@ -48,7 +48,7 @@ setInterval(() => hits.clear(), 3600000).unref();
 const TAG_COLORS = ['cyan', 'blau', 'rot', 'gruen', 'gelb', 'lila', 'orange', 'pink', 'weiss', 'rainbow'];
 const RESERVED_TAGS = ['dev', 'admin', 'mod', 'staff', 'owner', 'system', 'claude', 'anthropic'];
 
-const hasHighroller = (u) => String(u.unlocks || '').split(',').includes('EC5'); // Sonderlogo 12 aus dem Casino-Strang
+const hasHighroller = (u) => String(u.unlocks || '').split(',').includes('EX5'); // Sonderlogo 12 aus dem Casino-Strang
 const shownPrestige = (u) => { const pr = Math.max(0, Math.min(progress.MAX_PRESTIGE, Number(u.prestige) || 0)), ps = Number(u.pres_shown) || 0; return ps === -1 ? 0 : ps === 12 && hasHighroller(u) ? 12 : ps > 0 ? Math.min(ps, pr) : pr; };
 const isAdmin = (u) => !!ADMIN_NAME && u.name.toLowerCase() === ADMIN_NAME;
 const isMod = (u) => isAdmin(u) || u.role === 'coadmin';

@@ -1592,6 +1592,9 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cas-mini{display:block;width:80%;height:5px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.cas-mini b{display:block;height:100%;background:linear-gradient(90deg,#7CF0A8,#1FA35A)}
 .potcard .pot-ic{width:84px;height:84px}
 .mk-new{display:inline-block;margin-left:6px;min-width:20px;padding:1px 6px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 11.5px/18px Archivo;text-align:center;box-shadow:0 0 10px rgba(255,79,163,.7);animation:psglow 1.8s ease-in-out infinite}.mk-segnew{display:inline-block;margin-left:4px;min-width:16px;padding:0 5px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 10.5px/16px Archivo;font-style:normal}
+.shop-hero{display:flex;align-items:center;gap:10px;margin-bottom:12px}.shop-hero .dia{margin-left:auto;font:800 15px Archivo}
+.shop-sign{display:flex;align-items:center;gap:10px;flex:1;padding:10px 14px;border-radius:16px;background:linear-gradient(135deg,#FFE27A,#F5B82E 55%,#E39A12);color:#2A1B00;box-shadow:0 8px 20px rgba(255,190,40,.3)}.shop-sign span{font-size:28px}.shop-sign b{display:block;font:900 20px/1 Archivo}.shop-sign small{font:700 11.5px Archivo;opacity:.75}
+.shop-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;position:sticky;top:0;z-index:3;padding:6px 0;background:var(--bg-deep, #0b2f35)}.shop-sec{font:900 17px/1 Archivo;color:#FFD23F;margin:14px 0 10px}
 </style>
 </head>
 <body>
@@ -1611,7 +1614,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '100';
+const AVER = '102';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1623,7 +1626,7 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" src="/emblems/${t === 12 ? 'pc_EC5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img class="embimg" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(12, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
   const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
@@ -2490,7 +2493,8 @@ function renderCards() {
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
-  const sbig = document.querySelector('.ct-shopbig'); if (sbig) sbig.classList.toggle('on', ctab === 'shop');
+  const sbig = document.querySelector('.ct-shopbig'); if (sbig) { sbig.classList.toggle('on', ctab === 'shop'); sbig.hidden = ctab === 'shop'; }
+  const ctb = $('#ctabs'); if (ctb) ctb.hidden = ctab === 'shop';
   mkBadges();
   const cn = $('#ctNew'); if (cn) { const nw = (tcg.def.packs || []).filter((p) => p.isNew && !p.hidden); cn.hidden = !nw.length; cn.textContent = nw.length ? 'NEU: ' + nw.map((p) => p.name.replace('-Booster', '')).join(', ') : 'NEU'; }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
@@ -2521,14 +2525,24 @@ function renderCards() {
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
   } else if (ctab === 'traenke') {
     box.innerHTML = potionsHtml();
-  } else if (ctab === 'shop') {
-    const disps = tcg.def.packs.filter((p) => p.display && !p.off);
-    const pots = tcg.def.packs.filter((p) => p.potion && !p.off && p.price > 0);
-    const potShop = pots.length ? `<h3 class="inv-h">🧪 Tränke</h3>` + pots.map((p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + '<h3 class="inv-h">📦 Booster</h3>' : '';
-    box.innerHTML = potShop + disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden && !p.offsale).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+  } else if (ctab === 'shop') { // eigene Shop-Seite: Kategorien, teuerste zuerst
+    const byPrice = (a, b) => (b.price || 0) - (a.price || 0);
+    const disps = tcg.def.packs.filter((p) => p.display && !p.off).sort(byPrice);
+    const pots = tcg.def.packs.filter((p) => p.potion && !p.off && p.price > 0).sort(byPrice);
+    const packs = tcg.def.packs.filter((p) => !p.hidden && !p.offsale).sort(byPrice);
+    const cats = [['alle', '✨ Alles'], ['booster', '📦 Booster'], disps.length && ['displays', '🗃 Displays'], pots.length && ['traenke', '🧪 Tränke']].filter(Boolean);
+    if (!cats.some(([k]) => k === shopCat)) shopCat = 'alle';
+    const sec = (k, title, list, card) => (list.length && (shopCat === 'alle' || shopCat === k) ? `<h3 class="shop-sec">${title}</h3>` + list.map((p) => `${card(p)}`).join('') : '');
+    box.innerHTML = `<div class="shop-hero"><button class="btn small ghost" id="shopBack">← Karten</button><div class="shop-sign"><span>🛒</span><div><b>Shop</b><small>Booster, Displays und Tränke</small></div></div><span class="dia">${D} ${fmt(tcg.diamonds || 0)}</span></div>
+      <div class="shop-cats">${cats.map(([k, l]) => `<button class="chipbtn ${shopCat === k ? 'on-miss' : ''}" data-shopcat="${k}">${l}</button>`).join('')}</div>`
+      + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
+      + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
-      <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`).join('')
+      <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
+      + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
+    $('#shopBack').onclick = () => { ctab = 'sammlung'; renderCards(); window.scrollTo(0, 0); };
+    box.querySelectorAll('[data-shopcat]').forEach((b) => { b.onclick = () => { shopCat = b.dataset.shopcat; renderCards(); }; });
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     const isDisp = (l) => String(l.variant).startsWith('disp_'), dispL = market.listings.filter((l) => l.cardId === 'pack' && isDisp(l));
@@ -3584,7 +3598,7 @@ function passInfo(t, track) { // Vorschau einer Belohnung: groß, bewegte Items 
   const can = v.mode === 'on' && x.reached && !got && (track === 'free' || track === 'casino' || v.prem);
   const big = [];
   if (rw.item) big.push(rw.kind === 'title' ? `<img class="pi-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><b>Titel „${esc(rw.name)}“</b>` : `<img class="pi-emb ${rw.kind === 'frame' ? 'spin' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><b>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</b>`);
-  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>${rw.item2 === 'EC5' ? '<small>Auch als Prestige-Logo nutzbar, egal welcher Prestige-Rang: eine Alternative zu deinen Prestige-Logos, steht in der Auswahl neben Master.</small>' : ''}`);
+  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>${rw.item2 === 'EX5' ? '<small>Auch als Prestige-Logo nutzbar, egal welcher Prestige-Rang: eine Alternative zu deinen Prestige-Logos, steht in der Auswahl neben Master.</small>' : ''}`);
   if (rw.pack) { const pk = (tcg && tcg.def && tcg.def.packs || []).find((p) => p.id === rw.pack); big.push(`<img class="pi-pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><b>${PACK_NAME[rw.pack] || 'Booster'}</b><small>${pk ? pk.cards + ' Karten' + (rw.pack === 'gn' && !(home && home.gnOpen) ? ' · öffnen kannst du ihn ab der Freischaltung des Sets' : ' · im Shop ' + fmt(pk.price) + ' 💎') : ''}</small>`); }
   if (rw.box) big.push(`<img class="pi-emb" src="/news/pass_box.webp?v=${AVER}" alt=""><b>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</b><small>Wird beim Öffnen ausgelost, zum Beispiel: ${BOX_TXT[rw.box].join(' · ')}</small>`);
   if (rw.spin) big.push(`<img class="pi-emb" src="/news/gluecksrad.webp?v=${AVER}" alt=""><b>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</b><small>Zusätzlich zu deinen täglichen Drehs, verfallen nicht</small>`);
@@ -3872,7 +3886,7 @@ function renderHot() {
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
 // ---------- Support-Tickets ----------
-let mKind = 'cards', mMissing = false, mMine = false, gFilter = 'alle';
+let mKind = 'cards', mMissing = false, mMine = false, gFilter = 'alle', shopCat = 'alle';
 let tkCat = 'Fehler', tkImage = null, tkD = null, tkFilter = 'open', tkNewIds = new Set();
 const TK_ICON = { Fehler: '🐞', Account: '👤', Wunsch: '💡' };
 const TK_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
@@ -5055,7 +5069,7 @@ function update() {
         : `<div class="row" style="gap:14px"><span style="width:104px;height:104px;flex:none">${emblem(10)}</span><h2>Höchster Rang erreicht</h2></div>`;
       const shown = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown;
       $('#ranks').innerHTML = pr.names.slice(1).map((n, i) => `<div class="rank ${i + 1 > me.prestige ? 'locked' : 'pick'} ${i + 1 === shown ? 'sel' : ''}" ${i + 1 <= me.prestige ? `data-pres="${i + 1}"` : ''}>${emblem(i + 1)}${i + 1 === 11 ? 'Master' : 'Prestige ' + (i + 1)}</div>`).join('')
-      + (() => { const hr = String(me.unlocks || (home.cards && home.cards.emblems && home.cards.emblems.some((e) => e.id === 'EC5' && e.unlocked) ? 'EC5' : '')).includes('EC5'); return `<div class="rank hr ${hr ? 'pick' : 'locked'} ${shown === 12 ? 'sel' : ''}" ${hr ? 'data-pres="12"' : 'data-hrlock="1"'}>${emblem(12)}Highroller</div>`; })()
+      + (() => { const hr = String(me.unlocks || (home.cards && home.cards.emblems && home.cards.emblems.some((e) => e.id === 'EX5' && e.unlocked) ? 'EX5' : '')).includes('EX5'); return `<div class="rank hr ${hr ? 'pick' : 'locked'} ${shown === 12 ? 'sel' : ''}" ${hr ? 'data-pres="12"' : 'data-hrlock="1"'}>${emblem(12)}Highroller</div>`; })()
       + (me.prestige ? `<div class="rank pick ${shown === 0 ? 'sel' : ''}" data-pres="-1" style="display:grid;place-items:center;font-size:12px">ohne<br>Logo</div>` : '');
     }
     return;
