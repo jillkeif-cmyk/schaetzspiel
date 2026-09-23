@@ -58,6 +58,7 @@ const publicStats = (u) => ({
   playMinutes: Number(u.play_minutes) || 0, pokerMinutes: Number(u.poker_minutes) || 0, casinoXp: Number(u.casino_xp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp),
+  ...(() => { const kp = require('./lib/pass'); return kp.state() !== 'off' && u.pass_season === kp.SEASON.id ? { passTier: kp.tierOf(u.pass_xp), passXp: Number(u.pass_xp) || 0, passPrem: !!Number(u.pass_prem) } : {}; })(),
 });
 const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
 
@@ -292,6 +293,8 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
 // Kronen-Pass
 const kpass = require('./lib/pass');
 store.setting('pass_per_tier').then((v) => { if (v) kpass.setPerTier(v); }).catch(() => {});
+store.setting('pass_mode').then((v) => { if (v) { const x = JSON.parse(v); kpass.setMode(x.mode, x.unlockAt); } }).catch(() => {});
+const passClosed = (res) => { if (kpass.active()) return false; const st = kpass.state(); res.status(403).json({ error: st === 'locked' ? (kpass.unlockAt() ? `Der Kronen-Pass wird am ${new Date(kpass.unlockAt()).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} Uhr freigeschaltet.` : 'Der Kronen-Pass ist gerade gesperrt.') : 'Den Kronen-Pass gibt es gerade nicht.' }); return true; };
 const passBusy = new Set();
 async function passUser(u) { // Saison und Wochenstart nachziehen
   const upd = kpass.norm(u), wk = kpass.weekId();
@@ -319,11 +322,11 @@ app.get('/api/pass', async (req, res) => {
 });
 app.post('/api/pass/buy', async (req, res) => {
   try {
+    if (passClosed(res)) return;
     const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!passLock(u0.id, res)) return;
     try {
       const u = await passUser(await store.userById(u0.id));
-      if (!kpass.active()) return res.status(400).json({ error: 'Die Saison ist vorbei.' });
       if (Number(u.pass_prem)) return res.status(400).json({ error: 'Du hast den Premium-Pass schon.' });
       const dia = Number(u.diamonds) || 0; if (dia < kpass.PREMIUM_PRICE) return res.status(400).json({ error: `Du brauchst ${kpass.PREMIUM_PRICE.toLocaleString('de-DE')} Diamanten.` });
       await store.save(u.id, { diamonds: dia - kpass.PREMIUM_PRICE, pass_prem: 1 }); Object.assign(u, { diamonds: dia - kpass.PREMIUM_PRICE, pass_prem: 1 });
@@ -333,6 +336,7 @@ app.post('/api/pass/buy', async (req, res) => {
 });
 app.post('/api/pass/claim', async (req, res) => { // tier: Zahl oder 'all'; track: free | prem | both
   try {
+    if (passClosed(res)) return;
     const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!passLock(u0.id, res)) return;
     try {
@@ -353,6 +357,7 @@ app.post('/api/pass/claim', async (req, res) => { // tier: Zahl oder 'all'; trac
 });
 app.post('/api/pass/bank', async (req, res) => {
   try {
+    if (passClosed(res)) return;
     const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!passLock(u0.id, res)) return;
     try {
@@ -367,6 +372,7 @@ app.post('/api/pass/bank', async (req, res) => {
 });
 app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt Pass-XP
   try {
+    if (passClosed(res)) return;
     const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!passLock(u0.id, res)) return;
     try {
@@ -380,6 +386,11 @@ app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt 
       res.json({ ...kpass.view(u), gotXp: t.xp });
     } finally { passBusy.delete(u0.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/passmode', async (req, res) => { // Pass an, gesperrt (mit Freischaltzeit) oder aus
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const r = kpass.setMode(String(req.body.mode || 'on'), req.body.unlockAt ? Date.parse(req.body.unlockAt) || Number(req.body.unlockAt) : 0);
+  await store.setting('pass_mode', JSON.stringify(r)); console.log(`Kronen-Pass: ${r.mode}${r.unlockAt ? ' bis ' + new Date(r.unlockAt).toISOString() : ''} durch ${u.name}`); res.json(r);
 });
 app.post('/api/admin/passtier', async (req, res) => { // Pass-Tempo: XP pro Stufe
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -1021,7 +1032,7 @@ app.get('/api/ranks/pass', async (req, res) => { // Kronen-Pass-Rangliste der la
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const rows = (await store.passTop(kpass.SEASON.id, 50)).map((x) => ({ ...publicStats(x), passXp: Number(x.pass_xp) || 0, tier: kpass.tierOf(x.pass_xp), prem: !!Number(x.pass_prem) }));
-    res.json({ season: kpass.SEASON, perTier: kpass.perTier(), tiers: kpass.TIERS, rows });
+    res.json({ season: kpass.SEASON, perTier: kpass.perTier(), tiers: kpass.TIERS, mode: kpass.state(), unlockAt: kpass.unlockAt(), rows: kpass.state() === 'off' ? [] : rows });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.get('/api/ranks/graded', async (req, res) => {

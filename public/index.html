@@ -1437,6 +1437,11 @@ body.no-grading .grading-only{display:none !important}
 .pr-lord small{display:block;font:800 11px/1.2 Archivo;letter-spacing:.5px;color:#FFB547;text-transform:uppercase}.pr-lord b{display:block;font:800 18px/1.2 Archivo;margin:2px 0}.pr-lord span{font-size:12.5px;color:#E8DDFF}
 .pr-lordlogo{width:62px;height:62px;object-fit:contain;flex:none;filter:drop-shadow(0 0 10px rgba(255,160,40,.6))}
 .pr-xp{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto}.pr-xp b{font:800 15px/1 Archivo;color:#FFB547}.pr-xp small{font-size:10.5px;color:#aab}
+.pp-chip{display:inline-block;font:800 9.5px/1 Archivo;letter-spacing:.6px;padding:3px 6px;border-radius:99px;background:rgba(255,255,255,.12);color:#cfd6d8;vertical-align:1px}
+.pp-chip.prem{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;box-shadow:0 0 8px rgba(255,210,63,.5)}
+.psum-pass.prem b{color:#FFD23F}
+.passcard.locked{filter:saturate(.6);opacity:.9}
+.ps-lockd{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;margin-top:12px;padding:22px}
 </style>
 </head>
 <body>
@@ -1456,7 +1461,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '50';
+const AVER = '51';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3120,9 +3125,12 @@ const newsWhen = (iso) => { const d = new Date(iso); return d.toLocaleDateString
 // ── Kronen-Pass ──
 let passV = null;
 function loadPass() { return api('/api/pass').then((v) => { passV = v; renderPassCard(); if (page === 'pass') renderPass(); }).catch(() => {}); }
+const passWhen = (ts) => new Date(ts).toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' Uhr';
 const passLeft = (v) => { const ms = Date.parse(v.season.end) - Date.now(); if (ms <= 0) return 'beendet'; const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d ? `${d} T ${h} Std` : `${h} Std`; };
 function renderPassCard() {
-  const el = $('#passCard'); if (!el || !passV || !passV.active) { if (el) el.innerHTML = ''; return; }
+  const el = $('#passCard'); if (!el || !passV || passV.mode === 'off') { if (el) el.innerHTML = ''; return; }
+  if (passV.mode === 'locked') { el.innerHTML = `<button class="passcard locked" id="openPass"><img class="pc-logo" src="/news/pass_logo.webp?v=${AVER}" alt=""><span class="pc-t"><span class="nc-tag">Saison ${passV.season.nr} · ${esc(passV.season.name)}</span><b>🔒 Noch gesperrt</b><small>${passV.unlockAt ? 'Freischaltung ' + passWhen(passV.unlockAt) : 'Wird bald freigeschaltet'}</small></span></button>`; return; }
+  if (!passV.active) { el.innerHTML = ''; return; }
   const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
   el.innerHTML = `<button class="passcard ${v.prem ? 'prem' : ''}" id="openPass">${v.claimable ? `<span class="nc-corner">🎁 ${v.claimable}</span>` : ''}
     <img class="pc-logo" src="/news/pass_logo.webp?v=${AVER}" alt="">
@@ -3145,6 +3153,7 @@ function passRw(rw, prem) { // eine Belohnung als Kachel
 function renderPass() {
   const box = $('#passBody'); if (!box) return;
   if (!passV) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadPass(); return; }
+  if (passV.mode !== 'on') { box.innerHTML = `<div class="ps-hero"><img src="${passV.season.banner}?v=${AVER}" alt=""></div><div class="panel ps-lockd"><div style="font-size:40px">🔒</div><b>${passV.mode === 'off' ? 'Den Kronen-Pass gibt es gerade nicht' : 'Der Kronen-Pass ist noch gesperrt'}</b>${passV.mode === 'locked' ? `<p class="sub">${passV.unlockAt ? `Freischaltung: <b>${passWhen(passV.unlockAt)}</b>` : 'Die Freischaltung kommt bald.'}</p>` : ''}</div>`; return; }
   const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
   const next = v.tier >= v.tiersN ? '' : `noch ${fmt(v.perTier - v.into)} Pass-XP bis Stufe ${v.tier + 1}`;
   const bats = Array.from({ length: 7 }, (_, i) => `<span class="ps-bat" style="--x:${(i * 37) % 100}%;--y:${10 + (i * 23) % 70}%;--d:${6 + i % 4}s;--s:${0.6 + (i % 3) * 0.25}">${'<svg viewBox="0 0 64 32"><path d="M32 12c2-4 5-6 8-6-1 3 0 5 2 6 3-4 8-6 14-5-4 2-6 6-6 10-4-2-8-2-11 1-2-2-4-3-7-2-3-1-5 0-7 2-3-3-7-3-11-1 0-4-2-8-6-10 6-1 11 1 14 5 2-1 3-3 2-6 3 0 6 2 8 6z"/></svg>'}</span>`).join('');
@@ -3491,7 +3500,10 @@ function loadLedger() {
       <div class="lg-list">${r.rows.map((x) => `<div class="lg-row"><small>${d(x.ts)}</small><span class="grow">${lgSrc(x.src)}</span><b class="${x.delta < 0 ? 'neg' : 'pos'}">${x.delta > 0 ? '+' : ''}${fmt(x.delta)}</b><span class="lg-after">${fmt(x.after)}</span></div>`).join('') || '<p class="sub">Noch keine Einträge. Das Protokoll zählt ab jetzt.</p>'}</div>`;
   }).catch((e) => { out.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
 }
+const pt0 = () => { const b = document.querySelector('[data-pmode]'); if (!b || b.dataset.bound) return false; b.dataset.bound = 1; return true; };
 function loadAdmin() {
+  const pmInfo = (v) => { const i = $('#pmInfo'); if (i) i.innerHTML = `Aktuell: <b>${v.mode === 'on' ? '✅ an' : v.mode === 'locked' ? '🔒 gesperrt' : '⛔ aus'}</b>${v.mode === 'locked' && v.unlockAt ? ` · schaltet sich ${passWhen(v.unlockAt)} von selbst frei` : ''}. Gesperrt: sichtbar mit Hinweis, nichts abholbar, keine Pass-XP. Aus: komplett ausgeblendet.`; };
+  if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   const lg = $('#lgGo'); if (lg && !lg.onclick) { lg.onclick = loadLedger; $('#lgName').onkeydown = (e) => { if (e.key === 'Enter') loadLedger(); }; }
   const dl = $('#lgNames'); if (dl && adminUsers && !dl.children.length) dl.innerHTML = adminUsers.map((u) => `<option value="${esc(u.name)}">`).join('');
@@ -3594,8 +3606,9 @@ function renderRanks() {
   if (rtab === 'pass') {
     if (!passRanks || Date.now() - passRanks.t > 30000) { if (!passRanks) box.innerHTML = '<p class="sub">Lädt …</p>'; api('/api/ranks/pass').then((d) => { passRanks = { ...d, t: Date.now() }; if (rtab === 'pass') renderRanks(); }).catch((e) => toast(e.message)); if (!passRanks) return; }
     const d = passRanks, lord = d.rows[0];
-    box.innerHTML = `<div class="pr-lord">${lord ? `<img class="pr-lordlogo" src="/news/pass_logo.webp?v=${AVER}" alt=""><div class="grow"><small>Pass-Lord · Saison ${d.season.nr} ${esc(d.season.name)}</small><b>${withTag(lord)}</b><span>Stufe ${lord.tier} von ${d.tiers} · ${fmt(lord.passXp)} Pass-XP${lord.prem ? ' · 👑 Premium' : ''}</span></div>${avatar(lord, 52)}` : '<div class="grow"><b>Noch kein Pass-Lord</b><span>Spiel ein Quiz-Match und hol dir Platz 1.</span></div>'}</div>
-      ${d.rows.length ? `<div class="plist">${d.rows.map((u, i) => `<div class="pl rkrow pr-row ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? '#FF8A1F' : i < 3 ? '#B36BFF' : 'var(--line)'}"><span class="pos">${i === 0 ? '👑' : i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">Stufe ${u.tier}${u.tier >= d.tiers ? ' · 🏆 komplett' : ''}${u.prem ? ' · 👑 Premium' : ''}</span></span><span class="pr-xp"><b>${fmt(u.passXp)}</b><small>Pass-XP</small></span></div>`).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>'}`;
+    if (d.mode !== 'on') { box.innerHTML = `<div class="panel ps-lockd"><div style="font-size:34px">🔒</div><b>${d.mode === 'off' ? 'Den Kronen-Pass gibt es gerade nicht' : 'Der Kronen-Pass ist noch gesperrt'}</b>${d.mode === 'locked' && d.unlockAt ? `<p class="sub">Freischaltung: <b>${passWhen(d.unlockAt)}</b></p>` : ''}</div>`; return; }
+    box.innerHTML = `<div class="pr-lord">${lord ? `<img class="pr-lordlogo" src="/news/pass_logo.webp?v=${AVER}" alt=""><div class="grow"><small>Pass-Lord · Saison ${d.season.nr} ${esc(d.season.name)}</small><b>${withTag(lord)}</b><span>${lord.prem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'} Stufe ${lord.tier} von ${d.tiers} · ${fmt(lord.passXp)} Pass-XP</span></div>${avatar(lord, 52)}` : '<div class="grow"><b>Noch kein Pass-Lord</b><span>Spiel ein Quiz-Match und hol dir Platz 1.</span></div>'}</div>
+      ${d.rows.length ? `<div class="plist">${d.rows.map((u, i) => `<div class="pl rkrow pr-row ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? '#FF8A1F' : i < 3 ? '#B36BFF' : 'var(--line)'}"><span class="pos">${i === 0 ? '👑' : i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${u.prem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'} Stufe ${u.tier}${u.tier >= d.tiers ? ' · 🏆 komplett' : ''}</span></span><span class="pr-xp"><b>${fmt(u.passXp)}</b><small>Pass-XP</small></span></div>`).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>'}`;
     return;
   }
   if (rtab === 'graded') {
@@ -3881,6 +3894,9 @@ function build() {
       <datalist id="lgNames"></datalist><div id="lgOut"></div></details>
     <details class="panel lg-box"><summary><b>👑 Kronen-Pass Tempo</b><small> · Pass-XP pro Stufe</small></summary>
       <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="ptXp" type="number" min="500" step="500" placeholder="z. B. 4000"><button class="btn small" id="ptGo">Speichern</button></div>
+      <div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap"><b style="width:100%">Pass-Schalter</b><button class="btn small" data-pmode="on">✅ An</button><button class="btn small ghost" data-pmode="locked">🔒 Gesperrt</button><button class="btn small ghost" data-pmode="off">⛔ Aus</button></div>
+      <div class="row" style="gap:8px;margin-top:8px;align-items:center"><small style="white-space:nowrap">Freischalten am</small><input class="field grow" id="pmAt" type="datetime-local"></div>
+      <p class="sub" id="pmInfo" style="margin-top:6px"></p>
       <p class="sub" id="ptInfo" style="margin-top:6px">Gilt sofort für alle. Wer schon weiter ist, behält seine Pass-XP, die Stufe wird neu berechnet.</p></details>
     <div id="adminBody"><p class="sub">Lädt …</p></div></div>`;
 
@@ -4190,7 +4206,8 @@ async function showUser(id) {
       <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(11, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img src="/emblems/p${t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
       <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
       <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
-      <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div></div>`;
+      <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div>
+      ${u.passTier !== undefined ? `<div class="psum-pass ${u.passPrem ? 'prem' : ''}"><small>Kronen-Pass</small><b>Stufe ${u.passTier}</b><small>${u.passPrem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'}</small></div>` : ''}</div>`;
     $('#modal').innerHTML = `<div class="panel" style="gap:14px;max-height:90vh;overflow:auto">${playerCard(u, '')}
       ${vit}${sum}
       <button class="btn ghost" id="statToggle">📊 Alle Statistiken anzeigen</button>
