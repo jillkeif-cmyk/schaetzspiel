@@ -1443,6 +1443,11 @@ body.no-grading .grading-only{display:none !important}
 .passcard.locked{filter:saturate(.6);opacity:.9}
 .ps-lockbar{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px;border-radius:14px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1.5px rgba(255,170,60,.5);text-align:center}.ps-lockbar b{font:800 17px/1.1 Archivo;color:#FFB547}.ps-lockbar span{font-size:12.5px;color:#E8DDFF}
 .ps-lockd{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;margin-top:12px;padding:22px}
+.mk-dupes{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin-bottom:10px;border-radius:16px;text-align:left;background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(31,163,90,.18));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.5)}
+.mk-dupes b{display:block;font:800 15px/1.2 Archivo}.mk-dupes small{display:block;font-size:11.5px;color:#cfe}.mk-dupes-ic{font-size:26px}
+.ds-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ds-card{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;border-radius:12px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);opacity:.55;color:inherit;border:0;font:inherit}
+.ds-card.on{opacity:1;box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.3)}.ds-card img{width:100%;border-radius:6px}.ds-card b{font-size:11px;line-height:1.1}.ds-card small{font-size:10.5px;color:#cfe}
 </style>
 </head>
 <body>
@@ -1462,7 +1467,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '53';
+const AVER = '54';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2335,7 +2340,8 @@ function renderCards() {
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     const packsL = market.listings.filter((l) => l.cardId === 'pack'), gradL = market.listings.filter((l) => l.cardId === 'graded' && l.graded), cardsL = market.listings.filter((l) => l.cardId !== 'pack' && l.cardId !== 'graded');
-    const seg = `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
+    const dupeBtn = `<button class="mk-dupes" id="mkDupes"><span class="mk-dupes-ic">📤</span><span class="grow"><b>Doppelte hochladen</b><small>Alle doppelten Karten ab Legendär mit einem Klick zum Umwandlungspreis einstellen</small></span><span>›</span></button>`;
+    const seg = dupeBtn + `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
     if (mKind === 'graded') {
       box.innerHTML = seg + (gradL.length ? `<div class="slabgrid">${gradL.map((l) => `<div class="mk-slab">${slabHtml(l.graded)}<div class="row" style="justify-content:space-between;align-items:center;margin-top:6px"><span><b>${D} ${fmt(l.price)}</b><br><small class="sub">von ${esc(l.seller)} · ${l.graded.pop.by[l.graded.grade]}× in dieser Note</small></span>${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurück</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</div></div>`).join('')}</div>`
         : '<p class="sub">Gerade bietet niemand gegradete Karten an. Deine eigenen verkaufst du im Reiter „🏅 Gegradet“.</p>');
@@ -3195,6 +3201,36 @@ function passGot(r, title) { // Belohnungs-Einblendung
   u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
 async function passAct(path, body, title) { const r = await api(path, body).catch((e) => { toast(e.message); return null; }); if (r) passGot(r, title); return r; }
+const DUPE_MELT = { legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 2500 };
+function dupeSellDialog() { // Doppelte ab Legendär auf die Börse, eine Karte bleibt immer
+  if (!tcg || !tcg.def) return toast('Karten laden noch …');
+  const owned = (id, v) => { const x = (tcg.cards || []).find((c) => c.card_id === id && c.variant === v); return x ? Number(x.count) || 0 : 0; };
+  const list = [];
+  for (const c of tcg.def.cards) { if (c.set === 'dev') continue; for (const v of tcg.def.variants[c.id]) { if (!DUPE_MELT[v]) continue; const n = owned(c.id, v); if (n > 1) list.push({ c, v, extra: n - 1, key: c.id + ':' + v }); } }
+  const sel = Object.fromEntries(list.map((d) => [d.key, true]));
+  const draw = () => {
+    const pick = list.filter((d) => sel[d.key]), cnt = pick.reduce((a, d) => a + d.extra, 0), sum = pick.reduce((a, d) => a + d.extra * DUPE_MELT[d.v], 0);
+    const order = ['mythic', 'ghost', 'ext', 'ultra', 'legend'];
+    $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>📤 Doppelte hochladen</h2>
+      <p class="sub">Alle doppelten Karten ab <b>Legendär</b> (Legendär, Ultra Rare, Extended Art, Ghost Rare, Mythisch). Jede kommt einzeln zum Umwandlungspreis auf die Börse, von jeder Karte bleibt dir eine. Entwicklerkarten sind ausgenommen.</p>
+      ${list.length ? `<div class="row" style="gap:8px"><button class="chipbtn" id="dsAll">Alle wählen</button><button class="chipbtn" id="dsNone">Keine</button></div>
+      ${order.map((v) => [v, list.filter((d) => d.v === v)]).filter(([, l]) => l.length).map(([v, l]) => `<h3 style="margin:8px 0 2px">${esc(varName(v))} <span class="sub">· ${fmt(DUPE_MELT[v])} 💎 je Karte</span></h3>
+        <div class="ds-grid">${l.map((d) => `<button class="ds-card ${sel[d.key] ? 'on' : ''}" data-ds="${esc(d.key)}"><img src="${cardImg(d.c.id, d.v)}" alt=""><b>${esc(d.c.name)}</b><small>${d.extra}× · ${fmt(d.extra * DUPE_MELT[d.v])} 💎</small></button>`).join('')}</div>`).join('')}
+      <button class="btn" id="dsGo" ${cnt ? '' : 'disabled'}>${cnt ? `${cnt} ${cnt === 1 ? 'Karte' : 'Karten'} einstellen · zusammen ${fmt(sum)} 💎` : 'Nichts ausgewählt'}</button>`
+      : '<p class="sub">Du hast keine doppelten Karten ab Legendär.</p>'}
+      <button class="btn ghost" id="dsClose">Schließen</button></div>`;
+    $('#modal').classList.add('on'); $('#dsClose').onclick = closeModal;
+    if (!list.length) return;
+    $('#dsAll').onclick = () => { list.forEach((d) => { sel[d.key] = true; }); draw(); };
+    $('#dsNone').onclick = () => { list.forEach((d) => { sel[d.key] = false; }); draw(); };
+    document.querySelectorAll('#modal [data-ds]').forEach((b) => { b.onclick = () => { sel[b.dataset.ds] = !sel[b.dataset.ds]; draw(); }; });
+    $('#dsGo').onclick = () => {
+      if (!confirm(`${cnt} ${cnt === 1 ? 'Karte' : 'Karten'} zum Umwandlungspreis auf die Börse stellen?\\n\\nZusammen ${fmt(sum)} Diamanten, wenn alles verkauft wird. Du kannst jede Anzeige später einzeln zurückziehen.`)) return;
+      api('/api/tcg/sell-dupes', { items: pick.map((d) => ({ card: d.c.id, variant: d.v, n: d.extra })) }).then((r) => { tcg = r; closeModal(); sfx('exact'); toast(`${r.listed} Anzeigen erstellt`); market = null; loadMarket(); }).catch((e) => toast(e.message));
+    };
+  };
+  draw();
+}
 function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts || []; renderNewsCard(); if (page === 'news') renderNews(); }).catch(() => {}); }
 function renderNewsCard() {
   const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
@@ -4706,6 +4742,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.rt) { rtab = t.dataset.rt; if (rtab === 'cards') collectD = null; if (rtab === 'graded') gradedRanks = null; renderRanks(); }
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
+  else if (t.id === 'mkDupes' || t.closest('#mkDupes')) { dupeSellDialog(); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
   else if (t.dataset.pack) packInfo(t.dataset.pack);
   else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));

@@ -946,6 +946,29 @@ app.get('/api/tcg/market', async (req, res) => {
     res.json({ listings: out, diamonds: Number(u.diamonds) || 0 });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// Doppelte ab Legendär/Ultra Rare mit einem Klick zum Umwandlungspreis auf die Börse (Entwicklerkarten ausgenommen)
+const DUPE_SELL = new Set(['legend', 'ultra', 'ext', 'ghost', 'mythic']);
+const sellBusy = new Set();
+app.post('/api/tcg/sell-dupes', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (sellBusy.has(u.id)) return res.status(429).json({ error: 'Einen Moment …' }); sellBusy.add(u.id);
+    try {
+      const items = Array.isArray(req.body.items) ? req.body.items.slice(0, 200) : [];
+      let listed = 0, value = 0;
+      for (const it of items) {
+        const cid = String(it.card || ''), v = String(it.variant || ''), c = tcg.CARDS.find((x) => x.id === cid);
+        if (!c || c.set === 'dev' || !DUPE_SELL.has(v) || !tcg.has(cid, v)) continue;
+        const have = await store.cardCount(u.id, cid, v), take = Math.min(Math.max(0, Math.round(Number(it.n) || 0)), Math.max(0, have - 1), 300 - listed); // eine bleibt immer
+        for (let k = 0; k < take; k++) { await store.cardAdd(u.id, cid, v, -1); await store.marketAdd({ seller: u.id, card_id: cid, variant: v, price: MELT[v] }); listed++; value += MELT[v]; }
+        if (listed >= 300) break;
+      }
+      if (!listed) return res.status(400).json({ error: 'Keine passenden Doppelten gefunden. Von jeder Karte bleibt eine erhalten.' });
+      console.log(`Börse: ${u.name} stellt ${listed} Doppelte ein (${value} Diamanten Gesamtwert)`);
+      res.json({ ...(await tcgState(await store.userById(u.id))), listed, value });
+    } finally { sellBusy.delete(u.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.post('/api/tcg/sell', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
