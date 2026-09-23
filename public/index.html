@@ -1493,6 +1493,8 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 .pi-box{gap:12px;display:flex;flex-direction:column;align-items:center;max-height:90vh;overflow:auto}.pi-tag{font:800 11px/1 Archivo;letter-spacing:1px;color:#FFB547}
 .pi-items{display:flex;flex-direction:column;gap:14px;width:100%}.pi-it{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}.pi-it b{font:800 17px/1.2 Archivo}.pi-it small{color:#cbb8f0;font-size:12.5px}
 .pi-title{width:100%;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.5)}.pi-emb{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,160,60,.4))}.pi-emb.spin{animation:sp 10s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.pi-pack{width:120px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.6))}
+.ban-box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 18px}.ban-ic{font-size:54px}.ban-box h2{font-size:21px}
+.ban-timer{font:900 38px/1 Archivo;letter-spacing:1px;color:#FF8A8A;font-variant-numeric:tabular-nums;margin:4px 0}
 </style>
 </head>
 <body>
@@ -1512,7 +1514,7 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '65';
+const AVER = '66';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2352,7 +2354,7 @@ async function loadMarket() { try { market = await api('/api/tcg/market'); rende
 async function loadTrades() { try { trades = await api('/api/tcg/trades'); renderCards(); } catch (e) { toast(e.message); } }
 
 function renderCards() {
-  const box = $('#cbody'); if (!box || !tcg) return;
+  const box = $('#cbody'); if (!box || (!tcg && !(page === 'casino' && banActive()))) return;
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
@@ -2469,6 +2471,12 @@ function renderCards() {
       if (!items.length) return;
       api('/api/tcg/melt', { items }).then((st) => { tcg = st; meltSel = {}; if (home && home.me) home.me.diamonds = st.diamonds; renderCards(); sfx('exact'); toast(`${st.melted} Karten umgewandelt, +${fmt(st.gained)} Diamanten`); }).catch((e) => toast(e.message));
     };
+  } else if (ctab === 'casino' && banActive()) {
+    const b = home.me.casinoBan;
+    box.innerHTML = `<div class="panel ban-box"><div class="ban-ic">🚫</div><h2>Du wurdest vom Casino ausgeschlossen</h2>
+      ${b.until ? `<p class="sub">Die Sperre endet in</p><div class="ban-timer" id="banTimer">${banLeft(b.until)}</div><p class="sub">am ${new Date(b.until).toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} Uhr</p>` : '<p class="sub">Die Sperre hat kein Enddatum.</p>'}
+      <p class="sub" style="margin-top:6px">Bei Fragen wende dich an den Admin.</p></div>`;
+    clearInterval(banTick); if (b.until) banTick = setInterval(() => { const el = $('#banTimer'); if (!el) { clearInterval(banTick); return; } if (b.until <= Date.now()) { clearInterval(banTick); home.me.casinoBan = null; renderCards(); return; } el.textContent = banLeft(b.until); }, 1000);
   } else if (ctab === 'casino') {
     const dia = (tcg && tcg.diamonds) || 0;
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
@@ -3646,6 +3654,11 @@ function loadAdmin() {
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   const ha = $('#hwAnim'); if (ha && !ha.onclick) ha.onclick = () => api('/api/admin/theme', { anim: !siteAnim }).then((r) => { applyTheme(r.theme, r.anim); ha.textContent = r.anim ? 'Ausschalten' : 'Einschalten'; toast(r.anim ? '🦇 Animationen an' : 'Animationen aus'); }).catch((e) => toast(e.message));
   const hw = $('#hwToggle'); if (hw && !hw.onclick) hw.onclick = () => api('/api/admin/theme', { theme: siteTheme === 'halloween' ? '' : 'halloween' }).then((r) => { applyTheme(r.theme, r.anim); hw.textContent = r.theme === 'halloween' ? 'Ausschalten' : 'Einschalten'; toast(r.theme ? '🎃 Halloween-Look an' : 'Halloween-Look aus'); }).catch((e) => toast(e.message));
+  const bb = $('#banBox'); if (bb && !bb.dataset.bound) { bb.dataset.bound = 1; bb.ontoggle = () => { if (bb.open) loadBans(); };
+    const inp = $('#cbName'); inp.oninput = () => { const q = inp.value.trim().toLowerCase(), box = $('#cbSug'); if (!q || !adminUsers) { box.innerHTML = ''; return; }
+      box.innerHTML = adminUsers.filter((u) => u.name.toLowerCase().includes(q)).slice(0, 8).map((u) => `<button data-cbpick="${esc(u.name)}">${esc(u.name)}</button>`).join('');
+      box.querySelectorAll('[data-cbpick]').forEach((b) => { b.onclick = () => { inp.value = b.dataset.cbpick; box.innerHTML = ''; }; }); };
+    document.querySelectorAll('[data-banh]').forEach((b) => { b.onclick = () => { const n = inp.value.trim(), h = Number(b.dataset.banh); if (n && confirm(`${n} ${h < 0 ? 'unbefristet' : 'für ' + b.textContent} vom Casino ausschließen?`)) setBan(n, h); }; }); }
   const lg = $('#lgGo'); if (lg && !lg.onclick) {
     lg.onclick = () => { $('#lgSug').innerHTML = ''; loadLedger(); };
     const inp = $('#lgName');
@@ -3929,6 +3942,12 @@ document.addEventListener('visibilitychange', () => {
   if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) fetch('/api/version', { cache: 'no-store' }).then((r) => r.json()).then((d) => checkVersion(d.v)).catch(() => {});
 });
 setInterval(() => { if (verReload && !S) location.reload(); }, 5000);
+// Casino-Sperre einzelner Spieler
+let banTick = 0;
+const banActive = () => { const b = home && home.me && home.me.casinoBan; return !!b && (!b.until || b.until > Date.now()); };
+const banLeft = (t) => { let s = Math.max(0, Math.floor((t - Date.now()) / 1000)); const d = Math.floor(s / 86400); s %= 86400; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (d ? d + ' T ' : '') + [h, m, x].map((v) => String(v).padStart(2, '0')).join(':'); };
+function loadBans() { api('/api/admin/casinoban').then((r) => { const el = $('#cbList'); if (!el) return; el.innerHTML = r.bans.length ? r.bans.map((x) => `<div class="lg-row"><span class="grow"><b>${esc(x.name)}</b></span><small>${x.ban.until ? 'bis ' + new Date(x.ban.until).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'unbefristet'}</small><button class="btn small ghost" data-unban="${esc(x.name)}">Aufheben</button></div>`).join('') : '<small class="sub">Niemand ist gesperrt.</small>'; el.querySelectorAll('[data-unban]').forEach((b) => { b.onclick = () => setBan(b.dataset.unban, 0); }); }).catch(() => {}); }
+function setBan(name, hours) { if (!name) return toast('Spielername fehlt'); api('/api/admin/casinoban', { name, hours }).then((r) => { toast(r.ban ? `🚫 ${r.name} gesperrt` : `${r.name} wieder frei`); loadBans(); }).catch((e) => toast(e.message)); }
 async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
@@ -3942,6 +3961,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('casino:ban', (b) => { if (home && home.me) home.me.casinoBan = b; if (page === 'casino' || (page === 'cards' && ctab === 'casino')) { if (b) toast('🚫 Du wurdest vom Casino ausgeschlossen'); renderCards(); } });
   socket.on('theme', (t) => { if (home) { home.theme = t && t.theme !== undefined ? t.theme : t; home.themeAnim = t && t.anim !== undefined ? t.anim : true; } applyTheme(t); });
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
@@ -4098,6 +4118,11 @@ function build() {
     <h1 style="font-size:30px">Admin</h1>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎃</span><div class="grow"><b>Halloween-Look</b><small style="display:block;color:#cfe">Geister, Fledermäuse, Kürbisse und Halloween-Logo für alle, sofort live</small></div><button class="btn small" id="hwToggle">${siteTheme === 'halloween' ? 'Ausschalten' : 'Einschalten'}</button></div>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🦇</span><div class="grow"><b>Halloween-Animationen</b><small style="display:block;color:#cfe">Fledermäuse, wandernde Geister, Spinne. Aus: nur der Look, alles steht still</small></div><button class="btn small" id="hwAnim">${siteAnim ? 'Ausschalten' : 'Einschalten'}</button></div>
+    <details class="panel lg-box" id="banBox"><summary><b>🚫 Casino-Sperre</b><small> · einzelne Spieler vom Casino ausschließen</small></summary>
+      <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="cbName" placeholder="Spielername" autocomplete="off" autocapitalize="off"></div>
+      <div id="cbSug" class="lg-sug"></div>
+      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[[1, '1 Std'], [3, '3 Std'], [6, '6 Std'], [12, '12 Std'], [24, '1 Tag'], [72, '3 Tage'], [168, '1 Woche'], [-1, 'Unbefristet']].map(([h, l]) => `<button class="btn small ${h < 0 ? '' : 'ghost'}" data-banh="${h}">${l}</button>`).join('')}</div>
+      <b style="display:block;margin-top:12px">Gerade gesperrt</b><div id="cbList" class="lg-list" style="margin-top:6px"></div></details>
     <details class="panel lg-box" id="ledgerBox"><summary><b>💎 Guthaben-Verlauf</b><small> · jede Änderung am Kontostand eines Spielers</small></summary>
       <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="lgName" placeholder="Spielername" autocomplete="off" autocapitalize="off"><button class="btn small" id="lgGo">Anzeigen</button></div>
       <div id="lgSug" class="lg-sug"></div><div id="lgOut"></div></details>

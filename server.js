@@ -67,6 +67,14 @@ app.set('trust proxy', 1);
 const jsonSmall = express.json({ limit: '120kb' }), jsonBig = express.json({ limit: '2mb' }); // Tickets dürfen einen Screenshot mitbringen
 app.use((req, res, next) => (req.path === '/api/tickets' ? jsonBig : jsonSmall)(req, res, next));
 app.use((req, res, next) => store.ctx.run({ src: req.method + ' ' + req.path }, next)); // Herkunft für das Guthaben-Protokoll
+// Casino-Sperre für einzelne Spieler: casino_ban = 0 frei, 1 unbefristet, sonst Zeitstempel bis wann
+const BAN_FOREVER = 1;
+const casinoBan = (u) => { const b = Number(u && u.casino_ban) || 0; if (!b) return null; if (b === BAN_FOREVER) return { until: null }; return b > Date.now() ? { until: b } : null; };
+const banMsg = (b) => b.until ? `Du bist bis ${new Date(b.until).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} Uhr vom Casino ausgeschlossen.` : 'Du bist vom Casino ausgeschlossen.';
+app.use('/api/casino', async (req, res, next) => {
+  try { const u = await auth(req); const b = u && casinoBan(u); if (b) return res.status(403).json({ error: banMsg(b), casinoBan: b }); } catch (e) {}
+  next();
+});
 app.get('/healthz', (_, res) => res.send('ok'));
 app.get('/api/push/key', (_, res) => res.json({ key: push.publicKey() }));
 app.get('/api/config', (_, res) => res.json({ needCode: !!INVITE_CODE }));
@@ -164,7 +172,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -401,6 +409,22 @@ app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt 
       res.json({ ...kpass.view(u), gotXp: t.xp });
     } finally { passBusy.delete(u0.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/casinoban', async (req, res) => { // hours: Zahl = so lange, -1 = unbefristet, 0 = aufheben
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const t = await store.userByName(String(req.body.name || '').trim()); if (!t) return res.status(404).json({ error: 'Spieler nicht gefunden.' });
+  const h = Number(req.body.hours) || 0, val = h < 0 ? BAN_FOREVER : h > 0 ? Date.now() + Math.round(h * 3600e3) : 0;
+  await store.save(t.id, { casino_ban: val });
+  const b = casinoBan({ casino_ban: val });
+  io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === t.id) so.emit('casino:ban', b); });
+  console.log(`Casino-Sperre: ${t.name} ${b ? (b.until ? 'bis ' + new Date(b.until).toISOString() : 'unbefristet') : 'aufgehoben'} durch ${u.name}`);
+  res.json({ name: t.name, ban: b });
+});
+app.get('/api/admin/casinoban', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const all = await store.allUsers(); const out = [];
+  for (const x of all) { const f = x.casino_ban !== undefined ? x : await store.userById(x.id); const b = casinoBan(f); if (b) out.push({ name: f.name, ban: b }); }
+  res.json({ bans: out });
 });
 app.post('/api/admin/passmode', async (req, res) => { // Pass an, gesperrt (mit Freischaltzeit) oder aus
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -1632,7 +1656,12 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { socket.emit('ver', APP_VER); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next)); if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
+io.on('connection', (socket) => { socket.emit('ver', APP_VER); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next));
+  socket.use(async (pk, next) => { // Casino-Sperre auch für Poker, Blackjack-Tische und Zuschauen
+    if (!/^(pk:|bj:|cw:watch)/.test(String(pk[0])) || !socket.data.user) return next();
+    const u = await store.userById(socket.data.user.id).catch(() => null), b = casinoBan(u);
+    if (b) { socket.emit('casino:ban', b); return; } next();
+  }); if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
 function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, automatisch aufstehen
   socket.emit('tc:list', tcList());
   const unwatch = () => { for (let m = 1; m <= TC_MACHINES; m++) socket.leave('tc' + m); };
