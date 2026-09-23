@@ -34,11 +34,13 @@ def load_frame(path):
     _cache[path] = dict(img=fr, W=W, H=H, NAME=name, ART=art, TEXT=text, STATS=stats, alpha=alpha)
     return _cache[path]
 
-def fit(img, box):
+def fit(img, box, top=0.12):
+    # Beschnitt nur wo nötig; wenn oben und unten etwas weg muss, fast alles unten wegnehmen (Köpfe bleiben)
     bw, bh = box; ar = img.width / img.height; th = bh; tw = int(th * ar)
     if tw < bw: tw = bw; th = int(tw / ar)
     img = img.resize((tw, th), Image.LANCZOS)
-    return img.crop(((tw - bw) // 2, (th - bh) // 2, (tw - bw) // 2 + bw, (th - bh) // 2 + bh))
+    y = int((th - bh) * top)
+    return img.crop(((tw - bw) // 2, y, (tw - bw) // 2 + bw, y + bh))
 
 def prism(size, strength=1.0, shift=0.0):
     w, h = size

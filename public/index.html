@@ -1481,6 +1481,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 .pres-hint{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:16px;text-align:left;background:linear-gradient(135deg,rgba(255,210,63,.3),rgba(255,138,31,.2));box-shadow:inset 0 0 0 2px #FFD23F,0 0 18px rgba(255,210,63,.35);animation:psglow 2s ease-in-out infinite}
 .pres-hint>span:first-child{font-size:28px}.pres-hint b{display:block;font:800 16px/1.2 Archivo;color:#FFE27A}.pres-hint small{display:block;font-size:12px;color:#f1e6c8}
 .pres-flash{box-shadow:0 0 0 3px #FFD23F,0 0 30px rgba(255,210,63,.6)!important;transition:box-shadow .4s}
+body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 </style>
 </head>
 <body>
@@ -1500,7 +1501,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '63';
+const AVER = '64';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3611,7 +3612,8 @@ function loadAdmin() {
   const pmInfo = (v) => { const i = $('#pmInfo'); if (i) i.innerHTML = `Aktuell: <b>${v.mode === 'on' ? '✅ an' : v.mode === 'locked' ? '🔒 gesperrt' : '⛔ aus'}</b>${v.mode === 'locked' && v.unlockAt ? ` · schaltet sich ${passWhen(v.unlockAt)} von selbst frei` : ''}. Gesperrt: sichtbar mit Hinweis, nichts abholbar, keine Pass-XP. Aus: komplett ausgeblendet.`; };
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
-  const hw = $('#hwToggle'); if (hw && !hw.onclick) hw.onclick = () => api('/api/admin/theme', { theme: siteTheme === 'halloween' ? '' : 'halloween' }).then((r) => { applyTheme(r.theme); hw.textContent = r.theme === 'halloween' ? 'Ausschalten' : 'Einschalten'; toast(r.theme ? '🎃 Halloween-Look an' : 'Halloween-Look aus'); }).catch((e) => toast(e.message));
+  const ha = $('#hwAnim'); if (ha && !ha.onclick) ha.onclick = () => api('/api/admin/theme', { anim: !siteAnim }).then((r) => { applyTheme(r.theme, r.anim); ha.textContent = r.anim ? 'Ausschalten' : 'Einschalten'; toast(r.anim ? '🦇 Animationen an' : 'Animationen aus'); }).catch((e) => toast(e.message));
+  const hw = $('#hwToggle'); if (hw && !hw.onclick) hw.onclick = () => api('/api/admin/theme', { theme: siteTheme === 'halloween' ? '' : 'halloween' }).then((r) => { applyTheme(r.theme, r.anim); hw.textContent = r.theme === 'halloween' ? 'Ausschalten' : 'Einschalten'; toast(r.theme ? '🎃 Halloween-Look an' : 'Halloween-Look aus'); }).catch((e) => toast(e.message));
   const lg = $('#lgGo'); if (lg && !lg.onclick) {
     lg.onclick = () => { $('#lgSug').innerHTML = ''; loadLedger(); };
     const inp = $('#lgName');
@@ -3841,7 +3843,7 @@ function showCard(key) {
   showCard.stop = () => window.removeEventListener('deviceorientation', gyro);
 }
 // ── Jahreszeiten-Look (Halloween), vom Admin geschaltet ──
-let siteTheme = '';
+let siteTheme = '', siteAnim = true;
 const HW_BAT = '<svg viewBox="0 0 100 50"><g class="bw l"><path d="M46 22 C38 10 24 6 6 12 C12 15 14 19 12 24 C18 21 23 23 25 28 C29 24 35 24 38 29 C40 26 43 25 46 26 Z"/></g><g class="bw r"><path d="M54 22 C62 10 76 6 94 12 C88 15 86 19 88 24 C82 21 77 23 75 28 C71 24 65 24 62 29 C60 26 57 25 54 26 Z"/></g><ellipse cx="50" cy="25" rx="6" ry="9"/><path d="M45 18 L46 10 L49 16 Z M55 18 L54 10 L51 16 Z"/><circle cx="47.5" cy="21" r="1.2" fill="#FFB547"/><circle cx="52.5" cy="21" r="1.2" fill="#FFB547"/></svg>';
 const HW_SPIDER = '<svg viewBox="0 0 40 40"><g stroke="#0A0410" stroke-width="2" fill="none" stroke-linecap="round"><path d="M16 18 L6 10 L2 16"/><path d="M16 21 L4 20 L1 26"/><path d="M16 24 L6 28 L4 35"/><path d="M24 18 L34 10 L38 16"/><path d="M24 21 L36 20 L39 26"/><path d="M24 24 L34 28 L36 35"/></g><ellipse cx="20" cy="22" rx="6" ry="7" fill="#0A0410"/><circle cx="20" cy="14" r="4" fill="#0A0410"/><circle cx="18.5" cy="13.5" r="1" fill="#FF6A00"/><circle cx="21.5" cy="13.5" r="1" fill="#FF6A00"/></svg>';
 let hwTimers = [];
@@ -3871,17 +3873,19 @@ function hwStart() {
   setTimeout(hwSpawnBat, 1500);
 }
 const HW_WEB = '<svg viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg>';
-function applyTheme(t) {
-  t = t || ''; if (t === siteTheme && (t !== 'halloween' || $('#hwDeco'))) return; siteTheme = t;
+function applyTheme(t, anim) {
+  if (t && typeof t === 'object') { anim = t.anim; t = t.theme; }
+  t = t || ''; anim = anim !== false;
+  if (t === siteTheme && anim === siteAnim && (t !== 'halloween' || $('#hwDeco'))) return; siteTheme = t; siteAnim = anim;
   const on = t === 'halloween';
-  document.body.classList.toggle('halloween', on);
+  document.body.classList.toggle('halloween', on); document.body.classList.toggle('hw-still', on && !anim);
   const old = $('#hwDeco'); if (old) old.remove();
   if (on) {
     const d = document.createElement('div'); d.id = 'hwDeco'; d.setAttribute('aria-hidden', 'true');
     d.innerHTML = `<span class="hw-web l">${HW_WEB}</span><span class="hw-web r">${HW_WEB}</span>
       <img class="hw-ghost g1" src="/news/hw_ghost.webp?v=${AVER}" alt=""><img class="hw-ghost g2" src="/news/hw_ghost.webp?v=${AVER}" alt=""><img class="hw-ghost g3" src="/news/hw_ghost.webp?v=${AVER}" alt="">
       <img class="hw-pump p1" src="/news/pumpkin.webp?v=${AVER}" alt=""><img class="hw-pump p2" src="/news/pumpkin.webp?v=${AVER}" alt="">`;
-    document.body.appendChild(d); hwStart();
+    document.body.appendChild(d); if (anim) hwStart(); else { hwTimers.forEach(clearTimeout); hwTimers = []; }
   } else { hwTimers.forEach(clearTimeout); hwTimers = []; }
   document.querySelectorAll('.brand img, img.logo').forEach((im) => { im.src = (on ? '/news/logo_hw.webp' : '/emblems/logo2.webp') + '?v=' + AVER; });
 }
@@ -3893,7 +3897,7 @@ document.addEventListener('visibilitychange', () => {
   if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) fetch('/api/version', { cache: 'no-store' }).then((r) => r.json()).then((d) => checkVersion(d.v)).catch(() => {});
 });
 setInterval(() => { if (verReload && !S) location.reload(); }, 5000);
-async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
+async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
   if (socket) socket.disconnect();
@@ -3906,7 +3910,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
-  socket.on('theme', (t) => { if (home) home.theme = t; applyTheme(t); });
+  socket.on('theme', (t) => { if (home) { home.theme = t && t.theme !== undefined ? t.theme : t; home.themeAnim = t && t.anim !== undefined ? t.anim : true; } applyTheme(t); });
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
   socket.on('err', toast);
@@ -4061,6 +4065,7 @@ function build() {
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Admin</h1>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎃</span><div class="grow"><b>Halloween-Look</b><small style="display:block;color:#cfe">Geister, Fledermäuse, Kürbisse und Halloween-Logo für alle, sofort live</small></div><button class="btn small" id="hwToggle">${siteTheme === 'halloween' ? 'Ausschalten' : 'Einschalten'}</button></div>
+    <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🦇</span><div class="grow"><b>Halloween-Animationen</b><small style="display:block;color:#cfe">Fledermäuse, wandernde Geister, Spinne. Aus: nur der Look, alles steht still</small></div><button class="btn small" id="hwAnim">${siteAnim ? 'Ausschalten' : 'Einschalten'}</button></div>
     <details class="panel lg-box" id="ledgerBox"><summary><b>💎 Guthaben-Verlauf</b><small> · jede Änderung am Kontostand eines Spielers</small></summary>
       <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="lgName" placeholder="Spielername" autocomplete="off" autocapitalize="off"><button class="btn small" id="lgGo">Anzeigen</button></div>
       <div id="lgSug" class="lg-sug"></div><div id="lgOut"></div></details>
