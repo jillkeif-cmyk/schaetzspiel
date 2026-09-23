@@ -1578,6 +1578,12 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cas-head{display:flex;gap:12px;align-items:center;margin:18px 0 8px;background:linear-gradient(135deg,rgba(124,240,168,.16),rgba(142,75,214,.22))!important;box-shadow:inset 0 0 0 1.5px rgba(124,240,168,.5)!important}.cas-head img{width:64px;height:64px}.cas-head b{font:900 18px/1.1 Archivo}.cas-head small{display:block;color:#cfe;font-size:12px;margin-top:3px}
 .cas-track{display:flex;flex-direction:column;gap:6px}.cas-row{display:grid;grid-template-columns:74px 1fr;gap:6px;align-items:stretch}.cas-num{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.05)}.cas-num span{font:900 18px/1 Archivo}.cas-num small{font-size:10.5px;color:#9fe3bf;margin-top:2px}
 .cas-row.reached .cas-num{background:linear-gradient(180deg,#7CF0A8,#1FA35A);color:#062414}.cas-row.reached .cas-num small{color:#062414}.cas-row:not(.reached) .ps-cell{opacity:.55}.cas-row.big .ps-cell.cas{background:linear-gradient(180deg,rgba(124,240,168,.22),rgba(142,75,214,.25));box-shadow:inset 0 0 0 1.5px rgba(124,240,168,.6)}
+.ps-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px;position:relative;z-index:2}.ps-tabs button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12);color:#fff}
+.ps-tabs button span{font-size:24px;line-height:1}.ps-tabs button b{font:900 15px/1.1 Archivo}.ps-tabs button small{font:700 11px/1.2 Archivo;color:#cfe}
+.ps-tabs button.on{background:linear-gradient(135deg,rgba(255,210,63,.35),rgba(255,106,0,.25));box-shadow:inset 0 0 0 2px #FFD23F,0 0 18px rgba(255,210,63,.3)}
+.ps-tabs button.cas.on{background:linear-gradient(135deg,rgba(124,240,168,.3),rgba(142,75,214,.35));box-shadow:inset 0 0 0 2px #7CF0A8,0 0 18px rgba(124,240,168,.35)}
+.ps-dot{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:#FF4FA3;box-shadow:0 0 8px #FF4FA3}
+.ps-casino .cas-head{margin-top:0}
 </style>
 </head>
 <body>
@@ -1597,7 +1603,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '95';
+const AVER = '96';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3500,6 +3506,7 @@ function passRw(rw, prem) { // eine Belohnung als Kachel
   if (rw.dia) parts.push(`<span class="pr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(rw.dia)}</span>`);
   return parts.join('');
 }
+let passTab = 'main';
 function renderPass() {
   const box = $('#passBody'); if (!box) return;
   if (!passV) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadPass(); return; }
@@ -3509,6 +3516,8 @@ function renderPass() {
   const next = v.tier >= v.tiersN ? '' : `noch ${fmt(v.perTier - v.into)} Pass-XP bis Stufe ${v.tier + 1}`;
   const bats = Array.from({ length: 7 }, (_, i) => `<span class="ps-bat" style="--x:${(i * 37) % 100}%;--y:${10 + (i * 23) % 70}%;--d:${6 + i % 4}s;--s:${0.6 + (i % 3) * 0.25}">${'<svg viewBox="0 0 64 32"><path d="M32 12c2-4 5-6 8-6-1 3 0 5 2 6 3-4 8-6 14-5-4 2-6 6-6 10-4-2-8-2-11 1-2-2-4-3-7-2-3-1-5 0-7 2-3-3-7-3-11-1 0-4-2-8-6-10 6-1 11 1 14 5 2-1 3-3 2-6 3 0 6 2 8 6z"/></svg>'}</span>`).join('');
   box.innerHTML = `<div class="ps-halloween">${bats}<svg class="ps-web l" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg><svg class="ps-web r" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg></div><div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">${LOCK ? '🔒 gesperrt' : '⏳ ' + passLeft(v)}</span></div>
+    <div class="ps-tabs"><button class="${passTab === 'casino' ? '' : 'on'}" data-pstab="main"><span>👑</span><b>Kronen-Pass</b><small>Gratis & Premium</small></button><button class="cas ${passTab === 'casino' ? 'on' : ''}" data-pstab="casino"><span>🎰</span><b>Casino-Strang</b><small>💀 🎲 🃏 ${v.casino ? Math.min(100, Math.round(100 * v.casino.xp / v.casino.max)) + ' %' : ''}</small>${v.casino && !LOCK && v.casino.tiers.some((x) => x.reached && !x.got) ? '<i class="ps-dot"></i>' : ''}</button></div>
+    <div class="ps-main" ${passTab === 'casino' ? 'hidden' : ''}>
     <div class="ps-status panel">
       <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
       ${LOCK ? `<div class="ps-lockbar">🔒 <b>Noch gesperrt</b><span>${v.unlockAt ? 'Freischaltung ' + passWhen(v.unlockAt) : 'Die Freischaltung kommt bald. Schau dich schon mal um!'}</span></div>` : v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
@@ -3523,10 +3532,10 @@ function renderPass() {
         <button data-passinfo="${x.t}:free" class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}">${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</button>
         <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}</div>
         <button data-passinfo="${x.t}:prem" class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}">${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</button></div>`; }).join('')}</div>
-    ${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
+    </div><div class="ps-casino" ${passTab === 'casino' ? '' : 'hidden'}>${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
       return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP${nx ? ` · nächste Stufe bei ${fmt(nx.need)}` : ' · alles erreicht!'}</small></div></div>
       <div class="cas-track">${c.tiers.map((x) => { const rd = !LOCK && x.reached && !x.got; return `<div class="cas-row ${x.reached && !LOCK ? 'reached' : ''} ${[5, 10, 15, 20].includes(x.t) ? 'big' : ''}"><div class="cas-num"><span>${x.t}</span><small>${fmt(x.need)}</small></div><button data-passinfo="${x.t}:casino" class="ps-cell cas ${x.got ? 'got' : rd ? 'ready' : ''}">${passRw(x.rw, true)}${x.got ? '<span class="psk-ok">✓</span>' : rd ? '<span class="ps-claim">Abholen</span>' : ''}</button></div>`; }).join('')}</div>`; })() : ''}
-    <div class="ps-bank panel"><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
+    </div><div class="ps-bank panel" ${passTab === 'casino' ? 'hidden' : ''}><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
     <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino-XP zählen für den Casino-Strang.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
   const now = box.querySelector('.ps-now'); if (now && !renderPass.scrolled) { renderPass.scrolled = true; setTimeout(() => now.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250); }
 }
@@ -5306,6 +5315,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
   else if (t.id === 'openPass' || t.closest('#openPass')) { page = 'pass'; renderPass.scrolled = false; render(); loadPass(); }
+  else if (t.dataset.pstab) { passTab = t.dataset.pstab; renderPass(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   else if (t.dataset.passinfo) { const [tt, tr] = t.dataset.passinfo.split(':'); passInfo(Number(tt), tr); }
   else if (t.dataset.passclaim) { const c = t; passAct('/api/pass/claim', { tier: Number(c.dataset.passclaim), track: c.dataset.track }, `Stufe ${c.dataset.passclaim} abgeholt!`); }
   else if (t.id === 'passAll') { passAct('/api/pass/claim', { tier: 'all', track: 'both' }, 'Alles abgeholt!'); }
