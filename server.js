@@ -143,6 +143,9 @@ async function cardStats(uid) {
   return out;
 }
 
+// App-Version: steht als AVER in der index.html. Alte, lange im Hintergrund geparkte App-Stände laden sich damit selbst neu
+const APP_VER = (() => { try { const m = require('fs').readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').match(/const AVER = '(\d+)'/); return m ? m[1] : ''; } catch (e) { return ''; } })();
+app.get('/api/version', (req, res) => { res.set('Cache-Control', 'no-store'); res.json({ v: APP_VER }); });
 // Jahreszeiten-Look (zum Beispiel Halloween), im Admin-Menü schaltbar, geht live an alle
 let siteTheme = '';
 store.setting('site_theme').then((v) => { siteTheme = v || ''; }).catch(() => {});
@@ -1626,7 +1629,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next)); if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
+io.on('connection', (socket) => { socket.emit('ver', APP_VER); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next)); if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
 function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, automatisch aufstehen
   socket.emit('tc:list', tcList());
   const unwatch = () => { for (let m = 1; m <= TC_MACHINES; m++) socket.leave('tc' + m); };

@@ -1487,7 +1487,7 @@ body.halloween .brand img{filter:drop-shadow(0 0 12px rgba(255,120,30,.55))}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '56';
+const AVER = '57';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3802,6 +3802,14 @@ function applyTheme(t) {
   }
   document.querySelectorAll('.brand img, img.logo').forEach((im) => { im.src = (on ? '/news/logo_hw.webp' : '/emblems/logo2.webp') + '?v=' + AVER; });
 }
+// Neue Version auf dem Server: neu laden (nicht mitten im Match, dann danach)
+let verReload = false, hiddenAt = 0;
+function checkVersion(v) { if (!v || v === AVER) return; verReload = true; if (!S) location.reload(); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) fetch('/api/version', { cache: 'no-store' }).then((r) => r.json()).then((d) => checkVersion(d.v)).catch(() => {});
+});
+setInterval(() => { if (verReload && !S) location.reload(); }, 5000);
 async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
@@ -3814,6 +3822,7 @@ function connect() {
     if (s && s.phase === 'finished' && was && was.phase !== 'finished') loadHome();
     render();
   });
+  socket.on('ver', (v) => checkVersion(v));
   socket.on('theme', (t) => { if (home) home.theme = t; applyTheme(t); });
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
   socket.on('emote', (d) => showEmote(d.id, d.e));
@@ -3928,7 +3937,7 @@ function reportPresence() {
 let builtKey = '', pageFilled = '';
 function render() {
   setTimeout(reportPresence, 0);
-  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
+  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab + ':' + (home && home.me ? (home.me.admin ? 'A' : 'U') : '-') : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   const keepY = window.scrollY, samePage = key === builtKey; // war vorher dieselbe Seite zu sehen?
   if (key !== viewKey) {
     const same = samePage; viewKey = key; builtKey = key; pageFilled = ''; // neu aufgebaute Seite muss wieder gefüllt werden
