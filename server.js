@@ -318,6 +318,18 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS.filter((p) => !p.requi
 const kpass = require('./lib/pass');
 const boost = require('./lib/boost');
 const potions = require('./lib/potions');
+const note = (t) => { const c = store.ctx.getStore(); if (c) c.note = t; }; // Klartext fürs Guthaben-Protokoll
+const fmtD = (n) => Math.round(Number(n) || 0).toLocaleString('de-DE');
+const RED_SET = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+function betLabel(nums) { // Roulette-Einsatz lesbar machen
+  const k = nums.join(','), all = (f) => nums.length === 18 && nums.every(f);
+  if (nums.length === 1) return 'Zahl ' + nums[0];
+  if (all((x) => RED_SET.has(x))) return 'Rot'; if (all((x) => !RED_SET.has(x) && x > 0)) return 'Schwarz';
+  if (all((x) => x % 2 === 0)) return 'Gerade'; if (all((x) => x % 2 === 1)) return 'Ungerade';
+  if (k === Array.from({ length: 18 }, (_, i) => i + 1).join(',')) return '1–18'; if (k === Array.from({ length: 18 }, (_, i) => i + 19).join(',')) return '19–36';
+  if (nums.length === 12) { if (nums[11] - nums[0] === 11) return `${nums[0]}–${nums[11]}`; return `Kolonne ab ${nums[0]}`; }
+  return nums.join('/');
+}
 // ---------- Belohnungen (Codes, Banner): Diamanten + beliebige Items (Booster, Displays, Tränke) ----------
 const cleanReward = (rw) => { rw = rw || {}; const items = (Array.isArray(rw.items) ? rw.items : []).map((x) => ({ id: String(x.id || ''), n: Math.max(1, Math.min(1000, Math.round(Number(x.n) || 1))) })).filter((x) => tcg.PACKS[x.id]); return { dia: Math.max(0, Math.min(10000000, Math.round(Number(rw.dia) || 0))), items }; };
 const rewardText = (rw) => [rw.dia ? `${rw.dia.toLocaleString('de-DE')} 💎` : '', ...rw.items.map((x) => `${x.n}× ${tcg.PACKS[x.id].name}`)].filter(Boolean).join(', ');
@@ -333,25 +345,22 @@ app.post('/api/potion/use', async (req, res) => {
     const it = potions.ITEMS[String(req.body.id || '')]; if (!it) return res.status(400).json({ error: 'Unbekannter Trank.' });
     const have = ((await store.packsOf(u.id)).find((x) => x.pack_id === it.id) || {}).count || 0;
     if (!have) return res.status(400).json({ error: 'Du hast diesen Trank nicht.' });
-    potions.load(u); const cur = { ...potions.get(u.id) };
-    if (cur[it.type] && cur[it.type].left > 0) return res.status(400).json({ error: `Für ${potions.TYPES[it.type]} läuft schon ein Trank (noch ${Math.ceil(cur[it.type].left / 60000)} Min).` });
-    cur[it.type] = { m: it.mult, left: potions.DUR }; potions.set(u.id, cur);
+    potions.load(u); const cur = { ...potions.get(u.id) }, run = cur[it.type];
+    const bis = (t) => new Date(t).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+    if (run && run.m !== it.mult) return res.status(400).json({ error: `Für ${potions.TYPES[it.type]} läuft gerade ×${run.m} bis ${bis(run.until)} Uhr. ×2 und ×4 lassen sich nicht kombinieren, aktiviere ihn danach.` });
+    cur[it.type] = { m: it.mult, until: (run ? run.until : Date.now()) + potions.DUR }; potions.set(u.id, cur); // gleicher Trank: hinten anhängen
     await store.packAdd(u.id, it.id, -1); await store.save(u.id, { pot_active: JSON.stringify(cur) });
     console.log(`Trank: ${u.name} nutzt ${it.name}`);
     res.json({ ...(await tcgState(await store.userById(u.id))), potions: cur });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
-const POT_TICK = 15000;
-setInterval(async () => {
+setInterval(() => { // abgelaufene Tränke aufräumen und Bescheid geben (die Zeit läuft echt, auch wenn die App zu ist)
   for (const [uid, o] of potions.all()) {
-    if (!game.online.has(uid)) continue; // App zu: Zeit pausiert
-    const next = {}; let ended = [];
-    for (const [t, v] of Object.entries(o)) { const left = v.left - POT_TICK; if (left > 0) next[t] = { m: v.m, left }; else ended.push(t); }
-    potions.set(uid, next);
-    store.save(uid, { pot_active: JSON.stringify(next) }).catch(() => {});
+    const next = potions.clean(o), ended = Object.keys(o).filter((t) => !next[t]); if (!ended.length) continue;
+    potions.set(uid, next); store.save(uid, { pot_active: JSON.stringify(next) }).catch(() => {});
     io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('pot:update', { potions: next, ended }); });
   }
-}, POT_TICK);
+}, 20000);
 store.setting('boost').then((v) => { if (v) boost.set(JSON.parse(v)); }).catch(() => {});
 let openStyleV = 'showroom';
 store.setting('open_style').then((v) => { if (v) openStyleV = v; }).catch(() => {});
@@ -739,6 +748,7 @@ const tripleOpen = new Map(); // offener Gewinn auf der Risikoleiter je Spieler
 async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde für Casino-XP verbuchen
   tripleOpen.delete(uid); // zuerst schließen, damit ein zweiter gleichzeitiger Aufruf nichts mehr findet
   let dia = null;
+  note(`Triple Crown: Gewinn ${fmtD(extraPay)} ausgezahlt (Einsatz ${fmtD(st.bet)}, Walzen-Gewinn ${fmtD(st.win)}${st.cards && st.cards.length ? ', nach Risiko' : ''})`);
   if (extraPay > 0) dia = await payOut(uid, extraPay);
   await casinoStat(uid, st.bet, st.paid + (extraPay || 0)); await bigWin(uid, 'Triple Crown', st.paid + (extraPay || 0));
   const won = st.paid + (extraPay || 0);
@@ -816,6 +826,7 @@ app.post('/api/casino/triple', async (req, res) => {
     try {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
     const u2 = await store.userById(u.id);
+    note(`Triple Crown: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
     const t = await takeBet(u2, bet, triple.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
     const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
     const r = triple.play(bet, forced);
@@ -905,6 +916,7 @@ app.post('/api/casino/board', async (req, res) => {
     const r = casino.spinBoard(bets);
     if (r.error) return res.status(400).json({ error: r.error });
     const after = have - r.stake + r.won;
+    note(`Roulette: ${bets.map((b) => `${fmtD(b.amount)} auf ${betLabel(b.numbers)}`).join(', ')} → ${r.n} ${r.color === 'gruen' ? 'grün' : r.color} · ${r.won ? 'Auszahlung ' + fmtD(r.won) : 'verloren'} (Einsatz ${fmtD(r.stake)}, ${r.won - r.stake >= 0 ? '+' : ''}${fmtD(r.won - r.stake)})`);
     await store.save(u.id, { diamonds: after });
     const pays = Array.from({ length: 37 }, (_, n) => bets.reduce((x, b) => x + (b.numbers.includes(n) ? Math.round(b.amount * 36 / b.numbers.length) : 0), 0)).sort((a, b) => a - b);
     const risk = Math.max(0, r.stake - pays[18]); // Median der 37 möglichen Ergebnisse
@@ -922,6 +934,8 @@ const bjSend = async (res, uid, g, left) => {
   cwEmit(uid, { game: 'bj', type: 'state', state: v, won: g.over ? g.payout : null });
   if (g.over) {
     bjGames.delete(uid);
+    const hs = (g.hands || []).map((h) => (h.cards || []).map((c) => c.r).join('+')).join(' | '), ds = (g.dealer || []).map((c) => c.r).join('+');
+    note(`Blackjack: Auszahlung ${fmtD(g.payout)} bei Einsatz ${fmtD(g.staked)} · Hand ${hs} gegen Geber ${ds}`);
     const after = g.payout ? await payOut(uid, g.payout) : Number((await store.userById(uid)).diamonds) || 0;
     await casinoStat(uid, g.staked, g.payout); await bigWin(uid, 'Blackjack', g.payout);
     return res.json({ ...v, won: g.payout, diamonds: after });
@@ -934,6 +948,7 @@ app.post('/api/casino/bj/deal', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (bjGames.has(u.id)) return bjSend(res, u.id, bjGames.get(u.id)); // offene Runde weiterführen
     const amount = Math.round(Number(req.body.amount) || 0);
+    note(`Blackjack: Einsatz ${fmtD(amount)}`);
     const t = await takeBet(u, amount); if (t.error) return res.status(400).json({ error: t.error });
     const g = BJ.newRound(amount);
     bjGames.set(u.id, g);
