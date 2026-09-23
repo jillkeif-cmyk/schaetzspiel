@@ -726,7 +726,15 @@ async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gu
   tcSeats.delete(m); io.to('tc' + m).emit('tc:ev', { machine: m, type: 'left' }); tcPush();
 }
 setInterval(() => { for (const [, st] of tcSeats) if (Date.now() - st.last > TC_IDLE && !tripleBusy.has(st.uid)) tcRelease(st.uid).catch(() => {}); }, 30000);
-const tcSeated = (u, res) => { const m = tcSeatOf(u.id); if (!m) { res.status(403).json({ error: 'Setz dich zuerst an eine freie Maschine.' }); return null; } tcSeats.get(m).last = Date.now(); return m; };
+const tcSeated = (u, res, want) => { // sitzt der Spieler? Hat der Server den Platz vergessen (Neustart, Verbindung weg), wieder hinsetzen, falls frei
+  let m = tcSeatOf(u.id);
+  if (!m) {
+    const w = Math.round(Number(want) || 0), st = w >= 1 && w <= TC_MACHINES ? tcSeats.get(w) : null;
+    if (w >= 1 && w <= TC_MACHINES && !st) { tcSeats.set(w, { uid: u.id, name: u.name, last: Date.now(), grid: null }); tcPush(); m = w; console.log(`Triple Crown: ${u.name} automatisch wieder an Maschine ${w}`); }
+    else { res.status(403).json({ error: st ? `Deine Maschine wurde in der Zwischenzeit von ${st.name} belegt. Setz dich an eine freie Maschine.` : 'Setz dich zuerst an eine freie Maschine.', lostSeat: true }); return null; }
+  }
+  tcSeats.get(m).last = Date.now(); return m;
+};
 app.post('/api/casino/triple/sit', async (req, res) => {
   try {
     if (gameLocked('triple', res)) return;
@@ -767,7 +775,7 @@ app.post('/api/casino/triple', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const bet = Math.round(Number(req.body.bet) || 0);
     if (!triple.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
-    if (!tcSeated(u, res)) return;
+    if (!tcSeated(u, res, req.body.machine)) return;
     if (!tripleLock(u.id, res)) return;
     try {
     const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win); // offenen Gewinn vorher einsacken
@@ -789,7 +797,7 @@ app.post('/api/casino/triple', async (req, res) => {
 app.post('/api/casino/triple/risk', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    if (!tcSeated(u, res)) return;
+    if (!tcSeated(u, res, req.body.machine)) return;
     if (!tripleLock(u.id, res)) return;
     try {
     const st = tripleOpen.get(u.id); if (!st) return res.status(400).json({ error: 'Kein offener Gewinn.' });
@@ -1751,7 +1759,8 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
   });
   socket.on('cw:unwatch', () => { cwLeaveAll(); cwPush(); });
   socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:triple' && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
-  socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id)) { tcRelease(user.id).catch(() => {}); if (cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } } }, 20000); });
+  socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id) && cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } }, 20000);
+    setTimeout(() => { if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 180000); }); // Automatenplatz bleibt bei kurzem Verbindungsabbruch 3 Minuten reserviert
 } // Erfolge: Ausgangsstand beim Verbinden
 game.hooks.progress = (id) => checkProgress(id);
 game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id) || (tcSeatOf(id) ? `spielt Triple Crown an Maschine ${tcSeatOf(id)}` : null));

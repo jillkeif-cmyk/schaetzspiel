@@ -1580,7 +1580,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '79';
+const AVER = '80';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3005,7 +3005,7 @@ function tcStartKey() {
   if (tc.busy) return;
   tcSpin();
 }
-async function tcTakeQuiet() { tc.startHook = null; tc.startLabel = null; if (!tc.risk) return; const r = await api('/api/casino/triple/risk', { action: 'take' }).catch(() => null); if (r) { tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid; } tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; tcSync(); }
+async function tcTakeQuiet() { tc.startHook = null; tc.startLabel = null; if (!tc.risk) return; const r = await api('/api/casino/triple/risk', { action: 'take' , machine: tc.seat }).catch(() => null); if (r) { tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid; } tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; tcSync(); }
 function tcClearLines() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; document.querySelectorAll('#tcRoot .tc-cell.hit').forEach((c) => c.classList.remove('hit')); const lw = $('#tcLineWin'); if (lw) lw.className = 'tc-linewin'; }
 function tcShowLine(l, add) { // eine Gewinnlinie hervorheben, Betrag in der Mitte
   const svg = $('#tcLines'), L = TC_LINES[l.line - 1], pt = (c, r) => `${50 + c * 100},${50 + r * 100}`;
@@ -3042,7 +3042,7 @@ async function tcSpin() {
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
   tc.busy = true; tc.lastWin = 0; tcClearLines(); tcSetMsg('&nbsp;'); tcSync();
   try {
-    const r = await api('/api/casino/triple', { bet });
+    const r = await api('/api/casino/triple', { bet, machine: tc.seat });
     tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tcSync();
     if (r.forced) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '👑 Vollbild'; } }
     let shown = 0;
@@ -3066,7 +3066,7 @@ async function tcSpin() {
       if (tc.auto > 0) setTimeout(() => { if (tc.auto && !tc.busy) tcSpin(); }, tc.turbo ? 150 : 450);
       else tcSetMsg('Autoplay beendet');
     }
-  } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); tcSync(); }
+  } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); if (/belegt|Setz dich zuerst/.test(e.message)) { tc.seat = null; tc.risk = null; renderCasino(); return; } tcSync(); } // Platz verloren: zurück zur Maschinenauswahl
 }
 // Rewin-Rad: 12 feste Felder, außen läuft ein Licht über die Lämpchen. Runde k hat k Stop-Felder.
 // Start-Taste: einmal drücken beschleunigt, zweites Mal bremst ab. Ohne Drücken läuft es von selbst an und aus.
@@ -3158,7 +3158,7 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
   };
   const go = async () => { // ein Druck, ein Versuch: weiteres Drücken ändert nichts
     if (busy) return; busy = true; stopBlink();
-    const r = await api('/api/casino/triple/risk', { action: 'ladder' }).catch((e) => { toast(e.message); return null; });
+    const r = await api('/api/casino/triple/risk', { action: 'ladder' , machine: tc.seat }).catch((e) => { toast(e.message); return null; });
     if (!r) { busy = false; draw(); return; }
     busy = false; // Ergebnis sofort anzeigen, kein Auslaufen
     if (r.done) { tc.risk = null; tc.mode = 'play'; tc.startHook = null; tc.startLabel = null; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
@@ -3174,7 +3174,7 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
   draw();
 }
 async function tcSplit(redraw) {
-  const r = await api('/api/casino/triple/risk', { action: 'split' }).catch((e) => { toast(e.message); return null; }); if (!r) return;
+  const r = await api('/api/casino/triple/risk', { action: 'split' , machine: tc.seat }).catch((e) => { toast(e.message); return null; }); if (!r) return;
   tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds;
   tc.risk = { win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, bet: r.bet, noRisk: r.noRisk }; tcSetMsg(`✂️ ${fmt(r.banked)} sicher, mit ${fmt(r.win)} geht es weiter`); sfx('sent'); tcSync(); redraw();
 }
@@ -3197,7 +3197,7 @@ function tcCardOpen() {
     $('#tcCTake').onclick = async () => { await tcTakeQuiet(); tcSetMsg(`💰 ${fmt(tc.lastWin)} gutgeschrieben`); };
   };
   const pick = async (color) => {
-    const r = await api('/api/casino/triple/risk', { action: 'card', color }).catch((e) => { toast(e.message); return null; }); if (!r) return;
+    const r = await api('/api/casino/triple/risk', { action: 'card', color , machine: tc.seat }).catch((e) => { toast(e.message); return null; }); if (!r) return;
     tc.risk.cards = r.cards; sfx('tick');
     if (r.done) { tc.risk = { ...tc.risk, win: r.right ? r.paid : 0 }; draw(r.card); tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid || 0;
       tcSetMsg(r.right ? `🏆 AUSSPIELUNG! ${fmt(r.paid)} Diamanten` : `💥 ${r.card.s} ${r.card.r} · leider falsch`); sfx(r.right ? 'prestige' : 'wrong');
