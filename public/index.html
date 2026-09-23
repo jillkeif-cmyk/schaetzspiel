@@ -1496,6 +1496,10 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 .ban-box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 18px}.ban-ic{font-size:54px}.ban-box h2{font-size:21px}
 .ban-timer{font:900 38px/1 Archivo;letter-spacing:1px;color:#FF8A8A;font-variant-numeric:tabular-nums;margin:4px 0}
 .ban-help{margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:6px;align-items:center}.ban-help>a{font:900 22px/1 Archivo;color:#7CF0A8;text-decoration:none;margin-top:2px}.ban-help small a{color:#cfe}
+.mk-mine{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.boost-bar{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(255,210,63,.28),rgba(90,169,255,.22));box-shadow:inset 0 0 0 2px rgba(255,210,63,.7),0 0 20px rgba(255,210,63,.25);animation:psglow 2.2s ease-in-out infinite}
+.boost-bar .bb-ic{font-size:30px}.boost-bar b{display:block;font:800 16px/1.2 Archivo;color:#FFE27A}.boost-bar small{display:block;font-size:12.5px;color:#eef}
+#openSupport{position:relative}.sup-badge{position:absolute;top:10px;right:12px;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:#E5484D;color:#fff;font:800 13px/24px Archivo;text-align:center;box-shadow:0 0 0 2px var(--bg-deep),0 0 12px rgba(229,72,77,.6)}
 </style>
 </head>
 <body>
@@ -1515,7 +1519,7 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '67';
+const AVER = '69';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1810,7 +1814,7 @@ let vipD = null, soloIntent = false, cbetPick = '';
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const MAX_CBET = 1000000000; // Roulette und Blackjack: nur das eigene Guthaben begrenzt
-const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
+const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], [25000, '#0F6B4F'], [50000, '#1E3A8A'], [100000, 'linear-gradient(135deg,#E6E6E6,#8A8A8A)'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
 const numAt = (c, r) => 3 * c + (3 - r);
 function boardHtml() {
   const chipOn = (nums) => { const k = nums.slice().sort((a, b) => a - b).join(','); const b = rbets.find((x) => x.key === k); return b ? `<span class="rchip">${b.amount >= 1000 ? (b.amount / 1000).toFixed(1).replace('.0', '') + 'k' : b.amount}</span>` : ''; };
@@ -2364,9 +2368,10 @@ function renderCards() {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) { const n = owned(c.id, v); if (c.set === 'dev' && !n) continue; all.push({ c, v, n }); } // Entwickler-Karten nur zeigen, wenn man sie hat
     const hasDev = all.some((x) => x.c.set === 'dev');
-    const have = all.filter((x) => x.n && x.c.set !== 'dev' && x.c.set !== 'gn').length, allN = all.filter((x) => x.c.set !== 'dev' && x.c.set !== 'gn').length; // Entwickler- und (noch) Gruselnacht-Karten zählen nicht mit
+    const gnSoon = !(home && home.gnOpen), cnt = (x) => x.c.set !== 'dev' && (x.c.set !== 'gn' || !gnSoon);
+    const have = all.filter((x) => x.n && cnt(x)).length, allN = all.filter(cnt).length; // Entwickler- und (noch) Gruselnacht-Karten zählen nicht mit
     const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['mythic', 'Mythisch ✦']];
-    const SF = [['set:gn', 'Gruselnacht 🎃 bald'], ['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
+    const SF = [['set:gn', 'Gruselnacht 🎃' + (home && home.gnOpen ? '' : ' bald')], ['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
     let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter.startsWith('set:') ? x.c.set === cfilter.slice(4) : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
@@ -2374,8 +2379,8 @@ function renderCards() {
     box.innerHTML = `<p class="sub" style="margin-bottom:8px">${have} von ${allN} Varianten gesammelt${cfilter === 'set:dev' ? ' · Entwickler-Karten zählen für keine Rangliste, du kannst sie aber sammeln und handeln' : ''}</p>
       <div class="cfilter">${F.map(([k, n]) => `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>
       <div class="cfilter"><span class="sub" style="align-self:center;font-size:12px;margin-right:2px">Booster:</span>${SF.map(([k, n]) => { const inSet = all.filter((x) => x.c.set === k.slice(4)); return `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n} <small>${inSet.filter((x) => x.n).length}/${inSet.length}</small></button>`; }).join('')}</div>
-      <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : x.c.set === 'gn' ? 'soon' : 'miss'}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
-        <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : x.c.set === 'gn' ? '<br>🎃 bald erhältlich' : '<br>fehlt noch'}</figcaption></figure>`).join('')
+      <div class="cgrid">${list.map((x) => `<figure class="${x.n ? '' : x.c.set === 'gn' && gnSoon ? 'soon' : 'miss'}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
+        <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : x.c.set === 'gn' && gnSoon ? '<br>🎃 bald erhältlich' : '<br>fehlt noch'}</figcaption></figure>`).join('')
       || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
   } else if (ctab === 'inventar') {
     box.innerHTML = tcg.packs.length ? tcg.packs.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
@@ -2405,9 +2410,11 @@ function renderCards() {
       return;
     }
     const missCnt = cardsL.filter((l) => !owned(l.cardId, l.variant)).length;
-    const shown = mMissing ? cardsL.filter((l) => !owned(l.cardId, l.variant)) : cardsL;
+    let shown = mMissing ? cardsL.filter((l) => !owned(l.cardId, l.variant)) : cardsL; if (mMine) shown = shown.filter((l) => l.mine);
+    const myN = market.listings.filter((l) => l.mine).length;
+    const mineBar = `<div class="mk-mine"><button class="chipbtn ${mMine ? 'on-miss' : ''}" id="mkMine">🙋 Meine Angebote (${myN})</button>${mMine && myN ? '<button class="chipbtn" id="mkCancelAll">↩️ Alle zurücknehmen</button>' : ''}</div>`;
     const info = `<div class="mk-info"><span><b>${missCnt}</b> der ${cardsL.length} Angebote hast du noch nicht. Sie leuchten lila mit „Fehlt dir“.</span><button class="chipbtn ${mMissing ? 'on-miss' : ''}" data-mmiss="1">${mMissing ? '✓ ' : ''}Nur fehlende</button></div>`;
-    box.innerHTML = seg + info + (shown.length ? `<div class="cgrid">${shown.map((l) => `<figure class="${owned(l.cardId, l.variant) ? '' : 'mk-miss'}">${owned(l.cardId, l.variant) ? '' : '<span class="mk-misstag">Fehlt dir</span>'}<img loading="lazy" src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
+    box.innerHTML = seg + mineBar + info + (shown.length ? `<div class="cgrid">${shown.map((l) => `<figure class="${owned(l.cardId, l.variant) ? '' : 'mk-miss'}">${owned(l.cardId, l.variant) ? '' : '<span class="mk-misstag">Fehlt dir</span>'}<img loading="lazy" src="${cardImg(l.cardId, l.variant)}" data-card="${l.cardId}:${l.variant}" alt="">${badge(l.variant)}
       <figcaption><b>${esc(cardDef(l.cardId) ? cardDef(l.cardId).name : l.cardId)}</b>${esc(varName(l.variant))}<br>von ${esc(l.seller)}<br><span class="dia">${D} ${fmt(l.price)}</span><br>
       ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</figcaption></figure>`).join('')}</div>`
       : '<p class="sub">Gerade bietet niemand Karten an. Stell selbst welche ein, über „Verkaufen“ in der Sammlung.</p>');
@@ -3433,7 +3440,7 @@ function casinoOpenHtml() {
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
 // Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
-const PACK_NAME = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster', toon: 'Toon-Welt-Booster', secret: '???-Booster' };
+const PACK_NAME = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster', toon: 'Toon-Welt-Booster', secret: '???-Booster' , gn: 'Gruselnacht-Booster' };
 function renderGifts() {
   const el = $('#giftBox'); if (!el || !home) return;
   const g = home.me.gifts || [];
@@ -3568,7 +3575,7 @@ function renderHot() {
 }
 setInterval(() => { if ($('#hotInfo')) renderHot(); }, 1000);
 // ---------- Support-Tickets ----------
-let mKind = 'cards', mMissing = false, gFilter = 'alle';
+let mKind = 'cards', mMissing = false, mMine = false, gFilter = 'alle';
 let tkCat = 'Fehler', tkImage = null, tkD = null, tkFilter = 'open', tkNewIds = new Set();
 const TK_ICON = { Fehler: '🐞', Account: '👤', Wunsch: '💡' };
 const TK_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
@@ -3638,13 +3645,14 @@ let adminD = null, adminTimer = null, adminUsers = null;
 let adminLocks = null;
 const LG_SRC = [['/api/casino/board', '🎡 Roulette'], ['/api/casino/roulette', '🎡 Roulette'], ['/api/casino/triple/risk', '👑 Triple Crown Risiko'], ['/api/casino/triple', '👑 Triple Crown'], ['/api/casino/bj', '🃏 Blackjack'], ['Socket bj', '🃏 Blackjack-Tisch'], ['Socket pk', '♠️ Poker'], ['/api/casino/wheel', '🎡 Glücksrad'], ['/api/casino/cashback', '💸 Cashback'], ['/api/pass', '👑 Kronen-Pass'], ['/api/news', '📰 Update gelesen'], ['/api/admin', '🛠 Admin'], ['Quiz-Match', '🎯 Quiz-Match'], ['/api/market', '🏪 Marktplatz'], ['/api/tcg', '🃏 Karten/Booster'], ['/api/daily', '📅 Tagesbonus'], ['/api/code', '🎟 Code'], ['/api/gift', '🎁 Geschenk'], ['Socket bet', '💰 Wette'], ['Socket', '🔌 Spiel']];
 const lgSrc = (s) => { const x = LG_SRC.find(([k]) => String(s || '').includes(k)); return x ? x[1] : esc(String(s || 'System').replace(/^(POST|GET) /, '')); };
+let lgKind = 'dia';
 function loadLedger() {
   const n = ($('#lgName') || {}).value; if (!n) return;
   const out = $('#lgOut'); out.innerHTML = '<p class="sub">Lädt …</p>';
-  api('/api/admin/ledger?name=' + encodeURIComponent(n.trim())).then((r) => {
+  api('/api/admin/ledger?name=' + encodeURIComponent(n.trim()) + '&kind=' + lgKind).then((r) => {
     const sums = {}; r.rows.forEach((x) => { const k = lgSrc(x.src); sums[k] = (sums[k] || 0) + x.delta; });
     const d = (ts) => new Date(ts).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    out.innerHTML = `<p class="sub" style="margin:10px 0 6px"><b>${esc(r.name)}</b> · aktuell ${fmt(r.diamonds)} 💎 · ${r.rows.length} Einträge</p>
+    out.innerHTML = `<p class="sub" style="margin:10px 0 6px"><b>${esc(r.name)}</b> · aktuell ${fmt(r.now)} ${{ dia: '💎', xp: 'XP', cxp: 'Casino-XP', pxp: 'Pass-XP' }[r.kind]} · ${r.rows.length} Einträge</p>
       <div class="lg-sum">${Object.entries(sums).sort((a, b) => a[1] - b[1]).map(([k, v]) => `<span class="${v < 0 ? 'neg' : 'pos'}">${k} ${v > 0 ? '+' : ''}${fmt(v)}</span>`).join('')}</div>
       <div class="lg-list">${r.rows.map((x) => `<div class="lg-row"><small>${d(x.ts)}</small><span class="grow">${lgSrc(x.src)}</span><b class="${x.delta < 0 ? 'neg' : 'pos'}">${x.delta > 0 ? '+' : ''}${fmt(x.delta)}</b><span class="lg-after">${fmt(x.after)}</span></div>`).join('') || '<p class="sub">Noch keine Einträge. Das Protokoll zählt ab jetzt.</p>'}</div>`;
   }).catch((e) => { out.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
@@ -3654,6 +3662,8 @@ function loadAdmin() {
   const pmInfo = (v) => { const i = $('#pmInfo'); if (i) i.innerHTML = `Aktuell: <b>${v.mode === 'on' ? '✅ an' : v.mode === 'locked' ? '🔒 gesperrt' : '⛔ aus'}</b>${v.mode === 'locked' && v.unlockAt ? ` · schaltet sich ${passWhen(v.unlockAt)} von selbst frei` : ''}. Gesperrt: sichtbar mit Hinweis, nichts abholbar, keine Pass-XP. Aus: komplett ausgeblendet.`; };
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
+  document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
+  const gt = $('#gnToggle'); if (gt && !gt.onclick) gt.onclick = () => { const open = !(home && home.gnOpen); if (open && !confirm('Gruselnacht-Set jetzt für alle freigeben? Booster wird kaufbar, die Karten zählen zur Sammlung und das Update erscheint.')) return; api('/api/admin/gnopen', { open }).then((r) => { if (home) home.gnOpen = r.open; gt.textContent = r.open ? 'Sperren' : 'Freigeben'; toast(r.open ? '🎃 Gruselnacht freigeschaltet' : 'Gruselnacht gesperrt'); }).catch((e) => toast(e.message)); };
   const ha = $('#hwAnim'); if (ha && !ha.onclick) ha.onclick = () => api('/api/admin/theme', { anim: !siteAnim }).then((r) => { applyTheme(r.theme, r.anim); ha.textContent = r.anim ? 'Ausschalten' : 'Einschalten'; toast(r.anim ? '🦇 Animationen an' : 'Animationen aus'); }).catch((e) => toast(e.message));
   const hw = $('#hwToggle'); if (hw && !hw.onclick) hw.onclick = () => api('/api/admin/theme', { theme: siteTheme === 'halloween' ? '' : 'halloween' }).then((r) => { applyTheme(r.theme, r.anim); hw.textContent = r.theme === 'halloween' ? 'Ausschalten' : 'Einschalten'; toast(r.theme ? '🎃 Halloween-Look an' : 'Halloween-Look aus'); }).catch((e) => toast(e.message));
   const bb = $('#banBox'); if (bb && !bb.dataset.bound) { bb.dataset.bound = 1; bb.ontoggle = () => { if (bb.open) loadBans(); };
@@ -3663,6 +3673,7 @@ function loadAdmin() {
     document.querySelectorAll('[data-banh]').forEach((b) => { b.onclick = () => { const n = inp.value.trim(), h = Number(b.dataset.banh); if (n && confirm(`${n} ${h < 0 ? 'unbefristet' : 'für ' + b.textContent} vom Casino ausschließen?`)) setBan(n, h); }; }); }
   const lg = $('#lgGo'); if (lg && !lg.onclick) {
     lg.onclick = () => { $('#lgSug').innerHTML = ''; loadLedger(); };
+    document.querySelectorAll('[data-lgkind]').forEach((b) => { b.onclick = () => { lgKind = b.dataset.lgkind; document.querySelectorAll('[data-lgkind]').forEach((x) => x.classList.toggle('on-miss', x === b)); loadLedger(); }; });
     const inp = $('#lgName');
     inp.onkeydown = (e) => { if (e.key === 'Enter') { $('#lgSug').innerHTML = ''; loadLedger(); } };
     inp.oninput = () => { // Vorschläge: Namen, die den Text enthalten, Treffer am Anfang zuerst
@@ -3968,6 +3979,9 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('boost', (b) => { if (home) home.boost = b; if (!S && page === 'home') update(); });
+  socket.on('ticket:new', (t) => { if (home) home.openTickets = (home.openTickets || 0) + 1; toast(`🎫 Neues Ticket von ${t.from}: ${t.title}`); if (!S && page === 'home') update(); });
+  socket.on('gn:open', (o) => { if (home) home.gnOpen = o; newsPosts = null; loadTcg(); if (page === 'cards') renderCards(); if (!S && page === 'home') update(); });
   socket.on('casino:ban', (b) => { if (home && home.me) home.me.casinoBan = b; if (page === 'casino' || (page === 'cards' && ctab === 'casino')) { if (b) toast('🚫 Du wurdest vom Casino ausgeschlossen'); renderCards(); } });
   socket.on('theme', (t) => { if (home) { home.theme = t && t.theme !== undefined ? t.theme : t; home.themeAnim = t && t.anim !== undefined ? t.anim : true; } applyTheme(t); });
   socket.on('lobbies', (l) => { const ch = l.online !== L.online || l.running !== L.running; L = l; if (!S) { update(); if (ch) { clearTimeout(loadFriends.t); loadFriends.t = setTimeout(loadFriends, 800); } } });
@@ -4123,6 +4137,9 @@ function build() {
   if (!S && page === 'admin') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Admin</h1>
+    <div class="panel lg-box" id="boostBox"><b>⚡ Doppel-XP-Aktion</b><small style="display:block;color:#cfe">Unabhängig von der Hot Time. Aktiv wird sie allen auf der Startseite angezeigt</small>
+      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[['xp', '⭐ Level-XP'], ['cxp', '🎰 Casino-XP'], ['pxp', '👑 Pass-XP']].map(([k, l]) => `<button class="chipbtn ${home && home.boost && home.boost[k] ? 'on-miss' : ''}" data-boost="${k}">${l}</button>`).join('')}<button class="chipbtn" data-boost="all">Alle an</button><button class="chipbtn" data-boost="none">Alle aus</button></div></div>
+    <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🃏</span><div class="grow"><b>Gruselnacht-Set</b><small style="display:block;color:#cfe">100 Karten, Booster im Shop, Update-Beitrag. Freigeben schaltet alles auf einmal frei</small></div><button class="btn small" id="gnToggle">${home && home.gnOpen ? 'Sperren' : 'Freigeben'}</button></div>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎃</span><div class="grow"><b>Halloween-Look</b><small style="display:block;color:#cfe">Geister, Fledermäuse, Kürbisse und Halloween-Logo für alle, sofort live</small></div><button class="btn small" id="hwToggle">${siteTheme === 'halloween' ? 'Ausschalten' : 'Einschalten'}</button></div>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🦇</span><div class="grow"><b>Halloween-Animationen</b><small style="display:block;color:#cfe">Fledermäuse, wandernde Geister, Spinne. Aus: nur der Look, alles steht still</small></div><button class="btn small" id="hwAnim">${siteAnim ? 'Ausschalten' : 'Einschalten'}</button></div>
     <details class="panel lg-box" id="banBox"><summary><b>🚫 Casino-Sperre</b><small> · einzelne Spieler vom Casino ausschließen</small></summary>
@@ -4130,7 +4147,8 @@ function build() {
       <div id="cbSug" class="lg-sug"></div>
       <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[[1, '1 Std'], [3, '3 Std'], [6, '6 Std'], [12, '12 Std'], [24, '1 Tag'], [72, '3 Tage'], [168, '1 Woche'], [-1, 'Unbefristet']].map(([h, l]) => `<button class="btn small ${h < 0 ? '' : 'ghost'}" data-banh="${h}">${l}</button>`).join('')}</div>
       <b style="display:block;margin-top:12px">Gerade gesperrt</b><div id="cbList" class="lg-list" style="margin-top:6px"></div></details>
-    <details class="panel lg-box" id="ledgerBox"><summary><b>💎 Guthaben-Verlauf</b><small> · jede Änderung am Kontostand eines Spielers</small></summary>
+    <details class="panel lg-box" id="ledgerBox"><summary><b>📊 Verlauf</b><small> · jede Änderung an Diamanten und XP eines Spielers</small></summary>
+      <div class="row lg-kinds" style="gap:6px;margin-top:10px;flex-wrap:wrap">${[['dia', '💎 Diamanten'], ['xp', '⭐ XP'], ['cxp', '🎰 Casino-XP'], ['pxp', '👑 Pass-XP']].map(([k, l]) => `<button class="chipbtn ${k === 'dia' ? 'on-miss' : ''}" data-lgkind="${k}">${l}</button>`).join('')}</div>
       <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="lgName" placeholder="Spielername" autocomplete="off" autocapitalize="off"><button class="btn small" id="lgGo">Anzeigen</button></div>
       <div id="lgSug" class="lg-sug"></div><div id="lgOut"></div></details>
     <details class="panel lg-box"><summary><b>👑 Kronen-Pass Tempo</b><small> · Pass-XP pro Stufe</small></summary>
@@ -4198,6 +4216,7 @@ function build() {
     <div id="giftBox"></div>
     <div id="newsCard"></div>
     <div id="passCard"></div>
+    <div id="boostBar"></div>
     <button class="panel pcard" id="openProfile"></button>
     <div id="presHint"></div>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
@@ -4659,6 +4678,8 @@ function update() {
       np.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Neue Spieler</h2><div class="plist">${list.slice(0, 2).map(rowNP).join('')}</div>
         ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
+    const bb2 = $('#boostBar'); if (bb2) { const b = home && home.boost, on = b && [b.xp && '⭐ Level-XP', b.cxp && '🎰 Casino-XP', b.pxp && '👑 Pass-XP'].filter(Boolean); bb2.innerHTML = on && on.length ? `<div class="boost-bar"><span class="bb-ic">⚡</span><span class="grow"><b>Doppel-XP-Aktion läuft!</b><small>${on.join(' · ')} zählen gerade doppelt</small></span></div>` : ''; }
+    const sp = $('#openSupport'); if (sp) { const n = (home && home.openTickets) || 0; let bd = sp.querySelector('.sup-badge'); if (n) { if (!bd) { bd = document.createElement('span'); bd.className = 'sup-badge'; sp.appendChild(bd); } bd.textContent = n > 99 ? '99+' : n; } else if (bd) bd.remove(); }
     const ph = $('#presHint'); if (ph) { const can = home && home.progress && home.progress.prestige && home.progress.prestige.can; ph.innerHTML = can ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang. Jetzt aufsteigen</small></span><span>›</span></button>` : ''; }
     if (newsPosts) renderNewsCard(); else loadNews();
     if (!passV || Date.now() - (loadPass.t || 0) > 60000) { loadPass.t = Date.now(); loadPass(); } else renderPassCard();
@@ -4949,6 +4970,8 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'openDaily') dailyDialog();
   else if (t.id === 'openCards') { page = 'cards'; ctab = 'sammlung'; render(); loadTcg(); }
   else if (t.id === 'mkDupes' || t.closest('#mkDupes')) { dupeSellDialog(); }
+  else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
+  else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
   else if (t.dataset.pack) packInfo(t.dataset.pack);
   else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));

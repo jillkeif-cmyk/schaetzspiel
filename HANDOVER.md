@@ -139,7 +139,14 @@ damit Karten jederzeit neu gerendert werden können.
 - Noch offen: Animationen (Wan 3.0) für die 3 neuen Mythisch-Karten gn_a49 Kürbiskaiser, gn_b14 Lich-König, gn_b50 Auferstehung; statische Extended-Version für gn_schnitter und gn_koenig; alle 145 Varianten rendern (`build_hw.py`, `anim_card.py` mit rar='mythic'); Börsen-Filter „Meine Angebote“ mit Zurücknehmen; Update-Beitrag; Freischalten (Booster `gn` locked, Set in COLLECT ausgeschlossen).
 - Rendern: `tools/cards/build_hw.py` schneidet unten statt oben (Köpfe bleiben). Rate-Limit gpt_image_2_5: etwa 10 Bilder pro Schub.
 
-## Heute live gegangen (Stand Version 67)
+## Stand Version 69 (alles live, Gruselnacht per Schalter gesperrt)
+- Gruselnacht: alle 145 Kartenbilder fertig (public/tcg/gn_*), Freigabe im Admin-Menü „🃏 Gruselnacht-Set“ (Setting gn_open): Booster kaufbar, Set zählt zur Sammlung, Update u11 (requires 'gn') erscheint. Vorher gibt der Pass statt Gruselnacht-Booster (Premium 12/22/26) einen Geister-Booster.
+- Doppel-XP-Aktion (lib/boost.js, Setting boost): Level-XP, Casino-XP, Pass-XP einzeln schaltbar, Banner auf der Startseite.
+- Verlauf im Admin-Menü: Diamanten, XP, Casino-XP, Pass-XP (Tabelle ledger, Spalte kind: dia/xp/cxp/pxp).
+- Börse: bis 5.000 Angebote, Filter „Meine Angebote“, „Alle zurücknehmen“ (/api/tcg/cancel-all). Roulette-Chips bis 100k.
+- Tickets: Push an den Admin mit Protokoll („Ticket-Push an …: N Gerät(e)“), live Hinweis + roter Zähler offener Tickets am Support-Knopf (nur Mods/Admin).
+
+## Davor live gegangen (Version 67)
 - Casino-Sperre je Spieler (Admin-Menü „🚫 Casino-Sperre“, Timer, unbefristet, aufheben; Feld `casino_ban`: 0 frei, 1 unbefristet, sonst Zeitstempel). Sperrbild mit Beratungstelefon Glücksspielsucht 0800 1 37 27 00.
 - Holo-Effekt in der Kartenansicht neu (weicher Regenbogen am Lichtfleck, Glanzlicht, Glitzer). Kippen: Feder-Animation, größere Winkel, Finger relativ, Gyro relativ zur Haltung.
 - Halloween-Look + separater Animations-Schalter, Kronen-Pass (gesperrt bis Freigabe), Pass-Vorschau per Tipp, Guthaben-Verlauf, Prestige-Hinweise, Versionsabgleich (Auto-Reload).
