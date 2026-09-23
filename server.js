@@ -1117,7 +1117,7 @@ app.post('/api/tcg/cancel', async (req, res) => {
 const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15 };
 const COLLECT = (() => {
   const v = tcg.view(); const all = [];
-  for (const c of v.cards) if (c.set !== 'dev') for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht
+  for (const c of v.cards) if (c.set !== 'dev' && c.set !== 'gn') for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht, Gruselnacht erst nach der Freischaltung
   const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' ? 'ghost' : 'normal');
   const totals = { normal: 0, ext: 0, ghost: 0 }; let maxPts = 0;
   for (const e of all) { totals[group(e.variant)]++; maxPts += COLLECT_PTS[e.variant] || 1; }
