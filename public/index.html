@@ -1580,7 +1580,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '80';
+const AVER = '81';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1748,6 +1748,9 @@ function unlockAudio() {
     try { c.resume().catch(() => {}); } catch (e) {}
     setTimeout(() => { if (actx === c && c.state !== 'running') { try { c.close(); } catch (e) {} makeAudio(); if (actx && actx.state !== 'running') { try { actx.resume().catch(() => {}); } catch (e) {} } } }, 350);
   }
+  // Neuere iPhones (Audio-Session-Schnittstelle): Wiedergabe-Kategorie direkt setzen, kein stiller Mediaplayer nötig.
+  // Dann erscheint das Spiel nicht mehr als „spielt Musik“ im Kontrollzentrum und Pause wird nicht übergangen.
+  if (navigator.audioSession) { if (silentEl) { try { silentEl.pause(); silentEl.removeAttribute('src'); silentEl.load(); } catch (e) {} silentEl = null; } return; }
   if (!silentEl) {
     try {
       silentEl = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
