@@ -943,26 +943,26 @@ app.get('/api/tcg', async (req, res) => {
 // Booster kaufen
 // Shop-Steuerung je Booster (Admin): Preis, Bestand (null = unbegrenzt), ausverkauft
 let shopCfg = {};
-const applyShop = () => { for (const [id, c] of Object.entries(shopCfg)) { const p = tcg.PACKS[id]; if (!p) continue; if (!p.basePrice) p.basePrice = p.price; p.price = Number(c.price) > 0 ? Math.round(Number(c.price)) : p.basePrice; p.stock = c.stock === null || c.stock === undefined || c.stock === '' ? null : Math.max(0, Math.round(Number(c.stock))); p.soldout = !!c.soldout || p.stock === 0; p.note = String(c.note || '').slice(0, 120); } };
+const applyShop = () => { for (const [id, c] of Object.entries(shopCfg)) { const p = tcg.PACKS[id]; if (!p) continue; if (!p.basePrice) p.basePrice = p.price; p.price = Number(c.price) > 0 ? Math.round(Number(c.price)) : p.basePrice; p.stock = c.stock === null || c.stock === undefined || c.stock === '' ? null : Math.max(0, Math.round(Number(c.stock))); p.soldout = !!c.soldout || p.stock === 0; p.note = String(c.note || '').slice(0, 120); p.offsale = !!c.offsale; } };
 store.setting('shop_cfg').then((v) => { if (v) { shopCfg = JSON.parse(v); applyShop(); } }).catch(() => {});
 const saveShop = () => { for (const [id, p] of Object.entries(tcg.PACKS)) if (shopCfg[id]) { shopCfg[id].stock = p.stock; shopCfg[id].soldout = !!p.soldout && (shopCfg[id].soldout || p.stock === 0); } return store.setting('shop_cfg', JSON.stringify(shopCfg)); };
 // Displays (24 Booster am Stück): im Admin freischalten und Preis setzen
-store.setting('display_cfg').then((v) => { if (!v) return; for (const [id, c] of Object.entries(JSON.parse(v))) if (tcg.PACKS[id]) { tcg.PACKS[id].off = !c.on; if (Number(c.price) > 0) tcg.PACKS[id].price = Math.round(Number(c.price)); tcg.PACKS[id].note = String(c.note || ''); } }).catch(() => {});
+store.setting('display_cfg').then((v) => { if (!v) return; for (const [id, c] of Object.entries(JSON.parse(v))) if (tcg.PACKS[id]) { tcg.PACKS[id].off = !c.on; if (Number(c.price) > 0) tcg.PACKS[id].price = Math.round(Number(c.price)); tcg.PACKS[id].note = String(c.note || ''); tcg.PACKS[id].soldout = !!c.soldout; } }).catch(() => {});
 app.post('/api/admin/display', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
   const p = tcg.PACKS[String(req.body.pack || '')]; if (!p || !p.display) return res.status(400).json({ error: 'Unbekanntes Display.' });
-  p.off = !req.body.on; if (Number(req.body.price) > 0) p.price = Math.round(Number(req.body.price)); if ('note' in req.body) p.note = String(req.body.note || '').trim().slice(0, 120);
-  const cfg = {}; for (const x of Object.values(tcg.PACKS)) if (x.display) cfg[x.id] = { on: !x.off, price: x.price, note: x.note || '' };
+  p.off = !req.body.on; if (Number(req.body.price) > 0) p.price = Math.round(Number(req.body.price)); if ('note' in req.body) p.note = String(req.body.note || '').trim().slice(0, 120); if ('soldout' in req.body) p.soldout = !!req.body.soldout;
+  const cfg = {}; for (const x of Object.values(tcg.PACKS)) if (x.display) cfg[x.id] = { on: !x.off, price: x.price, note: x.note || '', soldout: !!x.soldout };
   await store.setting('display_cfg', JSON.stringify(cfg)); io.emit('shop:changed');
-  console.log(`Display: ${p.name} ${p.off ? 'aus' : 'an'}, Preis ${p.price} durch ${u.name}`); res.json({ pack: p.id, on: !p.off, price: p.price, note: p.note || '' });
+  console.log(`Display: ${p.name} ${p.off ? 'aus' : 'an'}, Preis ${p.price} durch ${u.name}`); res.json({ pack: p.id, on: !p.off, price: p.price, note: p.note || '', soldout: !!p.soldout });
 });
 app.post('/api/admin/shop', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
   const id = String(req.body.pack || ''); if (!tcg.PACKS[id]) return res.status(400).json({ error: 'Unbekannter Booster.' });
-  shopCfg[id] = { price: req.body.price, stock: req.body.stock === '' || req.body.stock === null || req.body.stock === undefined ? null : Number(req.body.stock), soldout: !!req.body.soldout, note: String(req.body.note || '').trim().slice(0, 120) };
+  shopCfg[id] = { price: req.body.price, stock: req.body.stock === '' || req.body.stock === null || req.body.stock === undefined ? null : Number(req.body.stock), soldout: !!req.body.soldout, offsale: !!req.body.offsale, note: String(req.body.note || '').trim().slice(0, 120) };
   applyShop(); await store.setting('shop_cfg', JSON.stringify(shopCfg)); io.emit('shop:changed');
   const p = tcg.PACKS[id]; console.log(`Shop: ${p.name} Preis ${p.price}, Bestand ${p.stock === null ? 'unbegrenzt' : p.stock}${p.soldout ? ', ausverkauft' : ''} durch ${u.name}`);
-  res.json({ pack: id, price: p.price, stock: p.stock, soldout: !!p.soldout, note: p.note || '' });
+  res.json({ pack: id, price: p.price, stock: p.stock, soldout: !!p.soldout, offsale: !!p.offsale, note: p.note || '' });
 });
 app.post('/api/tcg/buy', async (req, res) => {
   try {
@@ -972,6 +972,7 @@ app.post('/api/tcg/buy', async (req, res) => {
     if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
     if (p.hidden && !p.display) return res.status(403).json({ error: 'Diesen Booster gibt es nicht im Shop.' });
     if (p.display && p.off && !isMod(u)) return res.status(403).json({ error: 'Das Display gibt es gerade nicht zu kaufen.' });
+    if (p.offsale && !isMod(u)) return res.status(403).json({ error: 'Diesen Booster gibt es gerade nicht im Shop.' });
     if ((p.locked || (p.display && tcg.PACKS[p.of] && tcg.PACKS[p.of].locked)) && !isMod(u)) return res.status(403).json({ error: 'Dieser Booster ist noch gesperrt. Bald geht es los!' });
     if (p.soldout) return res.status(403).json({ error: 'Dieser Booster ist ausverkauft.' });
     if (p.stock !== null && p.stock !== undefined && n > p.stock) return res.status(400).json({ error: p.stock ? `Nur noch ${p.stock} Stück verfügbar.` : 'Dieser Booster ist ausverkauft.' });
@@ -1010,6 +1011,20 @@ app.post('/api/tcg/open', async (req, res) => {
 
 // Doppelte Karten umwandeln
 const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 1500 };
+// Displays umwandeln: bringt ein Viertel des Shop-Preises
+const dispMelt = (p) => Math.round((p.price || 0) * 0.25);
+app.post('/api/tcg/meltdisplay', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const p = tcg.PACKS[String(req.body.pack || '')]; if (!p || !p.display) return res.status(400).json({ error: 'Unbekanntes Display.' });
+    if (p.of === 'gn' && !gnOpen) return res.status(403).json({ error: 'Gruselnacht-Displays lassen sich erst nach der Freischaltung umwandeln.' });
+    const have = ((await store.packsOf(u.id)).find((x) => x.pack_id === p.id) || {}).count || 0, n = Math.min(have, Math.max(1, Math.round(Number(req.body.n) || 1)));
+    if (!have) return res.status(400).json({ error: 'Du hast dieses Display nicht.' });
+    const gain = dispMelt(p) * n, fresh = await store.userById(u.id);
+    await store.packAdd(u.id, p.id, -n); await store.save(u.id, { diamonds: (Number(fresh.diamonds) || 0) + gain });
+    res.json({ ...(await tcgState(await store.userById(u.id))), gained: gain, n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.post('/api/tcg/melt', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
