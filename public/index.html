@@ -1572,6 +1572,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .rb{display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:12px;background:rgba(255,255,255,.04)}#codeAdm label:not(.row),#banAdm label:not(.row),.rb label{font-size:12px;color:#cfe;display:flex;flex-direction:column;gap:3px}.rb-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.rb-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:rgba(255,210,63,.15);font:700 12.5px Archivo}.rb-chip button{background:none;border:0;color:#FF8A8A;font-weight:900}
 .code-row{display:flex;flex-direction:column;gap:4px;padding:10px 12px}
 .lg-note{display:block;margin-top:2px;font-size:12px;color:#FFE27A;line-height:1.3;white-space:normal}
+.ct-pot{display:inline-flex!important;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(180,120,255,.35),rgba(90,169,255,.25))!important;box-shadow:inset 0 0 0 1.5px rgba(200,160,255,.7)!important;color:#fff!important}.ct-pot img{width:20px;height:20px;object-fit:contain}.ct-pot.on{background:linear-gradient(135deg,#C9A2FF,#7FB6FF)!important;color:#1A0B26!important}
+.pot-head{display:flex;align-items:center;gap:6px;margin:4px 0 12px;padding:12px 14px;border-radius:16px;background:radial-gradient(circle at 20% 50%,rgba(180,120,255,.3),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(200,160,255,.35)}.pot-head img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}.pot-head div{margin-left:8px}.pot-head b{display:block;font:900 20px/1.1 Archivo}.pot-head small{color:#dcd0ff}
 </style>
 </head>
 <body>
@@ -1591,7 +1593,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '90';
+const AVER = '91';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2471,12 +2473,12 @@ function renderCards() {
   } else if (ctab === 'inventar') {
     const defOf = (id) => tcg.def.packs.find((x) => x.id === id) || {};
     const invD = tcg.packs.filter((p) => defOf(p.pack_id).display), invB = tcg.packs.filter((p) => !defOf(p.pack_id).display && !defOf(p.pack_id).potion);
-    const act = (home && home.potions) || {};
-    const potHtml = `<h3 class="inv-h">🧪 Tränke</h3><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft ab dem Aktivieren 60 Minuten. Gleicher Trank nochmal verlängert um 60 Minuten. ×2 und ×4 derselben Art lassen sich nicht kombinieren.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].until > Date.now(); return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft bis ${potBis(act[t].until)}</small>${n ? `<button class="btn small ghost" data-potuse="${id}">+60 Min</button>` : ''}` : on && n ? `<small>erst ab ${potBis(act[t].until)}, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
-    box.innerHTML = potHtml + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
+  } else if (ctab === 'traenke') {
+    box.innerHTML = potionsHtml();
   } else if (ctab === 'shop') {
     const disps = tcg.def.packs.filter((p) => p.display && !p.off);
     box.innerHTML = disps.map((p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`).join('') + tcg.def.packs.filter((p) => !p.hidden && !p.offsale).map((p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
@@ -3962,6 +3964,10 @@ function drawBannerAdmin() {
   }).catch((e) => toast(e.message));
   if (!tcg) loadTcg().then(go); else go();
 }
+function potionsHtml() {
+    const act = (home && home.potions) || {};
+    return `<div class="pot-head"><img src="/tcg/pot_xp.webp?v=${AVER}" alt=""><img src="/tcg/pot_cxp.webp?v=${AVER}" alt=""><img src="/tcg/pot_pxp.webp?v=${AVER}" alt=""><div><b>Tränke</b><small>Mehr XP für eine Stunde</small></div></div><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft ab dem Aktivieren 60 Minuten. Gleicher Trank nochmal verlängert um 60 Minuten. ×2 und ×4 derselben Art lassen sich nicht kombinieren.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].until > Date.now(); return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft bis ${potBis(act[t].until)}</small>${n ? `<button class="btn small ghost" data-potuse="${id}">+60 Min</button>` : ''}` : on && n ? `<small>erst ab ${potBis(act[t].until)}, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
+}
 function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenzt), Ausverkauft
   const box = $('#shopRows'); if (!box) return;
   const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
@@ -4306,7 +4312,7 @@ function connect() {
   });
   socket.on('ver', (v) => checkVersion(v));
   socket.on('banner:changed', () => { loadHome(); });
-  socket.on('pot:update', (d) => { if (home) home.potions = d.potions; (d.ended || []).forEach((t) => toast(`🧪 Dein ${POT_T[t]}-Trank ist abgelaufen`)); if (!S && page === 'home') update(); if (page === 'cards' && ctab === 'inventar') renderCards(); });
+  socket.on('pot:update', (d) => { if (home) home.potions = d.potions; (d.ended || []).forEach((t) => toast(`🧪 Dein ${POT_T[t]}-Trank ist abgelaufen`)); if (!S && page === 'home') update(); if (page === 'cards' && ctab === 'traenke') renderCards(); });
   socket.on('admin:note', (m) => { toast(m); sfx('exact'); });
   socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
@@ -4533,7 +4539,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
-    <button class="ct-shopbig" data-ct="shop"><span class="csb-ic">🛒</span><span class="grow"><b>Shop</b><small>Booster kaufen</small></span><span class="ct-new" id="ctNew" hidden>NEU</span><span class="csb-go">›</span></button><div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="boerse" class="ct-boerse">💱 Börse · Handeln</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
+    <button class="ct-shopbig" data-ct="shop"><span class="csb-ic">🛒</span><span class="grow"><b>Shop</b><small>Booster kaufen</small></span><span class="ct-new" id="ctNew" hidden>NEU</span><span class="csb-go">›</span></button><div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="traenke" class="ct-pot"><img src="/tcg/pot_xp.webp" alt="">Tränke</button><button data-ct="boerse" class="ct-boerse">💱 Börse · Handeln</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
     </div>`;
