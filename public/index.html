@@ -1614,7 +1614,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '103';
+const AVER = '104';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2532,7 +2532,7 @@ function renderCards() {
   } else if (ctab === 'shop') { // eigene Shop-Seite: Kategorien, teuerste zuerst
     const byPrice = (a, b) => (b.price || 0) - (a.price || 0);
     const disps = tcg.def.packs.filter((p) => p.display && !p.off).sort(byPrice);
-    const pots = tcg.def.packs.filter((p) => p.potion && !p.off && p.price > 0).sort(byPrice);
+    const pots = tcg.def.packs.filter((p) => p.potion && !p.off).sort(byPrice);
     const packs = tcg.def.packs.filter((p) => !p.hidden && !p.offsale).sort(byPrice);
     const cats = [['alle', '✨ Alles'], ['booster', '📦 Booster'], disps.length && ['displays', '🗃 Displays'], pots.length && ['traenke', '🧪 Tränke']].filter(Boolean);
     if (!cats.some(([k]) => k === shopCat)) shopCat = 'alle';
@@ -2543,7 +2543,7 @@ function renderCards() {
       + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
-      + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
+      + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br>${p.price > 0 ? `<span class="dia">${D} ${fmt(p.price)}</span>` : '<span class="dia" style="opacity:.8">Preis folgt</span>'}<p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
     $('#shopBack').onclick = () => { ctab = 'sammlung'; renderCards(); window.scrollTo(0, 0); };
     box.querySelectorAll('[data-shopcat]').forEach((b) => { b.onclick = () => { shopCat = b.dataset.shopcat; renderCards(); }; });
@@ -3412,12 +3412,12 @@ function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
   if (p.display || p.potion) { // Display oder Trank: einfach, nur kaufen
     const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = !!base.locked;
-    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">💎 ${fmt(p.price)}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${p.price > 0 ? '💎 ' + fmt(p.price) : 'Preis folgt'}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
       <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
-      ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+      ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : !(p.price > 0) ? '<button class="btn" id="packBuy" disabled>Preis folgt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
     $('#packN').oninput = () => { const b = $('#packBuy'); if (b && !b.disabled) b.textContent = `Kaufen · ${fmt(Math.max(1, Math.round(Number($('#packN').value) || 1)) * p.price)} 💎`; };
-    if (!locked && !p.soldout) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + (p.potion ? ' Trank gekauft' : ' Display gekauft')); if (p.potion) { ctab = 'traenke'; renderCards(); } }).catch((e) => toast(e.message)); };
+    if (!locked && !p.soldout && p.price > 0) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + (p.potion ? ' Trank gekauft' : ' Display gekauft')); if (p.potion) { ctab = 'traenke'; renderCards(); } }).catch((e) => toast(e.message)); };
     return;
   }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
