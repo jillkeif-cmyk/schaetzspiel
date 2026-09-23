@@ -172,7 +172,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? (await store.tickets().catch(() => [])).filter((t) => t.status !== 'abgeschlossen').length : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1264,6 +1264,8 @@ app.post('/api/gifts/:id/claim', async (req, res) => {
 
 // ---------- Support-Tickets ----------
 const TICKET_CATS = ['Fehler', 'Account', 'Wunsch'], TICKET_STATES = ['eingereicht', 'in Bearbeitung', 'abgeschlossen', 'abgelehnt'];
+const openTicketCount = async () => (await store.tickets().catch(() => [])).filter((t) => t.status === 'eingereicht' || t.status === 'in Bearbeitung').length; // abgeschlossen und abgelehnt sind erledigt
+const pushTicketCount = async () => { const n = await openTicketCount(); io.sockets.sockets.forEach((so) => { if (so.data.user && isMod(so.data.user)) so.emit('ticket:count', n); }); };
 app.get('/api/tickets', async (req, res) => {
   try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json({ tickets: await store.tickets(), canManage: isMod(u) }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -1310,6 +1312,7 @@ app.post('/api/tickets/:id/status', async (req, res) => {
     if (status === 'abgeschlossen' && isAdmin(u) && t.user_id !== u.id && (gDia || gPack)) gift = await store.giftAdd({ user_id: t.user_id, diamonds: gDia, pack: gPack, n: gN, reason: t.title });
     if (t.user_id !== u.id) {
       const thanks = status === 'abgeschlossen' ? `Dein Ticket „${t.title}“ wurde abgeschlossen. Vielen Dank für deine Meldung!${gift ? ' 🎁 Als Dankeschön wartet ein Geschenk auf dich.' : ''}` : `„${t.title}“ ist jetzt: ${status}${reply ? ' · ' + reply.slice(0, 80) : ''}`;
+      pushTicketCount().catch(() => {});
       push.toUser(t.user_id, { title: status === 'abgeschlossen' ? '🎫 Danke für deine Meldung!' : '🎫 Dein Ticket', body: thanks, tag: 'ticket', url: '/' }).catch(() => {});
       io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === t.user_id) so.emit('gift:new'); });
     }

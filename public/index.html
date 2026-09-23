@@ -3571,7 +3571,7 @@ function renderNews() {
     if (b.type === 'head') return `<h2 class="nw-h">${esc(b.text)}${b.badge ? ` <span class="nw-badge">${esc(b.badge)}</span>` : ''}</h2>`;
     if (b.type === 'text') return `<p class="nw-p">${esc(b.text)}</p>`;
     if (b.type === 'list') return `<ul class="nw-list">${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
-    if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const [id, v] = k.split('_'); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
+    if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const cut = k.lastIndexOf('_'), id = k.slice(0, cut), v = k.slice(cut + 1); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
     if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'vips') return `<div class="nw-embs">${b.items.map(([n, name, need]) => `<div class="nw-em"><img style="width:84px;height:84px;object-fit:contain" src="/emblems/vip${esc(n)}.webp?v=${AVER}" alt=""><b>${esc(name)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
@@ -4197,6 +4197,7 @@ function connect() {
   socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
   socket.on('boost', (b) => { if (home) home.boost = b; if (!S && page === 'home') update(); });
+  socket.on('ticket:count', (n) => { if (home) home.openTickets = n; if (!S && page === 'home') update(); });
   socket.on('ticket:new', (t) => { if (home) home.openTickets = (home.openTickets || 0) + 1; toast(`🎫 Neues Ticket von ${t.from}: ${t.title}`); if (!S && page === 'home') update(); });
   socket.on('gn:open', (o) => { if (home) home.gnOpen = o; newsPosts = null; loadTcg(); if (page === 'cards') renderCards(); if (!S && page === 'home') update(); });
   socket.on('casino:ban', (b) => { if (home && home.me) home.me.casinoBan = b; if (page === 'casino' || (page === 'cards' && ctab === 'casino')) { if (b) toast('🚫 Du wurdest vom Casino ausgeschlossen'); renderCards(); } });
