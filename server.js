@@ -346,7 +346,7 @@ async function passGive(u, rw, save, got) { // eine Belohnung gutschreiben
   if (rw.spin) { save.wheel_bonus = num('wheel_bonus') + rw.spin; got.spins += rw.spin; }
   if (rw.xp) { save.xp = Math.min(progress.CAP, num('xp') + rw.xp); got.xp += rw.xp; }
   if (rw.cxp) { save.casino_xp = num('casino_xp') + rw.cxp; got.cxp += rw.cxp; }
-  if (rw.pack) { const pk = rw.pack === 'gn' && !gnOpen ? 'ghost' : rw.pack; await store.packAdd(u.id, pk, 1); got.packs.push(pk); } // Gruselnacht-Booster erst nach der Freischaltung
+  if (rw.pack) { await store.packAdd(u.id, rw.pack, 1); got.packs.push(rw.pack); } // Gruselnacht-Booster gibt es schon vor der Freischaltung, geöffnet werden sie erst danach
   for (const [id, name] of [[rw.item, rw.name], [rw.item2, rw.name2]]) if (id) {
     const un = new Set(String(save.unlocks ?? u.unlocks ?? '').split(',').filter(Boolean)); un.add(id); save.unlocks = [...un].join(','); got.items.push(name);
   }
@@ -966,6 +966,7 @@ app.post('/api/tcg/open', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const pid = String(req.body.pack || '');
     if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Unbekannter Booster.' });
+    if (pid === 'gn' && !gnOpen && !isMod(u)) return res.status(403).json({ error: 'Gruselnacht-Booster lassen sich erst öffnen, wenn das Set freigeschaltet ist. Heb ihn solange auf!' });
     const mine = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
     if (!mine || mine.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
     await store.packAdd(u.id, pid, -1);
@@ -1150,6 +1151,7 @@ app.post('/api/tcg/sellpack', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const pid = String(req.body.pack || ''), price = Math.max(10, Math.min(1000000, Math.round(Number(req.body.price) || 0)));
     if (!tcg.PACKS[pid]) return res.status(400).json({ error: 'Diesen Booster gibt es nicht.' });
+    if (pid === 'gn' && !gnOpen) return res.status(403).json({ error: 'Gruselnacht-Booster können erst nach der Freischaltung an der Börse gehandelt werden.' });
     const own = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
     if (!own || own.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
     await store.packAdd(u.id, pid, -1);
