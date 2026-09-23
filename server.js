@@ -854,7 +854,7 @@ app.post('/api/casino/triple', async (req, res) => {
     await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
     let risk = null;
     if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
-    else await casinoStat(u.id, bet, 0);
+    else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1)); // Niete: deutlich weniger Casino-XP als ein Gewinn (Autoplay dreht schnell)
     const sm = tcSeatOf(u.id); if (sm && r.spins.length) tcSeats.get(sm).grid = r.spins[r.spins.length - 1].grid;
     tcEmit(u.id, { type: 'spin', bet, spins: r.spins, total: r.total, risk });
     res.json({ ...r, bet, risk, diamonds: t.left, forced });
