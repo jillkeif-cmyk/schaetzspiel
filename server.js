@@ -1017,6 +1017,13 @@ app.post('/api/tcg/sellgraded', async (req, res) => {
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+app.get('/api/ranks/pass', async (req, res) => { // Kronen-Pass-Rangliste der laufenden Saison
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const rows = (await store.passTop(kpass.SEASON.id, 50)).map((x) => ({ ...publicStats(x), passXp: Number(x.pass_xp) || 0, tier: kpass.tierOf(x.pass_xp), prem: !!Number(x.pass_prem) }));
+    res.json({ season: kpass.SEASON, perTier: kpass.perTier(), tiers: kpass.TIERS, rows });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.get('/api/ranks/graded', async (req, res) => {
   try {
     if (gradingOff(res)) return;

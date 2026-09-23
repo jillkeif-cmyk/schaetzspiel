@@ -1431,6 +1431,12 @@ body.no-grading .grading-only{display:none !important}
 .lg-list{max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:2px}
 .lg-row{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:5px 6px;border-radius:8px;background:rgba(255,255,255,.03)}.lg-row small{color:#9aa;white-space:nowrap}
 .lg-row .pos,.lg-sum .pos{color:#7CF0A8}.lg-row .neg,.lg-sum .neg{color:#FF8A8A}.lg-after{color:#cfd;min-width:78px;text-align:right}
+.rt-pass.on{background:linear-gradient(180deg,#FFB547,#FF6A00)!important;color:#2A0E00!important}
+.rt-pass{background:linear-gradient(180deg,rgba(255,138,31,.25),rgba(142,75,214,.25))!important;box-shadow:inset 0 0 0 1px rgba(255,160,60,.6)}
+.pr-lord{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:12px;border-radius:18px;background:linear-gradient(135deg,rgba(255,106,0,.3),rgba(142,75,214,.4));box-shadow:inset 0 0 0 1.5px rgba(255,170,60,.7),0 0 24px rgba(255,120,30,.25)}
+.pr-lord small{display:block;font:800 11px/1.2 Archivo;letter-spacing:.5px;color:#FFB547;text-transform:uppercase}.pr-lord b{display:block;font:800 18px/1.2 Archivo;margin:2px 0}.pr-lord span{font-size:12.5px;color:#E8DDFF}
+.pr-lordlogo{width:62px;height:62px;object-fit:contain;flex:none;filter:drop-shadow(0 0 10px rgba(255,160,40,.6))}
+.pr-xp{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto}.pr-xp b{font:800 15px/1 Archivo;color:#FFB547}.pr-xp small{font-size:10.5px;color:#aab}
 </style>
 </head>
 <body>
@@ -1450,7 +1456,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '49';
+const AVER = '50';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1732,7 +1738,7 @@ function pushUI() {
 }
 
 // ---------- Sammelkarten ----------
-let rtab = 'world';
+let rtab = 'pass', passRanks = null;
 let meltSel = {};
 let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
 let bjList = [], bjT = null;
@@ -3585,6 +3591,13 @@ function renderRanks() {
   document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.rt === rtab));
   const me2 = home.me;
   if (rtab === 'cards') return renderCollectRanks(box, me2);
+  if (rtab === 'pass') {
+    if (!passRanks || Date.now() - passRanks.t > 30000) { if (!passRanks) box.innerHTML = '<p class="sub">Lädt …</p>'; api('/api/ranks/pass').then((d) => { passRanks = { ...d, t: Date.now() }; if (rtab === 'pass') renderRanks(); }).catch((e) => toast(e.message)); if (!passRanks) return; }
+    const d = passRanks, lord = d.rows[0];
+    box.innerHTML = `<div class="pr-lord">${lord ? `<img class="pr-lordlogo" src="/news/pass_logo.webp?v=${AVER}" alt=""><div class="grow"><small>Pass-Lord · Saison ${d.season.nr} ${esc(d.season.name)}</small><b>${withTag(lord)}</b><span>Stufe ${lord.tier} von ${d.tiers} · ${fmt(lord.passXp)} Pass-XP${lord.prem ? ' · 👑 Premium' : ''}</span></div>${avatar(lord, 52)}` : '<div class="grow"><b>Noch kein Pass-Lord</b><span>Spiel ein Quiz-Match und hol dir Platz 1.</span></div>'}</div>
+      ${d.rows.length ? `<div class="plist">${d.rows.map((u, i) => `<div class="pl rkrow pr-row ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? '#FF8A1F' : i < 3 ? '#B36BFF' : 'var(--line)'}"><span class="pos">${i === 0 ? '👑' : i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">Stufe ${u.tier}${u.tier >= d.tiers ? ' · 🏆 komplett' : ''}${u.prem ? ' · 👑 Premium' : ''}</span></span><span class="pr-xp"><b>${fmt(u.passXp)}</b><small>Pass-XP</small></span></div>`).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>'}`;
+    return;
+  }
   if (rtab === 'graded') {
     if (!gradedRanks) { box.innerHTML = '<p class="sub">Lädt …</p>'; api('/api/ranks/graded').then((d) => { gradedRanks = d; if (rtab === 'graded') renderRanks(); }).catch((e) => toast(e.message)); return; }
     const d = gradedRanks;
@@ -3891,7 +3904,7 @@ function build() {
   if (!S && page === 'ranks') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Ranglisten</h1>
-    <div class="tabs2" id="rtabs"><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button><button data-rt="cards" class="rt-glitter">✨ Sammlung</button><button data-rt="graded" class="ct-gold grading-only">🏅 Gegradet</button></div>
+    <div class="tabs2" id="rtabs"><button data-rt="pass" class="rt-pass">👑 Kronen-Pass</button><button data-rt="world">Weltrangliste</button><button data-rt="points">Punkte</button><button data-rt="casino">Casino</button><button data-rt="cards" class="rt-glitter">✨ Sammlung</button><button data-rt="graded" class="ct-gold grading-only">🏅 Gegradet</button></div>
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
