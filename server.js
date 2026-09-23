@@ -94,7 +94,7 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler beim Anmelden.' }); }
 });
 
-const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
+const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost', 'mythic']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
   const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'slot_full', 'slot_best', 'slot_spins', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
@@ -120,7 +120,7 @@ const ITEM_GOALS = (() => {
 })();
 const DEV_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'dev').map((c) => c.id));
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
-const TOP = new Set(['ext', 'ghost']);
+const TOP = new Set(['ext', 'ghost', 'mythic']);
 async function cardStats(uid) {
   const rows = await store.cardsOf(uid).catch(() => []);
   let total = 0, rare = 0, ext = 0;
@@ -1114,11 +1114,11 @@ app.post('/api/tcg/cancel', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 // ---------- Sammler-Rangliste: jede Karte in jeder Fassung zählt einmal ----------
-const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15 };
+const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15, mythic: 15 };
 const COLLECT = (() => {
   const v = tcg.view(); const all = [];
   for (const c of v.cards) if (c.set !== 'dev' && c.set !== 'gn') for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht, Gruselnacht erst nach der Freischaltung
-  const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' ? 'ghost' : 'normal');
+  const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' || va === 'mythic' ? 'ghost' : 'normal'); // Mythisch (bewegt) zählt wie Ghost Rare
   const totals = { normal: 0, ext: 0, ghost: 0 }; let maxPts = 0;
   for (const e of all) { totals[group(e.variant)]++; maxPts += COLLECT_PTS[e.variant] || 1; }
   return { keys: new Set(all.map((e) => e.id + ':' + e.variant)), total: all.length, totals, maxPts, group };

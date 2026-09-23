@@ -1,0 +1,1747 @@
+[
+ {
+  "id": "gn_ritter",
+  "name": "Kürbisritter",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1900,
+  "dfs": 1600,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 001 / 100",
+  "prompt": "an armored knight in black and orange plate armor whose helmet is a glowing jack-o-lantern, holding a flaming scythe"
+ },
+ {
+  "id": "gn_katze",
+  "name": "Hexenkatze",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2400,
+  "dfs": 1900,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 002 / 100",
+  "prompt": "an elegant black cat standing upright in a purple witch robe and pointed hat casting green magic, floating spellbook"
+ },
+ {
+  "id": "gn_koenig",
+  "name": "Kürbiskönig",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "mythic",
+  "variants": [
+   "ext",
+   "mythic"
+  ],
+  "lvl": 10,
+  "atk": 3500,
+  "dfs": 3000,
+  "effect": "Einmal pro Duell: Hole alle Kürbis-Karten aus deinem Friedhof auf die Hand.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 003 / 100",
+  "prompt": "a giant regal pumpkin-headed king with golden crown and fiery grin on a throne of vines and jack-o-lanterns"
+ },
+ {
+  "id": "gn_a04",
+  "name": "Kesselhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1300,
+  "dfs": 1000,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 004 / 100",
+  "prompt": "an old cackling witch stirring a huge bubbling green cauldron, potion bottles, bats"
+ },
+ {
+  "id": "gn_a05",
+  "name": "Kürbiswichtel",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1200,
+  "dfs": 900,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 005 / 100",
+  "prompt": "a tiny mischievous goblin with a carved pumpkin as a helmet, holding a candle"
+ },
+ {
+  "id": "gn_a06",
+  "name": "Besenreiterin",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 800,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 006 / 100",
+  "prompt": "a young witch flying on a broomstick across a huge full moon, cape fluttering"
+ },
+ {
+  "id": "gn_a07",
+  "name": "Werwolf-Jäger",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1200,
+  "dfs": 1000,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 007 / 100",
+  "prompt": "a hulking werewolf howling on a rocky cliff under a full moon, fur glowing silver"
+ },
+ {
+  "id": "gn_a08",
+  "name": "Vogelscheuche",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1100,
+  "dfs": 800,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 008 / 100",
+  "prompt": "a creepy scarecrow with glowing orange eyes and a burlap face in a dark cornfield, crows"
+ },
+ {
+  "id": "gn_a09",
+  "name": "Süßigkeitengolem",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 700,
+  "effect": "Einmal pro Zug: Eine gegnerische Karte verliert 200 ATK bis zum Zugende.",
+  "tribute": "",
+  "num": "GN 009 / 100",
+  "prompt": "a big friendly-scary golem made of candy corn, lollipops and wrapped sweets"
+ },
+ {
+  "id": "gn_a10",
+  "name": "Frankensteins Riese",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 700,
+  "dfs": 400,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 010 / 100",
+  "prompt": "a towering stitched monster with neck bolts in a lightning-lit laboratory"
+ },
+ {
+  "id": "gn_a11",
+  "name": "Mumienpharao",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1200,
+  "dfs": 1000,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 011 / 100",
+  "prompt": "a bandaged mummy pharaoh with glowing eyes rising from a golden sarcophagus"
+ },
+ {
+  "id": "gn_a12",
+  "name": "Kürbisdrache",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1000,
+  "dfs": 700,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 012 / 100",
+  "prompt": "a dragon whose scaly body is made of orange pumpkin skin and vines, breathing embers"
+ },
+ {
+  "id": "gn_a13",
+  "name": "Hexenzirkelmeisterin",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "ext",
+  "variants": [
+   "ext"
+  ],
+  "lvl": 9,
+  "atk": 2700,
+  "dfs": 2500,
+  "effect": "Wenn diese Karte zerstört würde: Wirf stattdessen 1 Karte ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 013 / 100",
+  "prompt": "a powerful witch high priestess raising a staff inside a glowing magenta rune circle"
+ },
+ {
+  "id": "gn_a14",
+  "name": "Fledermausfürst",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 1200,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 014 / 100",
+  "prompt": "a noble vampire bat lord with huge wings and a tiny crown hanging from a castle beam"
+ },
+ {
+  "id": "gn_a15",
+  "name": "Trankmischer",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1100,
+  "dfs": 800,
+  "effect": "Wenn diese Karte zerstört wird: Heile 300 Lebenspunkte.",
+  "tribute": "",
+  "num": "GN 015 / 100",
+  "prompt": "a hunched alchemist goblin mixing glowing potions in a cluttered attic laboratory"
+ },
+ {
+  "id": "gn_a16",
+  "name": "Kürbisbombe",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1300,
+  "dfs": 600,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 016 / 100",
+  "prompt": "a sparking jack-o-lantern bomb with a lit fuse and a manic grin"
+ },
+ {
+  "id": "gn_a17",
+  "name": "Spinnenkönigin",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1100,
+  "dfs": 600,
+  "effect": "Wenn diese Karte zerstört wird: Heile 300 Lebenspunkte.",
+  "tribute": "",
+  "num": "GN 017 / 100",
+  "prompt": "a giant elegant spider queen with a golden crown on a huge glowing web"
+ },
+ {
+  "id": "gn_a18",
+  "name": "Zauberhut",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 800,
+  "effect": "Wenn diese Karte zerstört wird: Heile 300 Lebenspunkte.",
+  "tribute": "",
+  "num": "GN 018 / 100",
+  "prompt": "a living enchanted witch hat with eyes and a mouth, floating with magic sparkles"
+ },
+ {
+  "id": "gn_a19",
+  "name": "Mondwolf",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 600,
+  "dfs": 300,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 019 / 100",
+  "prompt": "a sleek silver wolf with glowing blue eyes standing before a giant moon"
+ },
+ {
+  "id": "gn_a20",
+  "name": "Laternenträger",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1400,
+  "dfs": 1200,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 020 / 100",
+  "prompt": "a tall thin figure carrying a pole of hanging jack-o-lanterns through fog"
+ },
+ {
+  "id": "gn_a21",
+  "name": "Rabenhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 600,
+  "dfs": 300,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 021 / 100",
+  "prompt": "a witch surrounded by a swirling flock of black ravens with glowing eyes"
+ },
+ {
+  "id": "gn_a22",
+  "name": "Kürbisgolem",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 1000,
+  "effect": "Wenn diese Karte zerstört wird: Heile 300 Lebenspunkte.",
+  "tribute": "",
+  "num": "GN 022 / 100",
+  "prompt": "a massive golem built from stacked pumpkins and roots, glowing carved face"
+ },
+ {
+  "id": "gn_a23",
+  "name": "Monsterbraut",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1300,
+  "dfs": 1100,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 023 / 100",
+  "prompt": "a gothic bride of the monster with tall streaked hair in a stone castle"
+ },
+ {
+  "id": "gn_a24",
+  "name": "Nachtkrähe",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 800,
+  "dfs": 300,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 024 / 100",
+  "prompt": "a huge black crow with glowing orange eyes perched on a gravestone"
+ },
+ {
+  "id": "gn_a25",
+  "name": "Hexenkobold",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1200,
+  "dfs": 700,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "",
+  "num": "GN 025 / 100",
+  "prompt": "a small green imp with a pointed hat juggling glowing magic orbs"
+ },
+ {
+  "id": "gn_a26",
+  "name": "Kürbisbogenschützin",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 1800,
+  "dfs": 1500,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 026 / 100",
+  "prompt": "a hooded archer shooting a flaming arrow, quiver of pumpkin-tipped arrows"
+ },
+ {
+  "id": "gn_a27",
+  "name": "Sumpfmonster",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1600,
+  "dfs": 1300,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 027 / 100",
+  "prompt": "a mossy swamp creature rising from murky water with glowing eyes"
+ },
+ {
+  "id": "gn_a28",
+  "name": "Gruselclown",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 1000,
+  "effect": "Wenn diese Karte beschworen wird: Wirf 1 gegnerische Karte mit 1000 ATK oder weniger ab.",
+  "tribute": "",
+  "num": "GN 028 / 100",
+  "prompt": "a spooky circus clown with a pumpkin nose holding glowing balloons in fog"
+ },
+ {
+  "id": "gn_a29",
+  "name": "Nachtschattenhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 2100,
+  "dfs": 1900,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 029 / 100",
+  "prompt": "a mysterious witch made of purple shadow and stars with a crescent staff"
+ },
+ {
+  "id": "gn_a30",
+  "name": "Werkatze",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1600,
+  "dfs": 900,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 030 / 100",
+  "prompt": "a sleek black panther-like werecat prowling on rooftops at night"
+ },
+ {
+  "id": "gn_a31",
+  "name": "Kürbiskutscher",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1800,
+  "dfs": 1100,
+  "effect": "Wenn diese Karte beschworen wird: Wirf 1 gegnerische Karte mit 1000 ATK oder weniger ab.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 031 / 100",
+  "prompt": "a pumpkin carriage pulled by skeletal horses with a pumpkin-headed driver"
+ },
+ {
+  "id": "gn_a32",
+  "name": "Zaubertrank",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1200,
+  "dfs": 1000,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "",
+  "num": "GN 032 / 100",
+  "prompt": "a bubbling glowing potion bottle with a skull cork and swirling magic"
+ },
+ {
+  "id": "gn_a33",
+  "name": "Bonbonhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 2000,
+  "dfs": 1300,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 033 / 100",
+  "prompt": "a sweet-looking witch with a gingerbread house and floating candies"
+ },
+ {
+  "id": "gn_a34",
+  "name": "Kürbisschlange",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1300,
+  "dfs": 1100,
+  "effect": "Wenn diese Karte zerstört wird: Beschwöre 1 Karte mit 3 oder weniger Sternen aus deinem Friedhof.",
+  "tribute": "",
+  "num": "GN 034 / 100",
+  "prompt": "a long serpent whose body is a vine of small glowing pumpkins"
+ },
+ {
+  "id": "gn_a35",
+  "name": "Gargoyle",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 1800,
+  "dfs": 1500,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 035 / 100",
+  "prompt": "a stone gargoyle coming alive on a cathedral roof, cracks glowing"
+ },
+ {
+  "id": "gn_a36",
+  "name": "Hexenlehrling",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2200,
+  "dfs": 1500,
+  "effect": "Alle gegnerischen Karten verlieren 500 DEF, solange diese Karte liegt.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 036 / 100",
+  "prompt": "a young apprentice witch reading a floating spellbook with sparkles"
+ },
+ {
+  "id": "gn_a37",
+  "name": "Kürbisfeld-Wächter",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 1900,
+  "dfs": 1200,
+  "effect": "Diese Karte kann zweimal pro Zug angreifen.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 037 / 100",
+  "prompt": "a giant guardian made of straw and pumpkins guarding a moonlit field"
+ },
+ {
+  "id": "gn_a38",
+  "name": "Minotaurus der Nacht",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2700,
+  "dfs": 2200,
+  "effect": "Einmal pro Zug: Hole 1 Karte aus deinem Friedhof auf die Hand.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 038 / 100",
+  "prompt": "a dark minotaur with glowing horns in a foggy stone labyrinth"
+ },
+ {
+  "id": "gn_a39",
+  "name": "Zauberspiegel-Hexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2100,
+  "dfs": 1600,
+  "effect": "Einmal pro Zug: Hole 1 Karte aus deinem Friedhof auf die Hand.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 039 / 100",
+  "prompt": "a witch gazing into a glowing enchanted mirror that shows a ghostly face"
+ },
+ {
+  "id": "gn_a40",
+  "name": "Kürbiskerze",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2400,
+  "dfs": 2100,
+  "effect": "Wenn diese Karte beschworen wird: Zerstöre 1 gegnerische Karte mit weniger als 2000 ATK.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 040 / 100",
+  "prompt": "a cute living candle inside a small jack-o-lantern with a flickering flame"
+ },
+ {
+  "id": "gn_a41",
+  "name": "Riesenfledermaus",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2400,
+  "dfs": 1700,
+  "effect": "Einmal pro Zug: Hole 1 Karte aus deinem Friedhof auf die Hand.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 041 / 100",
+  "prompt": "a gigantic bat with glowing red eyes swooping over a village"
+ },
+ {
+  "id": "gn_a42",
+  "name": "Kräuterhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 1900,
+  "dfs": 1200,
+  "effect": "Diese Karte kann zweimal pro Zug angreifen.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 042 / 100",
+  "prompt": "a forest witch gathering glowing mushrooms and herbs in a dark wood"
+ },
+ {
+  "id": "gn_a43",
+  "name": "Kürbiskanone",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2400,
+  "dfs": 1900,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 2 Karten und wirf 1 ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 043 / 100",
+  "prompt": "an old cannon firing flaming jack-o-lanterns from a castle wall"
+ },
+ {
+  "id": "gn_a44",
+  "name": "Yeti der Geisternacht",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2300,
+  "dfs": 2100,
+  "effect": "Einmal pro Duell: Tausche die ATK und DEF aller Karten auf dem Feld.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 044 / 100",
+  "prompt": "a furry white yeti with glowing purple eyes in a snowy haunted forest"
+ },
+ {
+  "id": "gn_a45",
+  "name": "Sternenhexe",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2600,
+  "dfs": 2100,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 2 Karten und wirf 1 ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 045 / 100",
+  "prompt": "a witch pulling stars from the night sky into her glowing lantern"
+ },
+ {
+  "id": "gn_a46",
+  "name": "Kürbisritter-Knappe",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2400,
+  "dfs": 1900,
+  "effect": "Einmal pro Duell: Tausche die ATK und DEF aller Karten auf dem Feld.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 046 / 100",
+  "prompt": "a small squire with a pumpkin helmet carrying a lantern and wooden sword"
+ },
+ {
+  "id": "gn_a47",
+  "name": "Hydra der Nacht",
+  "theme": "Monster",
+  "frame": "A",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2400,
+  "dfs": 1700,
+  "effect": "Wenn diese Karte angreift, kann der Gegner keine Effekte aktivieren.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 047 / 100",
+  "prompt": "a three-headed dark hydra with glowing orange eyes in a stormy lake"
+ },
+ {
+  "id": "gn_a48",
+  "name": "Schwarze Magierin",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "ext",
+  "variants": [
+   "ext"
+  ],
+  "lvl": 8,
+  "atk": 2500,
+  "dfs": 2200,
+  "effect": "Solange diese Karte liegt, kann dein Gegner keine Karten mit 5 oder mehr Sternen beschwören.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 048 / 100",
+  "prompt": "a powerful sorceress in black robes with swirling purple lightning"
+ },
+ {
+  "id": "gn_a49",
+  "name": "Kürbiskaiser",
+  "theme": "Grusel",
+  "frame": "A",
+  "group": "mythic",
+  "variants": [
+   "ext",
+   "mythic"
+  ],
+  "lvl": 10,
+  "atk": 3200,
+  "dfs": 2700,
+  "effect": "Wenn diese Karte beschworen wird: Zerstöre alle gegnerischen Karten mit weniger als 1500 DEF.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 049 / 100",
+  "prompt": "an emperor made of golden pumpkin armor with a flaming crown and cape"
+ },
+ {
+  "id": "gn_a50",
+  "name": "Hexenkönigin",
+  "theme": "Magie",
+  "frame": "A",
+  "group": "ext",
+  "variants": [
+   "ext"
+  ],
+  "lvl": 8,
+  "atk": 2400,
+  "dfs": 2100,
+  "effect": "Wenn diese Karte zerstört würde: Wirf stattdessen 1 Karte ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 050 / 100",
+  "prompt": "an elegant witch queen on a dark throne with a crown of thorns and magic"
+ },
+ {
+  "id": "gn_schnitter",
+  "name": "Seelenschnitter",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "mythic",
+  "variants": [
+   "ext",
+   "mythic"
+  ],
+  "lvl": 9,
+  "atk": 3300,
+  "dfs": 2600,
+  "effect": "Wenn diese Karte beschworen wird: Zerstöre alle gegnerischen Karten mit weniger als 1500 DEF.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 051 / 100",
+  "prompt": "a towering hooded spectral reaper made of teal ghost smoke with a huge scythe"
+ },
+ {
+  "id": "gn_b02",
+  "name": "Skelettkrieger",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1400,
+  "dfs": 1100,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 052 / 100",
+  "prompt": "a skeleton warrior in rusty armor with a glowing green sword"
+ },
+ {
+  "id": "gn_b03",
+  "name": "Irrlicht",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 600,
+  "dfs": 300,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 053 / 100",
+  "prompt": "a small floating ghost light wisp glowing teal in a dark swamp"
+ },
+ {
+  "id": "gn_b04",
+  "name": "Geisterbraut",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 1000,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 054 / 100",
+  "prompt": "a translucent ghost bride in a flowing veil in a ruined chapel"
+ },
+ {
+  "id": "gn_b05",
+  "name": "Knochendrache",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 700,
+  "effect": "Wenn diese Karte zerstört wird: Heile 300 Lebenspunkte.",
+  "tribute": "",
+  "num": "GN 055 / 100",
+  "prompt": "a huge skeletal dragon with green fire in its ribcage"
+ },
+ {
+  "id": "gn_b06",
+  "name": "Gespenst",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1000,
+  "dfs": 500,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 056 / 100",
+  "prompt": "a classic white sheet ghost with dark eyes floating through a hallway"
+ },
+ {
+  "id": "gn_b07",
+  "name": "Friedhofswächter",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 700,
+  "dfs": 400,
+  "effect": "Einmal pro Zug: Eine gegnerische Karte verliert 200 ATK bis zum Zugende.",
+  "tribute": "",
+  "num": "GN 057 / 100",
+  "prompt": "a hooded gravekeeper with a lantern and shovel among tombstones"
+ },
+ {
+  "id": "gn_b08",
+  "name": "Poltergeist",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 900,
+  "dfs": 600,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 058 / 100",
+  "prompt": "an angry ghost throwing floating furniture in a haunted room"
+ },
+ {
+  "id": "gn_b09",
+  "name": "Nekromant",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 700,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 059 / 100",
+  "prompt": "a dark necromancer raising skeleton hands from the ground with green magic"
+ },
+ {
+  "id": "gn_b10",
+  "name": "Banshee",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1400,
+  "dfs": 900,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 060 / 100",
+  "prompt": "a screaming banshee spirit with flowing white hair and teal mist"
+ },
+ {
+  "id": "gn_b11",
+  "name": "Skelettpirat",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1000,
+  "dfs": 700,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 061 / 100",
+  "prompt": "a skeleton pirate captain on a ghostly ship with green sails"
+ },
+ {
+  "id": "gn_b12",
+  "name": "Totenkopfritter",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 700,
+  "dfs": 400,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 062 / 100",
+  "prompt": "a knight with a flaming skull head on a skeletal horse"
+ },
+ {
+  "id": "gn_b13",
+  "name": "Spukkind",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1100,
+  "dfs": 600,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 063 / 100",
+  "prompt": "a creepy translucent ghost child holding a teddy bear in a dark hallway"
+ },
+ {
+  "id": "gn_b14",
+  "name": "Lich-König",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "mythic",
+  "variants": [
+   "ext",
+   "mythic"
+  ],
+  "lvl": 9,
+  "atk": 2900,
+  "dfs": 2600,
+  "effect": "Diese Karte ist unzerstörbar, solange du eine andere Gruselnacht-Karte liegen hast.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 064 / 100",
+  "prompt": "an undead lich king with a glowing crown and a staff with a skull"
+ },
+ {
+  "id": "gn_b15",
+  "name": "Geisterlaterne",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 900,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 065 / 100",
+  "prompt": "a floating old lantern with a trapped teal spirit inside"
+ },
+ {
+  "id": "gn_b16",
+  "name": "Knochengolem",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1100,
+  "dfs": 900,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 066 / 100",
+  "prompt": "a golem made of bones and skulls with glowing green eyes"
+ },
+ {
+  "id": "gn_b17",
+  "name": "Nebelgeist",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 900,
+  "dfs": 600,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 067 / 100",
+  "prompt": "a large ghost made of thick fog rising over a lake"
+ },
+ {
+  "id": "gn_b18",
+  "name": "Skeletthund",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 900,
+  "dfs": 300,
+  "effect": "Diese Karte kann nicht durch Effekte zerstört werden, solange du 2 oder mehr Karten liegen hast.",
+  "tribute": "",
+  "num": "GN 068 / 100",
+  "prompt": "a skeletal hound with green fire eyes and a spiked collar"
+ },
+ {
+  "id": "gn_b19",
+  "name": "Geisterorgel",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 3,
+  "atk": 1200,
+  "dfs": 500,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 069 / 100",
+  "prompt": "a ghostly organist playing a giant pipe organ with spirits flowing out"
+ },
+ {
+  "id": "gn_b20",
+  "name": "Grabräuber-Skelett",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1400,
+  "dfs": 1100,
+  "effect": "Solange diese Karte liegt, erhalten deine Grusel-Karten 100 ATK.",
+  "tribute": "",
+  "num": "GN 070 / 100",
+  "prompt": "a sneaky skeleton thief with a sack of gold in a crypt"
+ },
+ {
+  "id": "gn_b21",
+  "name": "Phantomritter",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 2,
+  "atk": 900,
+  "dfs": 400,
+  "effect": "Wenn diese Karte beschworen wird: Ziehe 1 Karte.",
+  "tribute": "",
+  "num": "GN 071 / 100",
+  "prompt": "a translucent phantom knight in glowing teal armor"
+ },
+ {
+  "id": "gn_b22",
+  "name": "Schädelthron",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "haeufig",
+  "variants": [
+   "haeufig"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 1000,
+  "effect": "Einmal pro Zug: Eine gegnerische Karte verliert 200 ATK bis zum Zugende.",
+  "tribute": "",
+  "num": "GN 072 / 100",
+  "prompt": "a menacing throne built from skulls with green flames"
+ },
+ {
+  "id": "gn_b23",
+  "name": "Geisterkatze",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1600,
+  "dfs": 900,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 073 / 100",
+  "prompt": "a translucent glowing ghost cat walking through a wall"
+ },
+ {
+  "id": "gn_b24",
+  "name": "Knochenmagier",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1500,
+  "dfs": 1300,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "",
+  "num": "GN 074 / 100",
+  "prompt": "a skeletal mage casting teal spells from an ancient book"
+ },
+ {
+  "id": "gn_b25",
+  "name": "Seelenfänger",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1800,
+  "dfs": 1500,
+  "effect": "Wenn diese Karte zerstört wird: Beschwöre 1 Karte mit 3 oder weniger Sternen aus deinem Friedhof.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 075 / 100",
+  "prompt": "a hooded figure catching glowing souls in a crystal jar"
+ },
+ {
+  "id": "gn_b26",
+  "name": "Skelettmusiker",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1800,
+  "dfs": 1500,
+  "effect": "Wenn diese Karte zerstört wird: Beschwöre 1 Karte mit 3 oder weniger Sternen aus deinem Friedhof.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 076 / 100",
+  "prompt": "a skeleton playing a violin on a gravestone under the moon"
+ },
+ {
+  "id": "gn_b27",
+  "name": "Geisterschiff",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1500,
+  "dfs": 800,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 077 / 100",
+  "prompt": "a ghost ship with glowing teal sails sailing through the sky"
+ },
+ {
+  "id": "gn_b28",
+  "name": "Totengräber",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 4,
+  "atk": 1400,
+  "dfs": 1100,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "",
+  "num": "GN 078 / 100",
+  "prompt": "a tall grim gravedigger with a skull-topped shovel in the rain"
+ },
+ {
+  "id": "gn_b29",
+  "name": "Spiegelgeist",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 2100,
+  "dfs": 1400,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 079 / 100",
+  "prompt": "a ghost face appearing inside an ornate cracked mirror"
+ },
+ {
+  "id": "gn_b30",
+  "name": "Skelettdrachenreiter",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1700,
+  "dfs": 1200,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 080 / 100",
+  "prompt": "a skeleton riding a skeletal wyvern through a stormy sky"
+ },
+ {
+  "id": "gn_b31",
+  "name": "Gruftwächter",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1700,
+  "dfs": 1000,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 081 / 100",
+  "prompt": "a massive armored undead guard at the gates of a crypt"
+ },
+ {
+  "id": "gn_b32",
+  "name": "Geistermönch",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1500,
+  "dfs": 1200,
+  "effect": "Einmal pro Zug: Ziehe 1 Karte, wenn du eine Zauberkarte gespielt hast.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 082 / 100",
+  "prompt": "a translucent monk spirit with a glowing rosary in a cloister"
+ },
+ {
+  "id": "gn_b33",
+  "name": "Totenmaske",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1600,
+  "dfs": 1400,
+  "effect": "Wenn diese Karte angreift: Sie erhält 300 ATK bis zum Ende des Zuges.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 083 / 100",
+  "prompt": "a floating ornate death mask with glowing green eyes"
+ },
+ {
+  "id": "gn_b34",
+  "name": "Heulende Seele",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 6,
+  "atk": 2000,
+  "dfs": 1500,
+  "effect": "Solange diese Karte in Verteidigung liegt, verlieren gegnerische Karten 300 ATK.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 084 / 100",
+  "prompt": "a twisted howling spirit trapped in swirling teal wind"
+ },
+ {
+  "id": "gn_b35",
+  "name": "Skelettkönigin",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "selten",
+  "variants": [
+   "selten",
+   "holo"
+  ],
+  "lvl": 5,
+  "atk": 1600,
+  "dfs": 1400,
+  "effect": "Wenn diese Karte zerstört wird: Beschwöre 1 Karte mit 3 oder weniger Sternen aus deinem Friedhof.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 085 / 100",
+  "prompt": "a skeleton queen in a black lace gown and silver crown"
+ },
+ {
+  "id": "gn_b36",
+  "name": "Geisterzug",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 2000,
+  "dfs": 1300,
+  "effect": "Alle gegnerischen Karten verlieren 500 DEF, solange diese Karte liegt.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 086 / 100",
+  "prompt": "a spectral steam train rushing through the night with glowing windows"
+ },
+ {
+  "id": "gn_b37",
+  "name": "Knochenschlange",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2200,
+  "dfs": 1500,
+  "effect": "Alle gegnerischen Karten verlieren 500 DEF, solange diese Karte liegt.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 087 / 100",
+  "prompt": "a giant serpent made of vertebrae coiling around a tomb"
+ },
+ {
+  "id": "gn_b38",
+  "name": "Kerzengeist",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 1800,
+  "dfs": 1300,
+  "effect": "Diese Karte kann zweimal pro Zug angreifen.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 088 / 100",
+  "prompt": "a small ghost made of candle smoke above a candelabra"
+ },
+ {
+  "id": "gn_b39",
+  "name": "Todesbote",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2300,
+  "dfs": 2100,
+  "effect": "Diese Karte kann zweimal pro Zug angreifen.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 089 / 100",
+  "prompt": "a winged dark angel of death with black feathers and a scythe"
+ },
+ {
+  "id": "gn_b40",
+  "name": "Geisterwolf",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 1900,
+  "dfs": 1600,
+  "effect": "Diese Karte kann zweimal pro Zug angreifen.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 090 / 100",
+  "prompt": "a translucent spectral wolf howling with teal aura"
+ },
+ {
+  "id": "gn_b41",
+  "name": "Skelettschmied",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 6,
+  "atk": 2000,
+  "dfs": 1300,
+  "effect": "Alle gegnerischen Karten verlieren 500 DEF, solange diese Karte liegt.",
+  "tribute": "Beschwörung: 1 Tribut",
+  "num": "GN 091 / 100",
+  "prompt": "a skeleton blacksmith hammering a glowing blade in a crypt forge"
+ },
+ {
+  "id": "gn_b42",
+  "name": "Gespensterturm",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "legend",
+  "variants": [
+   "legend",
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2600,
+  "dfs": 2100,
+  "effect": "Wenn diese Karte beschworen wird: Zerstöre 1 gegnerische Karte mit weniger als 2000 ATK.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 092 / 100",
+  "prompt": "a crooked haunted tower with ghosts spiraling around it"
+ },
+ {
+  "id": "gn_b43",
+  "name": "Schädelkrähe",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2200,
+  "dfs": 1900,
+  "effect": "Wenn diese Karte angreift, kann der Gegner keine Effekte aktivieren.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 093 / 100",
+  "prompt": "a crow with a skull face perched on a withered branch"
+ },
+ {
+  "id": "gn_b44",
+  "name": "Wiedergänger",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 7,
+  "atk": 2400,
+  "dfs": 1700,
+  "effect": "Einmal pro Duell: Tausche die ATK und DEF aller Karten auf dem Feld.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 094 / 100",
+  "prompt": "a pale undead revenant in tattered clothes rising from a grave"
+ },
+ {
+  "id": "gn_b45",
+  "name": "Geisterkönigin",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "ext",
+  "variants": [
+   "ext"
+  ],
+  "lvl": 8,
+  "atk": 2700,
+  "dfs": 2400,
+  "effect": "Wenn diese Karte zerstört würde: Wirf stattdessen 1 Karte ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 095 / 100",
+  "prompt": "a majestic ghost queen with a crown of teal flames"
+ },
+ {
+  "id": "gn_b46",
+  "name": "Knochenkoloss",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2700,
+  "dfs": 2000,
+  "effect": "Einmal pro Duell: Tausche die ATK und DEF aller Karten auf dem Feld.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 096 / 100",
+  "prompt": "a colossal giant made of thousands of bones towering over a city"
+ },
+ {
+  "id": "gn_b47",
+  "name": "Seelenlicht",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2600,
+  "dfs": 2400,
+  "effect": "Wenn diese Karte angreift, kann der Gegner keine Effekte aktivieren.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 097 / 100",
+  "prompt": "a radiant orb of many souls swirling in a dark cathedral"
+ },
+ {
+  "id": "gn_b48",
+  "name": "Sensenmeister",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "ultra",
+  "variants": [
+   "ultra"
+  ],
+  "lvl": 8,
+  "atk": 2500,
+  "dfs": 2200,
+  "effect": "Wenn diese Karte angreift, kann der Gegner keine Effekte aktivieren.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 098 / 100",
+  "prompt": "a skeletal master reaper holding two crossed scythes, cloak billowing"
+ },
+ {
+  "id": "gn_b49",
+  "name": "Geisterfürst",
+  "theme": "Geister",
+  "frame": "B",
+  "group": "ext",
+  "variants": [
+   "ext"
+  ],
+  "lvl": 9,
+  "atk": 2800,
+  "dfs": 2500,
+  "effect": "Wenn diese Karte zerstört würde: Wirf stattdessen 1 Karte ab.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 099 / 100",
+  "prompt": "a regal ghost lord in spectral robes with a golden crown"
+ },
+ {
+  "id": "gn_b50",
+  "name": "Totenfürst",
+  "theme": "Tod",
+  "frame": "B",
+  "group": "mythic",
+  "variants": [
+   "ext",
+   "mythic"
+  ],
+  "lvl": 9,
+  "atk": 3000,
+  "dfs": 2300,
+  "effect": "Einmal pro Duell: Hole alle deine zerstörten Karten auf die Hand.",
+  "tribute": "Beschwörung: 2 Tribute",
+  "num": "GN 100 / 100",
+  "prompt": "the lord of the dead on a throne of bones with a flaming crown"
+ }
+]

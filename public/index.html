@@ -2356,7 +2356,7 @@ function renderCards() {
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) { const n = owned(c.id, v); if (c.set === 'dev' && !n) continue; all.push({ c, v, n }); } // Entwickler-Karten nur zeigen, wenn man sie hat
     const hasDev = all.some((x) => x.c.set === 'dev');
     const have = all.filter((x) => x.n && x.c.set !== 'dev' && x.c.set !== 'gn').length, allN = all.filter((x) => x.c.set !== 'dev' && x.c.set !== 'gn').length; // Entwickler- und (noch) Gruselnacht-Karten zählen nicht mit
-    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻']];
+    const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['mythic', 'Mythisch ✦']];
     const SF = [['set:gn', 'Gruselnacht 🎃 bald'], ['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
     let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter.startsWith('set:') ? x.c.set === cfilter.slice(4) : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
@@ -2516,7 +2516,7 @@ async function openPack(pid) {
     ]);
     // ein Ton je Karte, gute Karten klingen anders
     r.pulled.forEach((c, i) => setTimeout(() => {
-      const top = ['ultra', 'ext', 'legend', 'ghost'].includes(c.variant);
+      const top = ['ultra', 'ext', 'legend', 'ghost', 'mythic'].includes(c.variant);
       sfx(top ? 'exact' : c.variant === 'holo' ? 'dartbest' : 'dart');
       if (top) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e2) {}
     }, i * 650 + 350));
@@ -3108,7 +3108,7 @@ function packInfo(pid) {
   // Die Stars: Ghost, Extended Art und Ultra Rare groß; alle Karten je Seltenheit zum Aufklappen, eigene grün umrandet
   const miss1 = (a, b) => (owned(a.c.id, a.v) ? 1 : 0) - (owned(b.c.id, b.v) ? 1 : 0); // fehlende zuerst
   const ultras = pool.filter((x) => x.v === 'ultra').sort(miss1);
-  const stars = [...pool.filter((x) => x.v === 'ghost').sort(miss1), ...pool.filter((x) => x.v === 'ext').sort(miss1), ...ultras.slice(0, 8)];
+  const stars = [...pool.filter((x) => x.v === 'ghost' || x.v === 'mythic').sort(miss1), ...pool.filter((x) => x.v === 'ext').sort(miss1), ...ultras.slice(0, 8)];
   const moreUltra = Math.max(0, ultras.length - 8);
   const haveN = pool.filter((x) => owned(x.c.id, x.v)).length;
   const byVar = rank.slice().reverse().filter((v) => pool.some((x) => x.v === v)).map((v) => [v, pool.filter((x) => x.v === v).sort((a, b) => (owned(b.c.id, b.v) ? 1 : 0) - (owned(a.c.id, a.v) ? 1 : 0) || a.c.name.localeCompare(b.c.name))]);
