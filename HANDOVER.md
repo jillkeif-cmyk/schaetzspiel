@@ -129,3 +129,24 @@ damit Karten jederzeit neu gerendert werden können.
 - GitHub-Token und Anthropic-Schlüssel standen im Chat und sollten erneuert werden
 - Casino-Ausbau: Blackjack mit Splitten, Verdoppeln, Versicherung, Mehrspieler-Tische;
   Roulette-Tableau in Draufsicht mit allen Einsatzarten
+
+## Gruselnacht-Set (in Arbeit, Zweig `gruselnacht`)
+
+- Arbeit läuft auf dem Zweig `gruselnacht`. `main` = live. Fertige Einzel-Features werden per cherry-pick nach `main` übertragen (dabei `tools/cards/hw/gn_jobs.json` weglassen).
+- 100 Motive in `lib/gn.js` (erzeugt von `tools/cards/hw/gen_defs.py`, Namen dort ändern und neu erzeugen), 145 Varianten: 40 Häufig, 25 Selten (+Holo), 15 Legendär (+Ultra), 10 nur Ultra, 5 nur Extended, 5 Extended + Mythisch (bewegt). 50 Rahmen A (`hw/frame_a.png`, Kürbis/Hexen/Monster), 50 Rahmen B (`hw/frame_b.png`, Geister/Tod).
+- Mythisch = bewegte Top-Stufe, zählt wie Ghost Rare (Sammlung, Umwandeln 1.500, Börse, Doppelte hochladen). Keine eigene Extended-Plus-Stufe (Nick wollte Mythisch).
+- Bilder: `tools/cards/hw/gn_jobs.json` enthält je Karte Prompt, Job-ID und fertige `url`. Hilfe: `tools/cards/hw/jobs.py next N | set 'i:job,...' | url 'i:url,...'`. Querformat 4:3 für normale Karten, 3:4 für Extended/Mythisch. Stand: alle 96 in Auftrag, letzter Schub (81, 82, 88-95) läuft.
+- Noch offen: Animationen (Wan 3.0) für die 3 neuen Mythisch-Karten gn_a49 Kürbiskaiser, gn_b14 Lich-König, gn_b50 Auferstehung; statische Extended-Version für gn_schnitter und gn_koenig; alle 145 Varianten rendern (`build_hw.py`, `anim_card.py` mit rar='mythic'); Börsen-Filter „Meine Angebote“ mit Zurücknehmen; Update-Beitrag; Freischalten (Booster `gn` locked, Set in COLLECT ausgeschlossen).
+- Rendern: `tools/cards/build_hw.py` schneidet unten statt oben (Köpfe bleiben). Rate-Limit gpt_image_2_5: etwa 10 Bilder pro Schub.
+
+## Stand Version 69 (alles live, Gruselnacht per Schalter gesperrt)
+- Gruselnacht: alle 145 Kartenbilder fertig (public/tcg/gn_*), Freigabe im Admin-Menü „🃏 Gruselnacht-Set“ (Setting gn_open): Booster kaufbar, Set zählt zur Sammlung, Update u11 (requires 'gn') erscheint. Vorher gibt der Pass statt Gruselnacht-Booster (Premium 12/22/26) einen Geister-Booster.
+- Doppel-XP-Aktion (lib/boost.js, Setting boost): Level-XP, Casino-XP, Pass-XP einzeln schaltbar, Banner auf der Startseite.
+- Verlauf im Admin-Menü: Diamanten, XP, Casino-XP, Pass-XP (Tabelle ledger, Spalte kind: dia/xp/cxp/pxp).
+- Börse: bis 5.000 Angebote, Filter „Meine Angebote“, „Alle zurücknehmen“ (/api/tcg/cancel-all). Roulette-Chips bis 100k.
+- Tickets: Push an den Admin mit Protokoll („Ticket-Push an …: N Gerät(e)“), live Hinweis + roter Zähler offener Tickets am Support-Knopf (nur Mods/Admin).
+
+## Davor live gegangen (Version 67)
+- Casino-Sperre je Spieler (Admin-Menü „🚫 Casino-Sperre“, Timer, unbefristet, aufheben; Feld `casino_ban`: 0 frei, 1 unbefristet, sonst Zeitstempel). Sperrbild mit Beratungstelefon Glücksspielsucht 0800 1 37 27 00.
+- Holo-Effekt in der Kartenansicht neu (weicher Regenbogen am Lichtfleck, Glanzlicht, Glitzer). Kippen: Feder-Animation, größere Winkel, Finger relativ, Gyro relativ zur Haltung.
+- Halloween-Look + separater Animations-Schalter, Kronen-Pass (gesperrt bis Freigabe), Pass-Vorschau per Tipp, Guthaben-Verlauf, Prestige-Hinweise, Versionsabgleich (Auto-Reload).

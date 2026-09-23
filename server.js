@@ -102,7 +102,7 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler beim Anmelden.' }); }
 });
 
-const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost']);
+const RARE = new Set(['holo', 'ultra', 'legend', 'ext', 'ghost', 'mythic']);
 // Welche Titel, Embleme und Rahmen hängen an welcher Herausforderung? Einmal beim Start ermittelt
 const CHALLENGE_REWARDS = (() => {
   const base = {}; for (const k of ['matches', 'wins', 'exact', 'close', 'answered', 'mc_right', 'mc_total', 'points', 'best_score', 'streak', 'best_streak', 'rank_points', 'prestige', 'casino_rounds', 'casino_wins', 'casino_best', 'casino_xp', 'slot_full', 'slot_best', 'slot_spins', 'collect_unique', 'cards_total', 'cards_rare', 'cards_ext', 'toon_distinct', 'packs_opened', 'melted', 'daily_streak', 'xp', 'poker_hands', 'poker_wins', 'poker_best', 'poker_allin_wins', 'poker_minutes', 'play_minutes']) base[k] = 0;
@@ -128,7 +128,7 @@ const ITEM_GOALS = (() => {
 })();
 const DEV_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'dev').map((c) => c.id));
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
-const TOP = new Set(['ext', 'ghost']);
+const TOP = new Set(['ext', 'ghost', 'mythic']);
 async function cardStats(uid) {
   const rows = await store.cardsOf(uid).catch(() => []);
   let total = 0, rare = 0, ext = 0;
@@ -172,7 +172,7 @@ app.get('/api/home', async (req, res) => {
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
-    res.json({ theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ boost: boost.get(), openTickets: isMod(u) ? (await store.tickets().catch(() => [])).filter((t) => t.status !== 'abgeschlossen').length : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -301,7 +301,7 @@ const NEWS_REWARD = 1000;
 app.post('/api/news/read', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    const latest = NEWS[0]; const id = String(req.body.id || '');
+    const latest = NEWS.find((p) => !p.requires || (p.requires === 'gn' && gnOpen)); const id = String(req.body.id || ''); // nur sichtbare Beiträge
     if (!latest || id !== latest.id) return res.json({ dia: 0 });
     const got = String(u.news_claimed || '').split(',').filter(Boolean);
     if (got.includes(id)) return res.json({ dia: 0 });
@@ -311,10 +311,17 @@ app.post('/api/news/read', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
-app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
+app.get('/api/news', (req, res) => res.json({ posts: NEWS.filter((p) => !p.requires || (p.requires === 'gn' && gnOpen)) }));
 
 // Kronen-Pass
 const kpass = require('./lib/pass');
+const boost = require('./lib/boost');
+store.setting('boost').then((v) => { if (v) boost.set(JSON.parse(v)); }).catch(() => {});
+app.post('/api/admin/boost', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const b = boost.set(req.body || {}); await store.setting('boost', JSON.stringify(b)); io.emit('boost', b);
+  console.log(`Doppel-XP: ${JSON.stringify(b)} durch ${u.name}`); res.json(b);
+});
 store.setting('pass_per_tier').then((v) => { if (v) kpass.setPerTier(v); }).catch(() => {});
 store.setting('pass_mode').then((v) => { if (v) { const x = JSON.parse(v); kpass.setMode(x.mode, x.unlockAt); } }).catch(() => {});
 const passClosed = (res) => { if (kpass.active()) return false; const st = kpass.state(); res.status(403).json({ error: st === 'locked' ? (kpass.unlockAt() ? `Der Kronen-Pass wird am ${new Date(kpass.unlockAt()).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} Uhr freigeschaltet.` : 'Der Kronen-Pass ist gerade gesperrt.') : 'Den Kronen-Pass gibt es gerade nicht.' }); return true; };
@@ -333,7 +340,7 @@ async function passGive(u, rw, save, got) { // eine Belohnung gutschreiben
   if (rw.spin) { save.wheel_bonus = num('wheel_bonus') + rw.spin; got.spins += rw.spin; }
   if (rw.xp) { save.xp = Math.min(progress.CAP, num('xp') + rw.xp); got.xp += rw.xp; }
   if (rw.cxp) { save.casino_xp = num('casino_xp') + rw.cxp; got.cxp += rw.cxp; }
-  if (rw.pack) { await store.packAdd(u.id, rw.pack, 1); got.packs.push(rw.pack); }
+  if (rw.pack) { const pk = rw.pack === 'gn' && !gnOpen ? 'ghost' : rw.pack; await store.packAdd(u.id, pk, 1); got.packs.push(pk); } // Gruselnacht-Booster erst nach der Freischaltung
   for (const [id, name] of [[rw.item, rw.name], [rw.item2, rw.name2]]) if (id) {
     const un = new Set(String(save.unlocks ?? u.unlocks ?? '').split(',').filter(Boolean)); un.add(id); save.unlocks = [...un].join(','); got.items.push(name);
   }
@@ -439,7 +446,8 @@ app.get('/api/admin/ledger', async (req, res) => { // Guthaben-Verlauf eines Spi
   try {
     const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
     const t = await store.userByName(String(req.query.name || '').trim()); if (!t) return res.status(404).json({ error: 'Spieler nicht gefunden.' });
-    res.json({ name: t.name, diamonds: Number(t.diamonds) || 0, rows: await store.ledgerOf(t.id, 500) });
+    const kind = ['dia', 'xp', 'cxp', 'pxp'].includes(String(req.query.kind)) ? String(req.query.kind) : 'dia';
+    res.json({ name: t.name, kind, diamonds: Number(t.diamonds) || 0, now: { dia: Number(t.diamonds) || 0, xp: Number(t.xp) || 0, cxp: Number(t.casino_xp) || 0, pxp: Number(t.pass_xp) || 0 }[kind], rows: await store.ledgerOf(t.id, 500, kind) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/admin/passxp', async (req, res) => { // Admin-Test: Pass-XP setzen
@@ -666,7 +674,7 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
-    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1),
+    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1),
   });
   setTimeout(() => checkProgress(uid), 400);
 };
@@ -1137,16 +1145,42 @@ app.post('/api/tcg/cancel', async (req, res) => {
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+app.post('/api/tcg/cancel-all', async (req, res) => { // alle eigenen Angebote auf einmal zurücknehmen
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const kind = String(req.body.kind || 'all'); let n = 0;
+    for (const row of await store.marketList()) {
+      if (row.seller !== u.id) continue;
+      const k = row.card_id === 'pack' ? 'packs' : row.card_id === 'graded' ? 'graded' : 'cards';
+      if (kind !== 'all' && kind !== k) continue;
+      await store.marketDrop(row.id);
+      if (row.card_id === 'pack') await store.packAdd(u.id, row.variant, 1); else if (row.card_id === 'graded') await store.gradedMove(Number(row.variant), u.id); else await store.cardAdd(u.id, row.card_id, row.variant, 1);
+      n++;
+    }
+    res.json({ ...(await tcgState(await store.userById(u.id))), cancelled: n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 // ---------- Sammler-Rangliste: jede Karte in jeder Fassung zählt einmal ----------
-const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15 };
-const COLLECT = (() => {
+const COLLECT_PTS = { haeufig: 1, selten: 2, holo: 3, ultra: 5, legend: 8, ext: 12, ghost: 15, mythic: 15 };
+// Gruselnacht-Set: bis zur Freischaltung weder kaufbar noch Teil der Sammlungs-Zählung
+let gnOpen = false;
+const COLLECT = {};
+function rebuildCollect() {
   const v = tcg.view(); const all = [];
-  for (const c of v.cards) if (c.set !== 'dev' && c.set !== 'gn') for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht, Gruselnacht erst nach der Freischaltung
-  const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' ? 'ghost' : 'normal');
+  for (const c of v.cards) if (c.set !== 'dev' && (c.set !== 'gn' || gnOpen)) for (const va of (v.variants[c.id] || [c.base])) all.push({ id: c.id, variant: va }); // Entwickler-Karten zählen nicht
+  const group = (va) => (va === 'ext' ? 'ext' : va === 'ghost' || va === 'mythic' ? 'ghost' : 'normal'); // Mythisch (bewegt) zählt wie Ghost Rare
   const totals = { normal: 0, ext: 0, ghost: 0 }; let maxPts = 0;
   for (const e of all) { totals[group(e.variant)]++; maxPts += COLLECT_PTS[e.variant] || 1; }
-  return { keys: new Set(all.map((e) => e.id + ':' + e.variant)), total: all.length, totals, maxPts, group };
-})();
+  Object.assign(COLLECT, { keys: new Set(all.map((e) => e.id + ':' + e.variant)), total: all.length, totals, maxPts, group });
+}
+rebuildCollect();
+const setGnOpen = (open) => { gnOpen = !!open; if (tcg.PACKS.gn) tcg.PACKS.gn.locked = !gnOpen; rebuildCollect(); collectCache = { at: 0, data: null }; };
+store.setting('gn_open').then((v) => { if (v === '1') setGnOpen(true); }).catch(() => {});
+app.post('/api/admin/gnopen', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  setGnOpen(req.body.open); await store.setting('gn_open', gnOpen ? '1' : '0');
+  io.emit('gn:open', gnOpen); console.log(`Gruselnacht ${gnOpen ? 'freigeschaltet' : 'gesperrt'} durch ${u.name}`); res.json({ open: gnOpen });
+});
 let collectCache = { at: 0, data: null };
 app.get('/api/ranks/cards', async (req, res) => {
   try {
@@ -1230,7 +1264,9 @@ app.post('/api/tickets', async (req, res) => {
     if (req.body.image) { image = String(req.body.image); if (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > 1400000) return res.status(400).json({ error: 'Das Bild ist zu groß oder kein Bild.' }); }
     const t = await store.ticketAdd({ user_id: u.id, user_name: u.name, category, title, text, image });
     // Admin und Co-Admins bekommen Bescheid
-    for (const x of await store.searchUsers('', 200).catch(() => [])) if (isAdmin(x) && x.id !== u.id) push.toUser(x.id, { title: '🎫 Neues Ticket', body: `${u.name}: ${title}`, tag: 'ticket', url: '/' }).catch(() => {}); // nur der Admin bekommt Bescheid
+    const adm = ADMIN_NAME ? await store.userByName(ADMIN_NAME) : null; // der Admin bekommt Bescheid, per Push und live in der App
+    if (adm && adm.id !== u.id) push.toUser(adm.id, { title: '🎫 Neues Ticket', body: `${u.name}: ${title}`, tag: 'ticket-' + t.id, url: '/' }).then((n) => console.log(`Ticket-Push an ${adm.name}: ${n} Gerät(e)${n ? '' : ' (keine Push-Anmeldung auf dem Gerät)'}`)).catch((e) => console.error('Ticket-Push:', e.message));
+    io.sockets.sockets.forEach((so) => { if (so.data.user && isMod(so.data.user)) so.emit('ticket:new', { from: u.name, title }); });
     res.json({ ok: true, id: t.id, tickets: await store.tickets(), canManage: isMod(u) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -1644,7 +1680,7 @@ const bjTables = require('./lib/bjtables')(io, store, casinoStat, push, () => lo
 const pokerStat = async (uid, stake, won, info = {}) => {
   await casinoStat(uid, stake, won); await bigWin(uid, 'Poker', won);
   const u = await store.userById(uid); if (!u) return;
-  const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1);
+  const bonus = Math.round(vip.xpFor(stake, won, stake) * 0.25) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1);
   const net = won - stake;
   await store.save(uid, {
     casino_xp: (Number(u.casino_xp) || 0) + bonus,
