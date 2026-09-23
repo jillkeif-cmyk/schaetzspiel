@@ -914,7 +914,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .newtag.soon{background:linear-gradient(135deg,#8E6BFF,#C04BFF)}
 
 .newscard{display:flex;gap:14px;align-items:center;width:100%;padding:12px;border-radius:20px;text-align:left;background:linear-gradient(135deg,rgba(142,107,255,.25),rgba(255,210,63,.12));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45),0 10px 26px rgba(0,0,0,.35)}
-.nc-img{flex:none;width:78px;height:96px;display:grid;place-items:center}.nc-img img{max-width:100%;max-height:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.nc-img{flex:none;width:78px;height:96px;display:flex;align-items:center;justify-content:center;overflow:visible}.nc-img img{width:auto;height:auto;max-width:78px;max-height:96px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .nc-t{display:flex;flex-direction:column;gap:3px;min-width:0}.nc-t b{font:400 20px/1.1 Anton,Impact,sans-serif;letter-spacing:.3px}.nc-t small{color:var(--muted);font-size:12px}
 .nc-tag{font:800 11px/1 Archivo;letter-spacing:1.5px;text-transform:uppercase;color:var(--tape)}.nc-new{color:#FF7FC8;font-weight:900}
 .nc-more{font-weight:800;font-size:13px;color:var(--tape);margin-top:2px}
@@ -1576,7 +1576,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '76';
+const AVER = '77';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
