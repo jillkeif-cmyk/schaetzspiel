@@ -1537,8 +1537,9 @@ body.halloween .sr-beam{background:linear-gradient(180deg,rgba(255,190,110,.28),
 .sr-bloom.on{animation:srbloom .95s cubic-bezier(.4,0,.2,1) forwards}@keyframes srbloom{0%{opacity:0;transform:scale(.2)}35%{opacity:1}100%{opacity:1;transform:scale(9)}}
 .sr-white{position:absolute;inset:0;background:#fff;pointer-events:none;opacity:1}.sr-white.fade{transition:opacity 1.1s ease;opacity:0}
 .sr-hint{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.4)}
-.sr-cardwrap{position:relative;z-index:2;margin-top:-4vh;transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .4s ease,filter .4s}
-.sr-cardwrap.out{transform:translateX(-70vw) rotateY(28deg) scale(.9);opacity:0;filter:blur(4px)}
+.sr-cardwrap{position:relative;z-index:2;margin-top:-4vh}
+.sr-cardwrap.out{animation:srout .42s cubic-bezier(.4,0,.2,1) forwards}@keyframes srout{to{transform:translateX(-70vw) rotateY(28deg) scale(.9);opacity:0;filter:blur(4px)}}
+.sr-cardwrap.hid{opacity:0}
 .sr-cardwrap.rise{animation:srrise 1.3s cubic-bezier(.22,1,.36,1)}@keyframes srrise{0%{transform:translateY(70px) scale(.78);opacity:0;filter:blur(10px) brightness(2)}60%{filter:blur(0) brightness(1.15)}100%{transform:none;opacity:1;filter:none}}
 .sr-cardwrap.slidein{animation:srslide .8s cubic-bezier(.22,1,.36,1)}@keyframes srslide{0%{transform:translateX(70vw) rotateY(-28deg) scale(.9);opacity:0;filter:blur(4px)}100%{transform:none;opacity:1;filter:none}}
 .sr-card{position:relative;width:min(68vw,290px);aspect-ratio:460/610;transform-style:preserve-3d;--gl:50%}
@@ -1593,7 +1594,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '92';
+const AVER = '93';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2743,8 +2744,8 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
     if ($('#srNext')) $('#srNext').onclick = () => { cancelAnimationFrame(raf2); openPack(pid); };
     if (c.variant === 'mythic' || c.variant === 'ghost') setTimeout(() => { if (el.classList.contains('on') && cards[i] === c) packHighlight(c.variant, cardImg(c.id, c.variant)); }, 1300);
   };
-  const enter = (first) => { card.parentNode.classList.remove('out'); card.parentNode.classList.add(first ? 'rise' : 'slidein'); cap.classList.add('show'); setTimeout(() => { card.parentNode.classList.remove('rise', 'slidein'); busy = false; }, first ? 1300 : 800); };
-  function next() { if (busy || i >= cards.length - 1) return; busy = true; card.parentNode.classList.add('out'); cap.classList.remove('show'); setTimeout(() => { i++; fill(); const im = card.querySelector('img'); Promise.race([im.decode ? im.decode().catch(() => {}) : Promise.resolve(), new Promise((ok) => setTimeout(ok, 700))]).then(() => enter(false)); }, 420); }
+  const enter = (first) => { const w = card.parentNode; w.classList.remove('out', 'hid', 'rise', 'slidein'); void w.offsetWidth; w.classList.add(first ? 'rise' : 'slidein'); cap.classList.add('show'); setTimeout(() => { card.parentNode.classList.remove('rise', 'slidein'); busy = false; }, first ? 1300 : 800); };
+  function next() { if (busy || i >= cards.length - 1) return; busy = true; card.parentNode.classList.add('out'); cap.classList.remove('show'); setTimeout(() => { card.parentNode.classList.add('hid'); card.parentNode.classList.remove('out'); i++; fill(); const im = card.querySelector('img'); Promise.race([im.decode ? im.decode().catch(() => {}) : Promise.resolve(), new Promise((ok) => setTimeout(ok, 700))]).then(() => enter(false)); }, 420); }
   card.onclick = (e) => { e.stopPropagation(); next(); }; // Tipp auf die Karte blättert weiter
   fill(); raf2 = requestAnimationFrame(idle); requestAnimationFrame(() => { studio.querySelector('.sr-white').classList.add('fade'); enter(true); });
 }
