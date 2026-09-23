@@ -59,6 +59,14 @@ Dateinamen: Embleme `public/emblems/pc_<id>.webp`, Titel `title_<id>.webp`, Rahm
 Karten `public/tcg/<kartenid>_<variante>.webp`. Bei neuen Assets `AVER` in index.html erhöhen,
 falls Browser alte Versionen zeigen.
 
+## Kronen-Pass (Season-Pass)
+
+- Logik in `lib/pass.js`: SEASON (id, Name, Start/Ende, Banner), 30 Stufen à 2.000 Pass-XP, FREE/PREM-Belohnungen, Wochenaufgaben, Bonus-Tresor.
+- Pass-XP kommen in `lib/game.js` nach jedem Match dazu (Match-XP ohne Herausforderungs-XP, kein Casino). Neue Saison: `norm()` setzt alles zurück, sobald `pass_season` nicht mehr passt.
+- Endpunkte in `server.js`: GET /api/pass, POST /api/pass/buy (15.000 💎), /claim (tier oder 'all'), /bank, /task, Admin-Test /api/admin/passxp.
+- Saison-Kosmetik ist `event: true` in cards.js/frames.js und wird über `unlocks` freigeschaltet.
+- Neue Saison anlegen: SEASON-Objekt tauschen (neue id!), Belohnungen und Item-IDs anpassen, 4 Bilder + 2 Wan-Videos erzeugen, News-Beitrag.
+
 ## Bewegte Titel und Embleme (Wan 3.0)
 
 1. Standbild mit `gpt_image_2_5` erzeugen. Titel 16:9 als Panorama: „All important content is arranged in one flat

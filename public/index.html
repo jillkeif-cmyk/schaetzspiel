@@ -1363,6 +1363,47 @@ body.no-grading .grading-only{display:none !important}
 .cw-bets{text-align:center}.cw-bets div{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
 .cw-chip{background:rgba(255,210,63,.15);border-radius:999px;padding:4px 10px;font-size:12px}
 .cw-hist{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.passcard{position:relative;display:flex;gap:12px;align-items:center;width:100%;padding:10px 12px;border-radius:20px;text-align:left;background:linear-gradient(135deg,rgba(142,75,214,.4),rgba(255,210,63,.14));box-shadow:inset 0 0 0 1.5px rgba(200,154,255,.55),0 10px 26px rgba(0,0,0,.35)}
+.passcard.prem{box-shadow:inset 0 0 0 2px #FFD23F,0 0 22px rgba(255,210,63,.35),0 10px 26px rgba(0,0,0,.35)}
+.pc-logo{width:74px;height:74px;object-fit:contain;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.pc-t{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}.pc-t b{font:800 16px/1.15 Archivo}.pc-t small{color:#C9B8F0;font-size:12px}
+.pc-bar{display:block;height:8px;border-radius:99px;background:rgba(0,0,0,.35);overflow:hidden}.pc-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8E4BD6,#FFD23F);box-shadow:0 0 10px rgba(255,210,63,.6)}
+.pc-bar.big{height:12px;margin:6px 0 4px}
+.ps-hero{position:relative;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1.5px rgba(255,210,63,.4)}.ps-hero img{display:block;width:100%}
+.ps-time{position:absolute;top:8px;right:8px;padding:5px 10px;border-radius:99px;background:rgba(0,0,0,.6);font:800 12px/1 Archivo;color:#FFE27A;box-shadow:inset 0 0 0 1px rgba(255,210,63,.5)}
+.ps-hin{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent)}.ps-hin small{font-weight:700}
+.ps-status{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.ps-lv{display:flex;gap:12px;align-items:center}.ps-lv small{color:#C9B8F0}
+.ps-tier{flex:none;width:58px;height:58px;display:grid;place-items:center;font:900 26px/1 Anton,Archivo;color:#2A1600;background:linear-gradient(180deg,#FFE27A,#E0A21E);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.ps-buy{display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(180deg,#B36BFF,#6A2BC4);color:#fff;box-shadow:0 0 0 2px #FFD23F,0 8px 22px rgba(142,75,214,.5);animation:psglow 2s ease-in-out infinite;font-size:17px}
+.ps-buy img{width:52px;margin-bottom:-4px}.ps-buy small{font-size:11px;font-weight:600;opacity:.9}
+@keyframes psglow{50%{box-shadow:0 0 0 2px #FFE27A,0 0 26px rgba(255,210,63,.6)}}
+.ps-premon{text-align:center;font-weight:800;color:#FFE27A;padding:8px;border-radius:12px;background:rgba(255,210,63,.12)}
+.ps-all{background:linear-gradient(180deg,#7CF0A8,#1FA35A);color:#062}
+.ps-tasks{display:flex;flex-direction:column;gap:8px}
+.ps-task{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05)}.ps-task small{color:#C9B8F0}.ps-task.ready{box-shadow:inset 0 0 0 1.5px #7CF0A8}.ps-task.done{opacity:.55}
+.ps-head{display:grid;grid-template-columns:1fr 44px 1fr;gap:6px;margin:18px 0 6px;text-align:center;font:800 12px/1 Archivo;letter-spacing:1px;color:#C9D3D6}.ps-head .gold{color:#FFD23F}
+.ps-track{display:flex;flex-direction:column;gap:6px;position:relative}
+.ps-row{display:grid;grid-template-columns:1fr 44px 1fr;gap:6px;align-items:stretch}
+.ps-num{display:grid;place-items:center}.ps-num span{width:36px;height:36px;display:grid;place-items:center;font:800 14px/1 Archivo;color:#C9B8F0;background:#241440;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.ps-row.reached .ps-num span{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600}
+.ps-cell{border:0;color:inherit;font:inherit;width:100%;position:relative;min-height:74px;border-radius:14px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;background:rgba(255,255,255,.05)}
+.ps-cell.prem{background:linear-gradient(180deg,rgba(142,75,214,.3),rgba(142,75,214,.12));box-shadow:inset 0 0 0 1px rgba(200,154,255,.35)}
+.ps-row.big .ps-cell.prem{background:linear-gradient(180deg,rgba(255,210,63,.28),rgba(142,75,214,.25));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6)}
+.ps-row:not(.reached) .ps-cell{opacity:.55}
+.ps-cell.ready{cursor:pointer;opacity:1!important;box-shadow:inset 0 0 0 2px #7CF0A8,0 0 16px rgba(124,240,168,.4);animation:psready 1.4s ease-in-out infinite}
+@keyframes psready{50%{transform:scale(1.03)}}
+.ps-cell.got{opacity:.5}
+.ps-cell.locked .pr-ico,.ps-cell.locked .pr-title,.ps-cell.locked .pr-dia{filter:saturate(.5) brightness(.8)}
+.ps-cell small{font-size:10.5px;line-height:1.15;color:#E8DDFF}
+.pr-dia{display:flex;align-items:center;gap:3px;font:800 14px/1 Archivo;color:#fff}.pr-dia img{width:20px}
+.pr-ico{width:46px;height:46px;object-fit:contain}.pr-ico.pack{width:34px;height:46px}.pr-ico.frame{width:52px;height:52px}
+.pr-title{width:100%;max-width:150px;border-radius:6px}
+.psk-ok{position:absolute;top:4px;right:6px;color:#7CF0A8;font:900 14px/1 Archivo}
+.ps-claim{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);background:#1FA35A;color:#fff;font:800 10px/1 Archivo;padding:4px 8px;border-radius:99px}
+.ps-lock{position:absolute;top:4px;right:6px;font-size:13px}
+.ps-now{display:flex;align-items:center;gap:8px;margin:4px 0}.ps-now::before,.ps-now::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#FFD23F,transparent)}.ps-now span{font:800 11px/1 Archivo;color:#FFD23F;letter-spacing:1px;text-transform:uppercase}
+.ps-bank{display:flex;gap:10px;align-items:center;margin-top:14px}.ps-bank img{width:52px}.ps-bank small{display:block;color:#C9B8F0;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -1382,7 +1423,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '45';
+const AVER = '46';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3043,6 +3084,65 @@ const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); r
 const addFr = (u) => (!u || (home && home.me && u.id === home.me.id) || frStatus(u.id) ? '' : `<button class="addfr" data-addfr="${u.id}" title="Als Freund hinzufügen">+</button>`);
 let newsPosts = null;
 const newsWhen = (iso) => { const d = new Date(iso); return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr'; };
+// ── Kronen-Pass ──
+let passV = null;
+function loadPass() { return api('/api/pass').then((v) => { passV = v; renderPassCard(); if (page === 'pass') renderPass(); }).catch(() => {}); }
+const passLeft = (v) => { const ms = Date.parse(v.season.end) - Date.now(); if (ms <= 0) return 'beendet'; const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d ? `${d} T ${h} Std` : `${h} Std`; };
+function renderPassCard() {
+  const el = $('#passCard'); if (!el || !passV || !passV.active) { if (el) el.innerHTML = ''; return; }
+  const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
+  el.innerHTML = `<button class="passcard ${v.prem ? 'prem' : ''}" id="openPass">${v.claimable ? `<span class="nc-corner">🎁 ${v.claimable}</span>` : ''}
+    <img class="pc-logo" src="/news/pass_logo.webp?v=${AVER}" alt="">
+    <span class="pc-t"><span class="nc-tag">Saison ${v.season.nr} · ${esc(v.season.name)}</span><b>Stufe ${v.tier} von ${v.tiersN}${v.prem ? ' · 👑 Premium' : ''}</b>
+    <span class="pc-bar"><i style="width:${pct}%"></i></span><small>⏳ noch ${passLeft(v)}</small></span></button>`;
+}
+function passRw(rw, prem) { // eine Belohnung als Kachel
+  if (!rw) return '';
+  const parts = [];
+  if (rw.item) parts.push(rw.kind === 'title' ? `<img class="pr-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><small>Titel „${esc(rw.name)}“</small>` : `<img class="pr-ico ${rw.kind === 'frame' ? 'frame' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><small>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</small>`);
+  if (rw.item2) parts.push(`<img class="pr-ico" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><small>Emblem „${esc(rw.name2)}“</small>`);
+  if (rw.pack) parts.push(`<img class="pr-ico pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><small>${PACK_NAME[rw.pack] || 'Booster'}</small>`);
+  if (rw.dia) parts.push(`<span class="pr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(rw.dia)}</span>`);
+  return parts.join('');
+}
+function renderPass() {
+  const box = $('#passBody'); if (!box) return;
+  if (!passV) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadPass(); return; }
+  const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
+  const next = v.tier >= v.tiersN ? '' : `noch ${fmt(v.perTier - v.into)} Pass-XP bis Stufe ${v.tier + 1}`;
+  box.innerHTML = `<div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">⏳ ${passLeft(v)}</span></div>
+    <div class="ps-status panel">
+      <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
+      ${v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · mindestens 22.500 💎 zurück</small></button>`}
+      ${v.claimable ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${v.claimable})</button>` : ''}
+    </div>
+    <h2 style="margin:14px 0 8px">📅 Wochenaufgaben</h2>
+    <div class="ps-tasks">${v.tasks.map((t) => `<div class="ps-task ${t.claimed ? 'done' : t.have >= t.goal ? 'ready' : ''}"><div class="grow"><b>${esc(t.text)}</b><span class="pc-bar"><i style="width:${Math.round(100 * t.have / t.goal)}%"></i></span><small>${t.have} / ${t.goal} · +${fmt(t.xp)} Pass-XP</small></div>${t.claimed ? '<span class="psk-ok">✓</span>' : t.have >= t.goal ? `<button class="btn small" data-passtask="${t.id}">Abholen</button>` : ''}</div>`).join('')}</div>
+    <div class="ps-head"><span>GRATIS</span><span></span><span class="gold">👑 PREMIUM</span></div>
+    <div class="ps-track">${v.tiers.map((x) => {
+      const fr = x.reached && !x.gotFree, pr = x.reached && v.prem && !x.gotPrem, cur = x.t === v.tier + 1;
+      return `${cur ? '<div class="ps-now"><span>Du bist hier</span></div>' : ''}<div class="ps-row ${x.reached ? 'reached' : ''} ${[10, 20, 30].includes(x.t) ? 'big' : ''}">
+        <${fr ? 'button' : 'div'} class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}" ${fr ? `data-passclaim="${x.t}" data-track="free"` : ''}>${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</${fr ? 'button' : 'div'}>
+        <div class="ps-num"><span>${x.t}</span></div>
+        <${pr ? 'button' : 'div'} class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}" ${pr ? `data-passclaim="${x.t}" data-track="prem"` : ''}>${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</${pr ? 'button' : 'div'}></div>`; }).join('')}</div>
+    <div class="ps-bank panel"><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
+    <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino zählt nicht.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
+  const now = box.querySelector('.ps-now'); if (now && !renderPass.scrolled) { renderPass.scrolled = true; setTimeout(() => now.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250); }
+}
+function passGot(r, title) { // Belohnungs-Einblendung
+  passV = r; if (home) home.me.diamonds = r.diamonds ?? home.me.diamonds; if (tcg && r.diamonds != null) tcg.diamonds = r.diamonds;
+  renderPass(); renderPassCard();
+  const g = r.got; if (!g || (!g.dia && !g.packs.length && !g.items.length)) return;
+  sfx('prestige');
+  const u = $('#unlock');
+  u.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Kronen-Pass</p><h1 class="cr-code" style="font-size:30px">${title}</h1>
+    ${g.dia ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(g.dia)}</b><span>Diamanten</span></div>` : ''}
+    ${g.packs.length ? `<p class="sub">📦 ${g.packs.map((p) => PACK_NAME[p] || p).join(', ')} liegen im Inventar</p>` : ''}
+    ${g.items.length ? `<p class="sub">✨ Neu: ${g.items.map(esc).join(', ')}</p>` : ''}
+    <button class="btn" id="unlockOk">Weiter</button></div>`;
+  u.classList.add('show'); $('#unlockOk').onclick = () => { u.classList.remove('show'); u.innerHTML = ''; };
+}
+async function passAct(path, body, title) { const r = await api(path, body).catch((e) => { toast(e.message); return null; }); if (r) passGot(r, title); return r; }
 function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts || []; renderNewsCard(); if (page === 'news') renderNews(); }).catch(() => {}); }
 function renderNewsCard() {
   const el = $('#newsCard'); if (!el || !newsPosts || !newsPosts.length) return;
@@ -3723,6 +3823,10 @@ function build() {
     <div id="chals" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div id="itemsWrap" ${chTab === 'items' ? '' : 'hidden'}></div></div>`;
 
+  if (!S && page === 'pass') return `<div class="col">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <div id="passBody"></div></div>`;
+
   if (!S && page === 'news') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <div id="newsBody"></div></div>`;
@@ -3766,6 +3870,7 @@ function build() {
     <div id="pushbar" hidden></div>
     <div id="giftBox"></div>
     <div id="newsCard"></div>
+    <div id="passCard"></div>
     <button class="panel pcard" id="openProfile"></button>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     </div><div class="col">
@@ -4130,6 +4235,7 @@ function update() {
     else if (page === 'admin') loadAdmin();
     else if (page === 'challenges') renderChallenges();
     else if (page === 'news') renderNews();
+    else if (page === 'pass') renderPass();
     else if (page === 'ranks') renderRanks();
     else renderCards();
     return;
@@ -4225,6 +4331,7 @@ function update() {
         ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
     if (newsPosts) renderNewsCard(); else loadNews();
+    if (!passV || Date.now() - (loadPass.t || 0) > 60000) { loadPass.t = Date.now(); loadPass(); } else renderPassCard();
     const cs = $('#chalSub'), prg = home && home.progress;
     if (cs && prg) { const d = prg.challenges.reduce((x, c) => x + c.done, 0), t = prg.challenges.reduce((x, c) => x + c.total, 0); cs.textContent = `${d} von ${t} Stufen geschafft`; }
     const ct = $('#casinoTop');
@@ -4492,6 +4599,16 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'newTrade') tradeDialog();
   else if (t.id === 'openCasino') { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }
   else if (t.id === 'openNews' || t.closest('#openNews')) { page = 'news'; render(); }
+  else if (t.id === 'openPass' || t.closest('#openPass')) { page = 'pass'; renderPass.scrolled = false; render(); loadPass(); }
+  else if (t.dataset.passclaim) { const c = t; passAct('/api/pass/claim', { tier: Number(c.dataset.passclaim), track: c.dataset.track }, `Stufe ${c.dataset.passclaim} abgeholt!`); }
+  else if (t.id === 'passAll') { passAct('/api/pass/claim', { tier: 'all', track: 'both' }, 'Alles abgeholt!'); }
+  else if (t.id === 'passBank') { passAct('/api/pass/bank', {}, 'Tresor geleert!'); }
+  else if (t.dataset.passtask) { api('/api/pass/task', { id: t.dataset.passtask }).then((r) => { passV = r; toast(`+${fmt(r.gotXp)} Pass-XP`); sfx('exact'); renderPass(); renderPassCard(); }).catch((e) => toast(e.message)); }
+  else if (t.id === 'passBuy' || t.closest('#passBuy')) {
+    const v = passV; if (!v) return;
+    if (!confirm(`Premium-Pass für ${fmt(v.price)} Diamanten kaufen?\n\nAlle Premium-Belohnungen bis Stufe ${v.tier} kannst du sofort abholen.`)) return;
+    api('/api/pass/buy', {}).then((r) => { passV = r; if (home) home.me.diamonds = r.diamonds; sfx('prestige'); toast('👑 Premium aktiv!'); renderPass(); renderPassCard(); }).catch((e) => toast(e.message));
+  }
   else if (t.id === 'openRanks') { page = 'ranks'; render(); }
   else if (t.id === 'openChallenges') { page = 'challenges'; chalMarkSeen(); render(); }
   else if (t.id === 'openAdmin') { page = 'admin'; render(); }

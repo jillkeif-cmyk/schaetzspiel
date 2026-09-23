@@ -287,6 +287,98 @@ app.post('/api/news/read', async (req, res) => {
 
 app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
 
+// Kronen-Pass
+const kpass = require('./lib/pass');
+const passBusy = new Set();
+async function passUser(u) { // Saison und Wochenstart nachziehen
+  const upd = kpass.norm(u), wk = kpass.weekId();
+  if (!String(u.pass_wk || '').startsWith(wk + '|')) upd.pass_wk = wk + '|' + JSON.stringify({ matches: Number(u.matches) || 0, wins: Number(u.wins) || 0, exact: Number(u.exact) || 0 });
+  if (Object.keys(upd).length) { await store.save(u.id, upd); Object.assign(u, upd); }
+  return u;
+}
+async function passGive(u, rw, save, got) { // eine Belohnung gutschreiben
+  if (!rw) return;
+  if (rw.dia) { save.diamonds = (save.diamonds ?? (Number(u.diamonds) || 0)) + rw.dia; got.dia += rw.dia; }
+  if (rw.pack) { await store.packAdd(u.id, rw.pack, 1); got.packs.push(rw.pack); }
+  for (const [id, name] of [[rw.item, rw.name], [rw.item2, rw.name2]]) if (id) {
+    const un = new Set(String(save.unlocks ?? u.unlocks ?? '').split(',').filter(Boolean)); un.add(id); save.unlocks = [...un].join(','); got.items.push(name);
+  }
+}
+const passLock = (uid, res) => { if (passBusy.has(uid)) { res.status(429).json({ error: 'Einen Moment …' }); return false; } passBusy.add(uid); return true; };
+app.get('/api/pass', async (req, res) => {
+  try { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); await passUser(u); res.json(kpass.view(u)); }
+  catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/pass/buy', async (req, res) => {
+  try {
+    const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!passLock(u0.id, res)) return;
+    try {
+      const u = await passUser(await store.userById(u0.id));
+      if (!kpass.active()) return res.status(400).json({ error: 'Die Saison ist vorbei.' });
+      if (Number(u.pass_prem)) return res.status(400).json({ error: 'Du hast den Premium-Pass schon.' });
+      const dia = Number(u.diamonds) || 0; if (dia < kpass.PREMIUM_PRICE) return res.status(400).json({ error: `Du brauchst ${kpass.PREMIUM_PRICE.toLocaleString('de-DE')} Diamanten.` });
+      await store.save(u.id, { diamonds: dia - kpass.PREMIUM_PRICE, pass_prem: 1 }); Object.assign(u, { diamonds: dia - kpass.PREMIUM_PRICE, pass_prem: 1 });
+      res.json({ ...kpass.view(u), diamonds: u.diamonds });
+    } finally { passBusy.delete(u0.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/pass/claim', async (req, res) => { // tier: Zahl oder 'all'; track: free | prem | both
+  try {
+    const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!passLock(u0.id, res)) return;
+    try {
+      const u = await passUser(await store.userById(u0.id));
+      const tier = kpass.tierOf(u.pass_xp), prem = !!Number(u.pass_prem), cf = kpass.set(u.pass_cf), cp = kpass.set(u.pass_cp);
+      const want = req.body.tier === 'all' ? Array.from({ length: tier }, (_, i) => i + 1) : [Math.round(Number(req.body.tier) || 0)];
+      const track = String(req.body.track || 'both'), save = {}, got = { dia: 0, packs: [], items: [] };
+      for (const t of want) {
+        if (t < 1 || t > tier) continue;
+        if (track !== 'prem' && !cf.has(String(t))) { await passGive(u, kpass.FREE[t], save, got); cf.add(String(t)); }
+        if (track !== 'free' && prem && !cp.has(String(t))) { await passGive(u, kpass.PREM[t], save, got); cp.add(String(t)); }
+      }
+      save.pass_cf = [...cf].join(','); save.pass_cp = [...cp].join(',');
+      await store.save(u.id, save); Object.assign(u, save);
+      res.json({ ...kpass.view(u), got, diamonds: Number(u.diamonds) || 0 });
+    } finally { passBusy.delete(u0.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/pass/bank', async (req, res) => {
+  try {
+    const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!passLock(u0.id, res)) return;
+    try {
+      const u = await passUser(await store.userById(u0.id));
+      if (!Number(u.pass_prem)) return res.status(400).json({ error: 'Der Tresor gehört zum Premium-Pass.' });
+      const add = kpass.bankOf(u.pass_xp) - (Number(u.pass_bank) || 0); if (add <= 0) return res.status(400).json({ error: 'Im Tresor ist gerade nichts Neues.' });
+      const save = { diamonds: (Number(u.diamonds) || 0) + add, pass_bank: kpass.bankOf(u.pass_xp) };
+      await store.save(u.id, save); Object.assign(u, save);
+      res.json({ ...kpass.view(u), got: { dia: add, packs: [], items: [] }, diamonds: u.diamonds });
+    } finally { passBusy.delete(u0.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt Pass-XP
+  try {
+    const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!passLock(u0.id, res)) return;
+    try {
+      const u = await passUser(await store.userById(u0.id));
+      if (!kpass.active()) return res.status(400).json({ error: 'Die Saison ist vorbei.' });
+      const v = kpass.view(u), t = v.tasks.find((x) => x.id === String(req.body.id));
+      if (!t || t.claimed || t.have < t.goal) return res.status(400).json({ error: 'Noch nicht geschafft.' });
+      const wk = kpass.weekId(), done = kpass.set(u.pass_wdone); for (const k of [...done]) if (!k.startsWith(wk)) done.delete(k); done.add(wk + ':' + t.id);
+      const save = { pass_xp: (Number(u.pass_xp) || 0) + t.xp, pass_wdone: [...done].join(',') };
+      await store.save(u.id, save); Object.assign(u, save);
+      res.json({ ...kpass.view(u), gotXp: t.xp });
+    } finally { passBusy.delete(u0.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/passxp', async (req, res) => { // Admin-Test: Pass-XP setzen
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const x = await passUser(await store.userById(u.id)); const xp = Math.max(0, Math.round(Number(req.body.xp) || 0));
+  await store.save(u.id, { pass_xp: xp }); x.pass_xp = xp; res.json(kpass.view(x));
+});
+
 // ---------- Tagesbelohnungen ----------
 app.get('/api/daily', async (req, res) => {
   try {
