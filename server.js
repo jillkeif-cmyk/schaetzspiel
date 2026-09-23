@@ -65,6 +65,7 @@ const app = express();
 app.set('trust proxy', 1);
 const jsonSmall = express.json({ limit: '120kb' }), jsonBig = express.json({ limit: '2mb' }); // Tickets dürfen einen Screenshot mitbringen
 app.use((req, res, next) => (req.path === '/api/tickets' ? jsonBig : jsonSmall)(req, res, next));
+app.use((req, res, next) => store.ctx.run({ src: req.method + ' ' + req.path }, next)); // Herkunft für das Guthaben-Protokoll
 app.get('/healthz', (_, res) => res.send('ok'));
 app.get('/api/push/key', (_, res) => res.json({ key: push.publicKey() }));
 app.get('/api/config', (_, res) => res.json({ needCode: !!INVITE_CODE }));
@@ -290,6 +291,7 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS }));
 
 // Kronen-Pass
 const kpass = require('./lib/pass');
+store.setting('pass_per_tier').then((v) => { if (v) kpass.setPerTier(v); }).catch(() => {});
 const passBusy = new Set();
 async function passUser(u) { // Saison und Wochenstart nachziehen
   const upd = kpass.norm(u), wk = kpass.weekId();
@@ -377,6 +379,17 @@ app.post('/api/pass/task', async (req, res) => { // Wochenaufgabe abholen: gibt 
       await store.save(u.id, save); Object.assign(u, save);
       res.json({ ...kpass.view(u), gotXp: t.xp });
     } finally { passBusy.delete(u0.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/passtier', async (req, res) => { // Pass-Tempo: XP pro Stufe
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const v = kpass.setPerTier(req.body.xp); await store.setting('pass_per_tier', String(v)); res.json({ perTier: v });
+});
+app.get('/api/admin/ledger', async (req, res) => { // Guthaben-Verlauf eines Spielers
+  try {
+    const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const t = await store.userByName(String(req.query.name || '').trim()); if (!t) return res.status(404).json({ error: 'Spieler nicht gefunden.' });
+    res.json({ name: t.name, diamonds: Number(t.diamonds) || 0, rows: await store.ledgerOf(t.id, 500) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/admin/passxp', async (req, res) => { // Admin-Test: Pass-XP setzen
@@ -1563,7 +1576,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
+io.on('connection', (socket) => { socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next)); if (socket.data.user) { bjTables.attach(socket, socket.data.user); poker.attach(socket, socket.data.user); checkProgress(socket.data.user.id); tcAttach(socket, socket.data.user); } });
 function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, automatisch aufstehen
   socket.emit('tc:list', tcList());
   const unwatch = () => { for (let m = 1; m <= TC_MACHINES; m++) socket.leave('tc' + m); };

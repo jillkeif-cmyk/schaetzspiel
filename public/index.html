@@ -1426,6 +1426,11 @@ body.no-grading .grading-only{display:none !important}
 .ps-task.ready{box-shadow:inset 0 0 0 1.5px #FFB547!important}
 .passcard{background:linear-gradient(135deg,rgba(255,106,0,.28),rgba(142,75,214,.4))!important}
 .passcard::after{content:'🎃';position:absolute;right:10px;bottom:6px;font-size:22px;opacity:.9;animation:pspump 2.4s ease-in-out infinite}
+.lg-box summary{cursor:pointer}.lg-box small{color:#9fb}
+.lg-sum{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.lg-sum span{font-size:12px;padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.06)}
+.lg-list{max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.lg-row{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:5px 6px;border-radius:8px;background:rgba(255,255,255,.03)}.lg-row small{color:#9aa;white-space:nowrap}
+.lg-row .pos,.lg-sum .pos{color:#7CF0A8}.lg-row .neg,.lg-sum .neg{color:#FF8A8A}.lg-after{color:#cfd;min-width:78px;text-align:right}
 </style>
 </head>
 <body>
@@ -1445,7 +1450,7 @@ body.no-grading .grading-only{display:none !important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '48';
+const AVER = '49';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3467,7 +3472,23 @@ function renderTickets() {
 // ---------- Admin: Fragen-Pool ----------
 let adminD = null, adminTimer = null, adminUsers = null;
 let adminLocks = null;
+const LG_SRC = [['/api/casino/board', '🎡 Roulette'], ['/api/casino/roulette', '🎡 Roulette'], ['/api/casino/triple/risk', '👑 Triple Crown Risiko'], ['/api/casino/triple', '👑 Triple Crown'], ['/api/casino/bj', '🃏 Blackjack'], ['Socket bj', '🃏 Blackjack-Tisch'], ['Socket pk', '♠️ Poker'], ['/api/casino/wheel', '🎡 Glücksrad'], ['/api/casino/cashback', '💸 Cashback'], ['/api/pass', '👑 Kronen-Pass'], ['/api/news', '📰 Update gelesen'], ['/api/admin', '🛠 Admin'], ['Quiz-Match', '🎯 Quiz-Match'], ['/api/market', '🏪 Marktplatz'], ['/api/tcg', '🃏 Karten/Booster'], ['/api/daily', '📅 Tagesbonus'], ['/api/code', '🎟 Code'], ['/api/gift', '🎁 Geschenk'], ['Socket bet', '💰 Wette'], ['Socket', '🔌 Spiel']];
+const lgSrc = (s) => { const x = LG_SRC.find(([k]) => String(s || '').includes(k)); return x ? x[1] : esc(String(s || 'System').replace(/^(POST|GET) /, '')); };
+function loadLedger() {
+  const n = ($('#lgName') || {}).value; if (!n) return;
+  const out = $('#lgOut'); out.innerHTML = '<p class="sub">Lädt …</p>';
+  api('/api/admin/ledger?name=' + encodeURIComponent(n.trim())).then((r) => {
+    const sums = {}; r.rows.forEach((x) => { const k = lgSrc(x.src); sums[k] = (sums[k] || 0) + x.delta; });
+    const d = (ts) => new Date(ts).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    out.innerHTML = `<p class="sub" style="margin:10px 0 6px"><b>${esc(r.name)}</b> · aktuell ${fmt(r.diamonds)} 💎 · ${r.rows.length} Einträge</p>
+      <div class="lg-sum">${Object.entries(sums).sort((a, b) => a[1] - b[1]).map(([k, v]) => `<span class="${v < 0 ? 'neg' : 'pos'}">${k} ${v > 0 ? '+' : ''}${fmt(v)}</span>`).join('')}</div>
+      <div class="lg-list">${r.rows.map((x) => `<div class="lg-row"><small>${d(x.ts)}</small><span class="grow">${lgSrc(x.src)}</span><b class="${x.delta < 0 ? 'neg' : 'pos'}">${x.delta > 0 ? '+' : ''}${fmt(x.delta)}</b><span class="lg-after">${fmt(x.after)}</span></div>`).join('') || '<p class="sub">Noch keine Einträge. Das Protokoll zählt ab jetzt.</p>'}</div>`;
+  }).catch((e) => { out.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
+}
 function loadAdmin() {
+  const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
+  const lg = $('#lgGo'); if (lg && !lg.onclick) { lg.onclick = loadLedger; $('#lgName').onkeydown = (e) => { if (e.key === 'Enter') loadLedger(); }; }
+  const dl = $('#lgNames'); if (dl && adminUsers && !dl.children.length) dl.innerHTML = adminUsers.map((u) => `<option value="${esc(u.name)}">`).join('');
   clearTimeout(adminTimer);
   if (!adminLocks) api('/api/admin/locks').then((r) => { adminLocks = r.games; renderAdmin(); }).catch(() => {});
   if (document.activeElement && /^gf/.test(document.activeElement.id || '')) { adminTimer = setTimeout(loadAdmin, 4000); return; } // nicht mitten im Tippen neu zeichnen
@@ -3842,6 +3863,12 @@ function build() {
   if (!S && page === 'admin') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button></div>
     <h1 style="font-size:30px">Admin</h1>
+    <details class="panel lg-box" id="ledgerBox"><summary><b>💎 Guthaben-Verlauf</b><small> · jede Änderung am Kontostand eines Spielers</small></summary>
+      <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="lgName" placeholder="Spielername" list="lgNames"><button class="btn small" id="lgGo">Anzeigen</button></div>
+      <datalist id="lgNames"></datalist><div id="lgOut"></div></details>
+    <details class="panel lg-box"><summary><b>👑 Kronen-Pass Tempo</b><small> · Pass-XP pro Stufe</small></summary>
+      <div class="row" style="gap:8px;margin-top:10px"><input class="field grow" id="ptXp" type="number" min="500" step="500" placeholder="z. B. 4000"><button class="btn small" id="ptGo">Speichern</button></div>
+      <p class="sub" id="ptInfo" style="margin-top:6px">Gilt sofort für alle. Wer schon weiter ist, behält seine Pass-XP, die Stufe wird neu berechnet.</p></details>
     <div id="adminBody"><p class="sub">Lädt …</p></div></div>`;
 
   if (!S && page === 'challenges') return `<div class="col">
