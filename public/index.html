@@ -1628,7 +1628,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '108';
+const AVER = '109';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2933,7 +2933,7 @@ function showGuide(k) {
 // Aufbau einmalig, danach nur gezielte Änderungen (kein Flackern). Symbole als vorgeladene Hintergründe.
 const TC_SYM = { K: 'Krone', S: 'Sieben', H: 'Hufeisen', B: 'Blitz', R: 'Herz', T: 'Stern', M: 'Mond', C: 'Chip' };
 const TC_PAY = { K: 150, S: 40, H: 12, B: 8, R: 8, T: 8, M: 8, C: 1 };
-const TC_BETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+const TC_BETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]; // wie lib/triple.js
 const TC_LINES = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
 const TC_LINE_COL = ['#3DDC97', '#8CF06B', '#8CF06B', '#FFD23F', '#FF5A6A'];
 const TC_SEGPOS = [6, 0, 3, 9, 1, 7, 4, 10, 2, 8, 5, 11]; // Stop-Feld Nr. f liegt auf Segment TC_SEGPOS[f], verteilt ums Rad
