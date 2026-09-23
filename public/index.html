@@ -1606,6 +1606,9 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .tb-card.top img{box-shadow:0 0 0 2px #FFD23F,0 0 26px rgba(255,210,63,.7)}.tb-card figcaption{margin-top:6px}.tb-card b{display:block;font:800 12px/1.2 Archivo}.tb-card small{font-size:10.5px;color:#cfe}
 @keyframes tbin{from{opacity:0;transform:translateY(40px) rotateY(90deg) scale(.8)}to{opacity:1;transform:none}}
 .tb-btns{display:flex;gap:8px;width:100%;max-width:420px}.tb-btns .btn{flex:1}
+.tier[data-zoom]{cursor:pointer}.zoom-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;overflow:hidden}.zoom-box img{position:relative;width:min(70vw,300px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.6));animation:zoomin .35s cubic-bezier(.2,.9,.3,1.2)}.zoom-box b{position:relative;font:900 22px/1.1 Archivo}.zoom-box small{position:relative;color:#cfe}.zoom-box .btn{position:relative;width:100%}
+.zoom-rays{position:absolute;left:50%;top:38%;width:600px;height:600px;margin:-300px;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.13) 0 10deg,transparent 10deg 24deg);animation:srrays 20s linear infinite;-webkit-mask-image:radial-gradient(closest-side,#000 25%,transparent 100%);mask-image:radial-gradient(closest-side,#000 25%,transparent 100%)}
+@keyframes zoomin{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -1625,7 +1628,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '104';
+const AVER = '106';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2137,7 +2140,7 @@ function renderSetup(box) { // Casino-Einstellungen: Tischdesign, Cashback und V
     <h2 class="rw-h">Tischdesign</h2>
     <div class="themes">${v.themes.map((t) => `<button class="thm th-${t.key} ${v.theme === t.key ? 'on' : ''} ${t.unlocked ? '' : 'lk'}" data-thm="${t.key}"><span class="sw"></span><b>${esc(t.name)}</b><small>${t.unlocked ? (v.theme === t.key ? 'aktiv' : 'wählen') : 'ab ' + esc(v.tiers[t.tier].name)}</small></button>`).join('')}</div>
     <h2 class="rw-h">VIP-Stufen</h2>
-    <div class="tiers">${v.tiers.map((t, i) => `<div class="tier ${i === v.tier ? 'cur' : ''} ${i > v.tier ? 'lk' : ''}">${vipBadge(i, 46)}<div class="grow"><b>${esc(t.name)}</b><small>ab ${fmt(t.xp)} Casino-XP</small>
+    <div class="tiers">${v.tiers.map((t, i) => `<div class="tier ${i === v.tier ? 'cur' : ''} ${i > v.tier ? 'lk' : ''}" data-zoom="/emblems/vip${i}.webp" data-zoomt="${esc(t.name)}" data-zooms="ab ${fmt(t.xp)} Casino-XP${t.cashback ? ' · ' + Math.round(t.cashback * 100) + ' % Cashback' : ''}">${vipBadge(i, 46)}<div class="grow"><b>${esc(t.name)}</b><small>ab ${fmt(t.xp)} Casino-XP</small>
       <span class="perks">🎡 ${t.spins}× drehen · ${t.cashback ? '💸 ' + Math.round(t.cashback * 100) + ' % Cashback' : 'kein Cashback'} · 🎨 ${esc(v.themes[i].name)}</span></div>${i === v.tier ? '<span class="rw-ok">du</span>' : i < v.tier ? '<span class="rw-ok">✓</span>' : ''}</div>`).join('')}</div>`;
   if ($('#cashGo')) $('#cashGo').onclick = claimCashback;
   box.querySelectorAll('[data-thm]').forEach((b) => { b.onclick = () => {
@@ -2824,6 +2827,10 @@ async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten
   function next() { if (busy || i >= cards.length - 1) return; busy = true; card.parentNode.classList.add('out'); cap.classList.remove('show'); setTimeout(() => { card.parentNode.classList.add('hid'); card.parentNode.classList.remove('out'); i++; fill(); const im = card.querySelector('img'); Promise.race([im.decode ? im.decode().catch(() => {}) : Promise.resolve(), new Promise((ok) => setTimeout(ok, 700))]).then(() => enter(false)); }, 420); }
   card.onclick = (e) => { e.stopPropagation(); next(); }; // Tipp auf die Karte blättert weiter
   fill(); raf2 = requestAnimationFrame(idle); requestAnimationFrame(() => { studio.querySelector('.sr-white').classList.add('fade'); enter(true); });
+}
+function zoomImg(src, title, sub) { // Abzeichen oder Emblem groß ansehen (bewegte Bilder laufen mit)
+  $('#modal').innerHTML = `<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${AVER}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#zoomX').onclick = closeModal; sfx('tick');
 }
 const turboOn = () => { try { return localStorage.getItem('turbo_open') === '1'; } catch (e) { return false; } };
 function openTurbo(pid, r) { // Turbo: kurz drehen, aufreißen, alle Karten auf einmal
@@ -3543,7 +3550,7 @@ function showLocked(kind, id) {
   const pic = kind === 'frame'
     ? `<div style="display:grid;place-items:center;padding:6px">${avatar({ id: home.me.id, name: home.me.name, av: home.me.av, color: '#4FD1C5', frame: item.id, frameAnim: item.anim }, 108, false)}</div>`
     : kind === 'emblem'
-      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:120px" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
+      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:min(62vw,240px)" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
       : `<img class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${AVER}" alt="">`;
   $('#modal').innerHTML = `<div class="panel" style="gap:12px">
     <h2>${esc(item.secret && !item.unlocked ? 'Geheim' : name)}</h2>
@@ -5349,6 +5356,8 @@ document.addEventListener('toggle', (e) => {
 }, true);
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
+  if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
+  const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen
   const pvw = e.target.closest && e.target.closest('[data-packview]'); if (pvw) { packView(pvw.dataset.packview); return; } // Booster in 3D ansehen, auch innerhalb der Shop-Karte
   if (!t) { const pr = e.target.closest('[data-pres]'); if (pr) { api('/api/prestige-icon', { n: Number(pr.dataset.pres) }).then(async () => { await loadHome(); refreshProfile(); }).catch((er) => toast(er.message)); return; }
     const inf = e.target.closest('[data-info]'); if (inf) return showInfo(inf.dataset.info); // Begriffe erklären
@@ -5441,6 +5450,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
+  else if (e.target.closest && e.target.closest('[data-zoom]')) { const z = e.target.closest('[data-zoom]'); zoomImg(z.dataset.zoom, z.dataset.zoomt || '', z.dataset.zooms || ''); }
   else if (t.id === 'turboTg') { try { localStorage.setItem('turbo_open', turboOn() ? '0' : '1'); } catch (e2) {} sfx('tick'); renderCards(); }
   else if (t.dataset.potuse) { const id = t.dataset.potuse, d = tcg.def.packs.find((x) => x.id === id); if (confirm(`${d.name} aktivieren? Er läuft ab jetzt 60 Minuten (läuft schon einer, wird er um 60 Minuten verlängert).`)) api('/api/potion/use', { id }).then((r) => { tcg = r; if (home) home.potions = r.potions; toast('🧪 ' + d.name + ' aktiv'); sfx('exact'); renderCards(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.meltdisp) { const d = tcg.def.packs.find((x) => x.id === t.dataset.meltdisp), val = Math.round(d.price * 0.6); if (confirm(`1 ${d.name} für ${fmt(val)} 💎 umwandeln?\n\nZum Vergleich: Im Shop kostet es ${fmt(d.price)} 💎, geöffnet bekommst du ${d.size} Booster.`)) api('/api/tcg/meltdisplay', { pack: d.id, n: 1 }).then((r) => { tcg = r; if (home) home.me.diamonds = r.diamonds; toast(`+${fmt(r.gained)} 💎`); renderCards(); }).catch((e) => toast(e.message)); }
