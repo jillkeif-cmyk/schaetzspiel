@@ -174,7 +174,10 @@ app.get('/api/home', async (req, res) => {
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
     potions.load(u);
-    res.json({ banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
+    for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
+    for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
+    res.json({ mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: ITEM_GOALS, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -320,6 +323,8 @@ app.get('/api/news', (req, res) => res.json({ posts: NEWS.filter((p) => !p.requi
 const kpass = require('./lib/pass');
 const boost = require('./lib/boost');
 const potions = require('./lib/potions');
+const mkKind = (row) => (row.card_id === 'pack' ? (String(row.variant).startsWith('disp_') ? 'displays' : 'packs') : row.card_id === 'graded' ? 'graded' : 'cards');
+const mkNotify = (row) => io.emit('market:new', { kind: mkKind(row), seller: row.seller, at: Date.now() }); // neues Börsen-Angebot: Zähler bei den anderen hochsetzen
 const note = (t) => { const c = store.ctx.getStore(); if (c) c.note = t; }; // Klartext fürs Guthaben-Protokoll
 const fmtD = (n) => Math.round(Number(n) || 0).toLocaleString('de-DE');
 const RED_SET = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -1150,7 +1155,7 @@ app.post('/api/tcg/sell-dupes', async (req, res) => {
         const cid = String(it.card || ''), v = String(it.variant || ''), c = tcg.CARDS.find((x) => x.id === cid);
         if (!c || c.set === 'dev' || !DUPE_SELL.has(v) || !tcg.has(cid, v)) continue;
         const have = await store.cardCount(u.id, cid, v), take = Math.min(Math.max(0, Math.round(Number(it.n) || 0)), Math.max(0, have - 1), 300 - listed); // eine bleibt immer
-        for (let k = 0; k < take; k++) { await store.cardAdd(u.id, cid, v, -1); await store.marketAdd({ seller: u.id, card_id: cid, variant: v, price: MELT[v] }); listed++; value += MELT[v]; }
+        for (let k = 0; k < take; k++) { await store.cardAdd(u.id, cid, v, -1); { const mkRow = { seller: u.id, card_id: cid, variant: v, price: MELT[v] }; await store.marketAdd(mkRow); mkNotify(mkRow); } listed++; value += MELT[v]; }
         if (listed >= 300) break;
       }
       if (!listed) return res.status(400).json({ error: 'Keine passenden Doppelten gefunden. Von jeder Karte bleibt eine erhalten.' });
@@ -1167,7 +1172,7 @@ app.post('/api/tcg/sell', async (req, res) => {
     if (!tcg.has(cid, v)) return res.status(400).json({ error: 'Diese Karte gibt es nicht.' });
     if (await store.cardCount(u.id, cid, v) < 1) return res.status(400).json({ error: 'Du besitzt diese Karte nicht.' });
     await store.cardAdd(u.id, cid, v, -1);
-    await store.marketAdd({ seller: u.id, card_id: cid, variant: v, price });
+    { const mkRow = { seller: u.id, card_id: cid, variant: v, price }; await store.marketAdd(mkRow); mkNotify(mkRow); }
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -1237,7 +1242,7 @@ app.post('/api/tcg/sellgraded', async (req, res) => {
     const g = await store.gradedGet(req.body.id); const price = Math.max(10, Math.min(10000000, Math.round(Number(req.body.price) || 0)));
     if (!g || Number(g.user_id) !== u.id) return res.status(400).json({ error: 'Diese gegradete Karte gehört dir nicht.' });
     await store.gradedMove(g.id, 0); // liegt während des Angebots bei der Börse
-    await store.marketAdd({ seller: u.id, card_id: 'graded', variant: String(g.id), price });
+    { const mkRow = { seller: u.id, card_id: 'graded', variant: String(g.id), price }; await store.marketAdd(mkRow); mkNotify(mkRow); }
     res.json({ ok: true });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -1276,7 +1281,7 @@ app.post('/api/tcg/sellpack', async (req, res) => {
     const own = (await store.packsOf(u.id)).find((x) => x.pack_id === pid);
     if (!own || own.count < 1) return res.status(400).json({ error: 'Du hast diesen Booster nicht.' });
     await store.packAdd(u.id, pid, -1);
-    await store.marketAdd({ seller: u.id, card_id: 'pack', variant: pid, price });
+    { const mkRow = { seller: u.id, card_id: 'pack', variant: pid, price }; await store.marketAdd(mkRow); mkNotify(mkRow); }
     res.json(await tcgState(await store.userById(u.id)));
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

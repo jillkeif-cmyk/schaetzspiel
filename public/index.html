@@ -1051,7 +1051,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .pk-pot .pk-pile{margin-right:4px}
 .pk-dock{position:sticky;bottom:0;z-index:5;margin-top:10px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 78%,rgba(0,0,0,0))}
 .pk-dock .pk-me{margin-top:0}.pk-dock .pk-emotes{margin:0;gap:4px}.pk-dock .pk-emotes button{width:36px;height:36px;font-size:18px}
-.pk-actions{min-height:110px}.pk-actions.wait{display:flex;align-items:center;justify-content:center}
+.pk-actions{min-height:186px;align-content:start}.pk-actions.wait{display:flex;align-items:center;justify-content:center}
 .pk-raise input[type=range]{flex:1}
 .goalbox{display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:14px}
 .pk-botmark{position:absolute;left:-6px;top:-6px;font-size:16px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
@@ -1062,7 +1062,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 #app.pk-on .pk-dock .pkc.big{width:46px;height:64px}#app.pk-on .pk-dock .pkc.big b{font-size:19px}#app.pk-on .pk-dock .pkc.big i{font-size:17px}
 #app.pk-on .pk-dock .pk-me{gap:8px}#app.pk-on .pk-dock .pk-me b{font-size:14px;white-space:nowrap}#app.pk-on .pk-dock .pk-me small{white-space:nowrap}
 #app.pk-on .pk-dock .pk-emotes button{width:32px;height:32px;font-size:16px}
-#app.pk-on .pk-actions{min-height:96px;gap:6px;margin-top:6px}#app.pk-on .pk-actions .btn{padding:12px}
+#app.pk-on .pk-actions{min-height:178px;gap:6px;margin-top:6px}#app.pk-on .pk-actions .btn{padding:12px}
 #app.pk-on .pk-raise{padding:8px;gap:6px}
 .pk-pile{display:inline-flex;align-items:flex-end;gap:1px;height:auto;width:auto;vertical-align:middle}
 .pk-col{position:relative;display:inline-block;width:20px;height:calc(8px + var(--h) * 3px)}
@@ -1591,6 +1591,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cas-next{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}.cas-next b{display:block;font:800 13px/1.2 Archivo;color:#7CF0A8}.cas-next .pc-bar{margin:5px 0 3px}.cas-next small{margin:0!important}
 .cas-mini{display:block;width:80%;height:5px;margin-top:4px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}.cas-mini b{display:block;height:100%;background:linear-gradient(90deg,#7CF0A8,#1FA35A)}
 .potcard .pot-ic{width:84px;height:84px}
+.mk-new{display:inline-block;margin-left:6px;min-width:20px;padding:1px 6px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 11.5px/18px Archivo;text-align:center;box-shadow:0 0 10px rgba(255,79,163,.7);animation:psglow 1.8s ease-in-out infinite}.mk-segnew{display:inline-block;margin-left:4px;min-width:16px;padding:0 5px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 10.5px/16px Archivo;font-style:normal}
 </style>
 </head>
 <body>
@@ -1610,7 +1611,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '99';
+const AVER = '100';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1715,6 +1716,11 @@ function sfx(name) {
     if (name === 'srtear') { for (let i = 0; i < 7; i++) { const t0 = i * 0.045 + Math.random() * 0.02; const n = Math.floor(actx.sampleRate * 0.04), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / n); const sc = actx.createBufferSource(); sc.buffer = b; const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500 + Math.random() * 2500; const g = actx.createGain(); g.gain.value = 0.12; sc.connect(hp).connect(g).connect(master); sc.start(actx.currentTime + t0); } tone(110, 0.02, 0.25, 'sine', 0.12); }
     if (name === 'srflash') { [784, 1175, 1568].forEach((f) => tone(f, 0, 1.4, 'sine', 0.05)); whoosh(0.7, 3000, 800, 0.08); }
     if (name === 'srcard') whoosh(0.35, 600, 2600, 0.1);
+    if (name === 'pkbeep') { tone(196, 0, 0.09, 'square', 0.05); tone(147, 0.1, 0.09, 'square', 0.045); } // „pork pork“
+    if (name === 'pkbeep2') tone(262, 0, 0.08, 'square', 0.06);
+    const clack = (t0, v) => { const n = Math.floor(actx.sampleRate * 0.03), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / n, 3); const sc = actx.createBufferSource(); sc.buffer = b; const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200 + Math.random() * 1500; bp.Q.value = 2; const g = actx.createGain(); g.gain.value = v; sc.connect(bp).connect(g).connect(master); sc.start(actx.currentTime + t0); };
+    if (name === 'chips') [0, 0.05, 0.09, 0.15].forEach((t0) => clack(t0, 0.35));
+    if (name === 'chipswin') for (let k = 0; k < 12; k++) clack(k * 0.045 + Math.random() * 0.02, 0.3);
     if (name === 'question') { tone(523, 0, 0.12); tone(784, 0.1, 0.18); }
     if (name === 'sent') tone(660, 0, 0.1, 'sine');
     if (name === 'emote') { tone(880, 0, 0.06, 'sine', 0.08); tone(1320, 0.05, 0.09, 'sine', 0.07); }
@@ -2234,6 +2240,7 @@ function renderPoker(box) {
     return `${s.bet ? `<span class="pk-betchips ${grew ? 'slide' : ''}" style="left:${bp[0]}%;top:${bp[1]}%;--sx:${sp[0]}%;--sy:${sp[1]}%;--ex:${bp[0]}%;--ey:${bp[1]}%">${chipPile(s.bet)}<em>${fmt(s.bet)}</em></span>` : ''}`;
   }).join('');
   const win = '';
+  const keepY = window.scrollY;
   const potOnTable = t.pot - t.seats.reduce((x, s) => x + (s ? s.bet : 0), 0);
   box.innerHTML = `
     <div class="row pk-head" style="margin-bottom:8px;gap:6px"><b class="grow">${esc(t.name)}<small> · Blinds ${t.sb}/${t.bb}</small></b>${me ? '<button class="btn small ghost pk-emobtn" id="pkEmoBtn">😀</button><button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
@@ -2303,9 +2310,16 @@ function renderPoker(box) {
     }, 1800);
   }
   if (me && me.stack > 0) renderPoker.asked = false;
+  requestAnimationFrame(() => { if (Math.abs(window.scrollY - keepY) > 2) window.scrollTo(0, keepY); }); // Tisch springt nicht
+  // Chips-Geräusche: Einsätze wachsen oder der Pot wird ausgezahlt
+  const betSum = t.seats.reduce((a, x) => a + ((x && x.bet) || 0), 0);
+  if (renderPoker.hand === t.handNo && betSum > (renderPoker.betSum || 0)) sfx('chips');
+  if (t.winners && !renderPoker.won) sfx('chipswin');
+  renderPoker.won = !!t.winners; renderPoker.betSum = betSum; renderPoker.hand = t.handNo;
   // Zeitring für den, der dran ist
   clearInterval(pkTick);
-  if (t.deadline) { const off = Date.now() - t.now; pkTick = setInterval(() => { const r = document.querySelector('.pk-ring'); if (!r) return clearInterval(pkTick); const left = Math.max(0, t.deadline - (Date.now() - off)); r.style.setProperty('--p', (left / 20000 * 100).toFixed(1)); }, 200); }
+  if (t.deadline) { const off = Date.now() - t.now; pkTick = setInterval(() => { const r = document.querySelector('.pk-ring'); if (!r) return clearInterval(pkTick); const left = Math.max(0, t.deadline - (Date.now() - off)); r.style.setProperty('--p', (left / 20000 * 100).toFixed(1));
+    if (myTurn && left > 0 && left < 10000) { const gap = left > 6000 ? 1000 : left > 3000 ? 500 : 250; if (Date.now() - (renderPoker.beep || 0) >= gap) { renderPoker.beep = Date.now(); sfx(left > 3000 ? 'pkbeep' : 'pkbeep2'); } } }, 100); }
   if (myTurn && !renderPoker.buzzed) { renderPoker.buzzed = true; sfx('tick'); } if (!myTurn) renderPoker.buzzed = false;
 }
 
@@ -2477,6 +2491,7 @@ function renderCards() {
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
   document.querySelectorAll('#ctabs button').forEach((b) => b.classList.toggle('on', b.dataset.ct === ctab));
   const sbig = document.querySelector('.ct-shopbig'); if (sbig) sbig.classList.toggle('on', ctab === 'shop');
+  mkBadges();
   const cn = $('#ctNew'); if (cn) { const nw = (tcg.def.packs || []).filter((p) => p.isNew && !p.hidden); cn.hidden = !nw.length; cn.textContent = nw.length ? 'NEU: ' + nw.map((p) => p.name.replace('-Booster', '')).join(', ') : 'NEU'; }
   const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
@@ -2519,20 +2534,23 @@ function renderCards() {
     const isDisp = (l) => String(l.variant).startsWith('disp_'), dispL = market.listings.filter((l) => l.cardId === 'pack' && isDisp(l));
     const packsL = market.listings.filter((l) => l.cardId === 'pack' && !isDisp(l)), gradL = market.listings.filter((l) => l.cardId === 'graded' && l.graded), cardsL = market.listings.filter((l) => l.cardId !== 'pack' && l.cardId !== 'graded');
     const dupeBtn = `<button class="mk-dupes" id="mkDupes"><span class="mk-dupes-ic">📤</span><span class="grow"><b>Doppelte hochladen</b><small>Alle doppelten Karten ab Legendär mit einem Klick zum Umwandlungspreis einstellen</small></span><span>›</span></button>`;
-    const seg = dupeBtn + `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})</button>${dispL.length ? `<button data-mkind="displays" class="${mKind === 'displays' ? 'on' : ''}">🗃 Displays (${dispL.length})</button>` : ''}${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
+    const seg = dupeBtn + `<div class="seg" style="margin-bottom:10px"><button data-mkind="cards" class="${mKind === 'cards' ? 'on' : ''}">🃏 Karten (${cardsL.length})${mkNewCount('cards') ? `<i class="mk-segnew">${mkNewCount('cards')}</i>` : ''}</button><button data-mkind="packs" class="${mKind === 'packs' ? 'on' : ''}">📦 Booster (${packsL.length})${mkNewCount('packs') ? `<i class="mk-segnew">${mkNewCount('packs')}</i>` : ''}</button>${dispL.length ? `<button data-mkind="displays" class="${mKind === 'displays' ? 'on' : ''}">🗃 Displays (${dispL.length})${mkNewCount('displays') ? `<i class="mk-segnew">${mkNewCount('displays')}</i>` : ''}</button>` : ''}${home && home.me.grading ? `<button data-mkind="graded" class="${mKind === 'graded' ? 'on' : ''}">🏅 Gegradet (${gradL.length})</button>` : ''}</div>`;
     if (mKind === 'graded') {
+      setTimeout(() => mkMarkSeen('graded'), 1500);
       box.innerHTML = seg + (gradL.length ? `<div class="slabgrid">${gradL.map((l) => `<div class="mk-slab">${slabHtml(l.graded)}<div class="row" style="justify-content:space-between;align-items:center;margin-top:6px"><span><b>${D} ${fmt(l.price)}</b><br><small class="sub">von ${esc(l.seller)} · ${l.graded.pop.by[l.graded.grade]}× in dieser Note</small></span>${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurück</button>` : `<button class="mini go" data-mbuy="${l.id}">Kaufen</button>`}</div></div>`).join('')}</div>`
         : '<p class="sub">Gerade bietet niemand gegradete Karten an. Deine eigenen verkaufst du im Reiter „🏅 Gegradet“.</p>');
       box.querySelectorAll('[data-slab]').forEach((el) => { el.onclick = () => { const l = gradL.find((x) => x.graded.id === Number(el.dataset.slab)); if (l) showSlab(l.graded); }; });
       return;
     }
     if (mKind === 'packs' || mKind === 'displays') {
+      setTimeout(() => mkMarkSeen(mKind), 1500);
       const lst = mKind === 'displays' ? dispL : packsL;
       box.innerHTML = seg + (lst.length ? lst.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
         ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="btn small" data-mbuy="${l.id}">Kaufen</button>`}</div>`).join('')
         : '<p class="sub">Gerade bietet niemand Booster an. Stell selbst welche ein, über „Verkaufen“ im Reiter Booster.</p>');
       return;
     }
+    setTimeout(() => mkMarkSeen('cards'), 1500);
     const missCnt = cardsL.filter((l) => !owned(l.cardId, l.variant)).length;
     let shown = mMissing ? cardsL.filter((l) => !owned(l.cardId, l.variant)) : cardsL; if (mMine) shown = shown.filter((l) => l.mine);
     const myN = market.listings.filter((l) => l.mine).length;
@@ -4007,6 +4025,11 @@ function potionsHtml() {
     const act = (home && home.potions) || {};
     return `<div class="pot-head"><img src="/tcg/pot_xp.webp?v=${AVER}" alt=""><img src="/tcg/pot_cxp.webp?v=${AVER}" alt=""><img src="/tcg/pot_pxp.webp?v=${AVER}" alt=""><div><b>Tränke</b><small>Mehr XP für eine Stunde</small></div></div><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft ab dem Aktivieren 60 Minuten. Gleicher Trank nochmal verlängert um 60 Minuten. ×2 und ×4 derselben Art lassen sich nicht kombinieren.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].until > Date.now(); return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft bis ${potBis(act[t].until)}</small>${n ? `<button class="btn small ghost" data-potuse="${id}">+60 Min</button>` : ''}` : on && n ? `<small>erst ab ${potBis(act[t].until)}, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
 }
+// Börse: „neu“-Zähler je Art (Karten, Booster, Displays, Gegradet), bis man die Art einmal ansieht
+const mkSeen = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('mk_seen') || '{}'); } catch (e) {} const now = Date.now(); for (const k of ['cards', 'packs', 'displays', 'graded']) if (!o[k]) o[k] = now; try { localStorage.setItem('mk_seen', JSON.stringify(o)); } catch (e) {} return o; })();
+const mkNewCount = (k) => ((home && home.mkTimes && home.mkTimes[k]) || []).filter((t) => t > (mkSeen[k] || 0)).length;
+function mkMarkSeen(k) { if (!mkNewCount(k)) return; mkSeen[k] = Date.now(); try { localStorage.setItem('mk_seen', JSON.stringify(mkSeen)); } catch (e) {} const sg = document.querySelector(`[data-mkind="${k}"] .mk-segnew`); if (sg) sg.remove(); mkBadges(); }
+function mkBadges() { const b = document.querySelector('#ctabs [data-ct="boerse"]'); if (!b) return; const n = ['cards', 'packs', 'displays', 'graded'].reduce((a, k) => a + mkNewCount(k), 0); let e = b.querySelector('.mk-new'); if (n) { if (!e) { e = document.createElement('span'); e.className = 'mk-new'; b.appendChild(e); } e.textContent = n > 99 ? '99+' : n; } else if (e) e.remove(); }
 function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenzt), Ausverkauft
   const box = $('#shopRows'); if (!box) return;
   const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
@@ -4350,6 +4373,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('market:new', (d) => { if (!home || !home.me || d.seller === home.me.id) return; home.mkTimes = home.mkTimes || {}; (home.mkTimes[d.kind] = home.mkTimes[d.kind] || []).unshift(d.at); mkBadges(); });
   let cxpT = 0;
   socket.on('me:cxp', (d) => { // nach jeder Casino-Runde: Casino-XP, VIP-Stufe und Casino-Strang live nachziehen
     if (home && home.me) { home.me.casinoXp = d.cxp; home.me.casinoTier = d.tier; }
