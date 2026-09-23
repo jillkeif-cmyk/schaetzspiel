@@ -1689,6 +1689,7 @@ function sfx(name) {
 // iOS schaltet Web-Audio beim Stummschalter ab. Ein stiller Dauerton über ein Audio-Element
 // setzt die Wiedergabe-Kategorie um, dann kommt der Ton meist trotzdem durch.
 let silentEl = null;
+if (muted) setTimeout(() => { try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {} }, 0);
 function makeAudio() { try { actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.connect(actx.destination); setVol(); } catch (e) { actx = null; } }
 // iPhone: nach einem App-Wechsel steht die Tonausgabe oft auf "interrupted" statt "suspended".
 // Jeder nicht laufende Zustand wird geweckt; klappt das nicht sofort, wird die Tonausgabe neu aufgebaut.
@@ -1728,7 +1729,15 @@ setInterval(() => {
   if (TCM.next < actx.currentTime - 0.2) TCM.next = actx.currentTime + 0.05; // nach Pausen nicht nachholen
   while (TCM.next < actx.currentTime + 0.25) { tcmStep(TCM.step, TCM.next); TCM.next += TCM_STEP; TCM.step++; }
 }, 60);
+// Stumm: Tonausgabe komplett loslassen, damit Spotify, Hörbücher usw. beim Wechsel ins Spiel weiterlaufen
+function releaseAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {}
+  if (silentEl) { try { silentEl.pause(); silentEl.removeAttribute('src'); silentEl.load(); } catch (e) {} silentEl = null; }
+  if (actx && actx.state === 'running') { try { actx.suspend().catch(() => {}); } catch (e) {} }
+}
 function unlockAudio() {
+  if (muted) { releaseAudio(); return; } // Ton aus: nichts aufwecken, keinen stillen Dauerton starten
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   if (!actx || actx.state === 'closed') makeAudio();
   else if (actx.state !== 'running') {
     const c = actx;
@@ -1746,7 +1755,7 @@ function unlockAudio() {
 document.addEventListener('pointerdown', unlockAudio, { passive: true });
 document.addEventListener('touchend', unlockAudio, { passive: true }); // iOS gibt Ton teils erst bei touchend frei
 window.addEventListener('pageshow', unlockAudio);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') unlockAudio(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') unlockAudio(); else if (silentEl) { try { silentEl.pause(); } catch (e) {} } });
 function showBulls(names) {
   const el = $('#bullsfx');
   el.innerHTML = `<div class="rays"></div><div class="in"><img src="/emblems/bullseye.webp?v=${AVER}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
@@ -5142,7 +5151,7 @@ document.addEventListener('click', (e) => {
     if (!midGame || confirm('Match wirklich verlassen? Du bekommst für dieses Match keine XP und keine Weltranglistenpunkte.')) socket.emit('leave');
   }
   else if (t.id === 'logout') logout();
-  else if (t.id === 'mute' || t.id === 'sound') { unlockAudio(); muted = !muted; try { localStorage.setItem('sz_mute', muted ? '1' : '0'); } catch (e2) {} update(); if (!muted) sfx('sent'); }
+  else if (t.id === 'mute' || t.id === 'sound') { muted = !muted; try { localStorage.setItem('sz_mute', muted ? '1' : '0'); } catch (e2) {} if (muted) releaseAudio(); else unlockAudio(); update(); if (!muted) sfx('sent'); }
   else if (t.dataset.board) { boardMode = t.dataset.board; update(); }
   else if (t.dataset.fight) {
     socket.emit('challenge', Number(t.dataset.fight));

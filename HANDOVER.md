@@ -140,6 +140,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Rendern: `tools/cards/build_hw.py` schneidet unten statt oben (Köpfe bleiben). Rate-Limit gpt_image_2_5: etwa 10 Bilder pro Schub.
 
 ## Stand Version 69 (alles live, Gruselnacht per Schalter gesperrt)
+- (showroom-v2) Audio: Ton aus = Tonausgabe komplett loslassen (releaseAudio, audioSession ambient, stiller Dauerton aus), beim Verlassen der App stiller Ton pausiert; damit laufen Spotify/Hörbücher weiter. Kronen-Pass: alle Booster (auch in Kürbis-Überraschungen) sind Gruselnacht-Booster (vor Freigabe Geister-Booster).
 - Gruselnacht: alle 145 Kartenbilder fertig (public/tcg/gn_*), Freigabe im Admin-Menü „🃏 Gruselnacht-Set“ (Setting gn_open): Booster kaufbar, Set zählt zur Sammlung, Update u11 (requires 'gn') erscheint. Vorher gibt der Pass statt Gruselnacht-Booster (Premium 12/22/26) einen Geister-Booster.
 - Doppel-XP-Aktion (lib/boost.js, Setting boost): Level-XP, Casino-XP, Pass-XP einzeln schaltbar, Banner auf der Startseite.
 - Verlauf im Admin-Menü: Diamanten, XP, Casino-XP, Pass-XP (Tabelle ledger, Spalte kind: dia/xp/cxp/pxp).
