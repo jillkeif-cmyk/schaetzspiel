@@ -29,6 +29,7 @@ const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type
   socks[0].emit('settings', { maxQuestions: 6, countdown: 1, pointLimit: 5000, answerTime: 10 }); await sleep(100);
   assert.equal(states[1].settings.maxQuestions, 6);
 
+  await fetch(URL + '/api/admin/passmode', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + users[0].token }, body: JSON.stringify({ mode: 'on' }) }); // Pass ist anfangs gesperrt
   let seen = 0, shown = false, lastQ = 0;
   socks[0].emit('start');
   const t0 = Date.now();
