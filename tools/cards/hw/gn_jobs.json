@@ -898,7 +898,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: a spectral steam train rushing through the night with glowing windows. The whole character is visible including the complete head with clear empty space above it, centered, icy blue moonlight and frost. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "0ba9ccbf-32e1-4602-9ff7-b29b5198a7d7"
  },
  {
   "index": 82,
@@ -908,7 +908,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: a pack of undead velociraptor skeletons with glowing eyes hunting through a dark museum hall. The whole character is visible including the complete head with clear empty space above it, centered, sickly toxic green glow and lightning. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "bc2f21a5-798a-4351-93ae-70c804ae5eec"
  },
  {
   "index": 83,
@@ -973,7 +973,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: an elegant vampire countess in a crimson gown with bats, drinking from a golden goblet in a gothic castle. The whole character is visible including the complete head with clear empty space above it, centered, deep violet mist and silver moonlight. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "0d4d12af-0758-428c-9b93-5b0d71aef6b0"
  },
  {
   "index": 89,
@@ -983,7 +983,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: a pale undead revenant in tattered clothes rising from a grave. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "54dbc509-c5b4-4e5f-9f93-4933a6c890cd"
  },
  {
   "index": 90,
@@ -993,7 +993,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art: a majestic ghost queen with a crown of teal flames. Dramatic full scene filling the whole portrait image, blood red moon and crimson fog. Extremely epic, dramatic and cinematic, intense lighting, highly detailed. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "1fb97b47-fedf-4a36-bf45-4c93f4a7431b"
  },
  {
   "index": 91,
@@ -1003,7 +1003,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: an undead woolly mammoth skeleton with frozen fur, ice crystals and green soul fire in its eyes. The whole character is visible including the complete head with clear empty space above it, centered, icy blue moonlight and frost. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "1c678949-fd19-43e3-80f2-b530d249bce9"
  },
  {
   "index": 92,
@@ -1013,7 +1013,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: a radiant orb of many souls swirling in a dark cathedral. The whole character is visible including the complete head with clear empty space above it, centered, sickly toxic green glow and lightning. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "c8fdeb12-813a-4c42-9a4b-5c902ae486a8"
  },
  {
   "index": 93,
@@ -1023,7 +1023,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art in landscape format: a skeletal master reaper holding two crossed scythes, cloak billowing. The whole character is visible including the complete head with clear empty space above it, centered, deep violet mist and silver moonlight. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "f1d74b64-0a28-4921-a977-8bae39703ebd"
  },
  {
   "index": 94,
@@ -1033,7 +1033,7 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art: a regal ghost lord in spectral robes with a golden crown. Dramatic full scene filling the whole portrait image, eerie ghostly teal and green light, moonlit. Extremely epic, dramatic and cinematic, intense lighting, highly detailed. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "f5e4e584-d17d-4fee-8512-fb5ff60f2378"
  },
  {
   "index": 95,
@@ -1043,6 +1043,6 @@
    "model": "gpt_image_2_5",
    "prompt": "Halloween card art: a towering necromancer overlord raising an army of skeletons, zombies and a zombie dinosaur from a cracked graveyard, green lightning storm, apocalyptic sky. Dramatic full scene filling the whole portrait image, blood red moon and crimson fog. Extremely epic, dramatic and cinematic, intense lighting, highly detailed. Painterly AAA card game illustration, no border, no text."
   },
-  "job": null
+  "job": "54cb1d99-30ca-48a2-b189-108065ea5912"
  }
 ]
