@@ -3162,8 +3162,8 @@ function passGot(r, title) { // Belohnungs-Einblendung
     ${g.dia ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(g.dia)}</b><span>Diamanten</span></div>` : ''}
     ${g.packs.length ? `<p class="sub">📦 ${g.packs.map((p) => PACK_NAME[p] || p).join(', ')} liegen im Inventar</p>` : ''}
     ${g.items.length ? `<p class="sub">✨ Neu: ${g.items.map(esc).join(', ')}</p>` : ''}
-    <button class="btn" id="unlockOk">Weiter</button></div>`;
-  u.classList.add('show'); $('#unlockOk').onclick = () => { u.classList.remove('show'); u.innerHTML = ''; };
+    <button class="btn" id="unlockOk" style="min-width:220px">Super!</button></div>`;
+  u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
 }
 async function passAct(path, body, title) { const r = await api(path, body).catch((e) => { toast(e.message); return null; }); if (r) passGot(r, title); return r; }
 function loadNews() { return api('/api/news').then((r) => { newsPosts = r.posts || []; renderNewsCard(); if (page === 'news') renderNews(); }).catch(() => {}); }
