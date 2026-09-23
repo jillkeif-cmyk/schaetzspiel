@@ -129,3 +129,11 @@ damit Karten jederzeit neu gerendert werden können.
 - GitHub-Token und Anthropic-Schlüssel standen im Chat und sollten erneuert werden
 - Casino-Ausbau: Blackjack mit Splitten, Verdoppeln, Versicherung, Mehrspieler-Tische;
   Roulette-Tableau in Draufsicht mit allen Einsatzarten
+
+## Gruselnacht-Set (in Arbeit, Zweig `gruselnacht`)
+
+- 100 Motive in `lib/gn.js` (erzeugt von `tools/cards/hw/gen_defs.py`), 145 Varianten: 40 Häufig, 25 Selten (+Holo), 15 Legendär (+Ultra), 10 nur Ultra, 5 nur Extended, 5 Extended + Mythisch (bewegt). 50 Rahmen A (`hw/frame_a.png`), 50 Rahmen B.
+- Bilder: `tools/cards/hw/gn_jobs.json` enthält je Karte Prompt und Higgsfield-Job-ID (leer = noch erzeugen). Querformat 4:3 für normale Karten, 3:4 für Extended/Mythisch.
+- Rendern: `tools/cards/build_hw.py` (statisch, schneidet unten statt oben), `tools/cards/anim_card.py` (Mythisch aus Wan-3.0-Video).
+- Set zählt nicht zur Sammlung, bis es freigeschaltet wird (COLLECT in server.js schließt set 'gn' aus). Booster `gn` ist `locked`.
+- Achtung: Rate-Limit bei gpt_image_2_5, höchstens etwa 10 Bilder pro Schub.

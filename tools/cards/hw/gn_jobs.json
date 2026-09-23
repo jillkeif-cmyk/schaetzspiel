@@ -1,0 +1,962 @@
+[
+ {
+  "index": 0,
+  "id": "gn_a04",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: an old cackling witch stirring a huge bubbling green cauldron, potion bottles, bats. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "c3631264-2bac-4a75-9434-5a609c2014e6"
+ },
+ {
+  "index": 1,
+  "id": "gn_a05",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a tiny mischievous goblin with a carved pumpkin as a helmet, holding a candle. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "af815a9f-7b47-4cd2-99e1-7a3e8fc21f29"
+ },
+ {
+  "index": 2,
+  "id": "gn_a06",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a young witch flying on a broomstick across a huge full moon, cape fluttering. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "4a76fd14-107f-4242-9cda-d8f2d4ef75d2"
+ },
+ {
+  "index": 3,
+  "id": "gn_a07",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a hulking werewolf howling on a rocky cliff under a full moon, fur glowing silver. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "8e6deae4-2b51-4373-8533-a56cc1d00fe3"
+ },
+ {
+  "index": 4,
+  "id": "gn_a08",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a creepy scarecrow with glowing orange eyes and a burlap face in a dark cornfield, crows. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "56813d98-a621-4c2a-9b5e-6c85df780bde"
+ },
+ {
+  "index": 5,
+  "id": "gn_a09",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a big friendly-scary golem made of candy corn, lollipops and wrapped sweets. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "5a4ac7ca-9e3a-4da0-943e-f229cc756fcf"
+ },
+ {
+  "index": 6,
+  "id": "gn_a10",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a towering stitched monster with neck bolts in a lightning-lit laboratory. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "449c1694-cd04-455b-8bcd-afde5dc8f4b5"
+ },
+ {
+  "index": 7,
+  "id": "gn_a11",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a bandaged mummy pharaoh with glowing eyes rising from a golden sarcophagus. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 8,
+  "id": "gn_a12",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a dragon whose scaly body is made of orange pumpkin skin and vines, breathing embers. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "bb3df40e-b368-4052-a096-ccb914063535"
+ },
+ {
+  "index": 9,
+  "id": "gn_a13",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: a powerful witch high priestess raising a staff inside a glowing magenta rune circle. Dramatic full scene filling the whole portrait image, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "e0f77d30-8cbc-4631-89c6-b8333bd7abe6"
+ },
+ {
+  "index": 10,
+  "id": "gn_a14",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a noble vampire bat lord with huge wings and a tiny crown hanging from a castle beam. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "1cfe8ae1-5eb0-4ecd-9f76-d2d1dc974b83"
+ },
+ {
+  "index": 11,
+  "id": "gn_a15",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a hunched alchemist goblin mixing glowing potions in a cluttered attic laboratory. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": "624173d4-1ecc-4b78-b5f0-8044321308ce"
+ },
+ {
+  "index": 12,
+  "id": "gn_a16",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a sparking jack-o-lantern bomb with a lit fuse and a manic grin. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 13,
+  "id": "gn_a17",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a giant elegant spider queen with a golden crown on a huge glowing web. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 14,
+  "id": "gn_a18",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a living enchanted witch hat with eyes and a mouth, floating with magic sparkles. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 15,
+  "id": "gn_a19",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a sleek silver wolf with glowing blue eyes standing before a giant moon. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 16,
+  "id": "gn_a20",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a tall thin figure carrying a pole of hanging jack-o-lanterns through fog. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 17,
+  "id": "gn_a21",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a witch surrounded by a swirling flock of black ravens with glowing eyes. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 18,
+  "id": "gn_a22",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a massive golem built from stacked pumpkins and roots, glowing carved face. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 19,
+  "id": "gn_a23",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a gothic bride of the monster with tall streaked hair in a stone castle. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 20,
+  "id": "gn_a24",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a huge black crow with glowing orange eyes perched on a gravestone. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 21,
+  "id": "gn_a25",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a small green imp with a pointed hat juggling glowing magic orbs. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 22,
+  "id": "gn_a26",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a hooded archer shooting a flaming arrow, quiver of pumpkin-tipped arrows. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 23,
+  "id": "gn_a27",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a mossy swamp creature rising from murky water with glowing eyes. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 24,
+  "id": "gn_a28",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a spooky circus clown with a pumpkin nose holding glowing balloons in fog. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 25,
+  "id": "gn_a29",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a mysterious witch made of purple shadow and stars with a crescent staff. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 26,
+  "id": "gn_a30",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a sleek black panther-like werecat prowling on rooftops at night. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 27,
+  "id": "gn_a31",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a pumpkin carriage pulled by skeletal horses with a pumpkin-headed driver. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 28,
+  "id": "gn_a32",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a bubbling glowing potion bottle with a skull cork and swirling magic. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 29,
+  "id": "gn_a33",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a sweet-looking witch with a gingerbread house and floating candies. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 30,
+  "id": "gn_a34",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a long serpent whose body is a vine of small glowing pumpkins. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 31,
+  "id": "gn_a35",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a stone gargoyle coming alive on a cathedral roof, cracks glowing. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 32,
+  "id": "gn_a36",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a young apprentice witch reading a floating spellbook with sparkles. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 33,
+  "id": "gn_a37",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a giant guardian made of straw and pumpkins guarding a moonlit field. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 34,
+  "id": "gn_a38",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a dark minotaur with glowing horns in a foggy stone labyrinth. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 35,
+  "id": "gn_a39",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a witch gazing into a glowing enchanted mirror that shows a ghostly face. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 36,
+  "id": "gn_a40",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a cute living candle inside a small jack-o-lantern with a flickering flame. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 37,
+  "id": "gn_a41",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a gigantic bat with glowing red eyes swooping over a village. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 38,
+  "id": "gn_a42",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a forest witch gathering glowing mushrooms and herbs in a dark wood. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 39,
+  "id": "gn_a43",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: an old cannon firing flaming jack-o-lanterns from a castle wall. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 40,
+  "id": "gn_a44",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a furry white yeti with glowing purple eyes in a snowy haunted forest. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 41,
+  "id": "gn_a45",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a witch pulling stars from the night sky into her glowing lantern. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 42,
+  "id": "gn_a46",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a small squire with a pumpkin helmet carrying a lantern and wooden sword. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 43,
+  "id": "gn_a47",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a three-headed dark hydra with glowing orange eyes in a stormy lake. The whole character is visible including the complete head with clear empty space above it, centered, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 44,
+  "id": "gn_a48",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: a powerful sorceress in black robes with swirling purple lightning. Dramatic full scene filling the whole portrait image, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 45,
+  "id": "gn_a49",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: an emperor made of golden pumpkin armor with a flaming crown and cape. Dramatic full scene filling the whole portrait image, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 46,
+  "id": "gn_a50",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: an elegant witch queen on a dark throne with a crown of thorns and magic. Dramatic full scene filling the whole portrait image, warm orange pumpkin glow and purple night. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 47,
+  "id": "gn_b02",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton warrior in rusty armor with a glowing green sword. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 48,
+  "id": "gn_b03",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a small floating ghost light wisp glowing teal in a dark swamp. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 49,
+  "id": "gn_b04",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a translucent ghost bride in a flowing veil in a ruined chapel. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 50,
+  "id": "gn_b05",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a huge skeletal dragon with green fire in its ribcage. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 51,
+  "id": "gn_b06",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a classic white sheet ghost with dark eyes floating through a hallway. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 52,
+  "id": "gn_b07",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a hooded gravekeeper with a lantern and shovel among tombstones. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 53,
+  "id": "gn_b08",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: an angry ghost throwing floating furniture in a haunted room. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 54,
+  "id": "gn_b09",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a dark necromancer raising skeleton hands from the ground with green magic. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 55,
+  "id": "gn_b10",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a screaming banshee spirit with flowing white hair and teal mist. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 56,
+  "id": "gn_b11",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton pirate captain on a ghostly ship with green sails. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 57,
+  "id": "gn_b12",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a knight with a flaming skull head on a skeletal horse. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 58,
+  "id": "gn_b13",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a creepy translucent ghost child holding a teddy bear in a dark hallway. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 59,
+  "id": "gn_b14",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: an undead lich king with a glowing crown and a staff with a skull. Dramatic full scene filling the whole portrait image, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 60,
+  "id": "gn_b15",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a floating old lantern with a trapped teal spirit inside. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 61,
+  "id": "gn_b16",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a golem made of bones and skulls with glowing green eyes. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 62,
+  "id": "gn_b17",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a large ghost made of thick fog rising over a lake. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 63,
+  "id": "gn_b18",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeletal hound with green fire eyes and a spiked collar. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 64,
+  "id": "gn_b19",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a ghostly organist playing a giant pipe organ with spirits flowing out. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 65,
+  "id": "gn_b20",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a sneaky skeleton thief with a sack of gold in a crypt. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 66,
+  "id": "gn_b21",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a translucent phantom knight in glowing teal armor. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 67,
+  "id": "gn_b22",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a menacing throne built from skulls with green flames. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 68,
+  "id": "gn_b23",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a translucent glowing ghost cat walking through a wall. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 69,
+  "id": "gn_b24",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeletal mage casting teal spells from an ancient book. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 70,
+  "id": "gn_b25",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a hooded figure catching glowing souls in a crystal jar. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 71,
+  "id": "gn_b26",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton playing a violin on a gravestone under the moon. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 72,
+  "id": "gn_b27",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a ghost ship with glowing teal sails sailing through the sky. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 73,
+  "id": "gn_b28",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a tall grim gravedigger with a skull-topped shovel in the rain. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 74,
+  "id": "gn_b29",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a ghost face appearing inside an ornate cracked mirror. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 75,
+  "id": "gn_b30",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton riding a skeletal wyvern through a stormy sky. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 76,
+  "id": "gn_b31",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a massive armored undead guard at the gates of a crypt. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 77,
+  "id": "gn_b32",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a translucent monk spirit with a glowing rosary in a cloister. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 78,
+  "id": "gn_b33",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a floating ornate death mask with glowing green eyes. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 79,
+  "id": "gn_b34",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a twisted howling spirit trapped in swirling teal wind. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 80,
+  "id": "gn_b35",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton queen in a black lace gown and silver crown. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 81,
+  "id": "gn_b36",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a spectral steam train rushing through the night with glowing windows. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 82,
+  "id": "gn_b37",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a giant serpent made of vertebrae coiling around a tomb. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 83,
+  "id": "gn_b38",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a small ghost made of candle smoke above a candelabra. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 84,
+  "id": "gn_b39",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a winged dark angel of death with black feathers and a scythe. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 85,
+  "id": "gn_b40",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a translucent spectral wolf howling with teal aura. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 86,
+  "id": "gn_b41",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeleton blacksmith hammering a glowing blade in a crypt forge. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 87,
+  "id": "gn_b42",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a crooked haunted tower with ghosts spiraling around it. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 88,
+  "id": "gn_b43",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a crow with a skull face perched on a withered branch. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 89,
+  "id": "gn_b44",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a pale undead revenant in tattered clothes rising from a grave. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 90,
+  "id": "gn_b45",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: a majestic ghost queen with a crown of teal flames. Dramatic full scene filling the whole portrait image, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 91,
+  "id": "gn_b46",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a colossal giant made of thousands of bones towering over a city. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 92,
+  "id": "gn_b47",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a radiant orb of many souls swirling in a dark cathedral. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 93,
+  "id": "gn_b48",
+  "params": {
+   "aspect_ratio": "4:3",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art in landscape format: a skeletal master reaper holding two crossed scythes, cloak billowing. The whole character is visible including the complete head with clear empty space above it, centered, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 94,
+  "id": "gn_b49",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: a regal ghost lord in spectral robes with a golden crown. Dramatic full scene filling the whole portrait image, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ },
+ {
+  "index": 95,
+  "id": "gn_b50",
+  "params": {
+   "aspect_ratio": "3:4",
+   "model": "gpt_image_2_5",
+   "prompt": "Halloween fantasy trading card creature art: the lord of the dead on a throne of bones with a flaming crown. Dramatic full scene filling the whole portrait image, eerie ghostly teal and green light, moonlit. Painterly highly detailed AAA card game illustration, no border, no text."
+  },
+  "job": null
+ }
+]
