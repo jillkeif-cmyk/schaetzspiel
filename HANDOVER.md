@@ -147,6 +147,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Tickets: Push an den Admin mit Protokoll („Ticket-Push an …: N Gerät(e)“), live Hinweis + roter Zähler offener Tickets am Support-Knopf (nur Mods/Admin).
 
 - Admin-Menü enthält jetzt auch Passwort-Reset (mit Namensvorschlägen) und Mod-Menü; im Profil des Admins sind sie weg (Mods ohne Admin behalten das Mod-Menü im Profil). Funktion renderStaffBoxes().
+- Booster-Showroom (openShowroom, packView): 3D-Drehung mit Glanz, Aufreißen, Blitz, Karten einzeln auf Podest; im Shop „👀 Ansehen“. Admin „🎬 Booster öffnen: Darstellung“ Showroom/Klassisch (Setting open_style, Standard showroom).
 - Shop-Steuerung (Admin „🛒 Shop-Steuerung“, Setting shop_cfg): je Booster Preis, Bestand (leer = unbegrenzt, zählt bei Käufen runter, 0 = ausverkauft), Ausverkauft-Knopf. Shop zeigt „Nur noch X Stück“ bzw. „Ausverkauft“.
 
 ## Davor live gegangen (Version 67)

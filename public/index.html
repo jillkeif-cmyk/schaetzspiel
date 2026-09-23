@@ -1501,6 +1501,39 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 .boost-bar .bb-ic{font-size:30px}.boost-bar b{display:block;font:800 16px/1.2 Archivo;color:#FFE27A}.boost-bar small{display:block;font-size:12.5px;color:#eef}
 #openSupport{position:relative}.sup-badge{position:absolute;top:10px;right:12px;min-width:24px;height:24px;padding:0 7px;border-radius:99px;background:#E5484D;color:#fff;font:800 13px/24px Archivo;text-align:center;box-shadow:0 0 0 2px var(--bg-deep),0 0 12px rgba(229,72,77,.6)}
 .shop-adm{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;background:rgba(255,255,255,.04)}.shop-adm img{width:48px;flex:none}.shop-adm label{display:flex;flex-direction:column;font-size:11px;color:#cfe;gap:2px}.shop-adm .field{width:110px;padding:7px}
+/* ---- Showroom ---- */
+#showroom{position:fixed;inset:0;z-index:40;display:none}#showroom.on{display:block}
+.sr-studio{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 80% at 50% 38%,#FFFFFF 0%,#EEF0F3 45%,#C9CED6 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;perspective:1100px}
+body.halloween .sr-studio{background:radial-gradient(120% 80% at 50% 38%,#5B2A72 0%,#2A1036 55%,#120818 100%)}
+.sr-floor{position:absolute;left:-20%;right:-20%;bottom:0;height:34%;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.08));}
+.sr-stage{position:relative;width:min(58vw,250px);aspect-ratio:420/782;transform-style:preserve-3d;touch-action:none;margin-top:-6vh}
+.sr-stage::after{content:'';position:absolute;left:10%;right:10%;bottom:-9%;height:6%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.35),transparent);filter:blur(4px)}
+.sr-pack{position:absolute;inset:0;transform-style:preserve-3d;--gl:30%}
+.sr-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:6px;overflow:hidden}.sr-face img{width:100%;height:100%;object-fit:contain;display:block}
+.sr-face.b{transform:rotateY(180deg)}.sr-face.b img{filter:brightness(.55) saturate(.8);transform:scaleX(-1)}
+.sr-gloss{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(105deg,transparent calc(var(--gl) - 22%),rgba(255,255,255,.75) var(--gl),rgba(180,230,255,.35) calc(var(--gl) + 6%),transparent calc(var(--gl) + 24%));}
+.sr-pack.spin{animation:srspin 1.9s cubic-bezier(.45,.05,.3,1) forwards}.sr-pack.spin .sr-gloss{animation:srgloss 1.9s linear forwards}
+@keyframes srspin{0%{transform:rotateY(-25deg) translateY(30px) scale(.9)}35%{transform:rotateY(160deg) translateY(-8px) scale(1)}100%{transform:rotateY(720deg) translateY(0) scale(1.04)}}
+@keyframes srgloss{0%{--gl:-20%}100%{--gl:130%}}
+@property --gl{syntax:'<percentage>';inherits:true;initial-value:30%}
+.sr-tear{position:absolute;inset:0;opacity:0}.sr-tear img{width:100%;height:100%;object-fit:contain}
+.sr-tear.t{clip-path:polygon(0 0,100% 0,100% 17%,82% 19%,64% 16%,45% 19%,27% 16%,0 18%)}.sr-tear.u{clip-path:polygon(0 18%,27% 16%,45% 19%,64% 16%,82% 19%,100% 17%,100% 100%,0 100%)}
+.sr-stage.tear .sr-pack{opacity:0}.sr-stage.tear .sr-tear{opacity:1}
+.sr-stage.tear .sr-tear.t{animation:srtop .7s cubic-bezier(.3,.6,.4,1) forwards}.sr-stage.tear .sr-tear.u{animation:srbot .7s cubic-bezier(.5,0,.7,.6) forwards}
+@keyframes srtop{to{transform:translate(-60%,-70%) rotate(-38deg) rotateY(50deg);opacity:0}}@keyframes srbot{to{transform:translate(40%,55%) rotate(26deg) rotateX(40deg) scale(.9);opacity:0}}
+.sr-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}.sr-flash.on{animation:srflash .9s ease forwards}@keyframes srflash{0%{opacity:0}35%{opacity:1}100%{opacity:1}}
+.sr-hint{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:12px;color:rgba(0,0,0,.4)}
+.sr-card{position:relative;width:min(70vw,300px);aspect-ratio:460/610;transform-style:preserve-3d;--gl:50%;margin-top:-4vh;z-index:2}
+.sr-card img{width:100%;height:100%;border-radius:14px;display:block;box-shadow:0 30px 50px rgba(0,0,0,.35)}.sr-card .sr-gloss{border-radius:14px;opacity:.55}
+.sr-card.in{animation:srcardin .65s cubic-bezier(.2,.9,.3,1.2)}@keyframes srcardin{0%{transform:translateY(40px) rotateY(-90deg) scale(.7);opacity:0}100%{transform:none;opacity:1}}
+.sr-podium{width:min(62vw,270px);height:26px;margin-top:18px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),rgba(210,215,222,.9) 60%,rgba(160,168,178,.6));box-shadow:0 14px 26px rgba(0,0,0,.18)}
+.sr-cap{margin-top:16px;text-align:center;color:#1D2226;display:flex;flex-direction:column;gap:2px;z-index:2}.sr-cap b{font:800 20px/1.2 Archivo}.sr-cap small{font:700 12px/1 Archivo;letter-spacing:.6px;color:#6B7580;text-transform:uppercase}
+body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
+.sr-btns{display:flex;gap:10px;margin-top:18px;z-index:2}.sr-close{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom))}
+.sr-studio.star .sr-cap small{color:#B8861C}
+.sr-rays{position:absolute;left:50%;top:40%;width:170vmax;height:170vmax;margin:-85vmax;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.22) 0 6deg,transparent 6deg 16deg);animation:srrays 14s linear infinite;pointer-events:none}@keyframes srrays{to{transform:rotate(360deg)}}
+.sr-studio.r-mythic .sr-rays,.sr-studio.r-ghost .sr-rays{background:repeating-conic-gradient(from 0deg,rgba(255,79,163,.18) 0 5deg,rgba(90,169,255,.16) 5deg 10deg,transparent 10deg 18deg)}
+.pk-view{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:inherit;font:700 11px Archivo;padding:0}
 </style>
 </head>
 <body>
@@ -1513,14 +1546,14 @@ body.hw-still .hw-ghost,body.hw-still .hw-pump{animation:none!important}
 <div id="emotes"></div>
 <div class="watchbar" id="watchbar" hidden></div>
 <div id="cardview"></div>
-<div id="opener"></div>
+<div id="opener"></div><div id="showroom"></div>
 <div id="bullsfx"></div>
 <div id="unlock"></div>
 <div id="modal"></div>
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '71';
+const AVER = '72';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2528,6 +2561,50 @@ function packHighlight(kind, img) {
   hl.onclick = () => { hl.className = ''; hl.innerHTML = ''; };
 }
 
+// ---------- Showroom: Booster in 3D ansehen und öffnen (im Admin-Menü umschaltbar) ----------
+const openStyle = () => (home && home.openStyle) || 'showroom';
+function srPack(pid, cls) { const src = `/tcg/pack_${pid}.webp?v=${AVER}`, m = `style="-webkit-mask-image:url(${src});mask-image:url(${src});-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"`; return `<div class="sr-pack ${cls || ''}"><div class="sr-face f"><img src="${src}" alt=""><i class="sr-gloss" ${m}></i></div><div class="sr-face b"><img src="${src}" alt=""><i class="sr-gloss" ${m}></i></div></div>`; }
+function srShell(inner) { const el = $('#showroom'); el.innerHTML = `<div class="sr-studio"><div class="sr-floor"></div>${inner}</div>`; el.classList.add('on'); return el; }
+function packView(pid) { // Booster frei drehen: ziehen dreht, loslassen dreht langsam weiter
+  const p = (tcg.def.packs || []).find((x) => x.id === pid); closeModal();
+  const el = srShell(`<div class="sr-stage" id="srStage">${srPack(pid, 'idle')}</div><div class="sr-cap"><b>${esc(p ? p.name : 'Booster')}</b><small>Ziehen zum Drehen</small></div><button class="btn ghost sr-close" id="srClose">Schließen</button>`);
+  const pk = el.querySelector('.sr-pack'); let ang = -18, vel = 0.35, drag = false, lx = 0, raf = 0;
+  const tick = () => { if (!drag) { ang += vel; vel += (0.35 - vel) * 0.02; } pk.style.transform = `rotateY(${ang}deg) rotateX(${Math.sin(ang / 57) * 4}deg)`; pk.style.setProperty('--gl', ((ang % 360 + 360) % 360 / 3.6).toFixed(1) + '%'); raf = requestAnimationFrame(tick); };
+  const st = $('#srStage');
+  st.onpointerdown = (e) => { drag = true; lx = e.clientX; st.setPointerCapture(e.pointerId); };
+  st.onpointermove = (e) => { if (!drag) return; const d = e.clientX - lx; lx = e.clientX; ang += d * 0.6; vel = d * 0.6; };
+  st.onpointerup = st.onpointercancel = () => { drag = false; };
+  tick(); $('#srClose').onclick = () => { cancelAnimationFrame(raf); el.classList.remove('on'); el.innerHTML = ''; };
+}
+async function openShowroom(pid, r) { // Booster dreht sich, reißt auf, Blitz, dann jede Karte einzeln auf dem Podest
+  const el = srShell(`<div class="sr-stage">${srPack(pid, 'spin')}<div class="sr-tear t"><img src="/tcg/pack_${pid}.webp?v=${AVER}" alt=""></div><div class="sr-tear u"><img src="/tcg/pack_${pid}.webp?v=${AVER}" alt=""></div></div><div class="sr-flash"></div><div class="sr-hint">Tippen zum Überspringen</div>`);
+  let skip = false; el.onclick = () => { skip = true; };
+  const wait = (ms) => new Promise((ok) => { const t0 = Date.now(); const iv = setInterval(() => { if (skip || Date.now() - t0 >= ms) { clearInterval(iv); ok(); } }, 30); });
+  sfx('tick'); await wait(1900);
+  el.querySelector('.sr-stage').classList.add('tear'); sfx('dartbest'); try { navigator.vibrate && navigator.vibrate(30); } catch (e) {}
+  await wait(650); el.querySelector('.sr-flash').classList.add('on'); await wait(380);
+  el.onclick = null;
+  let i = 0; const cards = r.pulled;
+  const top = (v) => ['ultra', 'ext', 'legend', 'ghost', 'mythic'].includes(v);
+  const show = () => {
+    const c = cards[i], def = tcg.def.cards.find((x) => x.id === c.id) || { name: '' }, last = i === cards.length - 1;
+    el.innerHTML = `<div class="sr-studio r-${esc(c.variant)} ${top(c.variant) ? 'star' : ''}"><div class="sr-floor"></div>${top(c.variant) ? '<div class="sr-rays"></div>' : ''}
+      <div class="sr-card in"><img src="${cardImg(c.id, c.variant)}" alt="" data-card="${c.id}:${c.variant}"><i class="sr-gloss"></i></div><div class="sr-podium"></div>
+      <div class="sr-cap"><small>${i + 1} / ${cards.length} · ${esc(varName(c.variant))}</small><b>${esc(def.name)}</b></div>
+      <div class="sr-btns">${last ? `${(tcg.packs.find((x) => x.pack_id === pid) || {}).count ? `<button class="btn" id="srNext">Nächsten öffnen (${(tcg.packs.find((x) => x.pack_id === pid) || {}).count})</button>` : ''}<button class="btn ghost" id="srDone">Fertig</button>` : '<button class="btn" id="srMore">Nächste Karte ›</button>'}</div></div>`;
+    sfx(top(c.variant) ? 'exact' : c.variant === 'holo' ? 'dartbest' : 'dart');
+    if (top(c.variant)) try { navigator.vibrate && navigator.vibrate([40, 30, 120]); } catch (e) {}
+    const cd = el.querySelector('.sr-card'); let rx = 0, ry = 0, t0 = performance.now(), raf2 = 0;
+    const idle = () => { const t = (performance.now() - t0) / 1000; ry = Math.sin(t * 0.9) * 10; rx = Math.cos(t * 0.7) * 5; cd.style.transform = `rotateY(${ry}deg) rotateX(${rx}deg) translateY(${Math.sin(t * 1.4) * 5}px)`; cd.style.setProperty('--gl', (50 + ry * 3).toFixed(1) + '%'); raf2 = requestAnimationFrame(idle); };
+    setTimeout(() => { cd.classList.remove('in'); idle(); }, 650);
+    const done = () => { cancelAnimationFrame(raf2); };
+    if ($('#srMore')) $('#srMore').onclick = () => { done(); i++; show(); };
+    if ($('#srDone')) $('#srDone').onclick = () => { done(); el.classList.remove('on'); el.innerHTML = ''; renderCards(); };
+    if ($('#srNext')) $('#srNext').onclick = () => { done(); openPack(pid); };
+    if (c.variant === 'mythic' || c.variant === 'ghost') setTimeout(() => { if (el.classList.contains('on')) packHighlight(c.variant, cardImg(c.id, c.variant)); }, 900);
+  };
+  show();
+}
 async function openPack(pid) {
   pid_last = pid;
   try {
@@ -2538,6 +2615,7 @@ async function openPack(pid) {
       Promise.all(r.pulled.map((c) => new Promise((ok) => { const im = new Image(); im.onload = im.onerror = ok; im.src = cardImg(c.id, c.variant); }))),
       new Promise((ok) => setTimeout(ok, 2500)),
     ]);
+    if (openStyle() === 'showroom') { $('#opener').classList.remove('on'); return openShowroom(pid, r); }
     // ein Ton je Karte, gute Karten klingen anders
     r.pulled.forEach((c, i) => setTimeout(() => {
       const top = ['ultra', 'ext', 'legend', 'ghost', 'mythic'].includes(c.variant);
@@ -3124,6 +3202,7 @@ function packInfo(pid) {
   for (const c of tcg.def.cards) {
     for (const v of tcg.def.variants[c.id]) {
       if (!p.odds[v]) continue;
+      if (c.set === 'dev' || (c.set === 'gn' && pid !== 'gn') || (pid === 'gn' && c.set !== 'gn')) continue;
       if (c.set === 'ghost' ? pid !== 'ghost' : !(p.all || c.set === pid)) continue;
       pool.push({ c, v, r: rank.indexOf(v) * 10000 + c.atk });
     }
@@ -3138,7 +3217,7 @@ function packInfo(pid) {
   const byVar = rank.slice().reverse().filter((v) => pool.some((x) => x.v === v)).map((v) => [v, pool.filter((x) => x.v === v).sort((a, b) => (owned(b.c.id, b.v) ? 1 : 0) - (owned(a.c.id, a.v) ? 1 : 0) || a.c.name.localeCompare(b.c.name))]);
   const thumb = (x) => { const n = owned(x.c.id, x.v); return `<button class="pk-th ${n ? 'have' : ''}" data-card="${x.c.id}:${x.v}" title="${esc(x.c.name)}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" alt="">${n ? `<span class="pk-ok">✓${n > 1 ? n : ''}</span>` : ''}</button>`; };
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:90vh;overflow:auto">
-    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt="">
+    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<button class="pk-view" data-packview="${esc(p.id)}" title="Ansehen"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt=""><span>👀 Ansehen</span></button>
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span></span></div>
     ${stars.length ? `<b>✨ Die Stars in diesem Booster</b>
     <div class="pk-stars">${stars.map((x) => { const n = owned(x.c.id, x.v); return `<figure class="${n ? 'have' : ''}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))} · ${n ? `<span class="pk-yes">✓ hast du${n > 1 ? ' ' + n + '×' : ''}</span>` : '<span class="pk-no">fehlt dir</span>'}</figcaption></figure>`; }).join('')}</div>${moreUltra ? `<small class="sub">Wische zur Seite · ${moreUltra} weitere Ultra Rares findest du unten</small>` : '<small class="sub">Wische zur Seite</small>'}` : ''}
@@ -3688,6 +3767,7 @@ function loadAdmin() {
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
   const sb = $('#shopBox'); if (sb && !sb.dataset.bound) { sb.dataset.bound = 1; sb.ontoggle = () => { if (sb.open) drawShopAdmin(); }; }
+  document.querySelectorAll('[data-ostyle]').forEach((b) => { if (b.onclick) return; b.onclick = () => api('/api/admin/openstyle', { style: b.dataset.ostyle }).then((r) => { if (home) home.openStyle = r.style; document.querySelectorAll('[data-ostyle]').forEach((x) => x.classList.toggle('on-miss', x.dataset.ostyle === r.style)); toast('Booster öffnen: ' + (r.style === 'showroom' ? 'Showroom' : 'Klassisch')); }).catch((e) => toast(e.message)); });
   const gt = $('#gnToggle'); if (gt && !gt.onclick) gt.onclick = () => { const open = !(home && home.gnOpen); if (open && !confirm('Gruselnacht-Set jetzt für alle freigeben? Booster wird kaufbar, die Karten zählen zur Sammlung und das Update erscheint.')) return; api('/api/admin/gnopen', { open }).then((r) => { if (home) home.gnOpen = r.open; gt.textContent = r.open ? 'Sperren' : 'Freigeben'; toast(r.open ? '🎃 Gruselnacht freigeschaltet' : 'Gruselnacht gesperrt'); }).catch((e) => toast(e.message)); };
   const ha = $('#hwAnim'); if (ha && !ha.onclick) ha.onclick = () => api('/api/admin/theme', { anim: !siteAnim }).then((r) => { applyTheme(r.theme, r.anim); ha.textContent = r.anim ? 'Ausschalten' : 'Einschalten'; toast(r.anim ? '🦇 Animationen an' : 'Animationen aus'); }).catch((e) => toast(e.message));
   const hw = $('#hwToggle'); if (hw && !hw.onclick) hw.onclick = () => api('/api/admin/theme', { theme: siteTheme === 'halloween' ? '' : 'halloween' }).then((r) => { applyTheme(r.theme, r.anim); hw.textContent = r.theme === 'halloween' ? 'Ausschalten' : 'Einschalten'; toast(r.theme ? '🎃 Halloween-Look an' : 'Halloween-Look aus'); }).catch((e) => toast(e.message));
@@ -4004,6 +4084,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
   socket.on('boost', (b) => { if (home) home.boost = b; if (!S && page === 'home') update(); });
   socket.on('ticket:new', (t) => { if (home) home.openTickets = (home.openTickets || 0) + 1; toast(`🎫 Neues Ticket von ${t.from}: ${t.title}`); if (!S && page === 'home') update(); });
@@ -4166,6 +4247,7 @@ function build() {
     <div id="adminBox"></div>
     <div id="modBox"></div>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
+    <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
     <div class="panel lg-box" id="boostBox"><b>⚡ Doppel-XP-Aktion</b><small style="display:block;color:#cfe">Unabhängig von der Hot Time. Aktiv wird sie allen auf der Startseite angezeigt</small>
       <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[['xp', '⭐ Level-XP'], ['cxp', '🎰 Casino-XP'], ['pxp', '👑 Pass-XP']].map(([k, l]) => `<button class="chipbtn ${home && home.boost && home.boost[k] ? 'on-miss' : ''}" data-boost="${k}">${l}</button>`).join('')}<button class="chipbtn" data-boost="all">Alle an</button><button class="chipbtn" data-boost="none">Alle aus</button></div></div>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🃏</span><div class="grow"><b>Gruselnacht-Set</b><small style="display:block;color:#cfe">100 Karten, Booster im Shop, Update-Beitrag. Freigeben schaltet alles auf einmal frei</small></div><button class="btn small" id="gnToggle">${home && home.gnOpen ? 'Sperren' : 'Freigeben'}</button></div>
@@ -4994,6 +5076,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'mkMine') { mMine = !mMine; renderCards(); }
   else if (t.id === 'mkCancelAll') { const n = market.listings.filter((l) => l.mine).length; if (confirm(`Alle ${n} eigenen Angebote zurücknehmen? Die Karten und Booster kommen zurück in deine Sammlung.`)) api('/api/tcg/cancel-all', { kind: 'all' }).then((r) => { tcg = r; toast(`${r.cancelled} Angebote zurückgenommen`); market = null; loadMarket(); }).catch((e) => toast(e.message)); }
   else if (t.dataset.ct) { ctab = t.dataset.ct; market = null; trades = null; renderCards(); if (ctab === 'boerse') loadMarket(); if (ctab === 'tausch') loadTrades(); }
+  else if (t.dataset.packview || t.closest('[data-packview]')) packView((t.dataset.packview ? t : t.closest('[data-packview]')).dataset.packview);
   else if (t.dataset.pack) packInfo(t.dataset.pack);
   else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));
   else if (t.dataset.open) openPack(t.dataset.open);
