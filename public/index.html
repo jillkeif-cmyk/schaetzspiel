@@ -1576,7 +1576,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '75';
+const AVER = '76';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3815,7 +3815,7 @@ function renderTickets() {
       <textarea class="field" id="tkReply" rows="4" maxlength="1000" placeholder="${st2 === 'abgelehnt' ? 'Warum abgelehnt?' : st2 === 'abgeschlossen' ? 'Was wurde gemacht?' : 'Zum Beispiel: Schaue ich mir heute an'}"></textarea>
       ${st2 === 'abgeschlossen' && home.me.admin ? `<div class="tk-gift"><b>🎁 Dankeschön (optional)</b><small>Nur der Ersteller sieht es auf seiner Startseite und kann es einfordern.</small>
         <label class="row" style="gap:8px;margin:0"><span class="grow">💎 Diamanten</span><input class="field" id="tkGD" inputmode="numeric" placeholder="0" style="width:110px;padding:8px"></label>
-        <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="tkGP" style="width:auto;padding:8px"><option value="">keiner</option><option value="standard">Standard</option><option value="premium">Premium</option><option value="ghost">Geister</option><option value="toon">Toon-Welt</option></select><input class="field" id="tkGN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl"></label></div>` : ''}
+        <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="tkGP" style="width:auto;padding:8px"><option value="">keiner</option><option value="standard">Standard</option><option value="premium">Premium</option><option value="ghost">Geister</option><option value="toon">Toon-Welt</option><option value="gn">Gruselnacht 🎃</option></select><input class="field" id="tkGN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl"></label></div>` : ''}
       <button class="btn" id="tkOk">${st2 === 'abgelehnt' ? 'Ablehnen' : st2 === 'abgeschlossen' ? 'Abschließen' : 'Übernehmen'}</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; setTimeout(() => $('#tkReply').focus(), 50);
     $('#tkOk').onclick = () => { const r = $('#tkReply').value.trim(); if (need && r.length < 3) return toast('Bitte eine kurze Antwort schreiben.'); send(r); };
@@ -3950,7 +3950,7 @@ function renderAdmin() {
       <small class="sub">Erscheint beim Spieler als „Geschenk vom Entwickler-Team“ auf der Startseite, zum Einfordern mit großer Einblendung.</small>
       <select class="field" id="gfTo" style="padding:8px"><option value="">Spieler wählen …</option><option value="all">🌍 Alle Spieler</option>${(adminUsers || []).map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
       <label class="row" style="gap:8px;margin:0"><span class="grow">💎 Diamanten</span><input class="field" id="gfDia" inputmode="numeric" placeholder="0" style="width:120px;padding:8px"></label>
-      <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="gfPack" style="width:auto;padding:8px"><option value="">keiner</option>${[['standard', 'Standard'], ['premium', 'Premium'], ['ghost', 'Geister'], ['toon', 'Toon-Welt'], ['secret', '??? (geheim)']].map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select><input class="field" id="gfN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl Booster"></label>
+      <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="gfPack" style="width:auto;padding:8px"><option value="">keiner</option>${[['standard', 'Standard'], ['premium', 'Premium'], ['ghost', 'Geister'], ['toon', 'Toon-Welt'], ['gn', 'Gruselnacht 🎃'], ['secret', '??? (geheim)']].map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select><input class="field" id="gfN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl Booster"></label>
       <label class="row" style="gap:8px;margin:0"><span class="grow">Wie oft verschicken</span><input class="field" id="gfTimes" inputmode="numeric" value="1" style="width:56px;padding:8px"></label>
       <input class="field" id="gfMsg" maxlength="200" placeholder="Nachricht, z. B. Danke fürs Mitspielen!" style="padding:8px">
       <button class="btn" id="gfSend">🎁 Verschicken</button>
