@@ -924,7 +924,7 @@ app.post('/api/tcg/open', async (req, res) => {
 });
 
 // Doppelte Karten umwandeln
-const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 2500 };
+const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 1500 };
 app.post('/api/tcg/melt', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
