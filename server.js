@@ -922,6 +922,19 @@ app.get('/api/tcg', async (req, res) => {
 });
 
 // Booster kaufen
+// Shop-Steuerung je Booster (Admin): Preis, Bestand (null = unbegrenzt), ausverkauft
+let shopCfg = {};
+const applyShop = () => { for (const [id, c] of Object.entries(shopCfg)) { const p = tcg.PACKS[id]; if (!p) continue; if (!p.basePrice) p.basePrice = p.price; p.price = Number(c.price) > 0 ? Math.round(Number(c.price)) : p.basePrice; p.stock = c.stock === null || c.stock === undefined || c.stock === '' ? null : Math.max(0, Math.round(Number(c.stock))); p.soldout = !!c.soldout || p.stock === 0; } };
+store.setting('shop_cfg').then((v) => { if (v) { shopCfg = JSON.parse(v); applyShop(); } }).catch(() => {});
+const saveShop = () => { for (const [id, p] of Object.entries(tcg.PACKS)) if (shopCfg[id]) { shopCfg[id].stock = p.stock; shopCfg[id].soldout = !!p.soldout && (shopCfg[id].soldout || p.stock === 0); } return store.setting('shop_cfg', JSON.stringify(shopCfg)); };
+app.post('/api/admin/shop', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const id = String(req.body.pack || ''); if (!tcg.PACKS[id]) return res.status(400).json({ error: 'Unbekannter Booster.' });
+  shopCfg[id] = { price: req.body.price, stock: req.body.stock === '' || req.body.stock === null || req.body.stock === undefined ? null : Number(req.body.stock), soldout: !!req.body.soldout };
+  applyShop(); await store.setting('shop_cfg', JSON.stringify(shopCfg)); io.emit('shop:changed');
+  const p = tcg.PACKS[id]; console.log(`Shop: ${p.name} Preis ${p.price}, Bestand ${p.stock === null ? 'unbegrenzt' : p.stock}${p.soldout ? ', ausverkauft' : ''} durch ${u.name}`);
+  res.json({ pack: id, price: p.price, stock: p.stock, soldout: !!p.soldout });
+});
 app.post('/api/tcg/buy', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -930,8 +943,11 @@ app.post('/api/tcg/buy', async (req, res) => {
     if (!p) return res.status(400).json({ error: 'Unbekannter Booster.' });
     if (p.hidden) return res.status(403).json({ error: 'Diesen Booster gibt es nicht im Shop.' });
     if (p.locked && !isMod(u)) return res.status(403).json({ error: 'Dieser Booster ist noch gesperrt. Bald geht es los!' });
+    if (p.soldout) return res.status(403).json({ error: 'Dieser Booster ist ausverkauft.' });
+    if (p.stock !== null && p.stock !== undefined && n > p.stock) return res.status(400).json({ error: p.stock ? `Nur noch ${p.stock} Stück verfügbar.` : 'Dieser Booster ist ausverkauft.' });
     const cost = p.price * n, have = Number(u.diamonds) || 0;
     if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
+    if (p.stock !== null && p.stock !== undefined) { p.stock -= n; if (p.stock <= 0) { p.stock = 0; p.soldout = true; } saveShop().catch(() => {}); io.emit('shop:changed'); } // Bestand sofort abziehen
     await store.save(u.id, { diamonds: have - cost });
     await store.packAdd(u.id, p.id, n);
     res.json(await tcgState(await store.userById(u.id)));
