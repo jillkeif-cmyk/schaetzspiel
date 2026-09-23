@@ -1628,7 +1628,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '106';
+const AVER = '107';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3561,12 +3561,13 @@ function showLocked(kind, id) {
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
 
-const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'];
+const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card', 'Obsidianherz', 'Purpurflamme', 'Geisterhand', 'Schattenkrone', 'Totenkönig']; // wie lib/vip.js
+const tierName = (t) => TIER_NAMES[Math.max(0, Math.min(TIER_NAMES.length - 1, Number(t) || 0))];
 function casinoRow(u, i, me2) {
   return `<div class="pl crow ${me2 && u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}">
     <span class="pos">${i + 1}</span>${avatar(u, 40)}
     <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span>${titleHtml(u)}</span>
-    <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(TIER_NAMES[u.casinoTier || 0])}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
+    <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(tierName(u.casinoTier))}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
 const addFr = (u) => (!u || (home && home.me && u.id === home.me.id) || frStatus(u.id) ? '' : `<button class="addfr" data-addfr="${u.id}" title="Als Freund hinzufügen">+</button>`);
@@ -3728,7 +3729,7 @@ function renderNews() {
       }, 900);
     }).catch(() => {});
   }
-  const TN = ['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'];
+  const TN = TIER_NAMES;
   const block = (b) => {
     if (b.type === 'head') return `<h2 class="nw-h">${esc(b.text)}${b.badge ? ` <span class="nw-badge">${esc(b.badge)}</span>` : ''}</h2>`;
     if (b.type === 'text') return `<p class="nw-p">${esc(b.text)}</p>`;
@@ -3868,7 +3869,7 @@ function renderItemsTab() {
   const C = home.cards, F = home.frames || [], g = home.me.goals || {}, st = home.me.stats || {};
   const prog = (it) => { const x = g[it.id]; if (!x) return it.unlocked ? 1 : 0; return Math.min(1, (st[x[0]] || 0) / x[1]); };
   const all = [...C.titles.map((i) => ({ ...i, k: 't', nm: i.text })), ...C.emblems.map((i) => ({ ...i, k: 'e', nm: i.name })), ...F.map((i) => ({ ...i, k: 'f', nm: i.name }))]
-    .filter((i) => !i.dev && !i.event && (itKind === 'all' || i.k === itKind));
+    .filter((i) => !i.dev && (!i.event || i.event === true || i.unlocked) && (itKind === 'all' || i.k === itKind)); // Pass-Items immer zeigen, Tages-Aktionen nur wenn frei
   const sn = seenSet(), open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked).sort((a, b) => (sn.has(a.k + ':' + a.id) ? 1 : 0) - (sn.has(b.k + ':' + b.id) ? 1 : 0));
   const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${AVER}" alt="">`
     : i.k === 'e' ? `<img class="it-emb" width="52" height="52" loading="lazy" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
@@ -4889,7 +4890,7 @@ function modEdit(id, page) {
        <button class="btn ghost small" id="modBack" style="width:100%">Zurück zu den Werten</button>`
     : `<form id="modForm" style="display:flex;flex-direction:column;gap:10px">
        <div class="modgrid">${f('level', 'Level (1-30)', u.level)}${f('prestige', 'Prestige (0-10)', u.prestige)}${f('rank_points', 'Weltranglistenpunkte', u.rankPoints)}${f('wins', 'Siege', u.wins)}${f('matches', 'Matches', u.matches)}${f('exact', 'Punktlandungen', u.exact)}${f('streak', 'Serie aktuell', u.streak)}${f('best_streak', 'Beste Serie', u.bestStreak)}${f('answered', 'Beantwortete Fragen', u.answered)}${f('points', 'Punkte gesamt', u.pointsTotal)}</div>
-       <label style="margin-top:6px">Casino · VIP ${esc(['Bronze', 'Silber', 'Gold', 'Platin', 'Diamant', 'Black Card'][u.casinoTier || 0])}</label>
+       <label style="margin-top:6px">Casino · VIP ${esc(tierName(u.casinoTier))}</label>
        <div class="modgrid">${f('casino_xp', 'Casino-XP (Silber 3.000 · Gold 10.000 · Platin 25.000 · Diamant 50.000 · Black 90.000)', u.casinoXp)}${f('casino_rounds', 'Casino-Runden', u.casinoRounds)}${f('casino_wins', 'Casino-Siege', u.casinoWins)}${f('casino_best', 'Bester Gewinn', u.casinoBest)}${f('wheel_used', 'Glücksrad heute gedreht (0 = alle frei)', u.wheelUsed)}</div>
        <label style="margin-top:6px">Tagesbelohnung</label>
        <div class="modgrid">${f('daily_streak', 'Tage in Folge (0 bis 6)', u.dailyStreak)}</div>
