@@ -2051,6 +2051,8 @@ app.post('/api/admin/pool', async (req, res) => {
     const a = String(req.body.action || '');
     if (a === 'start') game.qpool.start();
     else if (a === 'model' && ['sonnet', 'haiku'].includes(req.body.value)) { ai.setModel(req.body.value); await store.setting('ai_model', req.body.value); console.log('KI-Modell: ' + req.body.value); }
+    else if (a === 'need') { const r = await game.qpool.needReport(); return res.json({ need: r }); }
+    else if (a === 'fillneed') { const r = await game.qpool.fillNeeded(); const seen0 = await store.seenCounts(u.id).catch(() => new Set()); return res.json({ need: r, model: ai.modelKey(), source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen0) }); }
     else if (a === 'stop') game.qpool.stop();
     else if (a === 'target') game.qpool.setTarget(req.body.value);
     else if (a === 'auto') game.qpool.setAuto(!!req.body.value);

@@ -1706,6 +1706,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .crow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}.crow::-webkit-scrollbar{display:none}
 .crow button{flex:none;white-space:nowrap}.crow .tc-tab.on::before{content:''}.crow button.on{transform:none!important}
 .nw-img.wide{padding:0 0 14px;overflow:hidden}.nw-img.wide img{width:100%;max-width:none;border-radius:20px 20px 0 0;filter:none}.nw-img.wide > div{padding:0 14px}
+.need-box{margin:6px 0 2px}.need-list{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}.need-row{position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05);font:700 13px Archivo;overflow:hidden}
+.need-row small{color:var(--muted);font-weight:600}.need-row i{position:absolute;left:0;bottom:0;height:3px;width:var(--p);background:#7CF0A8}.need-row.knapp{box-shadow:inset 0 0 0 1.5px #E05252}.need-row.knapp i{background:#FF8A80}
 </style>
 </head>
 <body>
@@ -1725,7 +1727,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '170';
+const AVER = '171';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4817,6 +4819,7 @@ function renderAdmin() {
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
         <label class="row" style="gap:6px;margin:0"><span class="sub">Standard-Ziel</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
       </div>
+      <div class="need-box"><div class="row" style="gap:8px"><button class="btn small ghost" id="admNeed">🔍 Bedarf prüfen</button><small class="sub grow">Zeigt pro Kategorie, wie viele neue Fragen der Spieler noch hat, der am meisten gesehen hat.</small></div><div id="admNeedOut"></div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Modus</span><div class="seg"><button data-admmode="batch" class="${d.mode === 'batch' ? 'on' : ''}">📦 Sammelauftrag · halber Preis</button><button data-admmode="direct" class="${d.mode === 'direct' ? 'on' : ''}">⚡ Direkt</button></div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">KI-Modell</span><div class="seg"><button data-admmodel="sonnet" class="${d.model !== 'haiku' ? 'on' : ''}">Sonnet 5 · genauer</button><button data-admmodel="haiku" class="${d.model === 'haiku' ? 'on' : ''}">Haiku 4.5 · halber Preis</button></div></div>
       <p class="sub" style="margin:-4px 0 0;font-size:12px">${d.model === 'haiku' ? '⚡ Haiku: halb so teuer, macht aber häufiger Faktenfehler. „Nachdenken“ gilt bei Haiku nicht.' : '🎯 Sonnet 5: genauere Zahlen und Fakten, doppelt so teuer wie Haiku.'} Gilt für Befüllung und frische Match-Fragen.</p>
@@ -4853,6 +4856,12 @@ function renderAdmin() {
   };
   ['gfTo', 'gfDia', 'gfPack', 'gfN', 'gfTimes', 'gfMsg'].forEach((k) => { const el = document.getElementById(k); if (el) el.onfocus = () => clearTimeout(adminTimer); }); // beim Tippen nicht neu laden
   document.querySelectorAll('[data-admmodel]').forEach((b) => { b.onclick = () => adminAct('model', b.dataset.admmodel); });
+  const needRender = (n) => { const o = $('#admNeedOut'); if (!o || !n) return; const knapp = n.rows.filter((r) => r.need);
+    o.innerHTML = `<p class="sub" style="margin:8px 0 4px">${n.active} aktive Spieler (letzte 14 Tage) geprüft · ${knapp.length ? `<b style="color:#FF8A80">${knapp.length} Kategorien knapp</b>` : '<b style="color:#7CF0A8">überall genug neue Fragen</b>'}</p>
+      <div class="need-list">${n.rows.sort((a, b) => a.worst / a.count - b.worst / b.count).map((r) => `<div class="need-row ${r.need ? 'knapp' : ''}"><span class="grow">${esc(r.name)}</span><small>${r.who ? esc(r.who) + ': ' : ''}<b>${r.worst}</b> von ${r.count} neu</small><i style="--p:${Math.round((r.worst / r.count) * 100)}%"></i></div>`).join('')}</div>
+      ${knapp.length ? `<button class="btn small" id="admFillNeed" style="width:100%;margin-top:8px">▶ Nachfüllen, wo es knapp ist (${knapp.length})</button>` : ''}`;
+    const fb = $('#admFillNeed'); if (fb) fb.onclick = () => api('/api/admin/pool', { action: 'fillneed' }).then((d) => { adminD = d; renderAdmin(); toast(d.need.raised ? `▶ ${d.need.raised} Kategorien werden nachgefüllt` : 'Nichts zu tun'); setTimeout(() => needRender(d.need), 50); }).catch((e) => toast(e.message)); };
+  $('#admNeed').onclick = () => { const o = $('#admNeedOut'); if (o) o.innerHTML = '<p class="sub">Prüfe …</p>'; api('/api/admin/pool', { action: 'need' }).then((d) => needRender(d.need)).catch((e) => toast(e.message)); };
   $('#admStart').onclick = () => api('/api/admin/pool', { action: 'start' }).then((d) => { adminD = d; renderAdmin(); if (!d.running) toast(d.aiOk === false ? 'KI-Schlüssel fehlt' : d.themes.some((t) => !t.skip && t.count < t.target) ? 'Befüllung konnte nicht starten' : '✅ Alle aktiven Kategorien sind schon am Ziel. Zum Nachfüllen ein Ziel erhöhen.'); else toast('▶ Befüllung läuft'); }).catch((e) => toast(e.message));
   $('#admStop').onclick = () => adminAct('stop');
   $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
