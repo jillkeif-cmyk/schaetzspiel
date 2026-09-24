@@ -2203,7 +2203,7 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     setTimeout(() => { if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 180000); }); // Automatenplatz bleibt bei kurzem Verbindungsabbruch 3 Minuten reserviert
 } // Erfolge: Ausgangsstand beim Verbinden
 game.hooks.progress = (id) => checkProgress(id);
-game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id) || (tcSeatOf(id) ? `spielt Triple Crown an Maschine ${tcSeatOf(id)}` : null));
+game.hooks.table = (id) => (poker.isSeated(id) ? 'spielt Poker' : bjTables.isSeated(id) || (tcSeatOf(id) ? (() => { const m = tcSeatOf(id), g = machineGame(m), nr = m - ({ triple: 0, jester: 2, anubis: 4, crypt: 6 }[g] || 0); return `spielt ${GAME_LABEL[g] || 'Triple Crown'} an Maschine ${nr}`; })() : null));
 
 store.init().then(() => push.init(store)).then((k) => {
   console.log('Push bereit, Schlüssel endet auf …' + k.slice(-6));

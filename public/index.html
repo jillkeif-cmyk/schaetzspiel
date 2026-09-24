@@ -1698,6 +1698,13 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .jc-reels .tc-cell.cr-fill{animation:crfill .3s ease-out}@keyframes crfill{from{transform:scaleY(.2);filter:brightness(2)}to{transform:none}}
 .jc-reels .tc-cell.cr-exp-on{background-color:#3a1206!important;box-shadow:inset 0 0 0 2px #FFD23F;animation:crglowx .5s ease-in-out infinite alternate}@keyframes crglowx{from{filter:brightness(1) saturate(1)}to{filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 6px rgba(255,120,40,.8))}}
 .jc-reels .tc-cell.cr-flashw::after{content:'';position:absolute;inset:0;border-radius:8px;background:#fff;animation:crflw .45s ease-out forwards;pointer-events:none}@keyframes crflw{0%{opacity:.95}100%{opacity:0}}
+.cnav{display:flex!important;flex-direction:column;gap:8px;flex-wrap:nowrap!important}
+.cseg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.cseg button{position:relative;padding:9px 6px!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;color:var(--muted);font:800 13.5px Archivo!important;white-space:nowrap}
+.cseg button.on{background:linear-gradient(135deg,#FFE27A,#F5B82E)!important;color:#2A1B00!important;box-shadow:0 2px 10px rgba(255,210,63,.35)!important}
+.cseg-dot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#FF4FA3;box-shadow:0 0 8px #FF4FA3}
+.crow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}.crow::-webkit-scrollbar{display:none}
+.crow button{flex:none;white-space:nowrap}.crow .tc-tab.on::before{content:''}.crow button.on{transform:none!important}
 </style>
 </head>
 <body>
@@ -1717,7 +1724,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '160';
+const AVER = '161';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2864,12 +2871,21 @@ function renderCards() {
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
     const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
-    const tabs = games.filter(([k]) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))
-      .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label + (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : ''), extra || '')).join('');
-    box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
+    // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
+    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], more: ['wheel', 'rewards', 'crank', 'setup'] };
+    const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
+    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
+    const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
+    const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
+    const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
+    const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${l}${catDot(c)}</button>`).join('');
+    const tabs = `<div class="cseg">${seg}</div><div class="crow">${CAT[curCat].filter(ok).map((k) => { const [l, e] = lab[k] || [k, '']; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
+    window.__ccat = CAT; window.__cok = ok;
+    setTimeout(() => { const o = document.querySelector('.crow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
+    box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
@@ -6166,7 +6182,8 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
-  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
+  else if (t.dataset.ccat) { const C = window.__ccat || {}, ok = window.__cok || (() => true), last = (window.__clast || {})[t.dataset.ccat]; const list = (C[t.dataset.ccat] || []).filter(ok); const k = last && list.includes(last) ? last : list[0]; if (k) { cgame = k === 'wheel' ? 'vip' : k; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); } }
+  else if (t.dataset.cg) { cgame = t.dataset.cg; bj = null; window.__clast = window.__clast || {}; const C = window.__ccat || {}; const kk = cgame === 'vip' ? 'wheel' : cgame; Object.keys(C).forEach((c) => { if (C[c].includes(kk)) window.__clast[c] = kk; }); renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbstep) { // Einsatz in 100er-Schritten ändern, ohne zu tippen
     cbet = Math.max(50, Math.min(MAX_CBET, Math.round((Number(($('#cbAmount') || {}).value) || cbet) + Number(t.dataset.cbstep))));
     cbetPick = String(cbet); const el = $('#cbAmount'); if (el) el.value = cbet;
