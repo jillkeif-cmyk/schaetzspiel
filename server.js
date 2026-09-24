@@ -1702,6 +1702,7 @@ store.setting('slots_live').then((v) => { slotsLive = v === '1'; }).catch(() => 
 const newsVisible = (p) => !p.requires || (p.requires === 'gn' && gnOpen) || (p.requires === 'slots' && slotsLive); // Beiträge erst nach ihrer Freigabe
 let adminCodes = {}; // CODE -> { reward, max, until, note, used: [{ id, name, at }] }
 store.setting('admin_codes').then(async (v) => { if (v) adminCodes = JSON.parse(v);
+  if (!adminCodes.SOUNDTRACK) { adminCodes.SOUNDTRACK = { reward: { dia: 15000, items: [] }, max: 0, until: Date.now() + 30 * 86400000, note: 'Update 15: Sound & Effekte', used: [], created: Date.now() }; await saveCodes(); } // Code aus Update 15
   if (!adminCodes.AUTOMATEN) { adminCodes.AUTOMATEN = { reward: { dia: 15000, items: [] }, max: 0, until: Date.now() + 30 * 86400000, note: 'Update 14: neue Automaten testen', used: [], created: Date.now() }; await saveCodes(); } // Code aus Update 14
   if (!adminCodes.GEISTERJACKPOT) { adminCodes.GEISTERJACKPOT = { reward: { dia: 10000, items: [] }, max: 0, until: 0, note: 'Update 12', used: [], created: Date.now() }; await saveCodes(); } // Code aus Update 12
 }).catch(() => {});
