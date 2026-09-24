@@ -177,7 +177,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -385,7 +385,12 @@ app.post('/api/admin/boost', async (req, res) => {
   const b = boost.set(req.body || {}); await store.setting('boost', JSON.stringify(b)); io.emit('boost', b);
   console.log(`Doppel-XP: ${JSON.stringify(b)} durch ${u.name}`); res.json(b);
 });
-store.setting('pass_per_tier').then((v) => { if (v) kpass.setPerTier(v); }).catch(() => {});
+store.setting('pass_per_tier').then(async (v) => { // Umbau Quiz-Belohnung: einmalig auf 2.500 pro Stufe (≈ 60 Siege)
+  if (!(await store.setting('pass_rework1'))) { kpass.setPerTier(2500); await store.setting('pass_per_tier', '2500'); await store.setting('pass_rework1', '1'); console.log('Kronen-Pass: 2.500 Pass-XP pro Stufe'); return; }
+  if (v) kpass.setPerTier(v);
+}).catch(() => {});
+const quizpay = require('./lib/quizpay');
+store.setting('quiz_pay').then((v) => { if (v) quizpay.set(JSON.parse(v)); }).catch(() => {});
 store.setting('pass_mode').then((v) => { if (v) { const x = JSON.parse(v); kpass.setMode(x.mode, x.unlockAt); } }).catch(() => {});
 // Pass-Start: Wochenaufgaben zählen erst ab hier. Fehlt der Wert (erster Start nach diesem Update), beginnt die Zählung jetzt für alle neu
 store.setting('pass_epoch').then(async (v) => { if (v) kpass.setEpoch(v); else { kpass.setEpoch(Date.now()); await store.setting('pass_epoch', String(kpass.epoch())); console.log('Kronen-Pass: Wochenaufgaben zählen ab jetzt neu'); } }).catch(() => {});
@@ -1664,6 +1669,11 @@ app.post('/api/admin/banner', async (req, res) => {
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
+});
+app.post('/api/admin/quizpay', async (req, res) => { // Quiz-Diamanten: an/aus und Werte
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const c = quizpay.set({ ...quizpay.get(), ...req.body }); await store.setting('quiz_pay', JSON.stringify(c));
+  console.log(`Quiz-Diamanten: ${c.on ? 'an' : 'aus'}, Sieg bis ${c.win} ab ${c.pts} Punkten, Solo bis ${c.solo} ab ${c.soloPts}, Verlierer ×${c.lose}, durch ${u.name}`); res.json(c);
 });
 app.post('/api/admin/solowin', async (req, res) => { // Solo-Sieg an/aus, Punktgrenze, höchstens Fragen
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
