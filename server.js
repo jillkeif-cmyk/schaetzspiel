@@ -882,9 +882,11 @@ store.setting('jester_test').then((v) => { if (v !== null && v !== undefined && 
 const jesterBlocked = (u, res) => { if (jesterTest && !isAdmin(u)) { res.status(403).json({ error: '🔒 Die Narrenkappe ist noch in der Testphase. Zuschauen geht schon!' }); return true; } return false; };
 const tcSeats = new Map(); // Maschine -> { uid, name, last, grid }
 const tcSeatOf = (uid) => { for (const [m, st] of tcSeats) if (st.uid === uid) return m; return null; };
-const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, game: machineGame(i + 1), user: st ? { id: st.uid, name: st.name } : null, watchers: (io.sockets.adapter.rooms.get('tc' + (i + 1)) || { size: 0 }).size }; });
+const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, game: machineGame(i + 1), user: st ? { id: st.uid, name: st.name } : null, watchers: roomWatchers('tc' + (i + 1)) }; });
 const tcPush = () => io.emit('tc:list', tcList());
-const notifyWatched = (uid, watcher, game) => { if (!uid || !watcher || uid === watcher.id) return; io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('watch:new', { name: watcher.name, game }); }); }; // „X schaut dir zu“
+// Zuschauer zählen, der Admin schaut unsichtbar zu (keine Meldung, nicht im 👀-Zähler)
+const roomWatchers = (room) => [...(io.sockets.adapter.rooms.get(room) || [])].filter((sid) => { const so = io.sockets.sockets.get(sid); return !(so && so.data.user && isAdmin(so.data.user)); }).length;
+const notifyWatched = (uid, watcher, game) => { if (!uid || !watcher || uid === watcher.id || isAdmin(watcher)) return; io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('watch:new', { name: watcher.name, game }); }); }; // „X schaut dir zu“
 const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (!m) return; store.userById(uid).then((f) => io.to('tc' + m).emit('tc:ev', { machine: m, dia: f ? Number(f.diamonds) || 0 : null, ...ev })).catch(() => io.to('tc' + m).emit('tc:ev', { machine: m, ...ev })); }; // mit Guthaben des Spielers für die Zuschauer
 async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gutgeschrieben
   const m = tcSeatOf(uid); if (!m) return;
@@ -922,7 +924,7 @@ app.post('/api/casino/triple/leave', async (req, res) => {
 });
 // Zuschauen bei Roulette und Blackjack (allein): wer auf der Seite ist, sitzt am Tisch; Zuschauer im Raum cw<userId>
 const cwAt = new Map(); // userId -> { game, name }
-const cwList = () => [...cwAt.entries()].map(([uid, x]) => ({ uid, name: x.name, game: x.game, watchers: (io.sockets.adapter.rooms.get('cw' + uid) || { size: 0 }).size }));
+const cwList = () => [...cwAt.entries()].map(([uid, x]) => ({ uid, name: x.name, game: x.game, watchers: roomWatchers('cw' + uid) }));
 let cwT = null; const cwPush = () => { clearTimeout(cwT); cwT = setTimeout(() => io.emit('cw:list', cwList()), 300); };
 const cwEmit = (uid, ev) => io.to('cw' + uid).emit('cw:ev', { uid, ...ev });
 function cwSet(user, pg) {
@@ -933,8 +935,12 @@ function cwSet(user, pg) {
 const tcForce = new Set(); // Admin-Test: nächster Dreh wird ein Vollbild
 app.post('/api/admin/tcforce', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
-  if (req.body.on) tcForce.add(u.id); else tcForce.delete(u.id);
-  res.json({ on: tcForce.has(u.id) });
+  // Ohne Maschine: für den Admin selbst. Mit Maschine (beim Zuschauen): heimlich für den Spieler dort, der merkt nichts.
+  const m = Math.round(Number(req.body.machine) || 0), st = m ? tcSeats.get(m) : null, target = m ? (st && st.uid) : u.id;
+  if (!target) return res.status(400).json({ error: 'An dieser Maschine sitzt gerade niemand.' });
+  if (req.body.on) tcForce.add(target); else tcForce.delete(target);
+  if (m && req.body.on) console.log(`Bonus von ${u.name} für ${st.name} an Maschine ${m}`);
+  res.json({ on: tcForce.has(target) });
 });
 const tripleLock = (uid, res) => { if (tripleBusy.has(uid)) { res.status(429).json({ error: 'Einen Moment …' }); return false; } tripleBusy.add(uid); return true; };
 app.post('/api/casino/triple', async (req, res) => {
@@ -951,7 +957,7 @@ app.post('/api/casino/triple', async (req, res) => {
     const u2 = await store.userById(u.id);
     note(`Triple Crown: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
     const t = await takeBet(u2, bet, triple.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
-    const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
+    const forced = tcForce.has(u.id); if (forced) tcForce.delete(u.id); /* nur der Admin kann das setzen */
     const r = triple.play(bet, forced);
     const fulls = r.spins.filter((x) => x.full).length;
     await store.save(u.id, { slot_spins: (Number(u2.slot_spins) || 0) + 1, slot_full: (Number(u2.slot_full) || 0) + fulls }); // Drehungen und Vollbilder zählen
@@ -959,7 +965,7 @@ app.post('/api/casino/triple', async (req, res) => {
     if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
     else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1)); // Niete: deutlich weniger Casino-XP als ein Gewinn (Autoplay dreht schnell)
     const sm = tcSeatOf(u.id); if (sm && r.spins.length) tcSeats.get(sm).grid = r.spins[r.spins.length - 1].grid;
-    tcEmit(u.id, { type: 'spin', bet, spins: r.spins, total: r.total, risk });
+    tcEmit(u.id, { type: 'spin', bet, spins: r.spins, total: r.total, risk, forced });
     res.json({ ...r, bet, risk, diamonds: t.left, forced });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -979,13 +985,13 @@ app.post('/api/casino/jester', async (req, res) => { // Narrenkappe: 5 Walzen, 1
       const u2 = await store.userById(u.id);
       note(`Narrenkappe: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
       const t = await takeBet(u2, bet, jester.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
-      const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
+      const forced = tcForce.has(u.id); if (forced) tcForce.delete(u.id); /* nur der Admin kann das setzen */
       const r = jester.play(bet, undefined, forced);
       let risk = null;
       if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { game: 'jester', bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
       else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1));
       const sm = tcSeatOf(u.id); if (sm) tcSeats.get(sm).grid = r.grid;
-      tcEmit(u.id, { type: 'jspin', bet, before: r.before, grid: r.grid, cap: r.cap, lines: r.lines, total: r.total, risk });
+      tcEmit(u.id, { type: 'jspin', bet, before: r.before, grid: r.grid, cap: r.cap, lines: r.lines, total: r.total, risk, forced });
       res.json({ ...r, bet, risk, diamonds: t.left, forced });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
@@ -1765,14 +1771,14 @@ app.post('/api/casino/anubis', async (req, res) => { // Auge des Anubis: Maschin
       const u2 = await store.userById(u.id);
       note(`Auge des Anubis: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
       const t = await takeBet(u2, bet, anubis.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
-      const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
+      const forced = tcForce.has(u.id); if (forced) tcForce.delete(u.id); /* nur der Admin kann das setzen */
       const r = anubis.play(bet, undefined, forced);
       if (r.fs) note(`Auge des Anubis: ${r.fs.spins.length} Freispiele, Freispiel-Gewinn ${fmtD(r.fs.total)}`);
       let risk = null;
       if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { game: 'anubis', bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
       else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1));
       const sm = tcSeatOf(u.id); if (sm) tcSeats.get(sm).grid = r.fs ? r.fs.spins[r.fs.spins.length - 1].grid : r.grid;
-      tcEmit(u.id, { type: 'aspin', bet, r, risk });
+      tcEmit(u.id, { type: 'aspin', bet, r, risk, forced });
       res.json({ ...r, bet, risk, diamonds: t.left, forced });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }

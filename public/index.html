@@ -1684,7 +1684,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '145';
+const AVER = '146';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3101,7 +3101,7 @@ async function tcSit(m) {
 }
 const machGame = (m) => (m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
 const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis' }[machGame(m)] + ' · Maschine ' + (m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
-function tcWatch(m) { tc.game = machGame(m); tc.jgrid = null; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+function tcWatch(m) { tc.game = machGame(m); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
@@ -3115,6 +3115,7 @@ async function tcWatchRun() {
     const ev = tc.wq.shift();
     if (ev.dia !== null && ev.dia !== undefined) { tc.wdia = ev.type === 'spin' ? ev.dia - (ev.total || 0) : ev.dia; tcSync(); } // Guthaben des Spielers: beim Dreh erst ohne Gewinn
     try {
+      if (ev.forced && tc.force) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '🎁 ' + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild'); } }
       if (ev.type === 'aspin') { $('#tcOver').innerHTML = ''; anClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;'); await anPlay(ev.r, ev.bet); tcSetMsg(ev.risk ? `Gewinn ${fmt(ev.r.total)}` : 'Leider nichts'); tcSync(); }
       else if (ev.type === 'jspin') { // Narrenkappe zum Zuschauen
         $('#tcOver').innerHTML = ''; jcClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
@@ -3158,7 +3159,7 @@ function renderTriple(box) {
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
-    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.watch ? '🎁 ' : ''}${tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
       ${tc.game === 'jester' || tc.game === 'anubis' ? `<div class="jc-bg" ${tc.game === 'anubis' ? `style="background-image:url('/an/bg.webp')"` : ''}></div><img class="tc-logo jc-logo" src="${G_DIR()}logo.webp?v=${AVER}" alt="">${tc.game === 'anubis' ? `<div class="an-top"><div class="an-tab" id="anTab">${anTabHtml(0)}</div><div class="an-fs" id="anFs"></div></div>` : ''}
       <div class="tc-machine jc-machine"><div class="tc-reels jc-reels" id="tcReels">${jcGrid().map((col, c) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${c}">${col.map(jcCell).join('')}</div></div>`).join('')}
           <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
@@ -3182,7 +3183,7 @@ function renderTriple(box) {
       <div class="tc-tools"><button class="chipbtn" id="tcTurbo">⚡ Turbo</button><button class="chipbtn ${TCM.on ? 'on' : ''}" id="tcMusic">${TCM.on ? '🎵 Musik an' : '🔇 Musik aus'}</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
     </div>`;
     $('#tcStart').onclick = tcStartKey; $('#tcBack').onclick = tcBackToLobby;
-    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild') + (tc.force ? ' AN' : ''); toast(tc.force ? (tc.game === 'jester' ? 'Beim nächsten Dreh landet die Kappe und verwandelt 9 Felder.' : tc.game === 'anubis' ? 'Beim nächsten Dreh gibt es 3 Grabtore und Freispiele.' : 'Der nächste Dreh wird ein Vollbild.') : 'Vollbild-Test aus.'); };
+    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force, machine: tc.watch || undefined }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = (tc.watch ? '🎁 ' : '') + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild') + (tc.force ? ' AN' : ''); toast(tc.force ? (tc.watch ? '🎁 Heimlicher Bonus: ' : '') + (tc.game === 'jester' ? 'Beim nächsten Dreh landet die Kappe und verwandelt 9 Felder.' : tc.game === 'anubis' ? 'Beim nächsten Dreh gibt es 3 Grabtore und Freispiele.' : 'Der nächste Dreh wird ein Vollbild.') : 'Vollbild-Test aus.'); };
     $('#tcKBet').onclick = () => { if (tc.busy || tc.risk) return; tc.bi = (tc.bi + 1) % TC_BETS.length; tcSync(); sfx('tick'); };
     $('#tcKLad').onclick = () => tc.risk && !tc.busy && tcLadderOpen();
     $('#tcKCard').onclick = () => tc.risk && !tc.busy && tcCardOpen();
@@ -5878,7 +5879,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.cwwatch) { const x = cwList.find((c) => String(c.uid) === t.dataset.cwwatch); if (x) cwStart(x.uid, x.name, x.game); }
   else if (t.dataset.tcsit) { tcSit(Number(t.dataset.tcsit)); }
   else if (t.dataset.tcwatch) { tcWatch(Number(t.dataset.tcwatch)); }
-  else if (t.dataset.tcwatchhome) { const wm = Number(t.dataset.tcwatchhome); page = 'casino'; ctab = 'casino'; cgame = machGame(wm); tc.game = machGame(wm); tc.jgrid = null; tc.watch = wm; tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }
+  else if (t.dataset.tcwatchhome) { const wm = Number(t.dataset.tcwatchhome); page = 'casino'; ctab = 'casino'; cgame = machGame(wm); tc.game = machGame(wm); tc.jgrid = null; tc.force = false; tc.watch = wm; tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }
   else if (t.dataset.pkwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:watch', t.dataset.pkwatchhome); }
   else if (t.dataset.pkjoin) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:sit', { table: t.dataset.pkjoin }); }
   else if (t.dataset.bjjoin) { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', t.dataset.bjjoin); }
