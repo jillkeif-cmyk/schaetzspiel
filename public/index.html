@@ -1684,7 +1684,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '142';
+const AVER = '143';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3340,13 +3340,13 @@ async function jcCap(cap, after) { // Kappe schüttelt sich, dann fliegt sie Fel
   const cellEl = (c, r) => document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r];
   capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.add('jc-shake'); });
   tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1200);
-  if (!cap.turned.length) { capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.remove('jc-shake'); }); tcSetMsg('🃏 … sie hat sich nur geschüttelt'); await tcSleep(tc.turbo ? 300 : 700); tc.jgrid = after; return; }
+  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capped'); } }); // die Kappe selbst ist jetzt Narr (rot)
+  if (!cap.turned.length) { tcSetMsg('🃏 Die Kappe selbst zählt als Narr'); await tcSleep(tc.turbo ? 300 : 700); tc.jgrid = after; return; }
   tcSetMsg(`🃏 Die Kappe verteilt sich auf ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld' : 'Felder'}!`);
   for (const [c, r] of cap.turned) { // Kappe landet auf dem Symbol, das Feld glüht rot
     const el = cellEl(c, r); if (el) { el.classList.add('jc-capped'); el.insertAdjacentHTML('beforeend', `<img class="jc-hat" src="/jc/hat.webp?v=${AVER}" alt="">`); }
     sfx('jcpop'); await tcSleep(tc.turbo ? 160 : 420);
   }
-  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capdone'); } }); // leere Kappe kippt zur Seite
   await tcSleep(tc.turbo ? 200 : 450); tc.jgrid = after;
 }
 async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzählen
@@ -3389,7 +3389,7 @@ function jcPaytable() {
   const lb = TC_BETS[tc.bi] / 10;
   $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/jc/logo.webp?v=${AVER}" alt="" style="width:70%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(TC_BETS[tc.bi])}.</p>
     <div class="jc-pays">${Object.keys(JC_PAY).reverse().map((k) => `<div class="jc-pay"><img src="/jc/s_${k}.webp?v=${AVER}" alt=""><b>${esc(JC_SYM[k])}</b><small>${JC_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
-    <div class="jc-pay"><img src="/jc/s_N.webp?v=${AVER}" alt=""><b>Narrenkappe</b><small>Nur auf der mittleren Walze. Sie schüttelt sich und verwandelt zufällig Felder in Kürbisnarren, manchmal auch keins.</small></div>
+    <div class="jc-pay"><img src="/jc/s_N.webp?v=${AVER}" alt=""><b>Narrenkappe</b><small>Nur auf der mittleren Walze. Sie zählt selbst als Kürbisnarr, schüttelt sich und setzt sich oft auf weitere Symbole, bis zu 12. Die zählen dann ebenfalls als Narr.</small></div>
     <p class="sub" style="margin:0">🃏 Der Kürbisnarr ersetzt jedes Symbol außer der Kappe. Jeden Gewinn kannst du mit der Leiter oder der Karte riskieren.</p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
