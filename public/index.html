@@ -1618,7 +1618,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .solo-win{margin:6px 0 10px;padding:10px 12px;border-radius:14px;text-align:center;font:900 15px/1.3 Archivo;color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E);box-shadow:0 0 18px rgba(255,210,63,.5)}.sw-hint{background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(255,106,0,.12))!important}
 .solo-rule{padding:10px 12px;border-radius:12px;background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.4);margin:0}
 .pk-lobby{position:relative}.pk-lobby.pk-lux1{background:linear-gradient(135deg,#2a1147,#140a26)!important;box-shadow:inset 0 0 0 1.5px #B98CFF,0 0 20px rgba(180,120,255,.35)!important}.pk-lobby.pk-lux2{background:linear-gradient(135deg,#3a1560,#1b0b2e 60%,#2a1a05)!important;box-shadow:inset 0 0 0 2px #FFD23F,0 0 26px rgba(180,92,255,.55),0 0 10px rgba(255,210,63,.4)!important;animation:psglow 2.4s ease-in-out infinite}
-.pk-lux1 b,.pk-lux2 b{color:#E6D2FF}.pk-lux2 b{background:linear-gradient(90deg,#FFE27A,#E6B8FF,#FFE27A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pk-lobby.pk-lux1>.grow>b,.pk-lobby.pk-lux2>.grow>b{color:#E6D2FF}.pk-lobby.pk-lux2>.grow>b{background:linear-gradient(90deg,#FFE27A,#E6B8FF,#FFE27A);-webkit-background-clip:text;background-clip:text;color:transparent} /* nur der Tischname in der Lobby, nicht Karten am Tisch */
 .pk-luxtag{position:absolute;top:-9px;right:12px;padding:3px 10px;border-radius:99px;font:900 11px/1.2 Archivo;letter-spacing:.6px;color:#fff;background:linear-gradient(135deg,#B45CFF,#6A2BD6);box-shadow:0 0 12px rgba(180,92,255,.7)}.pk-lux2 .pk-luxtag{color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E)}
 .pk-table.pk-lux1{box-shadow:0 0 30px rgba(180,120,255,.45)}.pk-table.pk-lux2{box-shadow:0 0 40px rgba(180,92,255,.6),0 0 16px rgba(255,210,63,.45)}
 </style>
@@ -1640,7 +1640,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '123';
+const AVER = '124';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
