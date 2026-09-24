@@ -972,13 +972,14 @@ app.post('/api/casino/jester', async (req, res) => { // Narrenkappe: 5 Walzen, 1
       const u2 = await store.userById(u.id);
       note(`Narrenkappe: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
       const t = await takeBet(u2, bet, jester.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
-      const r = jester.play(bet);
+      const forced = tcForce.has(u.id) && isAdmin(u); if (forced) tcForce.delete(u.id);
+      const r = jester.play(bet, undefined, forced);
       let risk = null;
       if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { game: 'jester', bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
       else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1));
       const sm = tcSeatOf(u.id); if (sm) tcSeats.get(sm).grid = r.grid;
       tcEmit(u.id, { type: 'jspin', bet, before: r.before, grid: r.grid, cap: r.cap, lines: r.lines, total: r.total, risk });
-      res.json({ ...r, bet, risk, diamonds: t.left });
+      res.json({ ...r, bet, risk, diamonds: t.left, forced });
     } finally { tripleBusy.delete(u.id); }
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

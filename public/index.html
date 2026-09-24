@@ -1633,7 +1633,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .jc-shake{animation:jcshake .12s ease-in-out infinite;filter:drop-shadow(0 0 10px #7CF0A8)}@keyframes jcshake{0%,100%{transform:rotate(-9deg) scale(1.08)}50%{transform:rotate(9deg) scale(1.12)}}
 .jc-pop{animation:jcpop .45s cubic-bezier(.2,1.4,.4,1)}@keyframes jcpop{0%{transform:scale(.3);filter:brightness(3)}100%{transform:scale(1)}}
 .jc-pays{display:flex;flex-direction:column;gap:6px}.jc-pay{display:grid;grid-template-columns:48px 1fr;column-gap:10px;align-items:center;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05)}.jc-pay img{width:48px;height:48px;grid-row:span 2;object-fit:contain}.jc-pay b{font:800 14px Archivo}.jc-pay small{color:#cfe;font-size:12px}
-.tc-machine.jc-machine{display:block!important;width:100%}.jc-reels{width:100%;box-sizing:border-box}.jc-reels .tc-reel{height:auto!important}.jc-reels .tc-cell{height:auto!important;aspect-ratio:1}.jc-reels .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}
+.tc-machine.jc-machine{display:block!important;width:100%}.jc-reels{width:100%;box-sizing:border-box}.jc-reels .tc-reel{height:auto}.jc-reels .tc-cell{height:auto!important;aspect-ratio:1}.jc-reels .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}
 .jc-bg{position:absolute;inset:0;border-radius:inherit;background:url('/jc/bg.webp') center/cover;opacity:.9;z-index:0;pointer-events:none}.jc-machine,.jc-logo{position:relative;z-index:1}
 .jc-bg ~ *{position:relative;z-index:1}.jc-bg{opacity:.55}
 .jc-reels.dim .tc-cell:not(.hit){opacity:.32;filter:grayscale(.6)}.jc-reels .tc-cell{position:relative;transition:opacity .25s}
@@ -1671,7 +1671,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '135';
+const AVER = '136';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3135,7 +3135,7 @@ function renderTriple(box) {
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
-    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch && tc.game !== 'jester' ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">👑 Vollbild${tc.force ? ' AN' : ''}</button>` : ''}
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.game === 'jester' ? '🃏 Kappe' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
       ${tc.game === 'jester' ? `<div class="jc-bg"></div><img class="tc-logo jc-logo" src="/jc/logo.webp?v=${AVER}" alt="Narrenkappe">
       <div class="tc-machine jc-machine"><div class="tc-reels jc-reels" id="tcReels">${jcGrid().map((col, c) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${c}">${col.map(jcCell).join('')}</div></div>`).join('')}
           <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
@@ -3159,7 +3159,7 @@ function renderTriple(box) {
       <div class="tc-tools"><button class="chipbtn" id="tcTurbo">⚡ Turbo</button><button class="chipbtn ${TCM.on ? 'on' : ''}" id="tcMusic">${TCM.on ? '🎵 Musik an' : '🔇 Musik aus'}</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
     </div>`;
     $('#tcStart').onclick = tcStartKey; $('#tcBack').onclick = tcBackToLobby;
-    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = '👑 Vollbild' + (tc.force ? ' AN' : ''); toast(tc.force ? 'Der nächste Dreh wird ein Vollbild.' : 'Vollbild-Test aus.'); };
+    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = (tc.game === 'jester' ? '🃏 Kappe' : '👑 Vollbild') + (tc.force ? ' AN' : ''); toast(tc.force ? (tc.game === 'jester' ? 'Beim nächsten Dreh landet die Kappe und verwandelt 9 Felder.' : 'Der nächste Dreh wird ein Vollbild.') : 'Vollbild-Test aus.'); };
     $('#tcKBet').onclick = () => { if (tc.busy || tc.risk) return; tc.bi = (tc.bi + 1) % TC_BETS.length; tcSync(); sfx('tick'); };
     $('#tcKLad').onclick = () => tc.risk && !tc.busy && tcLadderOpen();
     $('#tcKCard').onclick = () => tc.risk && !tc.busy && tcCardOpen();
@@ -3351,6 +3351,7 @@ async function jcSpin() {
   try {
     const r = await api('/api/casino/jester', { bet, machine: tc.seat });
     tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tcSync();
+    if (r.forced) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '🃏 Kappe'; } }
     await jcAnimate(r.before);
     if (r.cap) await jcCap(r.cap, r.grid); else tc.jgrid = r.grid;
     if (r.lines.length) await jcLines(r.lines);
