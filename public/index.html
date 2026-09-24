@@ -1657,7 +1657,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '132';
+const AVER = '133';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3057,7 +3057,8 @@ function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
         <div class="tc-mmini"><img src="${LOGO}?v=${AVER}" alt=""><div class="tc-mreels">${'<span></span>'.repeat(J ? 5 : 3)}</div></div>
         ${m.user ? `<div class="tc-mwho">${tcAva(m.user)}<b>${esc(m.user.name)}</b></div><div class="tc-mstate">${mine ? 'Dein Platz' : 'Belegt'}${m.watchers ? ` · 👀 ${m.watchers}` : ''}</div>
           ${mine ? `<button class="btn small" data-tcsit="${m.id}">Weiterspielen</button>` : `<button class="btn small ghost" data-tcwatch="${m.id}">👀 Zuschauen</button>`}`
-        : `<div class="tc-mwho"><b style="color:#7CF0A8">Frei</b></div><div class="tc-mstate">&nbsp;</div><button class="btn small" data-tcsit="${m.id}">Hinsetzen</button>`}</div>`; }).join('')}</div></div>`;
+        : J && home && home.jesterTest && !home.me.admin ? `<div class="tc-mwho"><b style="color:#C9A2FF">🔒 Testphase</b></div><div class="tc-mstate">bald spielbar</div><button class="btn small ghost" disabled>🔒 Noch gesperrt</button>`
+        : `<div class="tc-mwho"><b style="color:#7CF0A8">Frei</b></div><div class="tc-mstate">${J && home && home.jesterTest ? '🧪 nur du (Testphase)' : '&nbsp;'}</div><button class="btn small" data-tcsit="${m.id}">Hinsetzen</button>`}</div>`; }).join('')}</div>${J && home && home.jesterTest && !home.me.admin ? '<p class="sub" style="text-align:center;margin:10px 0 0">🔒 Die Narrenkappe ist noch in der Testphase. Zuschauen geht schon!</p>' : ''}</div>`;
 }
 async function tcSit(m) {
   const r = await api('/api/casino/triple/sit', { machine: m }).catch((e) => { toast(e.message); return null; }); if (!r) return;
@@ -4255,6 +4256,7 @@ function loadAdmin() {
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
+  const jtt = $('#jtTog'); if (jtt && !jtt.dataset.bound) { jtt.dataset.bound = 1; jtt.onclick = () => api('/api/admin/jestertest', { on: !(home && home.jesterTest) }).then((r) => { home.jesterTest = r.on; toast(r.on ? '🧪 Narrenkappe: nur für dich' : '🃏 Narrenkappe für alle freigegeben'); $('#jtSt').textContent = r.on ? 'nur du' : 'für alle'; $('#jtSt').classList.toggle('on', r.on); jtt.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
   const bws = $('#bwSave'); if (bws && !bws.dataset.bound) { bws.dataset.bound = 1; bws.onclick = () => api('/api/admin/bigwin', { min: Number($('#bwMin').value) }).then((r) => { if (home) home.bigWinMin = r.min; toast(r.min ? `📣 Meldung ab ${fmt(r.min)} 💎` : '📣 Gewinn-Meldung aus'); }).catch((e) => toast(e.message)); }
   const qpb = $('#qpBox'); if (qpb && !qpb.dataset.bound) { qpb.dataset.bound = 1; qpb.ontoggle = () => { if (!qpb.open) return; const c = (home && home.quizPay) || {};
     $('#qpAdm').innerHTML = `<div class="row"><b class="grow">Status</b><span class="adm-st ${c.on ? 'on' : ''}">${c.on ? 'aktiv' : 'aus (alte Werte)'}</span></div>
@@ -4779,6 +4781,9 @@ function build() {
     <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
+    <div class="panel lg-box" id="jtBox"><div class="row"><b class="grow">🃏 Narrenkappe: Testphase</b><span class="adm-st ${home && home.jesterTest ? 'on' : ''}" id="jtSt">${home && home.jesterTest ? 'nur du' : 'für alle'}</span></div>
+      <small class="sub" style="display:block;margin:4px 0 8px">Ist die Testphase an, sehen alle das Spiel, aber nur du kannst dich hinsetzen. Zuschauen geht für alle.</small>
+      <button class="btn small" id="jtTog">${home && home.jesterTest ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'}</button></div>
     <details class="panel lg-box" id="bwBox"><summary><b>📣 Gewinn-Meldung an alle</b><small> · ab welchem Casino-Gewinn alle Online-Spieler eine Meldung bekommen</small></summary>
       <div style="margin-top:10px"><div class="row" style="gap:6px;flex-wrap:wrap"><label style="flex:1">Ab Gewinn (💎) <input class="field" type="number" min="0" step="10000" id="bwMin" value="${home && home.bigWinMin !== undefined ? home.bigWinMin : 50000}"></label><button class="btn small" id="bwSave" style="align-self:flex-end">Speichern</button></div>
       <p class="sub" style="margin:6px 0 0">0 = Meldung ausgeschaltet.</p></div></details>

@@ -177,7 +177,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ jesterTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -871,6 +871,9 @@ const tripleBusy = new Set(); // pro Spieler immer nur eine Triple-Anfrage gleic
 const TC_MACHINES = 4, TC_IDLE = 5 * 60 * 1000; // 1–2 Triple Crown, 3–4 Narrenkappe
 const jester = require('./lib/jester');
 const machineGame = (m) => (m >= 3 ? 'jester' : 'triple');
+let jesterTest = true; // Testphase: alle sehen die Narrenkappe, spielen darf nur der Admin
+store.setting('jester_test').then((v) => { if (v !== null && v !== undefined && v !== '') jesterTest = v === '1'; }).catch(() => {});
+const jesterBlocked = (u, res) => { if (jesterTest && !isAdmin(u)) { res.status(403).json({ error: '🔒 Die Narrenkappe ist noch in der Testphase. Zuschauen geht schon!' }); return true; } return false; };
 const tcSeats = new Map(); // Maschine -> { uid, name, last, grid }
 const tcSeatOf = (uid) => { for (const [m, st] of tcSeats) if (st.uid === uid) return m; return null; };
 const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, game: machineGame(i + 1), user: st ? { id: st.uid, name: st.name } : null, watchers: (io.sockets.adapter.rooms.get('tc' + (i + 1)) || { size: 0 }).size }; });
@@ -897,6 +900,7 @@ app.post('/api/casino/triple/sit', async (req, res) => {
     if (gameLocked('triple', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const m = Math.round(Number(req.body.machine) || 0); if (m < 1 || m > TC_MACHINES) return res.status(400).json({ error: 'Unbekannte Maschine.' });
+    if (machineGame(m) === 'jester' && jesterBlocked(u, res)) return;
     const cur = tcSeatOf(u.id);
     if (cur === m) return res.json({ machine: m, list: tcList() });
     const st = tcSeats.get(m); if (st) return res.status(409).json({ error: `Maschine ${m} ist gerade belegt.` });
@@ -957,6 +961,7 @@ app.post('/api/casino/jester', async (req, res) => { // Narrenkappe: 5 Walzen, 1
   try {
     if (gameLocked('jester', res)) return;
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (jesterBlocked(u, res)) return;
     const bet = Math.round(Number(req.body.bet) || 0);
     if (!jester.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
     if (!tcSeated(u, res, req.body.machine)) return;
@@ -1710,6 +1715,11 @@ app.post('/api/admin/banner', async (req, res) => {
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
+});
+app.post('/api/admin/jestertest', async (req, res) => { // Narrenkappe: Testphase an/aus
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  jesterTest = !!req.body.on; await store.setting('jester_test', jesterTest ? '1' : '0'); io.emit('shop:changed');
+  console.log(`Narrenkappe Testphase ${jesterTest ? 'an' : 'aus'} durch ${u.name}`); res.json({ on: jesterTest });
 });
 app.post('/api/admin/bigwin', async (req, res) => { // Schwelle für die „großer Gewinn“-Meldung an alle
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
