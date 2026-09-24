@@ -1664,6 +1664,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 @keyframes anlaser{0%{clip-path:inset(0 100% 0 0);opacity:.2}60%{clip-path:inset(0 0 0 0);opacity:1}100%{opacity:1}}
 .an-ti.zap{box-shadow:0 0 0 2px #fff,0 0 18px #7CE8FF!important;filter:brightness(1.8)}
 .rel-box{box-shadow:inset 0 0 0 2px #FFD23F,0 0 16px rgba(255,210,63,.3)!important}
+.tab-new{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;font:900 10.5px/16px Archivo;letter-spacing:.4px;color:#fff;background:linear-gradient(135deg,#FF4FA3,#B45CFF);box-shadow:0 0 10px rgba(255,79,163,.6);vertical-align:1px;animation:psglow 1.8s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -1683,7 +1684,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '140';
+const AVER = '141';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2738,7 +2739,7 @@ function renderCards() {
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
     const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     const tabs = games.filter(([k]) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))
-      .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label, extra || '')).join('');
+      .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label + (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : ''), extra || '')).join('');
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
@@ -4435,6 +4436,14 @@ function loadAdmin() {
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
+  const tbb = $('#tbBox'); if (tbb && !tbb.dataset.bound) { tbb.dataset.bound = 1; const draw = () => { const B = (home && home.tabBadges) || {};
+      $('#tbAdm').innerHTML = [['roulette', '🎡 Roulette'], ['bj', '🃏 Blackjack'], ['tables', '👥 Blackjack-Tische'], ['triple', '👑 Triple Crown'], ['jester', '🃏 Narrenkappe'], ['anubis', '👁 Auge des Anubis'], ['poker', '♠ Poker'], ['wheel', '🎡 Glücksrad'], ['rewards', '🏆 Belohnungen']].map(([k, l]) => `<div class="row tb-row" style="gap:6px;margin-bottom:6px"><span class="grow">${l}${B[k] ? ` <span class="tab-new">${esc(B[k])}</span>` : ''}</span><input class="field" maxlength="12" placeholder="Text" value="${esc(B[k] || '')}" data-tbin="${k}" style="width:96px;padding:6px 8px"><button class="btn small" data-tbset="${k}">OK</button>${B[k] ? `<button class="btn small ghost" data-tbdel="${k}">✕</button>` : ''}</div>`).join('') + '<p class="sub" style="margin:4px 0 0">Schnell: <button class="chipbtn" data-tbq="NEU">NEU</button> <button class="chipbtn" data-tbq="UPDATE">UPDATE</button> <button class="chipbtn" data-tbq="HOT">HOT</button> tippen, dann OK beim Reiter.</p>';
+      let quick = '';
+      $('#tbAdm').querySelectorAll('[data-tbq]').forEach((b) => { b.onclick = () => { quick = b.dataset.tbq; $('#tbAdm').querySelectorAll('[data-tbin]').forEach((i) => { if (!i.value) i.placeholder = quick; }); toast(`„${quick}“ gewählt: OK beim gewünschten Reiter tippen`); }; });
+      const send = (key, text) => api('/api/admin/tabbadge', { key, text }).then((r) => { home.tabBadges = r.badges; toast(text ? `🏷 „${text}“ gesetzt` : '🏷 Abzeichen entfernt'); draw(); }).catch((e) => toast(e.message));
+      $('#tbAdm').querySelectorAll('[data-tbset]').forEach((b) => { b.onclick = () => { const i = $('#tbAdm').querySelector(`[data-tbin="${b.dataset.tbset}"]`); send(b.dataset.tbset, i.value.trim() || quick); }; });
+      $('#tbAdm').querySelectorAll('[data-tbdel]').forEach((b) => { b.onclick = () => send(b.dataset.tbdel, ''); }); };
+    tbb.ontoggle = () => { if (tbb.open) draw(); }; }
   const rel = $('#relGo'); if (rel && !rel.dataset.bound) { rel.dataset.bound = 1; rel.onclick = () => { if (!confirm('Narrenkappe und Auge des Anubis jetzt für alle freigeben und Update 14 veröffentlichen?')) return; api('/api/admin/slotsrelease', {}).then(() => { toast('🚀 Freigegeben! Update 14 ist für alle sichtbar, Code AUTOMATEN aktiv.'); sfx('prestige'); loadHome().then(() => { if (page === 'admin') render(); }); }).catch((e) => toast(e.message)); }; }
   const att = $('#atTog'); if (att && !att.dataset.bound) { att.dataset.bound = 1; att.onclick = () => api('/api/admin/anubistest', { on: !(home && home.anubisTest) }).then((r) => { home.anubisTest = r.on; toast(r.on ? '🧪 Auge des Anubis: nur für dich' : '👁 Auge des Anubis für alle freigegeben'); $('#atSt').textContent = r.on ? 'nur du' : 'für alle'; $('#atSt').classList.toggle('on', r.on); att.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
   const jtt = $('#jtTog'); if (jtt && !jtt.dataset.bound) { jtt.dataset.bound = 1; jtt.onclick = () => api('/api/admin/jestertest', { on: !(home && home.jesterTest) }).then((r) => { home.jesterTest = r.on; toast(r.on ? '🧪 Narrenkappe: nur für dich' : '🃏 Narrenkappe für alle freigegeben'); $('#jtSt').textContent = r.on ? 'nur du' : 'für alle'; $('#jtSt').classList.toggle('on', r.on); jtt.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
@@ -4962,6 +4971,7 @@ function build() {
     <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
+    <details class="panel lg-box" id="tbBox"><summary><b>🏷 Abzeichen im Casino</b><small> · z. B. „NEU“ oder „UPDATE“ an einen Reiter hängen</small></summary><div id="tbAdm" style="margin-top:10px"></div></details>
     <div class="panel lg-box rel-box" id="relBox"><div class="row"><b class="grow">🚀 Neue Automaten freigeben</b><span class="adm-st ${home && home.slotsLive ? 'on' : ''}">${home && home.slotsLive ? 'freigegeben' : 'noch nicht'}</span></div>
       <small class="sub" style="display:block;margin:4px 0 8px">Ein Tipp: Narrenkappe und Auge des Anubis für alle spielbar, Update 14 erscheint für alle, Code AUTOMATEN (15.000 💎, 30 Tage) wird angelegt.</small>
       ${home && home.slotsLive ? '<small class="sub">✅ Ist erledigt.</small>' : '<button class="btn" id="relGo">🚀 Jetzt freigeben</button>'}</div>

@@ -177,7 +177,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1688,6 +1688,8 @@ app.post('/api/card', async (req, res) => {
 });
 
 // Code einlösen
+let tabBadges = { jester: 'NEU', anubis: 'NEU' }; // Abzeichen an den Casino-Reitern, im Admin-Menü änderbar
+store.setting('tab_badges').then((v) => { if (v) tabBadges = JSON.parse(v); }).catch(() => {});
 let slotsLive = false; // neue Automaten (Narrenkappe, Auge des Anubis) mit Update 14 für alle freigegeben
 store.setting('slots_live').then((v) => { slotsLive = v === '1'; }).catch(() => {});
 const newsVisible = (p) => !p.requires || (p.requires === 'gn' && gnOpen) || (p.requires === 'slots' && slotsLive); // Beiträge erst nach ihrer Freigabe
@@ -1725,6 +1727,13 @@ app.post('/api/admin/banner', async (req, res) => {
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
+});
+app.post('/api/admin/tabbadge', async (req, res) => { // Abzeichen setzen oder entfernen (leerer Text = weg)
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const key = String(req.body.key || '').replace(/[^a-z]/g, '').slice(0, 20), text = String(req.body.text || '').trim().slice(0, 12);
+  if (!key) return res.status(400).json({ error: 'Unbekannter Reiter.' });
+  if (text) tabBadges[key] = text; else delete tabBadges[key];
+  await store.setting('tab_badges', JSON.stringify(tabBadges)); io.emit('shop:changed'); res.json({ badges: tabBadges });
 });
 app.post('/api/admin/slotsrelease', async (req, res) => { // Ein Knopf: beide Automaten für alle, Update 14 sichtbar, Code AUTOMATEN
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
