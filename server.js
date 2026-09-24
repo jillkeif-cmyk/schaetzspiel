@@ -1448,6 +1448,9 @@ app.get('/api/tcg/history', async (req, res) => {
 });
 
 // ---------- Geschenke (Dankeschön für Support-Meldungen und vom Entwickler-Team) ----------
+const GIFT_ITEMS = { TSUP: 'Titel „Supporter“', ESUP: 'Emblem „Tüftel-Hamster“', fsup: 'Rahmen „Tüftelwerk“' }; // nur per Geschenk freischaltbar
+const giftItems = (arr) => (Array.isArray(arr) ? arr : String(arr || '').split(',')).map(String).filter((id) => GIFT_ITEMS[id]).join(',');
+const giftXp = (v) => Math.max(0, Math.min(100000, Math.round(Number(v) || 0)));
 app.post('/api/admin/gift', async (req, res) => {
   try {
     const u = await modAuth(req, res); if (!u) return;
@@ -1456,12 +1459,13 @@ app.post('/api/admin/gift', async (req, res) => {
     const pack = tcg.PACKS[req.body.pack] ? req.body.pack : null, n = pack ? Math.max(1, Math.min(100, Math.round(Number(req.body.n) || 1))) : 0;
     const times = Math.max(1, Math.min(20, Math.round(Number(req.body.times) || 1))); // wie oft das Geschenk verschickt wird
     const msg = String(req.body.message || '').trim().slice(0, 200);
-    if (!dia && !pack) return res.status(400).json({ error: 'Bitte Diamanten oder einen Booster auswählen.' });
+    const gxp = giftXp(req.body.xp), gitems = giftItems(req.body.items);
+    if (!dia && !pack && !gxp && !gitems) return res.status(400).json({ error: 'Bitte etwas fürs Geschenk auswählen.' });
     const ids = req.body.all ? (await store.searchUsers('', 500)).map((x) => x.id).filter((id) => id !== u.id) : [Number(req.body.id)];
     let sent = 0;
     for (const id of ids) {
       const t = await store.userById(id); if (!t) continue;
-      for (let k = 0; k < times; k++) await store.giftAdd({ user_id: t.id, diamonds: dia, pack, n, reason: '', source: 'dev', message: msg });
+      for (let k = 0; k < times; k++) await store.giftAdd({ user_id: t.id, diamonds: dia, pack, n, reason: '', source: 'dev', message: msg, xp: gxp, items: gitems });
       push.toUser(t.id, { title: '🎁 Geschenk vom Entwickler-Team', body: msg || 'Auf deiner Startseite wartet ein Geschenk auf dich.', tag: 'gift', url: '/' }).catch(() => {});
       io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === t.id) so.emit('gift:new'); });
       sent++;
@@ -1477,7 +1481,11 @@ app.post('/api/gifts/:id/claim', async (req, res) => {
     let dia = Number(u.diamonds) || 0;
     if (g.diamonds) { dia += Number(g.diamonds); await store.save(u.id, { diamonds: dia }); }
     if (g.pack && g.n) await store.packAdd(u.id, g.pack, Number(g.n));
-    res.json({ ok: true, diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, source: g.source || 'support', message: g.message || '', total: dia });
+    const gxp = Number(g.xp) || 0, gitems = String(g.items || '').split(',').filter((id) => GIFT_ITEMS[id]);
+    if (gxp || gitems.length) { const f = await store.userById(u.id), save = {}; if (gxp) save.xp = Math.min(progress.CAP, (Number(f.xp) || 0) + gxp);
+      if (gitems.length) { const un = new Set(String(f.unlocks || '').split(',').filter(Boolean)); gitems.forEach((id) => un.add(id)); save.unlocks = [...un].join(','); }
+      await store.save(u.id, save); }
+    res.json({ ok: true, xp: gxp, items: gitems.map((id) => ({ id, name: GIFT_ITEMS[id], kind: id[0] === 'T' ? 'title' : id[0] === 'E' ? 'emblem' : 'frame' })), diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, source: g.source || 'support', message: g.message || '', total: dia });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -1528,7 +1536,8 @@ app.post('/api/tickets/:id/status', async (req, res) => {
     const gDia = Math.max(0, Math.min(100000, Math.round(Number(rw.diamonds) || 0)));
     const gPack = tcg.PACKS[rw.pack] ? rw.pack : null, gN = gPack ? Math.max(1, Math.min(10, Math.round(Number(rw.n) || 1))) : 0;
     let gift = null;
-    if (status === 'abgeschlossen' && isAdmin(u) && t.user_id !== u.id && (gDia || gPack)) gift = await store.giftAdd({ user_id: t.user_id, diamonds: gDia, pack: gPack, n: gN, reason: t.title });
+    const gXp = giftXp(rw.xp), gItems = giftItems(rw.items);
+    if (status === 'abgeschlossen' && isAdmin(u) && t.user_id !== u.id && (gDia || gPack || gXp || gItems)) gift = await store.giftAdd({ user_id: t.user_id, diamonds: gDia, pack: gPack, n: gN, reason: t.title, xp: gXp, items: gItems });
     if (t.user_id !== u.id) {
       const thanks = status === 'abgeschlossen' ? `Dein Ticket „${t.title}“ wurde abgeschlossen. Vielen Dank für deine Meldung!${gift ? ' 🎁 Als Dankeschön wartet ein Geschenk auf dich.' : ''}` : `„${t.title}“ ist jetzt: ${status}${reply ? ' · ' + reply.slice(0, 80) : ''}`;
       pushTicketCount().catch(() => {});

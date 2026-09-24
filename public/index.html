@@ -1621,6 +1621,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .pk-lobby.pk-lux1>.grow>b,.pk-lobby.pk-lux2>.grow>b{color:#E6D2FF}.pk-lobby.pk-lux2>.grow>b{background:linear-gradient(90deg,#FFE27A,#E6B8FF,#FFE27A);-webkit-background-clip:text;background-clip:text;color:transparent} /* nur der Tischname in der Lobby, nicht Karten am Tisch */
 .pk-luxtag{position:absolute;top:-9px;right:12px;padding:3px 10px;border-radius:99px;font:900 11px/1.2 Archivo;letter-spacing:.6px;color:#fff;background:linear-gradient(135deg,#B45CFF,#6A2BD6);box-shadow:0 0 12px rgba(180,92,255,.7)}.pk-lux2 .pk-luxtag{color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E)}
 .pk-table.pk-lux1{box-shadow:0 0 30px rgba(180,120,255,.45)}.pk-table.pk-lux2{box-shadow:0 0 40px rgba(180,92,255,.6),0 0 16px rgba(255,210,63,.45)}
+.gift-items{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gift-items .sub{width:100%;margin:0;font-size:12px}.gi-pick{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.06);font:700 13px Archivo;color:#fff!important}
+.gift-title{width:100%;max-width:420px;margin:8px auto 0}.gift-title img{width:100%;height:auto;border-radius:12px}
 </style>
 </head>
 <body>
@@ -1640,7 +1642,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '126';
+const AVER = '127';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3829,6 +3831,9 @@ function showGiftReveal(r) {
     <p class="sub">${r.source === 'dev' ? 'Geschenk vom Entwickler-Team' : 'Dankeschön vom Support'}</p><h1 class="cr-code" style="font-size:30px">${r.source === 'dev' ? 'Für dich! 🎉' : 'Danke für deine Meldung!'}</h1>
     <p class="sub">${r.source === 'dev' ? esc(r.message || 'Viel Spaß damit!') : `„${esc(r.reason || '')}“`}</p>
     ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.xp ? `<div class="cr-dia"><span style="font-size:34px">⭐</span><b>+${fmt(r.xp)}</b><span>XP</span></div>` : ''}
+    ${(r.items || []).filter((it) => it.kind === 'title').map((it) => `<div class="cr-item gift-title" style="--d:0"><img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt=""><b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}
+    ${r.items && r.items.some((it) => it.kind !== 'title') ? `<div class="cr-grid">${r.items.filter((it) => it.kind !== 'title').map((it, k) => `<div class="cr-item" style="--d:${k}">${it.kind === 'title' ? `<img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt="" style="width:100%;max-width:260px">` : it.kind === 'emblem' ? `<img class="pcemb a-video" style="--s:96px" src="/emblems/pc_${esc(it.id)}.webp?v=${AVER}" alt="">` : `<img src="/emblems/${esc(it.id)}.webp?v=${AVER}" alt="" style="width:96px">`}<b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}</div>` : ''}
     ${r.pack ? `<div class="cr-grid"><div class="cr-item" style="--d:0"><img src="/tcg/pack_${esc(r.pack)}.webp?v=${AVER}" alt="" style="width:110px"><b>${r.n}× ${esc(r.packName)}</b><small>liegt in deinem Inventar</small></div></div>` : ''}
     <button class="btn" id="unlockOk" style="min-width:220px">Danke!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
@@ -3991,13 +3996,15 @@ function renderTickets() {
   el.querySelectorAll('[data-tkf]').forEach((b) => { b.onclick = () => { tkFilter = b.dataset.tkf; renderTickets(); }; });
   el.querySelectorAll('[data-tkst]').forEach((b) => { b.onclick = () => {
     const st2 = b.dataset.st, need = st2 === 'abgeschlossen' || st2 === 'abgelehnt';
-    const send = (reply) => api('/api/tickets/' + b.dataset.tkst + '/status', { status: st2, reply, reward: $('#tkGD') ? { diamonds: Number($('#tkGD').value) || 0, pack: $('#tkGP').value, n: Number($('#tkGN').value) || 1 } : null }).then((d) => { tkD = d; closeModal(); renderTickets(); toast('Status: ' + st2); }).catch((e) => toast(e.message));
+    const send = (reply) => api('/api/tickets/' + b.dataset.tkst + '/status', { status: st2, reply, reward: $('#tkGD') ? { diamonds: Number($('#tkGD').value) || 0, pack: $('#tkGP').value, n: Number($('#tkGN').value) || 1, xp: Number(($('#tkXP') || {}).value) || 0, items: [...document.querySelectorAll('[data-gi="tk"]:checked')].map((x) => x.value) } : null }).then((d) => { tkD = d; closeModal(); renderTickets(); toast('Status: ' + st2); }).catch((e) => toast(e.message));
     if (st2 === 'eingereicht') return send('');
     $('#modal').innerHTML = `<div class="panel" style="gap:10px"><h2>${st2 === 'abgelehnt' ? '🔴 Ticket ablehnen' : st2 === 'abgeschlossen' ? '🟢 Ticket abschließen' : '🟠 In Bearbeitung nehmen'}</h2>
       <p class="sub">${need ? 'Schreib kurz dazu, was erledigt wurde oder warum abgelehnt. Der Ersteller bekommt die Antwort als Nachricht.' : 'Optional: eine kurze Nachricht an den Ersteller.'}</p>
       <textarea class="field" id="tkReply" rows="4" maxlength="1000" placeholder="${st2 === 'abgelehnt' ? 'Warum abgelehnt?' : st2 === 'abgeschlossen' ? 'Was wurde gemacht?' : 'Zum Beispiel: Schaue ich mir heute an'}"></textarea>
       ${st2 === 'abgeschlossen' && home.me.admin ? `<div class="tk-gift"><b>🎁 Dankeschön (optional)</b><small>Nur der Ersteller sieht es auf seiner Startseite und kann es einfordern.</small>
         <label class="row" style="gap:8px;margin:0"><span class="grow">💎 Diamanten</span><input class="field" id="tkGD" inputmode="numeric" placeholder="0" style="width:110px;padding:8px"></label>
+        <label class="row" style="gap:8px;margin:0"><span class="grow">⭐ XP</span><input class="field" id="tkXP" inputmode="numeric" placeholder="0" style="width:110px;padding:8px"></label>
+        <div class="gift-items"><span class="sub">Supporter-Stücke (einzeln wählbar):</span>${[['TSUP', '🏷 Titel'], ['ESUP', '🏅 Emblem'], ['fsup', '🖼 Rahmen']].map(([id, l]) => `<label class="gi-pick"><input type="checkbox" value="${id}" data-gi="tk"> ${l}</label>`).join('')}</div>
         <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="tkGP" style="width:auto;padding:8px"><option value="">keiner</option><option value="standard">Standard</option><option value="premium">Premium</option><option value="ghost">Geister</option><option value="toon">Toon-Welt</option><option value="gn">Gruselnacht 🎃</option></select><input class="field" id="tkGN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl"></label></div>` : ''}
       <button class="btn" id="tkOk">${st2 === 'abgelehnt' ? 'Ablehnen' : st2 === 'abgeschlossen' ? 'Abschließen' : 'Übernehmen'}</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; setTimeout(() => $('#tkReply').focus(), 50);
@@ -4235,6 +4242,8 @@ function renderAdmin() {
       <small class="sub">Erscheint beim Spieler als „Geschenk vom Entwickler-Team“ auf der Startseite, zum Einfordern mit großer Einblendung.</small>
       <select class="field" id="gfTo" style="padding:8px"><option value="">Spieler wählen …</option><option value="all">🌍 Alle Spieler</option>${(adminUsers || []).map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
       <label class="row" style="gap:8px;margin:0"><span class="grow">💎 Diamanten</span><input class="field" id="gfDia" inputmode="numeric" placeholder="0" style="width:120px;padding:8px"></label>
+        <label class="row" style="gap:8px;margin:0"><span class="grow">⭐ XP</span><input class="field" id="gfXP" inputmode="numeric" placeholder="0" style="width:110px;padding:8px"></label>
+        <div class="gift-items"><span class="sub">Supporter-Stücke (einzeln wählbar):</span>${[['TSUP', '🏷 Titel'], ['ESUP', '🏅 Emblem'], ['fsup', '🖼 Rahmen']].map(([id, l]) => `<label class="gi-pick"><input type="checkbox" value="${id}" data-gi="gf"> ${l}</label>`).join('')}</div>
       <label class="row" style="gap:8px;margin:0"><span class="grow">📦 Booster</span><select class="field" id="gfPack" style="width:auto;padding:8px"><option value="">keiner</option>${[['standard', 'Standard'], ['premium', 'Premium'], ['ghost', 'Geister'], ['toon', 'Toon-Welt'], ['gn', 'Gruselnacht 🎃'], ['secret', '??? (geheim)']].map(([k, n]) => `<option value="${k}">${n}</option>`).join('')}</select><input class="field" id="gfN" inputmode="numeric" value="1" style="width:56px;padding:8px" aria-label="Anzahl Booster"></label>
       <label class="row" style="gap:8px;margin:0"><span class="grow">Wie oft verschicken</span><input class="field" id="gfTimes" inputmode="numeric" value="1" style="width:56px;padding:8px"></label>
       <input class="field" id="gfMsg" maxlength="200" placeholder="Nachricht, z. B. Danke fürs Mitspielen!" style="padding:8px">
@@ -4243,7 +4252,7 @@ function renderAdmin() {
     <div class="panel adm"><b>Protokoll · Befüllung und Live-Matches</b><div class="adm-log">${(d.log || []).map((l) => `<div>${esc(l)}</div>`).join('') || '<span class="sub">Noch nichts passiert.</span>'}</div></div>`;
   $('#gfSend').onclick = () => {
     const to = $('#gfTo').value; if (!to) return toast('Bitte einen Spieler wählen.');
-    api('/api/admin/gift', { id: to === 'all' ? null : Number(to), all: to === 'all', diamonds: Number($('#gfDia').value) || 0, pack: $('#gfPack').value, n: Number($('#gfN').value) || 1, times: Number($('#gfTimes').value) || 1, message: $('#gfMsg').value })
+    api('/api/admin/gift', { id: to === 'all' ? null : Number(to), all: to === 'all', diamonds: Number($('#gfDia').value) || 0, pack: $('#gfPack').value, n: Number($('#gfN').value) || 1, times: Number($('#gfTimes').value) || 1, message: $('#gfMsg').value, xp: Number(($('#gfXP') || {}).value) || 0, items: [...document.querySelectorAll('[data-gi="gf"]:checked')].map((x) => x.value) })
       .then((r) => { toast(`Geschenk an ${r.sent} Spieler verschickt${r.times > 1 ? ` (je ${r.times}×)` : ''}`); $('#gfDia').value = ''; $('#gfMsg').value = ''; }).catch((e) => toast(e.message));
   };
   ['gfTo', 'gfDia', 'gfPack', 'gfN', 'gfTimes', 'gfMsg'].forEach((k) => { const el = document.getElementById(k); if (el) el.onfocus = () => clearTimeout(adminTimer); }); // beim Tippen nicht neu laden
