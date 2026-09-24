@@ -325,7 +325,9 @@ const boost = require('./lib/boost');
 const potions = require('./lib/potions');
 const trophies = require('./lib/trophies');
 const solowin = require('./lib/solowin');
-store.setting('solo_win').then((v) => { if (v) solowin.set(JSON.parse(v)); }).catch(() => {});
+store.setting('solo_win').then(async (v) => { if (v) solowin.set(JSON.parse(v));
+  if (!(await store.setting('solo_rework2'))) { const c = solowin.set({ ...solowin.get(), min: 1200, min15: 750 }); await store.setting('solo_win', JSON.stringify(c)); await store.setting('solo_rework2', '1'); console.log('Solo-Sieg: 750 (15 Fragen) / 1.200 (25 Fragen)'); } // einmalige Umstellung
+}).catch(() => {});
 let trophySel = [];
 store.setting('trophies').then((v) => { if (v) trophySel = JSON.parse(v); }).catch(() => {});
 const mkKind = (row) => (row.card_id === 'pack' ? (String(row.variant).startsWith('disp_') ? 'displays' : 'packs') : row.card_id === 'graded' ? 'graded' : 'cards');
