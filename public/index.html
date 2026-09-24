@@ -1684,7 +1684,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '143';
+const AVER = '145';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2428,7 +2428,7 @@ function renderCasino() {
   if (cgame === 'vip') return renderVip(box);
   if (cgame === 'setup') return renderSetup(box);
   if (cgame === 'poker') return renderPoker(box);
-  if (cgame === 'triple' || cgame === 'jester' || cgame === 'anubis') { const g = cgame; if (tc.game !== g && !tc.seat && !tc.watch) tc.game = g; return renderTriple(box); }
+  if (cgame === 'triple' || cgame === 'jester' || cgame === 'anubis') { const g = cgame; const on = tc.watch || tc.seat; if (on) tc.game = machGame(on); else if (tc.game !== g) tc.game = g; return renderTriple(box); }
   if (cgame === 'watch') return renderCw(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
@@ -3096,10 +3096,12 @@ function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
 }
 async function tcSit(m) {
   const r = await api('/api/casino/triple/sit', { machine: m }).catch((e) => { toast(e.message); return null; }); if (!r) return;
-  tcMachines = r.list; tc.seat = r.machine; tc.watch = null; tc.game = r.machine >= 5 ? 'anubis' : r.machine >= 3 ? 'jester' : 'triple'; if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
+  tcMachines = r.list; tc.seat = r.machine; tc.watch = null; if (tc.game !== machGame(r.machine)) tc.jgrid = null; tc.game = machGame(r.machine); if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
   const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
 }
-function tcWatch(m) { tc.game = m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+const machGame = (m) => (m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
+const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis' }[machGame(m)] + ' · Maschine ' + (m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
+function tcWatch(m) { tc.game = machGame(m); tc.jgrid = null; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
@@ -4099,7 +4101,7 @@ function casinoOpenHtml() {
   return `<h2 style="margin:14px 0 10px">Im Casino</h2><div class="plist">
     ${pk.map((t) => `<div class="pl" style="--c:#8E4BD6"><span class="nm">♠️ Poker · ${esc(t.name)}<br><small>${t.seated} von ${t.max} Plätzen · Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small></span><span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-pkwatchhome="${esc(t.id)}">Zuschauen</button><button class="btn small" data-pkjoin="${esc(t.id)}">Hinsetzen</button></span></div>`).join('')}
     ${cwl.map((c) => `<div class="pl" style="--c:${c.game === 'bj' ? '#1FA35A' : '#C8283D'}"><span class="nm">${c.game === 'bj' ? '🃏 Blackjack' : '🎡 Roulette'}<br><small>${esc(c.name)} spielt gerade${c.watchers ? ` · 👀 ${c.watchers}` : ''}</small></span><button class="btn small ghost" data-cwwatch="${esc(String(c.uid))}">Zuschauen</button></div>`).join('')}
-    ${tcm.map((m) => `<div class="pl" style="--c:#E0A21E"><span class="nm">🎰 Triple Crown · Maschine ${m.id}<br><small>${esc(m.user.name)} spielt gerade${m.watchers ? ` · 👀 ${m.watchers}` : ''}</small></span><button class="btn small ghost" data-tcwatchhome="${m.id}">Zuschauen</button></div>`).join('')}
+    ${tcm.map((m) => `<div class="pl" style="--c:#E0A21E"><span class="nm">${machLabel(m.id)}<br><small>${esc(m.user.name)} spielt gerade${m.watchers ? ` · 👀 ${m.watchers}` : ''}</small></span><button class="btn small ghost" data-tcwatchhome="${m.id}">Zuschauen</button></div>`).join('')}
     ${bj.map((t) => `<div class="pl" style="--c:#1FA35A"><span class="nm">🃏 Blackjack-Tisch von ${esc(t.host)}<br><small>${t.seats} von ${t.max} Plätzen${t.phase === 'betting' ? ' · Einsätze laufen' : ''}</small></span><button class="btn small" data-bjjoin="${esc(t.id)}">Beitreten</button></div>`).join('')}</div>`;
 }
 // Dankeschön vom Support: nur sichtbar, wenn man eins bekommen hat
@@ -4916,6 +4918,7 @@ function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
   if (pg !== 'casino:watch' && cw) { socket.emit('cw:unwatch'); cw = null; }
+  if (pg !== 'casino:tables' && typeof bjT !== 'undefined' && bjT) bjT = null; // Blackjack-Tisch verlassen, wenn man woanders hingeht
   if (!['casino:triple', 'casino:jester', 'casino:anubis'].includes(pg) && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
@@ -5875,7 +5878,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.cwwatch) { const x = cwList.find((c) => String(c.uid) === t.dataset.cwwatch); if (x) cwStart(x.uid, x.name, x.game); }
   else if (t.dataset.tcsit) { tcSit(Number(t.dataset.tcsit)); }
   else if (t.dataset.tcwatch) { tcWatch(Number(t.dataset.tcwatch)); }
-  else if (t.dataset.tcwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'triple'; tc.watch = Number(t.dataset.tcwatchhome); tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }
+  else if (t.dataset.tcwatchhome) { const wm = Number(t.dataset.tcwatchhome); page = 'casino'; ctab = 'casino'; cgame = machGame(wm); tc.game = machGame(wm); tc.jgrid = null; tc.watch = wm; tc.seat = null; tc.wq = []; tc.wbusy = false; render(); loadTcg(); socket.emit('tc:watch', tc.watch); }
   else if (t.dataset.pkwatchhome) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:watch', t.dataset.pkwatchhome); }
   else if (t.dataset.pkjoin) { page = 'casino'; ctab = 'casino'; cgame = 'poker'; render(); loadTcg(); socket.emit('pk:sit', { table: t.dataset.pkjoin }); }
   else if (t.dataset.bjjoin) { page = 'casino'; ctab = 'casino'; cgame = 'tables'; render(); loadTcg(); socket.emit('bj:join', t.dataset.bjjoin); }

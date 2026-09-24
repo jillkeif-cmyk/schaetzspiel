@@ -170,6 +170,7 @@ app.post('/api/admin/theme', async (req, res) => {
 app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
+    if (u && !u.pres_base) { const snap = progress.presSnapshot(u); await store.save(u.id, { pres_base: snap, p_best_score: 0, p_best_streak: 0 }).catch(() => {}); u.pres_base = snap; u.p_best_score = 0; u.p_best_streak = 0; } // bisherige Spieler: Prestige-Bedingungen zählen ab jetzt
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const withOnline = (x) => ({ ...publicStats(x), online: game.online.has(x.id) });
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
@@ -2064,7 +2065,7 @@ app.post('/api/prestige', async (req, res) => {
     const u = await auth(req);
     if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!progress.prestigeStatus(u).can) return res.status(400).json({ error: 'Die Bedingungen für den nächsten Prestige-Rang sind noch nicht erfüllt.' });
-    await store.save(u.id, { prestige: u.prestige + 1, xp: 0 });
+    await store.save(u.id, { prestige: u.prestige + 1, xp: 0, pres_base: progress.presSnapshot(u), p_best_score: 0, p_best_streak: 0 }); // neue Stufe: Bedingungen zählen ab jetzt
     res.json({ prestige: u.prestige + 1 });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -2152,7 +2153,7 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     socket.emit('cw:snap', { uid: x[0], name: x[1].name, game: x[1].game, bj: g ? BJ.view(g) : null, history: rHistory.get(x[0]) || [] }); cwPush();
   });
   socket.on('cw:unwatch', () => { socket.data.cwWatching = null; cwLeaveAll(); cwPush(); });
-  socket.on('presence', (pg) => { cwSet(user, String(pg)); if (!['casino:triple', 'casino:jester', 'casino:anubis'].includes(String(pg)) && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
+  socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:tables' && bjTables.isSeated(user.id)) bjTables.leave(user.id); /* anderes Menü = vom Blackjack-Tisch aufstehen */ if (!['casino:triple', 'casino:jester', 'casino:anubis'].includes(String(pg)) && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
   socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id) && cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } }, 20000);
     setTimeout(() => { if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 180000); }); // Automatenplatz bleibt bei kurzem Verbindungsabbruch 3 Minuten reserviert
 } // Erfolge: Ausgangsstand beim Verbinden
