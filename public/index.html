@@ -1616,6 +1616,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .lg-pdf{display:flex;gap:8px;align-items:center;margin-bottom:10px}.lg-pdf select{flex:1}
 .ps-next{margin-top:8px}.ps-next b{color:#FFD23F!important}.ps-num{flex-direction:column}.ps-mini{width:36px!important;margin-top:3px}.ps-mini b{background:linear-gradient(90deg,#FFE27A,#E0A21E)!important}
 .solo-win{margin:6px 0 10px;padding:10px 12px;border-radius:14px;text-align:center;font:900 15px/1.3 Archivo;color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E);box-shadow:0 0 18px rgba(255,210,63,.5)}.sw-hint{background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(255,106,0,.12))!important}
+.solo-rule{padding:10px 12px;border-radius:12px;background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.4);margin:0}
 </style>
 </head>
 <body>
@@ -1635,7 +1636,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '116';
+const AVER = '117';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4788,7 +4789,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
       <p class="sub" id="accNote"></p></div>
     <div class="panel" id="settings" style="display:flex;flex-direction:column;gap:14px"></div>
     <div style="display:flex;flex-direction:column;gap:10px"><button class="btn" id="createDone">${soloIntent ? '🎯 Solo-Quiz starten' : 'Quiz eröffnen'}</button><button class="btn ghost" id="leave">Abbrechen</button>
-      ${soloIntent ? '<p class="sub">Solo zählt als freies Spiel: du sammelst XP und Diamanten, etwas weniger als mit anderen, aber keine Ranglistenpunkte.</p>' : ''}</div></div>`;
+      ${soloIntent ? '<p class="sub">Solo: XP und bis zu 8.000 Diamanten, etwas weniger als mit anderen. Mit einem Solo-Sieg zählt die Runde für Siegesserie, Herausforderungen und Prestige. Keine Ranglistenpunkte.</p>' : ''}</div></div>`;
 
   if (S.phase === 'lobby') return `<div class="col">
     <div class="center"><p class="sub">Match-Code</p><div class="code">${esc(S.code)}</div>
@@ -5253,9 +5254,10 @@ function update() {
     $('#waitNote2').textContent = gr ? 'Bei GRACE wird nur mit den festen Fragen gespielt.' : S.waitAi ? 'Fast alle Fragen sind dann frisch. Es wird bis zu drei Mal versucht und notfalls mehrere Minuten gewartet.' : 'Es geht pünktlich los. Fertige KI-Fragen kommen dazu, der Rest kommt aus dem festen Pool.';
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     const isPreset = Object.entries(PRESET).every(([k, v]) => S.settings[k] === v);
-    $('#settings').innerHTML = `<button class="btn preset ${isPreset ? 'on' : ''}" id="presetBtn">⭐ Standard<small>20 s · 25 Fragen · 2.000 Punkte · 60 s Countdown</small></button>`
-      + Object.entries(OPTS).map(([k, [label, vals, suf]]) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
-    $('#presetBtn').onclick = () => { socket.emit('settings', { ...PRESET }); sfx('tick'); toast('Standard eingestellt'); };
+    $('#settings').innerHTML = `${soloIntent ? '' : `<button class="btn preset ${isPreset ? 'on' : ''}" id="presetBtn">⭐ Standard<small>20 s · 25 Fragen · 2.000 Punkte · 60 s Countdown</small></button>`}`
+      + (soloIntent ? `<p class="sub solo-rule">🎯 Solo wird immer bis <b>2.000 Punkte</b> gespielt. Wähle 15 oder 25 Fragen. Ein Solo-Sieg zählt ab ${fmt((home && home.soloWin && home.soloWin.min) || 1500)} Punkten.</p>` : '')
+      + Object.entries(OPTS).filter(([k]) => !(soloIntent && (k === 'pointLimit' || k === 'countdown'))).map(([k, [label, vals0, suf]]) => ({ k, label, vals: soloIntent && k === 'maxQuestions' ? [15, 25] : vals0, suf })).map(({ k, label, vals, suf }) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
+    if ($('#presetBtn')) $('#presetBtn').onclick = () => { socket.emit('settings', { ...PRESET }); sfx('tick'); toast('Standard eingestellt'); };
     return;
   }
   if (S.phase === 'lobby') {
