@@ -191,6 +191,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Shop-Steuerung Displays + Tränke (display_cfg): im Verkauf, Preis, Bestand, Ausverkauft, Hinweis. Tränke standardmäßig aus und ohne Preis; im Shop sichtbar sobald „im Verkauf“, ohne Preis mit „Preis folgt“ und nicht kaufbar.
 - Triple Crown Nieten: casinoStat mit risk = 10 % des Einsatzes (weniger Casino-XP pro verlorenem Dreh), Gewinne unverändert.
 - Auflösung nach jeder Frage: Mehrspieler 7 s (REVEAL_MS, vorher 9 s), Solo 5,5 s (REVEAL_SOLO_MS).
+- Solo-Sieggrenze je Fragenzahl: 15 Fragen 1.000 (min15), 25 Fragen 1.500 (min), solowin.need(q); volle Solo-Diamanten ab derselben Grenze.
 - Solo fest: Punktelimit immer 2.000, Fragen nur 15 oder 25 (Server erzwingt in create_solo), im Setup kein Punkte- und Countdown-Regler.
 - Quiz-Diamanten neu (lib/quizpay.js, Setting quiz_pay, Admin „💎 Quiz-Belohnung“, AN): Sieger bis 12.000 voll ab 2.000 Punkten, andere anteilig × 0,6, Solo bis 8.000 voll ab 1.500 (mit Solo-Sieg). Tagesbonus/Hot Time verdoppeln weiter. Kronen-Pass einmalig auf 2.500 Pass-XP pro Stufe (Setting pass_rework1) ≈ 60 Siege. Update 13 (u13-quiz).
 - Solo-Sieg (lib/solowin.js, Setting solo_win, Admin „🏆 Solo-Sieg“, jetzt Standard AN): Solo zählt als Sieg bei >= min Punkten (1500) in <= maxQ Fragen (25); dann counted = true (Serie/Flammen wächst, reißt bei Verfehlen), Diamanten 70 % eines Siegs, Punktelimit im Solo mindestens min. Hinweis auf der Startseite, Anzeige „Solo-Sieg!“ am Ende.

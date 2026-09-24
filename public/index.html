@@ -1636,7 +1636,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '117';
+const AVER = '118';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4149,9 +4149,9 @@ function loadAdmin() {
   const swb = $('#swBox'); if (swb && !swb.dataset.bound) { swb.dataset.bound = 1; swb.ontoggle = () => { if (!swb.open) return; const c = (home && home.soloWin) || { on: false, min: 1500, maxQ: 25 };
     $('#swAdm').innerHTML = `<div class="row"><b class="grow">Status</b><span class="adm-st ${c.on ? 'on' : ''}">${c.on ? 'aktiv' : 'aus'}</span></div>
       <p class="sub" style="margin:6px 0">Wer im Solo-Quiz mindestens so viele Punkte in höchstens so vielen Fragen schafft, bekommt einen Sieg: zählt für Siege, Siegesserie (Flammen), Herausforderungen, Prestige und die Wochenaufgabe. Diamanten 70 % eines normalen Siegs. Verfehlt man die Grenze, reißt die Serie.</p>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><label>Mindestpunkte <input class="field" type="number" min="300" step="100" id="swMin" value="${c.min}"></label><label>höchstens Fragen <input class="field" type="number" min="5" max="50" id="swQ" value="${c.maxQ}"></label></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><label>Punkte bei 15 Fragen <input class="field" type="number" min="300" step="100" id="swMin15" value="${c.min15 || 1000}"></label><label>Punkte bei 25 Fragen <input class="field" type="number" min="300" step="100" id="swMin" value="${c.min}"></label><label>höchstens Fragen <input class="field" type="number" min="5" max="50" id="swQ" value="${c.maxQ}"></label></div>
       <div class="row" style="gap:6px;margin-top:8px"><button class="btn small" id="swOn">${c.on ? 'Speichern' : '✅ Einschalten'}</button>${c.on ? '<button class="btn small ghost" id="swOff">Ausschalten</button>' : ''}</div>`;
-    const send = (on) => api('/api/admin/solowin', { on, min: Number($('#swMin').value), maxQ: Number($('#swQ').value) }).then((r) => { home.soloWin = r; toast(`🏆 Solo-Sieg ${r.on ? 'aktiv' : 'aus'} · ab ${fmt(r.min)} Punkten in ${r.maxQ} Fragen`); swb.open = false; swb.open = true; }).catch((e) => toast(e.message));
+    const send = (on) => api('/api/admin/solowin', { on, min: Number($('#swMin').value), min15: Number($('#swMin15').value), maxQ: Number($('#swQ').value) }).then((r) => { home.soloWin = r; toast(`🏆 Solo-Sieg ${r.on ? 'aktiv' : 'aus'} · 15 Fragen: ${fmt(r.min15)} · 25 Fragen: ${fmt(r.min)} Punkte`); swb.open = false; swb.open = true; }).catch((e) => toast(e.message));
     $('#swOn').onclick = () => send(true); if ($('#swOff')) $('#swOff').onclick = () => send(false); }; }
   const bb3 = $('#banBox2'); if (bb3 && !bb3.dataset.bound) { bb3.dataset.bound = 1; bb3.ontoggle = () => { if (bb3.open) drawBannerAdmin(); }; }
   const cb3 = $('#codeBox'); if (cb3 && !cb3.dataset.bound) { cb3.dataset.bound = 1; cb3.ontoggle = () => { if (cb3.open) drawCodesAdmin(); }; }
@@ -5187,7 +5187,7 @@ function update() {
     }).catch(() => {});
     renderHot(); chalBadge();
     const fb = $('#firstBonus');
-    const sw0 = home && home.soloWin; const swHint = sw0 && sw0.on ? `<div class="fbonus sw-hint">🏆 Solo-Sieg: mindestens ${fmt(sw0.min)} Punkte in höchstens ${sw0.maxQ} Fragen zählen im Solo-Quiz als Sieg</div>` : '';
+    const sw0 = home && home.soloWin; const swHint = sw0 && sw0.on ? `<div class="fbonus sw-hint">🏆 Solo-Sieg: ${fmt(sw0.min15 || 1000)} Punkte bei 15 Fragen oder ${fmt(sw0.min)} Punkte bei 25 Fragen zählen im Solo-Quiz als Sieg</div>` : '';
     if (fb) fb.innerHTML = swHint + (home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '');
     api('/api/newplayers').then((r) => {
       const np = $('#newPlayers'); if (!np) return;
@@ -5255,7 +5255,7 @@ function update() {
     $('#accNote').textContent = S.locked ? 'Wer beitritt, muss dieses Passwort eingeben.' : 'Jeder mit Konto kann über die Liste oder den Code beitreten.';
     const isPreset = Object.entries(PRESET).every(([k, v]) => S.settings[k] === v);
     $('#settings').innerHTML = `${soloIntent ? '' : `<button class="btn preset ${isPreset ? 'on' : ''}" id="presetBtn">⭐ Standard<small>20 s · 25 Fragen · 2.000 Punkte · 60 s Countdown</small></button>`}`
-      + (soloIntent ? `<p class="sub solo-rule">🎯 Solo wird immer bis <b>2.000 Punkte</b> gespielt. Wähle 15 oder 25 Fragen. Ein Solo-Sieg zählt ab ${fmt((home && home.soloWin && home.soloWin.min) || 1500)} Punkten.</p>` : '')
+      + (soloIntent ? `<p class="sub solo-rule">🎯 Solo wird immer bis <b>2.000 Punkte</b> gespielt. Wähle 15 oder 25 Fragen. Ein Solo-Sieg zählt ab <b>${fmt((home && home.soloWin && home.soloWin.min15) || 1000)} Punkten bei 15 Fragen</b> und ab <b>${fmt((home && home.soloWin && home.soloWin.min) || 1500)} Punkten bei 25 Fragen</b>.</p>` : '')
       + Object.entries(OPTS).filter(([k]) => !(soloIntent && (k === 'pointLimit' || k === 'countdown'))).map(([k, [label, vals0, suf]]) => ({ k, label, vals: soloIntent && k === 'maxQuestions' ? [15, 25] : vals0, suf })).map(({ k, label, vals, suf }) => `<div class="setting"><label>${label}</label><div class="seg">${vals.map((v) => `<button data-set="${k}" data-v="${v}" class="${S.settings[k] === v ? 'on' : ''}">${v}${suf}</button>`).join('')}</div></div>`).join('');
     if ($('#presetBtn')) $('#presetBtn').onclick = () => { socket.emit('settings', { ...PRESET }); sfx('tick'); toast('Standard eingestellt'); };
     return;
