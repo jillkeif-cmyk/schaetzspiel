@@ -1725,7 +1725,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '168';
+const AVER = '169';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4811,7 +4811,7 @@ function renderAdmin() {
       <p class="sub">${d.source === 'pool' ? 'Runden nehmen Fragen aus dem Pool, die keiner der Mitspieler je hatte. Reicht der Pool nicht, wird der Rest live erstellt.' : 'Jede Runde wird live erstellt. Die neuen Fragen wandern trotzdem automatisch in den Pool.'}</p>
     </div>
     <div class="panel adm">
-      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? (d.aiOk === false ? 'aus · KI-Schlüssel fehlt' : d.themes.some((t) => t.count < t.target) ? 'pausiert · Kategorien unter dem Ziel' : 'bereit · alle Kategorien am Ziel') : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
+      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? (d.aiOk === false ? 'aus · KI-Schlüssel fehlt' : d.themes.some((t) => !t.skip && t.count < t.target) ? `pausiert · ${d.themes.filter((t) => !t.skip && t.count < t.target).length} Kategorien unter dem Ziel` : 'bereit · alle Kategorien am Ziel') : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
       <div class="row" style="gap:8px;flex-wrap:wrap">
         <button class="btn small ${d.running ? 'ghost' : ''}" id="admStart" ${d.running ? 'disabled' : ''}>▶ Bis zum Ziel füllen</button>
         <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
@@ -4850,7 +4850,7 @@ function renderAdmin() {
       .then((r) => { toast(`Geschenk an ${r.sent} Spieler verschickt${r.times > 1 ? ` (je ${r.times}×)` : ''}`); $('#gfDia').value = ''; $('#gfMsg').value = ''; }).catch((e) => toast(e.message));
   };
   ['gfTo', 'gfDia', 'gfPack', 'gfN', 'gfTimes', 'gfMsg'].forEach((k) => { const el = document.getElementById(k); if (el) el.onfocus = () => clearTimeout(adminTimer); }); // beim Tippen nicht neu laden
-  $('#admStart').onclick = () => adminAct('start');
+  $('#admStart').onclick = () => api('/api/admin/pool', { action: 'start' }).then((d) => { adminD = d; renderAdmin(); if (!d.running) toast(d.aiOk === false ? 'KI-Schlüssel fehlt' : d.themes.some((t) => !t.skip && t.count < t.target) ? 'Befüllung konnte nicht starten' : '✅ Alle aktiven Kategorien sind schon am Ziel. Zum Nachfüllen ein Ziel erhöhen.'); else toast('▶ Befüllung läuft'); }).catch((e) => toast(e.message));
   $('#admStop').onclick = () => adminAct('stop');
   $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
   $('#admAuto').onchange = (e) => adminAct('auto', e.target.checked);
