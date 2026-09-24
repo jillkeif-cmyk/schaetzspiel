@@ -1636,6 +1636,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .tc-machine.jc-machine{display:block!important;width:100%}.jc-reels{width:100%;box-sizing:border-box}.jc-reels .tc-reel{height:auto!important}.jc-reels .tc-cell{height:auto!important;aspect-ratio:1}.jc-reels .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}
 .jc-bg{position:absolute;inset:0;border-radius:inherit;background:url('/jc/bg.webp') center/cover;opacity:.9;z-index:0;pointer-events:none}.jc-machine,.jc-logo{position:relative;z-index:1}
 .jc-bg ~ *{position:relative;z-index:1}.jc-bg{opacity:.55}
+.jc-reels.dim .tc-cell:not(.hit){opacity:.32;filter:grayscale(.6)}.jc-reels .tc-cell{position:relative;transition:opacity .25s}
+.jc-lwin{position:absolute;left:2px;top:2px;padding:1px 6px;border-radius:6px;font:900 11px/1.4 Archivo;color:#1A0B26;background:var(--lc,#FFD23F);box-shadow:0 2px 6px rgba(0,0,0,.5);z-index:3}
 </style>
 </head>
 <body>
@@ -1760,6 +1762,13 @@ function sfx(name) {
     if (name === 'srtear') { for (let i = 0; i < 7; i++) { const t0 = i * 0.045 + Math.random() * 0.02; const n = Math.floor(actx.sampleRate * 0.04), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * (1 - k / n); const sc = actx.createBufferSource(); sc.buffer = b; const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500 + Math.random() * 2500; const g = actx.createGain(); g.gain.value = 0.12; sc.connect(hp).connect(g).connect(master); sc.start(actx.currentTime + t0); } tone(110, 0.02, 0.25, 'sine', 0.12); }
     if (name === 'srflash') { [784, 1175, 1568].forEach((f) => tone(f, 0, 1.4, 'sine', 0.05)); whoosh(0.7, 3000, 800, 0.08); }
     if (name === 'srcard') whoosh(0.35, 600, 2600, 0.1);
+    // Narrenkappe: Merkur-typische Klangfolge, selbst gebaut
+    if (name === 'jcspin') [392, 440, 494, 523, 587, 659, 740, 784, 880, 988].forEach((f, i) => tone(f, i * 0.045, 0.09, 'square', 0.035)); // aufsteigender Lauf beim Start
+    if (name === 'jcstop') { tone(130, 0, 0.09, 'triangle', 0.13); tone(98, 0.01, 0.07, 'sine', 0.08); } // tiefer Anschlag je Walze
+    if (name === 'jcbell') for (let k = 0; k < 10; k++) tone([1319, 1568, 1760, 2093][k % 4], k * 0.07, 0.12, 'triangle', 0.04); // Schellen der Narrenkappe
+    if (name === 'jcpop') { tone(880, 0, 0.06, 'square', 0.05); tone(1760, 0.04, 0.12, 'sine', 0.06); } // Feld wird zum Narren
+    if (name === 'jccount') tone(1047 + Math.random() * 60, 0, 0.05, 'square', 0.03); // Hochzählen des Gewinns
+    if (name === 'jcnone') { tone(220, 0, 0.12, 'triangle', 0.05); tone(196, 0.1, 0.16, 'triangle', 0.04); }
     if (name === 'pkbeep') { tone(196, 0, 0.09, 'square', 0.05); tone(147, 0.1, 0.09, 'square', 0.045); } // „pork pork“
     if (name === 'pkbeep2') tone(262, 0, 0.08, 'square', 0.06);
     const clack = (t0, v) => { const n = Math.floor(actx.sampleRate * 0.03), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / n, 3); const sc = actx.createBufferSource(); sc.buffer = b; const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200 + Math.random() * 1500; bp.Q.value = 2; const g = actx.createGain(); g.gain.value = v; sc.connect(bp).connect(g).connect(master); sc.start(actx.currentTime + t0); };
@@ -3230,30 +3239,34 @@ function jcSetGrid(g) { tc.jgrid = g; g.forEach((col, c) => { const st = $('#tcS
 async function jcAnimate(g) { // Walzen nacheinander anhalten
   const fast = tc.turbo, cols = [0, 1, 2, 3, 4];
   cols.forEach((c) => { const st = $('#tcStrip' + c); if (st) st.classList.add('jc-spin'); });
-  sfx('srspin');
-  for (const c of cols) { await tcSleep(fast ? 90 : 230); const st = $('#tcStrip' + c); if (st) { st.classList.remove('jc-spin'); st.innerHTML = g[c].map(jcCell).join(''); st.classList.add('jc-stop'); setTimeout(() => st.classList.remove('jc-stop'), 300); } sfx('tick'); }
+  sfx('jcspin');
+  for (const c of cols) { await tcSleep(fast ? 90 : 230); const st = $('#tcStrip' + c); if (st) { st.classList.remove('jc-spin'); st.innerHTML = g[c].map(jcCell).join(''); st.classList.add('jc-stop'); setTimeout(() => st.classList.remove('jc-stop'), 300); } sfx('jcstop'); }
   tc.jgrid = g;
 }
 async function jcCap(cap, after) { // Kappe schüttelt sich, dann werden Felder zu Narren
   const capCells = []; tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === 'N') capCells.push([c, r]); }));
   capCells.forEach(([c, r]) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('jc-shake'); });
-  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('srglow'); await tcSleep(tc.turbo ? 500 : 1300);
+  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1300);
   if (!cap.turned.length) { tcSetMsg('🃏 … sie hat sich nur geschüttelt'); await tcSleep(tc.turbo ? 300 : 700); jcSetGrid(after); return; }
   tcSetMsg(`🃏 ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld wird' : 'Felder werden'} zum Narren!`);
-  for (const [c, r] of cap.turned) { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) { el.style.backgroundImage = `url('/jc/s_W.webp?v=${AVER}')`; el.classList.add('jc-pop'); } sfx('dart'); await tcSleep(tc.turbo ? 90 : 220); }
+  for (const [c, r] of cap.turned) { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) { el.style.backgroundImage = `url('/jc/s_W.webp?v=${AVER}')`; el.classList.add('jc-pop'); } sfx('jcpop'); await tcSleep(tc.turbo ? 90 : 220); }
   await tcSleep(tc.turbo ? 200 : 500); tc.jgrid = after;
 }
 async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzählen
-  const svg = $('#tcLines'), lw = $('#tcLineWin'); let sum = 0;
+  const svg = $('#tcLines'), lw = $('#tcLineWin'), reels = $('#tcReels'); let sum = 0;
+  if (reels) reels.classList.add('dim'); // übrige Felder abdunkeln wie am Original
   for (const L of lines) {
     const pts = JC_LINES[L.line - 1].map((r, c) => `${c * 100 + 50},${r * 100 + 50}`).join(' ');
     if (svg) svg.innerHTML += `<polyline points="${pts}" fill="none" stroke="${JC_COL[L.line - 1]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;
     JC_LINES[L.line - 1].slice(0, L.n).forEach((r, c) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit'); });
-    sum += L.win; tc.lastWin = sum; if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${JC_SYM[L.sym]} = ${fmt(L.win)}`; tcSync(); sfx(L.sym === 'W' || L.sym === 'O' ? 'exact' : 'dart'); await tcSleep(tc.turbo ? 220 : 600);
+    const first = document.querySelectorAll(`#tcStrip0 .tc-cell`)[JC_LINES[L.line - 1][0]]; if (first) first.insertAdjacentHTML('beforeend', `<span class="jc-lwin" style="--lc:${JC_COL[L.line - 1]}">${fmt(L.win)}</span>`);
+    if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${JC_SYM[L.sym]}`;
+    const steps = tc.turbo ? 4 : 10; for (let k = 1; k <= steps; k++) { tc.lastWin = sum + Math.round(L.win * k / steps); tcSync(); sfx('jccount'); await tcSleep(tc.turbo ? 25 : 45); } // Gewinn tickend hochzählen
+    sum += L.win; tc.lastWin = sum; tcSync(); if (L.sym === 'W' || L.sym === 'O') sfx('exact'); await tcSleep(tc.turbo ? 160 : 420);
   }
   if (lw) lw.textContent = '';
 }
-function jcClear() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); }
+function jcClear() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; const rl = $('#tcReels'); if (rl) rl.classList.remove('dim'); document.querySelectorAll('.jc-lwin').forEach((e) => e.remove()); document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); }
 async function jcSpin() {
   const bet = TC_BETS[tc.bi];
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
@@ -3267,7 +3280,7 @@ async function jcSpin() {
     if (r.lines.length) await jcLines(r.lines);
     tc.busy = false;
     if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 20) { sfx('prestige'); try { navigator.vibrate && navigator.vibrate([60, 40, 160]); } catch (e) {} } }
-    else tcSetMsg('Leider nichts');
+    else { tcSetMsg('Leider nichts'); if (!tc.auto) sfx('jcnone'); }
     tcSync();
     if (tc.auto) {
       if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
