@@ -1636,7 +1636,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '120';
+const AVER = '121';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4474,6 +4474,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
+  socket.on('watch:new', (d) => { toast(`👀 ${d.name} schaut dir bei ${d.game} zu`); sfx('tick'); });
   socket.on('market:new', (d) => { if (!home || !home.me || d.seller === home.me.id) return; home.mkTimes = home.mkTimes || {}; (home.mkTimes[d.kind] = home.mkTimes[d.kind] || []).unshift(d.at); mkBadges(); });
   let cxpT = 0;
   socket.on('me:cxp', (d) => { // nach jeder Casino-Runde: Casino-XP, VIP-Stufe und Casino-Strang live nachziehen

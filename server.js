@@ -871,6 +871,7 @@ const tcSeats = new Map(); // Maschine -> { uid, name, last, grid }
 const tcSeatOf = (uid) => { for (const [m, st] of tcSeats) if (st.uid === uid) return m; return null; };
 const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, user: st ? { id: st.uid, name: st.name } : null, watchers: (io.sockets.adapter.rooms.get('tc' + (i + 1)) || { size: 0 }).size }; });
 const tcPush = () => io.emit('tc:list', tcList());
+const notifyWatched = (uid, watcher, game) => { if (!uid || !watcher || uid === watcher.id) return; io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('watch:new', { name: watcher.name, game }); }); }; // „X schaut dir zu“
 const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (!m) return; store.userById(uid).then((f) => io.to('tc' + m).emit('tc:ev', { machine: m, dia: f ? Number(f.diamonds) || 0 : null, ...ev })).catch(() => io.to('tc' + m).emit('tc:ev', { machine: m, ...ev })); }; // mit Guthaben des Spielers für die Zuschauer
 async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gutgeschrieben
   const m = tcSeatOf(uid); if (!m) return;
@@ -2022,6 +2023,7 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     const m = Math.round(Number(id) || 0); if (m < 1 || m > TC_MACHINES) return;
     unwatch(); socket.join('tc' + m);
     const st = tcSeats.get(m), open = st ? tripleOpen.get(st.uid) : null;
+    if (st) notifyWatched(st.uid, user, 'Triple Crown');
     const snap = (dia) => socket.emit('tc:snap', { machine: m, user: st ? { id: st.uid, name: st.name } : null, grid: st && st.grid, risk: open ? tripleView(open) : null, dia });
     if (st) store.userById(st.uid).then((f) => snap(f ? Number(f.diamonds) || 0 : null)).catch(() => snap(null)); else snap(null);
     tcPush();
@@ -2033,9 +2035,10 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     const uid = String(id || ''); const x = [...cwAt.entries()].find(([k]) => String(k) === uid); cwLeaveAll();
     if (!x) return socket.emit('cw:snap', { uid, gone: true });
     socket.join('cw' + x[0]); const g = bjGames.get(x[0]);
+    if (!socket.data.cwWatching || socket.data.cwWatching !== x[0]) { socket.data.cwWatching = x[0]; notifyWatched(x[0], user, x[1].game === 'bj' ? 'Blackjack' : 'Roulette'); }
     socket.emit('cw:snap', { uid: x[0], name: x[1].name, game: x[1].game, bj: g ? BJ.view(g) : null, history: rHistory.get(x[0]) || [] }); cwPush();
   });
-  socket.on('cw:unwatch', () => { cwLeaveAll(); cwPush(); });
+  socket.on('cw:unwatch', () => { socket.data.cwWatching = null; cwLeaveAll(); cwPush(); });
   socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:triple' && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
   socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id) && cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } }, 20000);
     setTimeout(() => { if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 180000); }); // Automatenplatz bleibt bei kurzem Verbindungsabbruch 3 Minuten reserviert

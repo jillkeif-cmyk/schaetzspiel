@@ -195,6 +195,7 @@ damit Karten jederzeit neu gerendert werden können.
 - Solo fest: Punktelimit immer 2.000, Fragen nur 15 oder 25 (Server erzwingt in create_solo), im Setup kein Punkte- und Countdown-Regler.
 - Quiz-Diamanten neu (lib/quizpay.js, Setting quiz_pay, Admin „💎 Quiz-Belohnung“, AN): Sieger bis 12.000 voll ab 2.000 Punkten, andere anteilig × 0,6, Solo bis 8.000 voll ab 1.500 (mit Solo-Sieg). Tagesbonus/Hot Time verdoppeln weiter. Kronen-Pass einmalig auf 2.500 Pass-XP pro Stufe (Setting pass_rework1) ≈ 60 Siege. Update 13 (u13-quiz).
 - Solo-Sieg (lib/solowin.js, Setting solo_win, Admin „🏆 Solo-Sieg“, jetzt Standard AN): Solo zählt als Sieg bei >= min Punkten (1500) in <= maxQ Fragen (25); dann counted = true (Serie/Flammen wächst, reißt bei Verfehlen), Diamanten 70 % eines Siegs, Punktelimit im Solo mindestens min. Hinweis auf der Startseite, Anzeige „Solo-Sieg!“ am Ende.
+- Zuschauer-Meldung: notifyWatched() → Socket watch:new an den Spieler („X schaut dir bei Triple Crown/Roulette/Blackjack zu“), bei tc:watch und cw:watch.
 - Triple Crown Zuschauer: tcEmit und tc:snap senden dia (Guthaben des Spielers); Anzeige beim Dreh erst ohne Gewinn, danach mit.
 - Verlauf als PDF: GET /api/admin/ledger.pdf?name&kind&hours (pdfkit), Zeitfenster-Auswahl + „📄 Als PDF“ im Admin-Verlauf, teilen/herunterladen. Quellen-Namen aus LG_SRC in index.html.
 - Zweite Ebene layer()/closeLayer() (#layer2) für Großansicht und Trophäen-Auswahl: Schließen führt zurück zum darunterliegenden Fenster. Trophäen-Knopf auch in „Profil bearbeiten“ (nur Admin).
