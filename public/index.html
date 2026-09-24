@@ -1614,6 +1614,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .tr-lib{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}.tr-pick{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(255,255,255,.05)}.tr-pick img{width:90px;height:50px;object-fit:contain}.tr-pick b{display:block;font:800 13px Archivo}.tr-pick small{color:#cfe}
 #layer2{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,10,14,.78);backdrop-filter:blur(3px)}#layer2.on{display:flex}#layer2>.panel{width:100%;max-width:440px;max-height:90vh;overflow:auto}
 .lg-pdf{display:flex;gap:8px;align-items:center;margin-bottom:10px}.lg-pdf select{flex:1}
+.ps-next{margin-top:8px}.ps-next b{color:#FFD23F!important}.ps-num{flex-direction:column}.ps-mini{width:36px!important;margin-top:3px}.ps-mini b{background:linear-gradient(90deg,#FFE27A,#E0A21E)!important}
 </style>
 </head>
 <body>
@@ -1633,7 +1634,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '113';
+const AVER = '114';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3626,7 +3627,7 @@ function renderPass() {
     <div class="ps-tabs"><button class="${passTab === 'casino' ? '' : 'on'}" data-pstab="main"><span>👑</span><b>Kronen-Pass</b><small>Gratis & Premium</small></button><button class="cas ${passTab === 'casino' ? 'on' : ''}" data-pstab="casino"><span>🎰</span><b>Casino-Strang</b><small>💀 🎲 🃏 ${v.casino ? Math.min(100, Math.round(100 * v.casino.xp / v.casino.max)) + ' %' : ''}</small>${v.casino && !LOCK && v.casino.tiers.some((x) => x.reached && !x.got) ? '<i class="ps-dot"></i>' : ''}</button></div>
     <div class="ps-main" ${passTab === 'casino' ? 'hidden' : ''}>
     <div class="ps-status panel">
-      <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small></div></div>
+      <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small>${v.tier < v.tiersN ? `<div class="cas-next ps-next"><b>Bis Stufe ${v.tier + 1}: ${fmt(v.into)} / ${fmt(v.perTier)} Pass-XP</b><span class="pc-bar"><i style="width:${Math.round(100 * v.into / v.perTier)}%"></i></span><small>Insgesamt: ${fmt(v.xp)} / ${fmt(v.perTier * v.tiersN)} Pass-XP bis Stufe ${v.tiersN} · noch ${fmt(Math.max(0, v.perTier * v.tiersN - v.xp))}</small></div>` : ''}</div></div>
       ${LOCK ? `<div class="ps-lockbar">🔒 <b>Noch gesperrt</b><span>${v.unlockAt ? 'Freischaltung ' + passWhen(v.unlockAt) : 'Die Freischaltung kommt bald. Schau dich schon mal um!'}</span></div>` : v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
       ${(() => { const n = v.claimable + (v.casino && !LOCK ? v.casino.tiers.filter((x) => x.reached && !x.got).length : 0); return n ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${n})</button>` : ''; })()}
     </div>
@@ -3637,7 +3638,7 @@ function renderPass() {
       const fr = x.reached && !x.gotFree, pr = x.reached && v.prem && !x.gotPrem, cur = x.t === v.tier + 1;
       return `${cur ? '<div class="ps-now"><span>Du bist hier</span></div>' : ''}<div class="ps-row ${x.reached ? 'reached' : ''} ${[10, 20, 30].includes(x.t) ? 'big' : ''}">
         <button data-passinfo="${x.t}:free" class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}">${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</button>
-        <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}</div>
+        <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}${x.t === v.tier + 1 ? `<i class="cas-mini ps-mini"><b style="width:${Math.max(4, Math.round(100 * v.into / v.perTier))}%"></b></i>` : ''}</div>
         <button data-passinfo="${x.t}:prem" class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}">${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</button></div>`; }).join('')}</div>
     </div><div class="ps-casino" ${passTab === 'casino' ? '' : 'hidden'}>${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
       return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP gesammelt</small>${nx ? (() => { const prev = nx.t > 1 ? c.tiers[nx.t - 2].need : 0, p2 = Math.max(0, Math.min(100, Math.round(100 * (c.xp - prev) / (nx.need - prev)))); return `<div class="cas-next"><b>Bis Stufe ${nx.t}: ${fmt(c.xp)} / ${fmt(nx.need)}</b><span class="pc-bar"><i style="width:${p2}%"></i></span><small>noch ${fmt(nx.need - c.xp)} Casino-XP</small></div>`; })() : '<small>🏆 Alles erreicht!</small>'}</div></div>

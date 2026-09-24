@@ -536,30 +536,66 @@ app.get('/api/admin/ledger.pdf', async (req, res) => { // Guthaben-Verlauf als P
     const clean = (x) => String(x || '').replace(/→/g, '->').replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').replace(/\s+/g, ' ').trim(); // Standardschrift kennt keine Emojis
     const d = (ts) => new Date(Number(ts)).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const n = (x) => Math.round(Number(x) || 0).toLocaleString('de-DE');
-    const PDF = require('pdfkit'); const doc = new PDF({ size: 'A4', margin: 40 });
+    const PDF = require('pdfkit'); const doc = new PDF({ size: 'A4', margin: 36, bufferPages: true, info: { Title: `Kontoauszug ${t.name}`, Author: 'PUNKTLANDUNG' } });
+    const FD = path.join(__dirname, 'tools/pdf');
+    doc.registerFont('Title', path.join(FD, 'Anton.ttf')); doc.registerFont('Body', path.join(FD, 'Archivo.ttf'));
+    const clean2 = (x) => String(x || '').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').trim(); // Emojis raus, Pfeile bleiben
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="Verlauf_${encodeURIComponent(t.name)}_${kind}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="Kontoauszug_${encodeURIComponent(t.name)}_${kind}.pdf"`);
     doc.pipe(res);
-    doc.font('Helvetica-Bold').fontSize(18).text(`PUNKTLANDUNG · Verlauf ${KN}`);
-    doc.font('Helvetica').fontSize(10.5).fillColor('#444').text(`Spieler: ${clean(t.name)}   ·   Zeitraum: ${hours ? 'letzte ' + (hours >= 48 && hours % 24 === 0 ? hours / 24 + ' Tage' : hours === 1 ? 'Stunde' : hours + ' Stunden') : 'alles'}   ·   erstellt ${d(Date.now())}`);
-    const sum = rows.reduce((a, r) => a + Number(r.delta || 0), 0);
-    doc.text(`Aktueller Stand: ${n({ dia: t.diamonds, xp: t.xp, cxp: t.casino_xp, pxp: t.pass_xp }[kind])}   ·   Einträge: ${rows.length}   ·   Summe im Zeitraum: ${sum >= 0 ? '+' : ''}${n(sum)}`);
-    doc.moveDown(0.8);
-    const X = [40, 145, 385, 470], W = [100, 235, 80, 85];
-    const head = () => { doc.font('Helvetica-Bold').fontSize(9).fillColor('#000'); ['Zeit', 'Quelle / Details', 'Änderung', 'Stand'].forEach((h, i) => doc.text(h, X[i], doc.y, { width: W[i], align: i >= 2 ? 'right' : 'left', continued: false, lineBreak: false }) && (i < 3 ? doc.moveUp() : 0)); doc.moveDown(0.3); doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#999').stroke(); doc.moveDown(0.3); };
+    const W = doc.page.width, M = 36, GOLD = '#E0A21E', DARK = '#12303A', INK = '#1d2530', MUTE = '#6b7785';
+    const dd = (ts) => new Date(Number(ts)).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    // Kopfband
+    const g = doc.linearGradient(0, 0, W, 110); g.stop(0, '#0B2A33').stop(0.6, '#1B3F4A').stop(1, '#3A1C4F');
+    doc.rect(0, 0, W, 110).fill(g);
+    doc.rect(0, 110, W, 4).fill(GOLD);
+    try { doc.image(path.join(FD, 'logo.png'), M, 18, { width: 74 }); } catch (e) {}
+    doc.font('Title').fontSize(30).fillColor('#FFD23F').text('PUNKTLANDUNG', M + 90, 24, { lineBreak: false });
+    doc.font('Body').fontSize(12).fillColor('#ffffff').text(`Kontoauszug · ${KN}`, M + 92, 66);
+    doc.font('Body').fontSize(8.5).fillColor('#cfe3e8').text(`erstellt am ${dd(Date.now())}`, W - M - 160, 30, { width: 160, align: 'right' });
+    doc.text(`Nr. ${t.id}-${Date.now().toString(36).toUpperCase()}`, W - M - 160, 44, { width: 160, align: 'right' });
+    // Kontoinhaber und Zeitraum
+    let y = 132;
+    doc.font('Body').fontSize(9).fillColor(MUTE).text('KONTOINHABER', M, y);
+    doc.font('Title').fontSize(22).fillColor(INK).text(clean2(t.name), M, y + 12);
+    const from = since || (rows.length ? Number(rows[rows.length - 1].ts) : Date.now());
+    doc.font('Body').fontSize(9).fillColor(MUTE).text('ZEITRAUM', W / 2, y, { width: W / 2 - M, align: 'right' });
+    doc.font('Body').fontSize(11.5).fillColor(INK).text(`${dd(from)}  –  ${dd(Date.now())}`, W / 2, y + 14, { width: W / 2 - M, align: 'right' });
+    doc.font('Body').fontSize(9).fillColor(MUTE).text(hours ? 'letzte ' + (hours >= 48 && hours % 24 === 0 ? hours / 24 + ' Tage' : hours === 1 ? 'Stunde' : hours + ' Stunden') : 'gesamter Verlauf', W / 2, y + 30, { width: W / 2 - M, align: 'right' });
+    // Kennzahlen
+    y = 190;
+    const plus = rows.reduce((a, r) => a + Math.max(0, Number(r.delta) || 0), 0), minus = rows.reduce((a, r) => a + Math.min(0, Number(r.delta) || 0), 0);
+    const kpi = [['Aktueller Stand', n({ dia: t.diamonds, xp: t.xp, cxp: t.casino_xp, pxp: t.pass_xp }[kind]), INK], ['Zugänge', '+' + n(plus), '#0A7A3A'], ['Abgänge', n(minus), '#B00020'], ['Saldo im Zeitraum', (plus + minus >= 0 ? '+' : '') + n(plus + minus), plus + minus >= 0 ? '#0A7A3A' : '#B00020']];
+    const bw = (W - 2 * M - 3 * 8) / 4;
+    kpi.forEach(([l, v, c], k) => { const x = M + k * (bw + 8); doc.roundedRect(x, y, bw, 50, 8).fill('#F3F6F8'); doc.rect(x, y, 4, 50).fill(k === 0 ? GOLD : c);
+      doc.font('Body').fontSize(8).fillColor(MUTE).text(l.toUpperCase(), x + 12, y + 9, { width: bw - 18 }); doc.font('Title').fontSize(15).fillColor(c).text(v, x + 12, y + 23, { width: bw - 18 }); });
+    doc.font('Body').fontSize(8.5).fillColor(MUTE).text(`${rows.length} Buchungen`, M, y + 58);
+    // Tabelle
+    y += 76; const C = [M, M + 92, W - M - 160, W - M - 78], CW = [88, C[2] - C[1] - 8, 76, 78];
+    const head = () => { doc.roundedRect(M, y, W - 2 * M, 20, 4).fill(DARK); doc.font('Body').fontSize(8.5).fillColor('#ffffff');
+      ['Datum', 'Vorgang', 'Betrag', 'Stand'].forEach((h, k) => doc.text(h, C[k] + 6, y + 6, { width: CW[k] - 6, align: k >= 2 ? 'right' : 'left', lineBreak: false })); y += 24; };
     head();
-    for (const r of rows) {
-      const src = clean(lgName(r.src)) + (r.note ? '\n' + clean(r.note) : '');
-      const h = Math.max(12, doc.font('Helvetica').fontSize(8.5).heightOfString(src, { width: W[1] })) + 4;
-      if (doc.y + h > 800) { doc.addPage(); head(); }
-      const y = doc.y;
-      doc.font('Helvetica').fontSize(8.5).fillColor('#222').text(d(r.ts), X[0], y, { width: W[0] });
-      doc.text(src, X[1], y, { width: W[1] });
-      doc.fillColor(Number(r.delta) < 0 ? '#B00020' : '#0A7A3A').text(`${Number(r.delta) > 0 ? '+' : ''}${n(r.delta)}`, X[2], y, { width: W[2], align: 'right' });
-      doc.fillColor('#222').text(n(r.after), X[3], y, { width: W[3], align: 'right' });
-      doc.y = y + h; doc.x = 40;
-    }
-    if (!rows.length) doc.font('Helvetica').fontSize(10).fillColor('#666').text('Keine Einträge im gewählten Zeitraum.');
+    rows.forEach((r, k) => {
+      const title = clean2(lgName(r.src)); let det = clean2(r.note); const pre = det.split(':')[0]; if (pre && title.toLowerCase().includes(pre.toLowerCase().split(' ')[0])) det = det.slice(pre.length + 1).trim(); // „Roulette: …“ nicht doppelt
+      doc.font('Body').fontSize(9); const h1 = doc.heightOfString(title, { width: CW[1] - 6 }); doc.fontSize(7.8); const h2 = det ? doc.heightOfString(det, { width: CW[1] - 6 }) : 0;
+      const h = Math.max(20, h1 + h2 + 10);
+      if (y + h > doc.page.height - 50) { doc.addPage(); y = 40; head(); }
+      if (k % 2 === 0) doc.rect(M, y - 2, W - 2 * M, h).fill('#F7F9FA');
+      doc.font('Body').fontSize(8.3).fillColor(MUTE).text(dd(r.ts), C[0] + 6, y + 3, { width: CW[0] - 6 });
+      doc.font('Body').fontSize(9).fillColor(INK).text(title, C[1] + 6, y + 3, { width: CW[1] - 6 });
+      if (det) doc.font('Body').fontSize(7.8).fillColor(MUTE).text(det, C[1] + 6, y + 3 + h1 + 1, { width: CW[1] - 6 });
+      const dl = Number(r.delta) || 0;
+      doc.font('Title').fontSize(10.5).fillColor(dl < 0 ? '#B00020' : '#0A7A3A').text(`${dl > 0 ? '+' : ''}${n(dl)}`, C[2], y + 3, { width: CW[2], align: 'right' });
+      doc.font('Body').fontSize(9).fillColor(INK).text(n(r.after), C[3], y + 4, { width: CW[3], align: 'right' });
+      y += h;
+    });
+    if (!rows.length) doc.font('Body').fontSize(10).fillColor(MUTE).text('Keine Buchungen im gewählten Zeitraum.', M, y + 6);
+    // Fußzeile auf jeder Seite
+    const pr = doc.bufferedPageRange();
+    for (let k = pr.start; k < pr.start + pr.count; k++) { doc.switchToPage(k); const fy = doc.page.height - 30;
+      doc.moveTo(M, fy - 6).lineTo(W - M, fy - 6).lineWidth(0.5).strokeColor('#d5dde3').stroke();
+      doc.font('Body').fontSize(7.5).fillColor(MUTE).text(`PUNKTLANDUNG · Kontoauszug ${KN} · ${clean2(t.name)}`, M, fy, { lineBreak: false, height: 10 });
+      doc.text(`Seite ${k - pr.start + 1} von ${pr.count}`, W - M - 100, fy, { width: 100, align: 'right', lineBreak: false, height: 10 }); }
     doc.end();
   } catch (e) { console.error(e); if (!res.headersSent) res.status(500).json({ error: 'Serverfehler.' }); }
 });

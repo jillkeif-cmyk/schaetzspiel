@@ -10,8 +10,22 @@ Nick, spricht informelles Deutsch, schickt oft Sprachnachrichten mit Tippfehlern
 Er will kurze, handlungsorientierte Antworten und ehrliche Einschätzungen statt Schönfärberei.
 Wenn etwas nicht getestet ist oder nicht geht, sag es klar.
 
-**Grundregel: Niemals deployen ohne seine ausdrückliche Freigabe.** Er spielt oft gerade
-mit Freunden. Pushen auf GitHub ist unkritisch, Render deployt nur über `trigger_deploy`.
+**Deployen:** Nick erwartet inzwischen, dass fertige, getestete Änderungen direkt live gehen
+(push nach `main` und `gruselnacht`, dann Render `trigger_deploy`). Nur bei riskanten Umbauten vorher fragen.
+Render deployt NICHT automatisch beim Push. Ist das Render-Werkzeug nicht verfügbar: sagen, dass es
+gepusht, aber nicht live ist, und Nick „Manual Deploy → Deploy latest commit“ im Render-Dashboard nennen.
+Nach jedem Deploy `curl https://schaetzspiel-p0eb.onrender.com/api/version` prüfen (= AVER).
+
+## Zugänge und Infrastruktur
+
+- Live: https://schaetzspiel-p0eb.onrender.com · Version = `AVER` in `public/index.html` (bei jeder Änderung erhöhen)
+- GitHub: `jillkeif-cmyk/schaetzspiel`, Zweige `main` (live) und `gruselnacht` (identisch halten: `git push … main:gruselnacht`)
+- Push: `git push -q "https://x-access-token:<TOKEN>@github.com/jillkeif-cmyk/schaetzspiel.git" main`
+  (Token steht in der Chat-Zusammenfassung; er stand im Chat und sollte erneuert werden)
+- Render: Service `srv-dancluv40ujc73bgi7lg`, Workspace `tea-dahd3bp5efls73dj48n0`, Postgres `dpg-dancm40ae00c73eb1lmg-a`
+  (**läuft am 19. Oktober 2026 ab → Umzug zu Neon.tech dringend**). Direkte SQL-Abfragen über das
+  Render-Werkzeug scheitern (SSL), Protokolle über `list_logs` gehen.
+- Admin im Spiel: `ADMIN_NAME=zimmerbiest` (Nick = ZimmerBiest)
 
 ## Technik in einem Satz
 
@@ -42,8 +56,18 @@ Frontend ist die eine Datei `public/index.html` mit Template-Strings. Kein Build
 
 ## Bilder erzeugen (Higgsfield)
 
-Modell `gpt_image_2_5`, Stapel bis 12 Bilder, danach `jobs_wait` mit höchstens 15 Sekunden.
-Bei `429 rate_limit_reached` kurz warten und die fehlenden neu schicken.
+**Werkzeuge:** Higgsfield-MCP. Standbilder mit `generate_image_batch` (Modell `gpt_image_2_5`),
+Videos mit `generate_video` (Modell `wan3_0`), Warten mit `jobs_wait` (timeout höchstens 15 s,
+bei längeren Jobs dazwischen `sleep` in bash). Stapel bis ~10 Bilder, bei `429 rate_limit_reached`
+kurz warten und die fehlenden neu schicken. Kosten: Bild wenige Credits, Wan 5 s 720p ≈ 9 Credits,
+Wan 30 s 720p ≈ 52,5 Credits (vorher mit `get_cost: true` prüfen).
+
+**Referenzen:** Vorhandene Bilder als `medias: [{role: 'image', value: <job-id oder media-id>}]` mitgeben
+(Stil übernehmen). Dateien von der Live-Seite holen: `media_import_url` mit der öffentlichen URL
+→ `media_id`. Bei Wan: `start_image` (Animation eines Bildes) oder `image_references` (Trailer).
+
+**Preset-Hinweis:** Higgsfield schlägt manchmal ein Preset vor („IN THE DARK“, „FLOAT SPIN“).
+Dann denselben Aufruf mit `declined_preset_id: <id>` wiederholen, damit wörtlich generiert wird.
 
 **Immer auf reinem Schwarz generieren**, dann freistellen mit `tools/assets/cutout.py`:
 - Embleme: „single video game emblem, 3D rendered like a AAA UI icon ... isolated on a pure solid black background. No text“
@@ -61,7 +85,7 @@ falls Browser alte Versionen zeigen.
 
 ## Kronen-Pass (Season-Pass)
 
-- Logik in `lib/pass.js`: SEASON (id, Name, Start/Ende, Banner), 30 Stufen à 2.000 Pass-XP, FREE/PREM-Belohnungen, Wochenaufgaben, Bonus-Tresor.
+- Logik in `lib/pass.js`: SEASON (id, Name, Start/Ende, Banner), 30 Stufen à XP_PER_TIER (aktuell 4.000, im Admin einstellbar), FREE/PREM-Belohnungen, Wochenaufgaben, Bonus-Tresor.
 - Pass-XP kommen in `lib/game.js` nach jedem Match dazu (Match-XP ohne Herausforderungs-XP, kein Casino). Neue Saison: `norm()` setzt alles zurück, sobald `pass_season` nicht mehr passt.
 - Endpunkte in `server.js`: GET /api/pass, POST /api/pass/buy (15.000 💎), /claim (tier oder 'all'), /bank, /task, Admin-Test /api/admin/passxp.
 - Saison-Kosmetik ist `event: true` in cards.js/frames.js und wird über `unlocks` freigeschaltet.
@@ -81,6 +105,14 @@ falls Browser alte Versionen zeigen.
    (Krone, Kopf), YPOS senken: bisher 0.30 (Komplettist), 0.22 (Violetter Flush), 0.0 (König des Pokers).
 5. Im Code `anim: 'video'` am Titel oder Emblem setzen. Rahmen bleiben Standbilder mit CSS-Animation (`spin`, `crown` usw.).
 6. Vorschau für Nick: Playwright-Aufnahme im Spiel plus Untertitel per ffmpeg `drawtext`, oder Vergleichsseite als Artifact.
+
+## Kennungen von Titeln, Emblemen, Rahmen (WICHTIG)
+
+Jede Kennung darf es nur einmal geben, sonst überschreibt man Bilder und Items erscheinen doppelt
+(ist einmal passiert). `npm test` startet mit `test/ids.js`, das Doppelte und fehlende Bilder meldet.
+Vergeben: TC1-3/EC1-3/fC1-3 = GAMBLER-Code-Paket, TP1-3/EP1-3 = Poker, TH*/EH*/fp1 = Geisternacht-Pass,
+TX1-4/EX1-5 = Casino-Strang des Passes (EX5 = Highroller, auch Prestige-Logo 12), TK*/EK*/FK* = Sammler.
+Vor jeder neuen Kennung `grep -n "id: 'XY" lib/cards.js lib/frames.js` und `ls public/emblems | grep XY`.
 
 ## Karten rendern
 
@@ -187,3 +219,39 @@ damit Karten jederzeit neu gerendert werden können.
 - Casino-Sperre je Spieler (Admin-Menü „🚫 Casino-Sperre“, Timer, unbefristet, aufheben; Feld `casino_ban`: 0 frei, 1 unbefristet, sonst Zeitstempel). Sperrbild mit Beratungstelefon Glücksspielsucht 0800 1 37 27 00.
 - Holo-Effekt in der Kartenansicht neu (weicher Regenbogen am Lichtfleck, Glanzlicht, Glitzer). Kippen: Feder-Animation, größere Winkel, Finger relativ, Gyro relativ zur Haltung.
 - Halloween-Look + separater Animations-Schalter, Kronen-Pass (gesperrt bis Freigabe), Pass-Vorschau per Tipp, Guthaben-Verlauf, Prestige-Hinweise, Versionsabgleich (Auto-Reload).
+
+
+## Stand Version 114 (23./24.09.2026) – alles live bis auf den letzten Deploy, siehe oben
+
+Bild-Werkzeuge in dieser Session (Ablauf zum Nachmachen):
+- Freistellen auf Schwarz: `python3 tools/assets/cutout.py in.png out.webp emblem 400` (auch für Packs/Displays)
+- Freistellen auf Weiß/Grau (z. B. Trophäen): kleines PIL-Skript, Hintergrundfarbe an den Ecken messen,
+  Alpha = Abstand zur Farbe (siehe Trophäen Karambit/AK in `public/trophies/`)
+- Bewegte Embleme/VIP-Abzeichen: Bild in hoher Auflösung auf Schwarz (bei kleinen/transparenten Vorlagen erst mit
+  `gpt_image_2_5` „Recreate this exact badge … high resolution … pure black background“ nachzeichnen lassen),
+  dann Wan 3.0 5 s 1:1 720p, dann `tools/anim/emb.py` (180×180, 42 Bilder)
+- Bewegte Titel: 21:9 ohne Text, Wan `aspect_ratio: auto`, dann `tools/anim/towebp.sh … banner <YPOS>`,
+  Kopf abgeschnitten → YPOS kleiner (TX4 = 0.2)
+- Update-Bilder zusammensetzen: mehrere freigestellte Assets mit PIL + weichem Leuchten (`public/news/u12_hero.webp`)
+- Werbe-Trailer: Wan 3.0, 30 s, 9:16, `generate_audio: true`, `enable_thinking: true`, 6 `image_references`
+  (Logo, Pass-Logo, Booster, Display, Kürbiskönig, Triple-Crown-Logo), Drehbuch mit Zeitmarken im Prompt,
+  Endkarte per ffmpeg `drawtext` (Schrift Anton, keine Emojis)
+
+Neu in dieser Session (Details in den Punkten weiter oben):
+- Gruselnacht-Display (24 Booster), Tränke (×2/×4 für Level-, Casino-, Pass-XP, 60 Min echte Zeit, verlängerbar),
+  Gutscheincodes mit mehreren Belohnungen, Ankündigungsbanner mit Einlösen, Update 12 mit Code GEISTERJACKPOT
+- Kronen-Pass: Casino-Strang (20 Stufen bis 2,5 Mio Casino-XP) mit Umschalter, Fortschrittsleisten in beiden
+  Strängen („Bis Stufe X: a / b“ und „Insgesamt“), Wochenaufgaben zählen erst ab Pass-Start
+- Shop als eigene Seite (Kategorien, teuerste zuerst), Shop-Steuerung für Booster, Displays und Tränke
+  (Preis, Bestand, Ausverkauft, Nicht im Verkauf, Hinweistext), Push an Admin beim Ausverkauf
+- Showroom-Fixes (Kartenwechsel), Sounds, Turbo-Öffnung; Poker ohne Springen, Piepen, Chip-Klänge
+- Börse: Neu-Zähler je Art, Displays-Reiter; Casino-XP live; Triple Crown bis 50.000 Einsatz, Nieten weniger XP,
+  Zuschauer sehen Guthaben; Verlauf mit Klartext-Notizen und als gestalteter PDF-Kontoauszug
+  (`tools/pdf/` Logo + Schriften Anton/Archivo, pdfkit)
+- Trophäen-Vitrine nur für den Admin (Karambit Pattern 387, AK-47 Pattern 661)
+- Roulette statistisch geprüft (1 Mio Drehungen: fair). Tischlimit weiterhin offen (Nick entscheidet)
+
+Offen / Ideen von Nick:
+- DB-Umzug vor 19.10.2026, Tokens erneuern
+- Roulette-Höchsteinsatz, Admin: Spieler-Akte, Buchung rückgängig, Backup-Knopf, Statistik-Seite, Zeitsteuerung
+- App-Symbol: Halloween-Logo als Icon (Nick noch nicht entschieden; iOS aktualisiert Homescreen-Icons nicht)
