@@ -1671,6 +1671,13 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .an-flip{animation:anflip .48s ease-in-out}@keyframes anflip{0%{transform:perspective(300px) rotateY(0)}45%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}55%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}100%{transform:perspective(300px) rotateY(0)}}
 .an-scatglow{animation:anscat 1s ease-in-out infinite;z-index:2}@keyframes anscat{0%,100%{box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.7);filter:brightness(1.1)}50%{box-shadow:inset 0 0 0 3px #FFF6C9,0 0 34px rgba(255,220,100,1),0 0 60px rgba(255,180,40,.8);filter:brightness(1.6)}}
 [data-pzoom]{cursor:zoom-in}
+.cr-top{justify-content:space-between}.cr-special{display:none;align-items:center;gap:6px;padding:4px 8px;border-radius:10px;background:rgba(20,10,30,.8);box-shadow:inset 0 0 0 1.5px #7CF0A8;font:700 11px Archivo;color:#CFFFE0}.cr-special.on{display:flex}.cr-special i{width:30px;height:30px;background:center/contain no-repeat;border-radius:6px}
+.cr-pick{flex-direction:column;gap:6px;background:rgba(5,10,8,.62)}.cr-book{position:relative;width:min(80%,300px)}.cr-book img{width:100%;display:block;filter:drop-shadow(0 0 22px rgba(124,240,168,.55))}
+.cr-page{position:absolute;left:50%;top:44%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);background:center/contain no-repeat}.cr-page.flip{animation:crflip .12s ease-out}@keyframes crflip{from{transform:translate(-50%,-50%) rotateY(70deg);opacity:.3}to{transform:translate(-50%,-50%);opacity:1}}
+.cr-page.chosen{animation:crchosen .9s ease-out forwards;filter:drop-shadow(0 0 16px #7CF0A8)}@keyframes crchosen{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.35)}100%{transform:translate(-50%,-50%) scale(1.2)}}
+.cr-t{color:#FFE27A;text-shadow:0 2px 0 #3a2400,0 0 16px rgba(124,240,168,.6)}.cr-s{color:#DFFFE8;font:700 13px Archivo;text-shadow:0 1px 3px #000}
+.cr-exp{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:repeat(3,1fr);border-radius:10px;background:rgba(40,20,10,.85);box-shadow:inset 0 0 0 2px #FFD23F,0 0 20px rgba(255,210,63,.7);animation:crexp .45s cubic-bezier(.2,1,.4,1) both}.cr-exp i{background:center/82% no-repeat}
+@keyframes crexp{from{clip-path:inset(40% 0 40% 0);filter:brightness(2.2)}to{clip-path:inset(0);filter:none}}.jc-reels .tc-cell.cr-dim{opacity:.35}
 </style>
 </head>
 <body>
@@ -1690,7 +1697,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '155';
+const AVER = '156';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1814,6 +1821,10 @@ function sfx(name) {
       const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 0.8;
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.05); g.gain.setValueAtTime(0.06, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
       o.connect(f).connect(g); o2.connect(g); g.connect(master); [o, o2, lfo].forEach((x) => { x.start(t); x.stop(t + 1.05); }); whoosh(0.9, 2500, 5000, 0.03); }
+    if (name === 'crpage') whoosh(0.09, 1500, 3200, 0.02); // Seite blättert
+    if (name === 'crchosen') { [392, 523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.07, 0.35, 'triangle', 0.024)); tone(196, 0, 0.6, 'sine', 0.04); }
+    if (name === 'crbook') { [523, 784, 1047, 1568].forEach((f, i) => tone(f, i * 0.1, 0.4, 'sine', 0.02)); whoosh(0.6, 800, 3000, 0.02); }
+    if (name === 'crexp') { whoosh(0.35, 300, 2400, 0.04); tone(330, 0, 0.3, 'triangle', 0.03); tone(660, 0.08, 0.3, 'sine', 0.02); }
     if (name === 'anzap') { tone(2093, 0, 0.08, 'square', 0.02); tone(3136, 0.03, 0.1, 'sine', 0.025); whoosh(0.15, 4000, 7000, 0.03); } // Knistern auf dem Tafelplatz
     if (name === 'jcspin') { tone(3180, 0, 0.05, 'square', 0.01); tone(262, 0.05, 0.22, 'triangle', 0.02); tone(349, 0.14, 0.22, 'triangle', 0.018); whoosh(0.5, 240, 700, 0.025); } // Start: heller Klick, kurzer Anlauf
     if (name.startsWith('jcstop')) { const k = Number(name.slice(6)) || 0, f = [523, 659, 784, 988, 1175][k]; tone(f, 0, 0.2, 'triangle', 0.022); tone(f * 2, 0, 0.12, 'sine', 0.008); tone(110, 0, 0.06, 'sine', 0.03); } // jede Walze eigener, ansteigender Ton
@@ -1896,7 +1907,7 @@ function gmDuck(ms = 1500, depth = 0.3) { // Musik kurz leiser, damit Gewinne, L
 }
 function gmWant() {
   if (document.hidden || !TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return ''; // App im Hintergrund: keine Musik
-  if (tc.game === 'jester') return '/music/jc_bg.mp3';
+  if (tc.game === 'jester' || tc.game === 'crypt') return '/music/jc_bg.mp3';
   if (tc.game === 'anubis') return tc.fsMusic ? '/music/an_fs.mp3' : '/music/an_bg.mp3';
   return '';
 }
@@ -1930,7 +1941,7 @@ document.addEventListener('visibilitychange', () => (document.hidden ? appAway()
 window.addEventListener('pagehide', appAway); window.addEventListener('blur', () => { if (document.hidden) appAway(); });
 setInterval(() => { try { gmusic(false); } catch (e) {} }, 700);
 function tcmStep(s, t) {
-  if (tc.game === 'jester' || tc.game === 'anubis') return; // hier läuft echte Musik (gmusic)
+  if (tc.game === 'jester' || tc.game === 'anubis' || tc.game === 'crypt') return; // hier läuft echte Musik (gmusic)
   const bar = Math.floor(s / 16) % 8, st = s % 16, [bass, ch] = TCM_PROG[bar];
   if (st === 0 || st === 8) mtone(mf(36), t, 0.14, 'sine', 0.16); // Kick
   if ([0, 6, 8, 14].includes(st)) mtone(mf(bass - 12 + (st === 6 || st === 14 ? 12 : 0)), t, 0.22, 'triangle', 0.1); // Bass
@@ -2513,7 +2524,7 @@ function renderCasino() {
   if (cgame === 'vip') return renderVip(box);
   if (cgame === 'setup') return renderSetup(box);
   if (cgame === 'poker') return renderPoker(box);
-  if (cgame === 'triple' || cgame === 'jester' || cgame === 'anubis') { const g = cgame; const on = tc.watch || tc.seat; if (on) tc.game = machGame(on); else if (tc.game !== g) tc.game = g; return renderTriple(box); }
+  if (cgame === 'triple' || cgame === 'jester' || cgame === 'anubis' || cgame === 'crypt') { const g = cgame; const on = tc.watch || tc.seat; if (on) tc.game = machGame(on); else if (tc.game !== g) tc.game = g; return renderTriple(box); }
   if (cgame === 'watch') return renderCw(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
@@ -2822,13 +2833,13 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
-    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
+    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     const tabs = games.filter(([k]) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))
       .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label + (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : ''), extra || '')).join('');
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
@@ -3173,12 +3184,12 @@ function cwStart(uid, name, game) { cw = { uid, name, game }; page = 'casino'; c
 const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}" alt="" onerror="this.style.visibility='hidden'">`;
 function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
   const me = home && home.me && home.me.id;
-  const GM = cgame === 'anubis' ? 'anubis' : cgame === 'jester' ? 'jester' : 'triple', J = GM !== 'triple', LOGO = { triple: '/tcg/tc_logo.webp', jester: '/jc/logo.webp', anubis: '/an/logo.webp' }[GM], TEST = GM === 'jester' ? home && home.jesterTest : GM === 'anubis' ? home && home.anubisTest : false;
-  box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${AVER}" alt="${{ triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis' }[GM]}"></div>
+  const GM = ['anubis', 'jester', 'crypt'].includes(cgame) ? cgame : 'triple', J = GM !== 'triple', LOGO = { triple: '/tcg/tc_logo.webp', jester: '/jc/logo.webp', anubis: '/an/logo.webp', crypt: '/cr/logo.webp' }[GM], TEST = GM === 'jester' ? home && home.jesterTest : GM === 'anubis' ? home && home.anubisTest : GM === 'crypt' ? home && home.cryptTest : false;
+  box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${AVER}" alt="${{ triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft' }[GM]}"></div>
     <p class="sub" style="text-align:center;margin:0 0 10px">Zwei Maschinen. Setz dich an eine freie oder schau jemandem zu.</p>
-    <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1, game: 'triple' }, { id: 2, game: 'triple' }, { id: 3, game: 'jester' }, { id: 4, game: 'jester' }, { id: 5, game: 'anubis' }, { id: 6, game: 'anubis' }]).filter((m) => (m.game || 'triple') === GM).map((m) => {
+    <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1, game: 'triple' }, { id: 2, game: 'triple' }, { id: 3, game: 'jester' }, { id: 4, game: 'jester' }, { id: 5, game: 'anubis' }, { id: 6, game: 'anubis' }, { id: 7, game: 'crypt' }, { id: 8, game: 'crypt' }]).filter((m) => (m.game || 'triple') === GM).map((m) => {
       const mine = m.user && m.user.id === me;
-      return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${GM === 'anubis' ? m.id - 4 : J ? m.id - 2 : m.id}</div>
+      return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${GM === 'crypt' ? m.id - 6 : GM === 'anubis' ? m.id - 4 : J ? m.id - 2 : m.id}</div>
         <div class="tc-mmini"><img src="${LOGO}?v=${AVER}" alt=""><div class="tc-mreels">${'<span></span>'.repeat(J ? 5 : 3)}</div></div>
         ${m.user ? `<div class="tc-mwho">${tcAva(m.user)}<b>${esc(m.user.name)}</b></div><div class="tc-mstate">${mine ? 'Dein Platz' : 'Belegt'}${m.watchers ? ` · 👀 ${m.watchers}` : ''}</div>
           ${mine ? `<button class="btn small" data-tcsit="${m.id}">Weiterspielen</button>` : `<button class="btn small ghost" data-tcwatch="${m.id}">👀 Zuschauen</button>`}`
@@ -3190,8 +3201,8 @@ async function tcSit(m) {
   tcMachines = r.list; tc.seat = r.machine; tc.watch = null; if (tc.game !== machGame(r.machine)) tc.jgrid = null; tc.game = machGame(r.machine); if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
   const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
 }
-const machGame = (m) => (m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
-const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis' }[machGame(m)] + ' · Maschine ' + (m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
+const machGame = (m) => (m >= 7 ? 'crypt' : m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
+const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis', crypt: '📖 Buch der Gruft' }[machGame(m)] + ' · Maschine ' + (m >= 7 ? m - 6 : m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
 function tcWatch(m) { tc.fsMusic = false; tc.game = machGame(m); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
@@ -3206,8 +3217,9 @@ async function tcWatchRun() {
     const ev = tc.wq.shift();
     if (ev.dia !== null && ev.dia !== undefined) { tc.wdia = ev.type === 'spin' ? ev.dia - (ev.total || 0) : ev.dia; tcSync(); } // Guthaben des Spielers: beim Dreh erst ohne Gewinn
     try {
-      if (ev.forced && tc.force) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '🎁 ' + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild'); } }
-      if (ev.type === 'aspin') { $('#tcOver').innerHTML = ''; anClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;'); await anPlay(ev.r, ev.bet); tcSetMsg(ev.risk ? `Gewinn ${fmt(ev.r.total)}` : 'Leider nichts'); tcSync(); }
+      if (ev.forced && tc.force) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '🎁 ' + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : tc.game === 'crypt' ? '📖 Freispiele' : '👑 Vollbild'); } }
+      if (ev.type === 'cspin') { $('#tcOver').innerHTML = ''; crClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;'); await crPlay(ev.r, ev.bet); tcSetMsg(ev.risk ? `Gewinn ${fmt(ev.r.total)}` : 'Leider nichts'); tcSync(); }
+      else if (ev.type === 'aspin') { $('#tcOver').innerHTML = ''; anClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;'); await anPlay(ev.r, ev.bet); tcSetMsg(ev.risk ? `Gewinn ${fmt(ev.r.total)}` : 'Leider nichts'); tcSync(); }
       else if (ev.type === 'jspin') { // Narrenkappe zum Zuschauen
         $('#tcOver').innerHTML = ''; jcClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
         await jcAnimate(ev.before);
@@ -3250,8 +3262,8 @@ function renderTriple(box) {
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
-    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.watch ? '🎁 ' : ''}${tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
-      ${tc.game === 'jester' || tc.game === 'anubis' ? `<div class="jc-bg" ${tc.game === 'anubis' ? `style="background-image:url('/an/bg.webp')"` : ''}></div><img class="tc-logo jc-logo" src="${G_DIR()}logo.webp?v=${AVER}" alt="">${tc.game === 'anubis' ? `<div class="an-top"><div class="an-tab" id="anTab">${anTabHtml(0)}</div><div class="an-fs" id="anFs"></div></div>` : ''}
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.watch ? '🎁 ' : ''}${tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : tc.game === 'crypt' ? '📖 Freispiele' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
+      ${tc.game === 'jester' || tc.game === 'anubis' || tc.game === 'crypt' ? `<div class="jc-bg" ${tc.game === 'anubis' || tc.game === 'crypt' ? `style="background-image:url('${G_DIR()}bg.webp')"` : ''}></div><img class="tc-logo jc-logo" src="${G_DIR()}logo.webp?v=${AVER}" alt="">${tc.game === 'anubis' ? `<div class="an-top"><div class="an-tab" id="anTab">${anTabHtml(0)}</div><div class="an-fs" id="anFs"></div></div>` : ''}${tc.game === 'crypt' ? `<div class="an-top cr-top"><div class="cr-special" id="crSpec"></div><div class="an-fs" id="anFs"></div></div>` : ''}
       <div class="tc-machine jc-machine"><div class="tc-reels jc-reels" id="tcReels">${jcGrid().map((col, c) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${c}">${col.map(jcCell).join('')}</div></div>`).join('')}
           <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
       <div class="tc-machine">
@@ -3274,14 +3286,14 @@ function renderTriple(box) {
       <div class="tc-tools"><button class="chipbtn" id="tcTurbo">⚡ Turbo</button><button class="chipbtn ${TCM.on ? 'on' : ''}" id="tcMusic">${TCM.on ? '🎵 Musik an' : '🔇 Musik aus'}</button><button class="chipbtn" id="tcPay">📋 Gewinne</button></div>
     </div>`;
     $('#tcStart').onclick = tcStartKey; $('#tcBack').onclick = tcBackToLobby;
-    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force, machine: tc.watch || undefined }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = (tc.watch ? '🎁 ' : '') + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : '👑 Vollbild') + (tc.force ? ' AN' : ''); toast(tc.force ? (tc.watch ? '🎁 Heimlicher Bonus: ' : '') + (tc.game === 'jester' ? 'Beim nächsten Dreh landet die Kappe und verwandelt 9 Felder.' : tc.game === 'anubis' ? 'Beim nächsten Dreh gibt es 3 Grabtore und Freispiele.' : 'Der nächste Dreh wird ein Vollbild.') : 'Vollbild-Test aus.'); };
+    if ($('#tcForce')) $('#tcForce').onclick = async () => { const r = await api('/api/admin/tcforce', { on: !tc.force, machine: tc.watch || undefined }).catch((e) => { toast(e.message); return null; }); if (!r) return; tc.force = r.on; const b = $('#tcForce'); b.classList.toggle('on', tc.force); b.textContent = (tc.watch ? '🎁 ' : '') + (tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : tc.game === 'crypt' ? '📖 Freispiele' : '👑 Vollbild') + (tc.force ? ' AN' : ''); toast(tc.force ? (tc.watch ? '🎁 Heimlicher Bonus: ' : '') + (tc.game === 'jester' ? 'Beim nächsten Dreh landet die Kappe und verwandelt 9 Felder.' : tc.game === 'anubis' ? 'Beim nächsten Dreh gibt es 3 Grabtore und Freispiele.' : tc.game === 'crypt' ? 'Beim nächsten Dreh gibt es 3 Grimoires und Freispiele.' : 'Der nächste Dreh wird ein Vollbild.') : 'Vollbild-Test aus.'); };
     $('#tcKBet').onclick = () => { if (tc.busy || tc.risk) return; tc.bi = (tc.bi + 1) % TC_BETS.length; tcSync(); sfx('tick'); };
     $('#tcKLad').onclick = () => tc.risk && !tc.busy && tcLadderOpen();
     $('#tcKCard').onclick = () => tc.risk && !tc.busy && tcCardOpen();
     $('#tcKAuto').onclick = tcAutoWindow;
     $('#tcTurbo').onclick = () => { tc.turbo = !tc.turbo; tcSync(); };
     $('#tcMusic').onclick = () => { unlockAudio(); TCM.on = !TCM.on; try { localStorage.setItem('sz_tcmusic', TCM.on ? '1' : '0'); } catch (e) {} const b = $('#tcMusic'); b.classList.toggle('on', TCM.on); b.textContent = TCM.on ? '🎵 Musik an' : '🔇 Musik aus'; if (TCM.on && muted) toast('Der Ton ist gerade ganz aus, schalte ihn über den Lautsprecher-Knopf ein.'); };
-    $('#tcPay').onclick = tc.game === 'jester' ? jcPaytable : tc.game === 'anubis' ? anPaytable : tcPaytable;
+    $('#tcPay').onclick = tc.game === 'jester' ? jcPaytable : tc.game === 'anubis' ? anPaytable : tc.game === 'crypt' ? crPaytable : tcPaytable;
   }
   tcSync();
 }
@@ -3293,7 +3305,7 @@ function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   $('#tcBal').textContent = tc.watch ? (tc.wdia !== null && tc.wdia !== undefined ? fmt(tc.wdia) + ' 💎' : '—') : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
   $('#tcBet').textContent = fmt(tc.watch ? (tc.wbet || 0) : TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
-  $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : tc.game === 'jester' ? '10 Linien · 3 gleiche von links · der Narr ersetzt alles' : tc.game === 'anubis' ? '10 Linien · Anubis füllt die Walze · 3 Grabtore = 12 Freispiele' : '5 Linien · 3 gleiche Symbole gewinnen');
+  $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : tc.game === 'jester' ? '10 Linien · 3 gleiche von links · der Narr ersetzt alles' : tc.game === 'anubis' ? '10 Linien · Anubis füllt die Walze · 3 Grabtore = 12 Freispiele' : tc.game === 'crypt' ? '10 Linien · Grimoire ersetzt alles · 3 Grimoires = 10 Freispiele' : '5 Linien · 3 gleiche Symbole gewinnen');
   const canRisk = !!tc.risk && !tc.busy && !tc.risk.noRisk;
   const canLad = canRisk && tc.mode !== 'ladder', canCard = canRisk && tc.mode !== 'card'; // jederzeit zwischen Leiter und Karte wechseln
   $('#tcKBet').disabled = tc.busy || !!tc.risk; $('#tcKLad').disabled = !canLad; $('#tcKCard').disabled = !canCard;
@@ -3404,7 +3416,7 @@ const JC_SYM = { T: '10', J: 'J', Q: 'Q', K: 'K', A: 'A', G: 'Geisterpferd', V: 
 const JC_PAY = { T: [5, 25, 100], J: [5, 25, 100], Q: [5, 25, 100], K: [5, 40, 150], A: [5, 40, 150], G: [10, 75, 250], V: [10, 75, 250], P: [15, 150, 500], O: [25, 250, 1000], W: [50, 500, 2000] }; // wie lib/jester.js, × Einsatz/10
 const JC_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 0, 0, 0, 1], [1, 2, 2, 2, 1], [0, 0, 1, 2, 2], [2, 2, 1, 0, 0], [1, 0, 1, 2, 1]];
 const JC_COL = ['#FFD23F', '#7CF0A8', '#FF7AB6', '#5AA9FF', '#FF8A3D', '#C08BFF', '#3DDC97', '#FF5E5E', '#9FE3FF', '#FFE27A'];
-const G_DIR = () => (tc.game === 'anubis' ? '/an/' : '/jc/'), G_LOW = () => (tc.game === 'anubis' ? 'JQKALHSBXE' : 'TJQKAGVPOW');
+const G_DIR = () => (tc.game === 'anubis' ? '/an/' : tc.game === 'crypt' ? '/cr/' : '/jc/'), G_LOW = () => (tc.game === 'anubis' ? 'JQKALHSBXE' : tc.game === 'crypt' ? 'TJQKAGCMR' : 'TJQKAGVPOW');
 const jcCell = (k) => `<div class="tc-cell jc-cell" style="background-image:url('${G_DIR()}s_${k}.webp?v=${AVER}')"></div>`;
 const jcRand = () => { const L = G_LOW(); return Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => L[Math.floor(Math.random() * 7)])); };
 function jcGrid() { if (!tc.jgrid) tc.jgrid = jcRand(); return tc.jgrid; }
@@ -3448,11 +3460,12 @@ async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzä
   const svg = $('#tcLines'), lw = $('#tcLineWin'), reels = $('#tcReels'); let sum = 0;
   if (reels) reels.classList.add('dim'); // übrige Felder abdunkeln wie am Original
   for (const L of lines) {
-    const pts = JC_LINES[L.line - 1].map((r, c) => `${c * 100 + 50},${r * 100 + 50}`).join(' ');
+    const LNS = tc.game === 'crypt' ? CR_LINES : JC_LINES;
+    const pts = LNS[L.line - 1].map((r, c) => `${c * 100 + 50},${r * 100 + 50}`).join(' ');
     if (svg) svg.innerHTML += `<polyline points="${pts}" fill="none" stroke="${JC_COL[L.line - 1]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;
-    JC_LINES[L.line - 1].slice(0, L.n).forEach((r, c) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit'); });
-    const first = document.querySelectorAll(`#tcStrip0 .tc-cell`)[JC_LINES[L.line - 1][0]]; if (first) first.insertAdjacentHTML('beforeend', `<span class="jc-lwin" style="--lc:${JC_COL[L.line - 1]}">${fmt(L.win)}</span>`);
-    if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${(tc.game === 'anubis' ? AN_SYM : JC_SYM)[L.sym]}`;
+    LNS[L.line - 1].slice(0, L.n).forEach((r, c) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit'); });
+    const first = document.querySelectorAll(`#tcStrip0 .tc-cell`)[LNS[L.line - 1][0]]; if (first) first.insertAdjacentHTML('beforeend', `<span class="jc-lwin" style="--lc:${JC_COL[L.line - 1]}">${fmt(L.win)}</span>`);
+    if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${(tc.game === 'anubis' ? AN_SYM : tc.game === 'crypt' ? CR_SYM : JC_SYM)[L.sym]}`;
     sfx('jcline'); const steps = tc.turbo ? 4 : 8; for (let k = 1; k <= steps; k++) { tc.lastWin = sum + Math.round(L.win * k / steps); tcSync(); if (k % 4 === 1) sfx('jcbass'); else if (k % 2) sfx('jccount'); await tcSleep(tc.turbo ? 25 : 45); } // Gewinn tickend hochzählen
     sum += L.win; tc.lastWin = sum; tcSync(); if (L.sym === 'W' || L.sym === 'O') sfx('exact'); await tcSleep(tc.turbo ? 160 : 420);
   }
@@ -3596,10 +3609,90 @@ function anPaytable() {
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
+// ---------- Buch der Gruft (Maschinen 7 und 8): Grimoire = Wild + Scatter, Freispiele mit ausgedehntem Bonus-Symbol ----------
+const CR_SYM = { R: 'Grabräuber', M: 'Mumien-Pharao', G: 'Gargoyle', C: 'Totenkopf-Käfer', A: 'A', K: 'K', Q: 'Q', J: 'J', T: '10', B: 'Grimoire' };
+const CR_PAY = { R: [10, 100, 1000, 5000], M: [5, 40, 400, 2000], G: [5, 30, 100, 750], C: [5, 30, 100, 750], A: [0, 5, 40, 150], K: [0, 5, 40, 150], Q: [0, 5, 25, 100], J: [0, 5, 25, 100], T: [0, 5, 25, 100] }; // wie lib/crypt.js
+const CR_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 2, 2, 2, 1], [1, 0, 0, 0, 1], [2, 2, 1, 0, 0], [0, 0, 1, 2, 2], [2, 1, 1, 1, 0]];
+function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${AVER}')"></i>` : ''; e.classList.toggle('on', !!sym); }
+async function crShowBooks(grid, win, big) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'B') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat', big ? 'an-scatglow' : 'x'); } })); tcSetMsg(`📖 Grimoires: +${fmt(win)}`); sfx('crbook'); await tcSleep(tc.turbo ? 500 : big ? 2000 : 900); }
+async function crPick(special) { // Grimoire blättert auf und lost das Bonus-Symbol aus
+  const root = $('#tcRoot'); if (!root) return; const el = document.createElement('div'); el.className = 'an-pop cr-pick';
+  el.innerHTML = `<div class="cr-book"><img src="/cr/book_open.webp?v=${AVER}" alt=""><i class="cr-page" id="crPage"></i></div><b class="an-mid cr-t">10 FREISPIELE</b><small class="cr-s">Das Grimoire wählt dein Bonus-Symbol …</small>`;
+  root.appendChild(el); gmDuck(4200);
+  const pool = ['R', 'M', 'G', 'C', 'A', 'K', 'Q', 'J', 'T'], pg = el.querySelector('#crPage'); let d = 70, k = 0;
+  const total = tc.turbo ? 10 : 22;
+  for (let i = 0; i < total; i++) { const sym = i === total - 1 ? special : pool[(k++) % pool.length]; pg.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`; pg.classList.remove('flip'); void pg.offsetWidth; pg.classList.add('flip'); sfx('crpage'); await tcSleep(d); d = Math.min(260, d * 1.12); }
+  pg.classList.add('chosen'); sfx('crchosen'); el.querySelector('.cr-s').textContent = `Bonus-Symbol: ${CR_SYM[special]}`; crSetSpec(special);
+  await tcSleep(tc.turbo ? 700 : 1800); el.classList.add('out'); await tcSleep(300); el.remove();
+}
+async function crExpand(ex, special) { // Walzen mit dem Bonus-Symbol füllen sich, dann zahlt es auf allen Linien
+  if (!ex || !ex.win) return;
+  gmDuck(3000); document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => e.classList.add('cr-dim'));
+  for (let c = 0; c < 5; c++) if (ex.reels[c]) {
+    const reel = ($('#tcStrip' + c) || {}).parentElement; if (!reel) continue; reel.style.position = 'relative';
+    reel.insertAdjacentHTML('beforeend', `<div class="cr-exp">${`<i style="background-image:url('/cr/s_${special}.webp?v=${AVER}')"></i>`.repeat(3)}</div>`);
+    sfx('crexp'); await tcSleep(tc.turbo ? 180 : 480);
+  }
+  tcSetMsg(`📖 ${CR_SYM[special]} auf ${ex.n} Walzen: +${fmt(ex.win)}`); sfx('jcline'); await tcSleep(tc.turbo ? 500 : 1300);
+}
+function crClear() { document.querySelectorAll('.cr-exp').forEach((e) => e.remove()); document.querySelectorAll('.cr-dim').forEach((e) => e.classList.remove('cr-dim')); jcClear(); }
+async function crPlay(r, bet) {
+  crSetSpec(null); anSetFs('');
+  await jcAnimate(r.grid);
+  let sum = 0;
+  if (r.lines.length) { await jcLines(r.lines); sum = r.lines.reduce((a, l) => a + l.win, 0); }
+  if (r.scat) { if (r.fs) { tc.fsMusic = true; gmusic(false); } await crShowBooks(r.grid, r.scat, !!r.fs); sum += r.scat; tc.lastWin = sum; tcSync(); }
+  if (r.fs) {
+    await crPick(r.fs.special);
+    let total = 10, fsSum = 0;
+    for (let i = 0; i < r.fs.spins.length; i++) {
+      const sp = r.fs.spins[i]; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`);
+      crClear(); tcSetMsg('&nbsp;'); await jcAnimate(sp.grid);
+      if (sp.lines.length) await jcLines(sp.lines);
+      if (sp.scat) await crShowBooks(sp.grid, sp.scat, false);
+      if (sp.exp && sp.exp.win) await crExpand(sp.exp, r.fs.special);
+      fsSum += sp.win; tc.lastWin = sum + fsSum; tcSync();
+      if (sp.retrigger) { total += sp.retrigger; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anfs'); await anPopup(`<b class="an-mid">+${sp.retrigger} FREISPIELE</b>`, 1500); }
+      await tcSleep(tc.turbo ? 150 : 350);
+    }
+    anSetFs(''); crClear(); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); crSetSpec(null); tc.fsMusic = false; gmusic(false);
+  }
+  tc.lastWin = r.total; tcSync();
+  await tcBigWin(r.total, bet);
+}
+async function crSpin() {
+  clearInterval(tc.awT); tc.autoPaused = false;
+  const bet = TC_BETS[tc.bi];
+  if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet();
+  if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
+  if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
+  tc.busy = true; tc.lastWin = 0; crClear(); tcSetMsg('&nbsp;'); tcSync();
+  try {
+    const r = await api('/api/casino/crypt', { bet, machine: tc.seat });
+    tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tcSync();
+    if (r.forced) { tc.force = false; const fb = $('#tcForce'); if (fb) { fb.classList.remove('on'); fb.textContent = '📖 Freispiele'; } }
+    await crPlay(r, bet);
+    tc.busy = false;
+    if (r.risk) tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`);
+    else tcSetMsg('Leider nichts');
+    tcSync();
+    if (tc.auto) await tcAutoAfter();
+  } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); if (/belegt|Setz dich/.test(e.message)) { tc.seat = null; tc.risk = null; renderCasino(); return; } tcSync(); }
+}
+function crPaytable() {
+  const lb = TC_BETS[tc.bi] / 10, b = TC_BETS[tc.bi];
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/cr/logo.webp?v=${AVER}" alt="" style="width:74%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links. Beträge für deinen Einsatz von ${fmt(b)}.</p>
+    <div class="jc-pay"><img src="/cr/s_B.webp?v=${AVER}" alt=""><b>Grimoire</b><small>Ersetzt alle Symbole und zählt überall: 3× ${fmt(b * 2)} · 4× ${fmt(b * 20)} · 5× ${fmt(b * 200)}. 3 oder mehr ergeben 10 Freispiele mit Bonus-Symbol.</small></div>
+    <div class="jc-pays">${['R', 'M', 'G', 'C', 'A', 'Q'].map((k) => `<div class="jc-pay"><img src="/cr/s_${k}.webp?v=${AVER}" alt=""><b>${k === 'A' ? 'A, K' : k === 'Q' ? 'Q, J, 10' : esc(CR_SYM[k])}</b><small>${CR_PAY[k].map((v, i) => (v ? `${i + 2}× ${fmt(Math.round(v * lb))}` : '')).filter(Boolean).join(' · ')}</small></div>`).join('')}</div>
+    <p class="sub" style="margin:0">📖 Vor den Freispielen wählt das Grimoire ein Bonus-Symbol. In den Freispielen füllt es jede Walze, auf der es steht, und zahlt auf allen 10 Linien, auch wenn die Walzen nicht nebeneinander liegen. 3 Grimoires in den Freispielen geben 10 weitere.</p>
+    <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
 async function tcSpin() {
   clearInterval(tc.awT); tc.autoPaused = false;
   if (tc.game === 'jester') return jcSpin();
   if (tc.game === 'anubis') return anSpin();
+  if (tc.game === 'crypt') return crSpin();
   const bet = TC_BETS[tc.bi];
   if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet(); // offenen Gewinn erst gutschreiben, sonst blockiert ein leeres Konto (Ticket: 1.000 Rest, gewonnen, START ging nicht)
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; } // offener Gewinn wird vom Server eingesackt
@@ -4550,13 +4643,14 @@ function loadAdmin() {
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
   const tbb = $('#tbBox'); if (tbb && !tbb.dataset.bound) { tbb.dataset.bound = 1; const draw = () => { const B = (home && home.tabBadges) || {};
-      $('#tbAdm').innerHTML = [['roulette', '🎡 Roulette'], ['bj', '🃏 Blackjack'], ['tables', '👥 Blackjack-Tische'], ['triple', '👑 Triple Crown'], ['jester', '🃏 Narrenkappe'], ['anubis', '👁 Auge des Anubis'], ['poker', '♠ Poker'], ['wheel', '🎡 Glücksrad'], ['rewards', '🏆 Belohnungen']].map(([k, l]) => `<div class="row tb-row" style="gap:6px;margin-bottom:6px"><span class="grow">${l}${B[k] ? ` <span class="tab-new">${esc(B[k])}</span>` : ''}</span><input class="field" maxlength="12" placeholder="Text" value="${esc(B[k] || '')}" data-tbin="${k}" style="width:96px;padding:6px 8px"><button class="btn small" data-tbset="${k}">OK</button>${B[k] ? `<button class="btn small ghost" data-tbdel="${k}">✕</button>` : ''}</div>`).join('') + '<p class="sub" style="margin:4px 0 0">Schnell: <button class="chipbtn" data-tbq="NEU">NEU</button> <button class="chipbtn" data-tbq="UPDATE">UPDATE</button> <button class="chipbtn" data-tbq="HOT">HOT</button> tippen, dann OK beim Reiter.</p>';
+      $('#tbAdm').innerHTML = [['roulette', '🎡 Roulette'], ['bj', '🃏 Blackjack'], ['tables', '👥 Blackjack-Tische'], ['triple', '👑 Triple Crown'], ['jester', '🃏 Narrenkappe'], ['anubis', '👁 Auge des Anubis'], ['crypt', '📖 Buch der Gruft'], ['poker', '♠ Poker'], ['wheel', '🎡 Glücksrad'], ['rewards', '🏆 Belohnungen']].map(([k, l]) => `<div class="row tb-row" style="gap:6px;margin-bottom:6px"><span class="grow">${l}${B[k] ? ` <span class="tab-new">${esc(B[k])}</span>` : ''}</span><input class="field" maxlength="12" placeholder="Text" value="${esc(B[k] || '')}" data-tbin="${k}" style="width:96px;padding:6px 8px"><button class="btn small" data-tbset="${k}">OK</button>${B[k] ? `<button class="btn small ghost" data-tbdel="${k}">✕</button>` : ''}</div>`).join('') + '<p class="sub" style="margin:4px 0 0">Schnell: <button class="chipbtn" data-tbq="NEU">NEU</button> <button class="chipbtn" data-tbq="UPDATE">UPDATE</button> <button class="chipbtn" data-tbq="HOT">HOT</button> tippen, dann OK beim Reiter.</p>';
       let quick = '';
       $('#tbAdm').querySelectorAll('[data-tbq]').forEach((b) => { b.onclick = () => { quick = b.dataset.tbq; $('#tbAdm').querySelectorAll('[data-tbin]').forEach((i) => { if (!i.value) i.placeholder = quick; }); toast(`„${quick}“ gewählt: OK beim gewünschten Reiter tippen`); }; });
       const send = (key, text) => api('/api/admin/tabbadge', { key, text }).then((r) => { home.tabBadges = r.badges; toast(text ? `🏷 „${text}“ gesetzt` : '🏷 Abzeichen entfernt'); draw(); }).catch((e) => toast(e.message));
       $('#tbAdm').querySelectorAll('[data-tbset]').forEach((b) => { b.onclick = () => { const i = $('#tbAdm').querySelector(`[data-tbin="${b.dataset.tbset}"]`); send(b.dataset.tbset, i.value.trim() || quick); }; });
       $('#tbAdm').querySelectorAll('[data-tbdel]').forEach((b) => { b.onclick = () => send(b.dataset.tbdel, ''); }); };
     tbb.ontoggle = () => { if (tbb.open) draw(); }; }
+  const ctt = $('#ctTog'); if (ctt && !ctt.dataset.bound) { ctt.dataset.bound = 1; ctt.onclick = () => api('/api/admin/crypttest', { on: !(home && home.cryptTest) }).then((r) => { home.cryptTest = r.on; toast(r.on ? '🧪 Buch der Gruft: nur für dich' : '📖 Buch der Gruft für alle freigegeben'); $('#ctSt').textContent = r.on ? 'nur du' : 'für alle'; $('#ctSt').classList.toggle('on', r.on); ctt.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
   const att = $('#atTog'); if (att && !att.dataset.bound) { att.dataset.bound = 1; att.onclick = () => api('/api/admin/anubistest', { on: !(home && home.anubisTest) }).then((r) => { home.anubisTest = r.on; toast(r.on ? '🧪 Auge des Anubis: nur für dich' : '👁 Auge des Anubis für alle freigegeben'); $('#atSt').textContent = r.on ? 'nur du' : 'für alle'; $('#atSt').classList.toggle('on', r.on); att.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
   const jtt = $('#jtTog'); if (jtt && !jtt.dataset.bound) { jtt.dataset.bound = 1; jtt.onclick = () => api('/api/admin/jestertest', { on: !(home && home.jesterTest) }).then((r) => { home.jesterTest = r.on; toast(r.on ? '🧪 Narrenkappe: nur für dich' : '🃏 Narrenkappe für alle freigegeben'); $('#jtSt').textContent = r.on ? 'nur du' : 'für alle'; $('#jtSt').classList.toggle('on', r.on); jtt.textContent = r.on ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'; }).catch((e) => toast(e.message)); }
   const bws = $('#bwSave'); if (bws && !bws.dataset.bound) { bws.dataset.bound = 1; bws.onclick = () => api('/api/admin/bigwin', { min: Number($('#bwMin').value) }).then((r) => { if (home) home.bigWinMin = r.min; toast(r.min ? `📣 Meldung ab ${fmt(r.min)} 💎` : '📣 Gewinn-Meldung aus'); }).catch((e) => toast(e.message)); }
@@ -4962,9 +5056,9 @@ function connect() {
       const mine = tcMachines.find((m) => m.id === tc.seat);
       if (mine && !mine.user) { // Server hat den Platz vergessen (Neustart, Verbindung weg): still wieder hinsetzen
         api('/api/casino/triple/sit', { machine: tc.seat }).then((r) => { tcMachines = r.list; }).catch(() => {});
-      } else { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && ['triple', 'jester', 'anubis'].includes(cgame)) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
+      } else { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
     }
-    if (page === 'casino' && ['triple', 'jester', 'anubis'].includes(cgame) && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
+    if (page === 'casino' && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
     if (!S && page === 'home') update();
   });
   socket.on('cw:list', (l) => { cwList = l || []; if (!S && page === 'home') update(); });
@@ -5030,7 +5124,7 @@ function reportPresence() {
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
   if (pg !== 'casino:watch' && cw) { socket.emit('cw:unwatch'); cw = null; }
   if (pg !== 'casino:tables' && typeof bjT !== 'undefined' && bjT) bjT = null; // Blackjack-Tisch verlassen, wenn man woanders hingeht
-  if (!['casino:triple', 'casino:jester', 'casino:anubis'].includes(pg) && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
+  if (!['casino:triple', 'casino:jester', 'casino:anubis', 'casino:crypt'].includes(pg) && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
 }
@@ -5085,6 +5179,9 @@ function build() {
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
     <details class="panel lg-box" id="tbBox"><summary><b>🏷 Abzeichen im Casino</b><small> · z. B. „NEU“ oder „UPDATE“ an einen Reiter hängen</small></summary><div id="tbAdm" style="margin-top:10px"></div></details>
+    <div class="panel lg-box" id="ctBox"><div class="row"><b class="grow">📖 Buch der Gruft: Testphase</b><span class="adm-st ${home && home.cryptTest ? 'on' : ''}" id="ctSt">${home && home.cryptTest ? 'nur du' : 'für alle'}</span></div>
+      <small class="sub" style="display:block;margin:4px 0 8px">Ist die Testphase an, sehen alle das Spiel, aber nur du kannst dich hinsetzen. Zuschauen geht für alle.</small>
+      <button class="btn small" id="ctTog">${home && home.cryptTest ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'}</button></div>
     <div class="panel lg-box" id="atBox"><div class="row"><b class="grow">👁 Auge des Anubis: Testphase</b><span class="adm-st ${home && home.anubisTest ? 'on' : ''}" id="atSt">${home && home.anubisTest ? 'nur du' : 'für alle'}</span></div>
       <small class="sub" style="display:block;margin:4px 0 8px">Ist die Testphase an, sehen alle das Spiel, aber nur du kannst dich hinsetzen. Zuschauen geht für alle.</small>
       <button class="btn small" id="atTog">${home && home.anubisTest ? '✅ Für alle freigeben' : '🧪 Wieder nur für mich'}</button></div>

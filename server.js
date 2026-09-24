@@ -178,7 +178,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -799,7 +799,7 @@ async function checkProgress(uid) {
 }
 
 // Gesperrte Casino-Spiele (Admin): Schlüssel wie triple, roulette, bj, tables, poker, wheel
-const GAME_NAMES = { triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', roulette: 'Roulette', bj: 'Blackjack', tables: 'Blackjack-Tische', poker: 'Poker', wheel: 'Glücksrad' };
+const GAME_NAMES = { triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft', roulette: 'Roulette', bj: 'Blackjack', tables: 'Blackjack-Tische', poker: 'Poker', wheel: 'Glücksrad' };
 let lockedGames = new Set();
 const loadLocks = async () => { try { lockedGames = new Set(JSON.parse((await store.setting('locked_games')) || '[]')); } catch (e) { lockedGames = new Set(); } };
 loadLocks();
@@ -869,11 +869,14 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
 const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: triple.riskTop(st.bet), bet: st.bet, noRisk: st.win >= triple.riskTop(st.bet) });
 const tripleBusy = new Set(); // pro Spieler immer nur eine Triple-Anfrage gleichzeitig
 // Zwei Maschinen: wer spielen will, setzt sich an eine freie. Andere können zuschauen (Socket-Raum tc<Nr>).
-const TC_MACHINES = 6, TC_IDLE = 5 * 60 * 1000; // 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
-const anubis = require('./lib/anubis');
+const TC_MACHINES = 8, TC_IDLE = 5 * 60 * 1000; // 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis, 7–8 Buch der Gruft
+const anubis = require('./lib/anubis'), crypt = require('./lib/crypt');
 const jester = require('./lib/jester');
-const machineGame = (m) => (m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple');
-const GAME_LABEL = { triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis' };
+const machineGame = (m) => (m >= 7 ? 'crypt' : m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple');
+const GAME_LABEL = { triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft' };
+let cryptTest = true; // Testphase: alle sehen, nur der Admin spielt
+store.setting('crypt_test').then((v) => { if (v !== null && v !== undefined && v !== '') cryptTest = v === '1'; }).catch(() => {});
+const cryptBlocked = (u, res) => { if (cryptTest && !isAdmin(u)) { res.status(403).json({ error: '🔒 Buch der Gruft ist noch in der Testphase. Zuschauen geht schon!' }); return true; } return false; };
 let anubisTest = true; // Testphase wie bei der Narrenkappe
 store.setting('anubis_test').then((v) => { if (v !== null && v !== undefined && v !== '') anubisTest = v === '1'; }).catch(() => {});
 const anubisBlocked = (u, res) => { if (anubisTest && !isAdmin(u)) { res.status(403).json({ error: '🔒 Auge des Anubis ist noch in der Testphase. Zuschauen geht schon!' }); return true; } return false; };
@@ -910,6 +913,7 @@ app.post('/api/casino/triple/sit', async (req, res) => {
     const m = Math.round(Number(req.body.machine) || 0); if (m < 1 || m > TC_MACHINES) return res.status(400).json({ error: 'Unbekannte Maschine.' });
     if (machineGame(m) === 'jester' && jesterBlocked(u, res)) return;
     if (machineGame(m) === 'anubis' && anubisBlocked(u, res)) return;
+    if (machineGame(m) === 'crypt' && cryptBlocked(u, res)) return;
     const cur = tcSeatOf(u.id);
     if (cur === m) return res.json({ machine: m, list: tcList() });
     const st = tcSeats.get(m); if (st) return res.status(409).json({ error: `Maschine ${m} ist gerade belegt.` });
@@ -1696,7 +1700,8 @@ app.post('/api/card', async (req, res) => {
 
 // Code einlösen
 let tabBadges = { jester: 'NEU', anubis: 'NEU' }; // Abzeichen an den Casino-Reitern, im Admin-Menü änderbar
-store.setting('tab_badges').then((v) => { if (v) tabBadges = JSON.parse(v); }).catch(() => {});
+store.setting('tab_badges').then((v) => { if (v) tabBadges = JSON.parse(v); if (!('crypt' in tabBadges)) tabBadges.crypt = 'NEU'; }).catch(() => {});
+if (!('crypt' in tabBadges)) tabBadges.crypt = 'NEU';
 let slotsLive = false; // neue Automaten (Narrenkappe, Auge des Anubis) mit Update 14 für alle freigegeben
 store.setting('slots_live').then((v) => { slotsLive = v === '1'; }).catch(() => {});
 const newsVisible = (p) => !p.requires || (p.requires === 'gn' && gnOpen) || (p.requires === 'slots' && slotsLive); // Beiträge erst nach ihrer Freigabe
@@ -1751,6 +1756,37 @@ app.post('/api/admin/slotsrelease', async (req, res) => { // Ein Knopf: beide Au
   if (!adminCodes.AUTOMATEN) { adminCodes.AUTOMATEN = { reward: { dia: 15000, items: [] }, max: 0, until: Date.now() + 30 * 86400000, note: 'Update 14: neue Automaten testen', used: [], created: Date.now() }; await saveCodes(); }
   io.emit('shop:changed'); io.emit('news:new');
   console.log(`Neue Automaten freigegeben durch ${u.name}`); res.json({ ok: true, jesterTest, anubisTest, slotsLive });
+});
+app.post('/api/admin/crypttest', async (req, res) => { // Buch der Gruft: Testphase an/aus
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  cryptTest = !!req.body.on; await store.setting('crypt_test', cryptTest ? '1' : '0'); io.emit('shop:changed'); res.json({ on: cryptTest });
+});
+app.post('/api/casino/crypt', async (req, res) => { // Buch der Gruft: Maschinen 7 und 8, Freispiele am Stück berechnet
+  try {
+    if (gameLocked('crypt', res)) return;
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (cryptBlocked(u, res)) return;
+    const bet = Math.round(Number(req.body.bet) || 0);
+    if (!crypt.BETS.includes(bet)) return res.status(400).json({ error: 'Ungültiger Einsatz.' });
+    if (!tcSeated(u, res, req.body.machine)) return;
+    if (machineGame(tcSeatOf(u.id)) !== 'crypt') return res.status(400).json({ error: 'Setz dich an eine Maschine von Buch der Gruft.' });
+    if (!tripleLock(u.id, res)) return;
+    try {
+      const open = tripleOpen.get(u.id); if (open) await tripleFinish(u.id, open, open.win);
+      const u2 = await store.userById(u.id);
+      note(`Buch der Gruft: Einsatz ${fmtD(bet)} an Maschine ${tcSeatOf(u.id) || '?'}`);
+      const t = await takeBet(u2, bet, crypt.BETS[0]); if (t.error) return res.status(400).json({ error: t.error });
+      const forced = tcForce.has(u.id); if (forced) tcForce.delete(u.id); /* nur der Admin kann das setzen */
+      const r = crypt.play(bet, undefined, forced);
+      if (r.fs) note(`Buch der Gruft: ${r.fs.spins.length} Freispiele mit ${crypt.NAMES[r.fs.special]}, Gewinn ${fmtD(r.fs.total)}`);
+      let risk = null;
+      if (r.total > 0) { const L = triple.ladder(r.total, bet); const st = { game: 'crypt', bet, win: r.total, steps: L.steps, pos: L.pos, paid: 0, cards: [] }; tripleOpen.set(u.id, st); risk = tripleView(st); }
+      else await casinoStat(u.id, bet, 0, Math.round(bet * 0.1));
+      const sm = tcSeatOf(u.id); if (sm) tcSeats.get(sm).grid = r.fs ? r.fs.spins[r.fs.spins.length - 1].grid : r.grid;
+      tcEmit(u.id, { type: 'cspin', bet, r, risk, forced });
+      res.json({ ...r, bet, risk, diamonds: t.left, forced });
+    } finally { tripleBusy.delete(u.id); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/admin/anubistest', async (req, res) => { // Auge des Anubis: Testphase an/aus
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -2161,7 +2197,7 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     socket.emit('cw:snap', { uid: x[0], name: x[1].name, game: x[1].game, bj: g ? BJ.view(g) : null, history: rHistory.get(x[0]) || [] }); cwPush();
   });
   socket.on('cw:unwatch', () => { socket.data.cwWatching = null; cwLeaveAll(); cwPush(); });
-  socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:tables' && bjTables.isSeated(user.id)) bjTables.leave(user.id); /* anderes Menü = vom Blackjack-Tisch aufstehen */ if (!['casino:triple', 'casino:jester', 'casino:anubis'].includes(String(pg)) && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
+  socket.on('presence', (pg) => { cwSet(user, String(pg)); if (String(pg) !== 'casino:tables' && bjTables.isSeated(user.id)) bjTables.leave(user.id); /* anderes Menü = vom Blackjack-Tisch aufstehen */ if (!['casino:triple', 'casino:jester', 'casino:anubis', 'casino:crypt'].includes(String(pg)) && tcSeatOf(user.id) && !tripleBusy.has(user.id)) tcRelease(user.id).catch(() => {}); });
   socket.on('disconnect', () => { setTimeout(() => { tcPush(); cwPush(); if (!game.online.has(user.id) && cwAt.has(user.id)) { cwAt.delete(user.id); cwEmit(user.id, { type: 'left' }); cwPush(); } }, 20000);
     setTimeout(() => { if (!game.online.has(user.id)) tcRelease(user.id).catch(() => {}); }, 180000); }); // Automatenplatz bleibt bei kurzem Verbindungsabbruch 3 Minuten reserviert
 } // Erfolge: Ausgangsstand beim Verbinden
