@@ -2076,7 +2076,7 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     const m = Math.round(Number(id) || 0); if (m < 1 || m > TC_MACHINES) return;
     unwatch(); socket.join('tc' + m);
     const st = tcSeats.get(m), open = st ? tripleOpen.get(st.uid) : null;
-    if (st) notifyWatched(st.uid, user, 'Triple Crown');
+    if (st) notifyWatched(st.uid, user, { jester: 'Narrenkappe', horus: 'Auge des Anubis' }[machineGame(m)] || 'Triple Crown');
     const snap = (dia) => socket.emit('tc:snap', { machine: m, user: st ? { id: st.uid, name: st.name } : null, grid: st && st.grid, risk: open ? tripleView(open) : null, dia });
     if (st) store.userById(st.uid).then((f) => snap(f ? Number(f.diamonds) || 0 : null)).catch(() => snap(null)); else snap(null);
     tcPush();

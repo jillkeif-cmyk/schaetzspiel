@@ -1642,6 +1642,16 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .jc-hat{position:absolute;left:50%;top:-16%;width:50%;transform:translateX(-50%) rotate(-8deg);filter:drop-shadow(0 3px 5px rgba(0,0,0,.6));animation:jchat .42s cubic-bezier(.2,1.3,.4,1) both;pointer-events:none}
 @keyframes jchat{0%{transform:translate(-50%,-160%) rotate(-30deg) scale(1.5);opacity:0}100%{transform:translateX(-50%) rotate(-8deg) scale(1);opacity:1}}
 .jc-capdone{animation:jccapdone .5s ease-out forwards}@keyframes jccapdone{to{transform:rotate(-22deg) scale(.9);opacity:.45}}
+.tc-bigwin{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 50% 45%,rgba(50,16,80,.94),rgba(5,2,12,.97));border-radius:inherit;overflow:hidden;animation:bwin .35s ease-out;cursor:pointer}.tc-bigwin.out{animation:bwout .35s ease-in forwards}
+@keyframes bwin{from{opacity:0;transform:scale(1.15)}to{opacity:1;transform:none}}@keyframes bwout{to{opacity:0;transform:scale(.9)}}
+.bw-rays{position:absolute;left:50%;top:45%;width:900px;height:900px;margin:-450px;background:repeating-conic-gradient(from 0deg,rgba(255,210,63,.1) 0 9deg,transparent 9deg 22deg);animation:srrays 14s linear infinite}
+.bw-t{position:relative;font:400 clamp(30px,10vw,54px)/1 Anton,Impact,sans-serif;letter-spacing:1px;background:linear-gradient(180deg,#FFF6C9,#FFD23F 45%,#E0A21E);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #7a4a00) drop-shadow(0 0 18px rgba(255,210,63,.6));animation:bwpulse 1s ease-in-out infinite}
+.tc-bigwin.riesig .bw-t{background:linear-gradient(180deg,#FFE3FF,#FF7AB6 45%,#B45CFF);-webkit-background-clip:text;background-clip:text}.tc-bigwin.mega .bw-t{background:linear-gradient(90deg,#7CF0A8,#FFD23F,#FF7AB6,#5AA9FF,#7CF0A8);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;animation:bwpulse 1s ease-in-out infinite,bwrain 2s linear infinite}
+@keyframes bwpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}@keyframes bwrain{to{background-position:200% 0}}
+.bw-n{position:relative;font:400 clamp(34px,12vw,64px)/1 Anton,Impact,sans-serif;color:#fff;text-shadow:0 0 18px rgba(255,210,63,.8)}.tc-bigwin small{position:relative;color:#E6D2FF;font-size:12px}
+.bw-coin{position:absolute;left:50%;top:40%;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF6C9,#FFD23F 45%,#B07A10);box-shadow:0 0 8px rgba(255,210,63,.8);animation:bwcoin 1.6s cubic-bezier(.2,.6,.4,1) var(--d) infinite;opacity:0}
+@keyframes bwcoin{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),260px) rotate(var(--r))}}
+.tc-eye{position:absolute;top:8px;left:8px;z-index:6;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.6);color:#fff;font:800 13px Archivo;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}#tcRoot{position:relative}.tc-eye.pop{animation:eyepop .6s ease-out}@keyframes eyepop{0%{transform:scale(1.6);background:#FF4FA3}100%{transform:none}}
 </style>
 </head>
 <body>
@@ -1661,7 +1671,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '134';
+const AVER = '135';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2206,7 +2216,7 @@ function renderVip(box) {
       <img class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
       <img class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
     </div>
-    <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} von ${v.spinsTotal} heute` : 'Morgen wieder drehen'}</button>
+    <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} ${v.spinsLeft === 1 ? 'Drehung' : 'Drehungen'}${v.spinsBonus ? ` (davon ${v.spinsBonus} Bonus)` : ` von ${v.spinsTotal} heute`}` : 'Morgen wieder drehen'}</button>
     <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
     `;
 
@@ -3162,6 +3172,9 @@ function renderTriple(box) {
 }
 function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   if (!$('#tcRoot')) return;
+  { const mm = tc.seat && tcMachines.find((x) => x.id === tc.seat), n = mm ? mm.watchers || 0 : 0; let e = $('#tcEye');
+    if (!e) { e = document.createElement('span'); e.id = 'tcEye'; e.className = 'tc-eye'; $('#tcRoot').appendChild(e); }
+    e.textContent = n ? `👀 ${n}` : ''; e.style.display = n ? '' : 'none'; e.title = n ? `${n} ${n === 1 ? 'Person schaut' : 'Personen schauen'} zu` : ''; } // bleibt sichtbar, solange jemand zuschaut
   $('#tcBal').textContent = tc.watch ? (tc.wdia !== null && tc.wdia !== undefined ? fmt(tc.wdia) + ' 💎' : '—') : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
   $('#tcBet').textContent = fmt(tc.watch ? (tc.wbet || 0) : TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
@@ -3194,6 +3207,45 @@ function tcAutoWindow() { // Fenster: Einsatz und Anzahl der Drehungen wählen
   draw();
 }
 function tcSetMsg(t) { tc.msg = t; const m = $('#tcMsg'); if (m) m.innerHTML = t; }
+// Großgewinn-Anzeige für alle Automaten: ab 20-fach Banner, Betrag zählt hoch, Münzen fliegen
+function tcBigWin(total, bet) {
+  const x = total / bet; if (x < 20) return Promise.resolve();
+  const lvl = x >= 100 ? ['MEGA-GEWINN', 'mega'] : x >= 50 ? ['RIESENGEWINN', 'riesig'] : ['GROSSER GEWINN', 'gross'];
+  const root = $('#tcRoot'); if (!root) return Promise.resolve();
+  const el = document.createElement('div'); el.className = 'tc-bigwin ' + lvl[1];
+  el.innerHTML = `<div class="bw-rays"></div>${Array.from({ length: 18 }, (_, i) => `<i class="bw-coin" style="--x:${Math.round(Math.random() * 200 - 100)}px;--d:${(i * 0.08).toFixed(2)}s;--r:${Math.round(Math.random() * 720 - 360)}deg"></i>`).join('')}<b class="bw-t">${lvl[0]}</b><b class="bw-n" id="bwN">0</b><small>${Math.round(x)}-facher Einsatz · tippen zum Überspringen</small>`;
+  root.appendChild(el); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 50, 200]); } catch (e) {}
+  return new Promise((done) => {
+    const dur = tc.turbo ? 1200 : x >= 100 ? 4200 : x >= 50 ? 3400 : 2600, t0 = performance.now(); let fin = false;
+    const end = () => { if (fin) return; fin = true; el.classList.add('out'); setTimeout(() => { el.remove(); done(); }, 350); };
+    el.onclick = end;
+    const step = (t) => { if (fin) return; const p = Math.min(1, (t - t0) / dur), v = Math.round(total * (1 - Math.pow(1 - p, 3))); const n = document.getElementById('bwN'); if (n) n.textContent = fmt(v); if (Math.floor(p * 20) !== Math.floor(((t - 16) - t0) / dur * 20)) sfx('jccount'); if (p < 1) requestAnimationFrame(step); else setTimeout(end, 900); };
+    requestAnimationFrame(step);
+  });
+}
+// Autoplay: bei einem riskierbaren Gewinn anhalten und 5 Sekunden auf Risiko oder START warten, dann weiter
+function tcAutoContinue() {
+  if (!tc.auto) return; if (tc.auto < 9000) tc.auto--; tcSync();
+  if (tc.auto > 0) setTimeout(() => { if (tc.auto && !tc.busy && !tc.risk) tcSpin(); }, tc.turbo ? 150 : 450);
+  else tcSetMsg('Autoplay beendet');
+}
+async function tcAutoAfter() {
+  clearInterval(tc.awT);
+  if (tc.risk && !tc.risk.noRisk && !tc.watch) {
+    let left = 5; tc.autoPaused = true;
+    const tick = () => {
+      if (!tc.auto || !tc.autoPaused) { clearInterval(tc.awT); return; }
+      if (tc.mode !== 'play') { clearInterval(tc.awT); return; } // Risiko läuft: danach geht es weiter
+      if (!tc.risk) { clearInterval(tc.awT); tc.autoPaused = false; return; }
+      if (left <= 0) { clearInterval(tc.awT); tc.autoPaused = false; tcTakeQuiet().then(tcAutoContinue); return; }
+      tcSetMsg(`⏸ Autoplay wartet: Risiko oder START nimmt an · ${left}`); sfx('tick'); left--;
+    };
+    tick(); tc.awT = setInterval(tick, 1000); return;
+  }
+  if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
+  tcAutoContinue();
+}
+function tcAutoResume() { if (tc.auto && tc.autoPaused) { tc.autoPaused = false; setTimeout(tcAutoContinue, 1800); } } // nach Risiko Leiter/Karte
 function tcStartKey() {
   if (tc.watch) return;
   sfx('tick');
@@ -3291,6 +3343,7 @@ async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzä
 }
 function jcClear() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; const rl = $('#tcReels'); if (rl) rl.classList.remove('dim'); document.querySelectorAll('.jc-lwin').forEach((e) => e.remove()); document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); }
 async function jcSpin() {
+  clearInterval(tc.awT); tc.autoPaused = false;
   const bet = TC_BETS[tc.bi];
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
@@ -3301,17 +3354,12 @@ async function jcSpin() {
     await jcAnimate(r.before);
     if (r.cap) await jcCap(r.cap, r.grid); else tc.jgrid = r.grid;
     if (r.lines.length) await jcLines(r.lines);
+    await tcBigWin(r.total, bet);
     tc.busy = false;
     if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 20) { sfx('prestige'); try { navigator.vibrate && navigator.vibrate([60, 40, 160]); } catch (e) {} } }
     else { tcSetMsg('Leider nichts'); if (!tc.auto) sfx('jcnone'); }
     tcSync();
-    if (tc.auto) {
-      if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
-      if (tc.auto < 9000) tc.auto--;
-      tcSync();
-      if (tc.auto > 0) setTimeout(() => { if (tc.auto && !tc.busy) tcSpin(); }, tc.turbo ? 150 : 450);
-      else tcSetMsg('Autoplay beendet');
-    }
+    if (tc.auto) await tcAutoAfter(); // bei riskierbarem Gewinn 5 Sekunden warten
   } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); if (/belegt|Setz dich/.test(e.message)) { tc.seat = null; tc.risk = null; renderCasino(); return; } tcSync(); }
 }
 function jcPaytable() {
@@ -3324,6 +3372,7 @@ function jcPaytable() {
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
 async function tcSpin() {
+  clearInterval(tc.awT); tc.autoPaused = false;
   if (tc.game === 'jester') return jcSpin();
   const bet = TC_BETS[tc.bi];
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; } // offener Gewinn wird vom Server eingesackt
@@ -3343,17 +3392,12 @@ async function tcSpin() {
       if (sp.wheel) shown = await tcWheel(sp.wheel, sp.lines, shown);
       await tcSleep(sp.win ? 500 : 180);
     }
+    await tcBigWin(r.total, bet);
     tc.busy = false;
     if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 40) sfx('exact'); }
     else tcSetMsg('Leider nichts');
     tcSync();
-    if (tc.auto) { // Gewinn im Autoplay sofort einsacken und weiterdrehen
-      if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
-      if (tc.auto < 9000) tc.auto--;
-      tcSync();
-      if (tc.auto > 0) setTimeout(() => { if (tc.auto && !tc.busy) tcSpin(); }, tc.turbo ? 150 : 450);
-      else tcSetMsg('Autoplay beendet');
-    }
+    if (tc.auto) await tcAutoAfter(); // bei riskierbarem Gewinn 5 Sekunden warten
   } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); if (/belegt|Setz dich zuerst/.test(e.message)) { tc.seat = null; tc.risk = null; renderCasino(); return; } tcSync(); } // Platz verloren: zurück zur Maschinenauswahl
 }
 // Rewin-Rad: 12 feste Felder, außen läuft ein Licht über die Lämpchen. Runde k hat k Stop-Felder.
@@ -3449,7 +3493,7 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
     const r = await api('/api/casino/triple/risk', { action: 'ladder' , machine: tc.seat }).catch((e) => { toast(e.message); return null; });
     if (!r) { busy = false; draw(); return; }
     busy = false; // Ergebnis sofort anzeigen, kein Auslaufen
-    if (r.done) { tc.risk = null; tc.mode = 'play'; tc.startHook = null; tc.startLabel = null; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid;
+    if (r.done) { tc.risk = null; tc.mode = 'play'; tc.startHook = null; tc.startLabel = null; tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid; tcAutoResume();
       const cell = $('#tcLs' + r.pos); if (cell) cell.classList.add('cur');
       if (r.ausspielung) { tcSetMsg('🔔 AUSSPIELUNG · der ganze Gewinn ist weg'); sfx('wrong'); }
       else if (r.top) { tcSetMsg(`🏆 GANZ OBEN! ${fmt(r.paid)} Diamanten`); sfx('prestige'); }
@@ -3489,7 +3533,7 @@ function tcCardOpen() {
     tc.risk.cards = r.cards; sfx('tick');
     if (r.done) { tc.risk = { ...tc.risk, win: r.right ? r.paid : 0 }; draw(r.card); tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tc.lastWin = r.paid || 0;
       tcSetMsg(r.right ? `🏆 AUSSPIELUNG! ${fmt(r.paid)} Diamanten` : `💥 ${r.card.s} ${r.card.r} · leider falsch`); sfx(r.right ? 'prestige' : 'wrong');
-      tc.risk = null; tc.mode = 'play'; setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1600); tcSync(); return; }
+      tc.risk = null; tc.mode = 'play'; setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1600); tcSync(); tcAutoResume(); return; }
     tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos, cards: r.cards, top: r.top, noRisk: r.noRisk }; tcSetMsg(`✅ Richtig! Jetzt ${fmt(r.win)}`); sfx('exact'); tcSync(); draw(r.card);
   };
   draw();
@@ -4619,7 +4663,7 @@ function connect() {
     render();
   });
   socket.on('ver', (v) => checkVersion(v));
-  socket.on('watch:new', (d) => { toast(`👀 ${d.name} schaut dir bei ${d.game} zu`); sfx('tick'); });
+  socket.on('watch:new', (d) => { toast(`👀 ${d.name} schaut dir jetzt bei ${d.game} zu`); sfx('tick'); const e = $('#tcEye'); if (e) { e.classList.remove('pop'); void e.offsetWidth; e.classList.add('pop'); } });
   socket.on('market:new', (d) => { if (!home || !home.me || d.seller === home.me.id) return; home.mkTimes = home.mkTimes || {}; (home.mkTimes[d.kind] = home.mkTimes[d.kind] || []).unshift(d.at); mkBadges(); });
   let cxpT = 0;
   socket.on('me:cxp', (d) => { // nach jeder Casino-Runde: Casino-XP, VIP-Stufe und Casino-Strang live nachziehen
@@ -4677,7 +4721,7 @@ function connect() {
     $('#pkAcc').onclick = () => go('pk:sit'); $('#pkWatch').onclick = () => go('pk:watch');
   });
   socket.on('tc:list', (l) => {
-    tcMachines = l || [];
+    tcMachines = l || []; setTimeout(() => { if ($('#tcRoot')) tcSync(); }, 0); // Zuschauer-Auge aktuell halten
     if (tc.seat && !tcMachines.some((m) => m.id === tc.seat && m.user && home && m.user.id === home.me.id)) {
       const mine = tcMachines.find((m) => m.id === tc.seat);
       if (mine && !mine.user) { // Server hat den Platz vergessen (Neustart, Verbindung weg): still wieder hinsetzen
