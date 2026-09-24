@@ -869,6 +869,7 @@ async function tripleFinish(uid, st, extraPay) { // Gewinn auszahlen und Runde f
 const tripleView = (st) => ({ win: st.win, steps: st.steps, pos: st.pos, cards: st.cards, top: triple.riskTop(st.bet), bet: st.bet, noRisk: st.win >= triple.riskTop(st.bet) });
 const tripleBusy = new Set(); // pro Spieler immer nur eine Triple-Anfrage gleichzeitig
 // Zwei Maschinen: wer spielen will, setzt sich an eine freie. Andere können zuschauen (Socket-Raum tc<Nr>).
+store.setting('ai_model').then((v) => { if (v) ai.setModel(v); }).catch(() => {}); // gewähltes KI-Modell nach Neustart
 const TC_MACHINES = 8, TC_IDLE = 5 * 60 * 1000; // 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis, 7–8 Buch der Gruft
 const anubis = require('./lib/anubis'), crypt = require('./lib/crypt');
 const jester = require('./lib/jester');
@@ -2040,7 +2041,7 @@ app.get('/api/admin/pool', async (req, res) => {
     const u = await modAuth(req, res); if (!u) return;
     if (!isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
     const seen = await store.seenCounts(u.id).catch(() => new Set());
-    res.json({ source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
+    res.json({ model: ai.modelKey(), source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 app.post('/api/admin/pool', async (req, res) => {
@@ -2049,6 +2050,7 @@ app.post('/api/admin/pool', async (req, res) => {
     if (!isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
     const a = String(req.body.action || '');
     if (a === 'start') game.qpool.start();
+    else if (a === 'model' && ['sonnet', 'haiku'].includes(req.body.value)) { ai.setModel(req.body.value); await store.setting('ai_model', req.body.value); console.log('KI-Modell: ' + req.body.value); }
     else if (a === 'stop') game.qpool.stop();
     else if (a === 'target') game.qpool.setTarget(req.body.value);
     else if (a === 'auto') game.qpool.setAuto(!!req.body.value);
@@ -2057,7 +2059,7 @@ app.post('/api/admin/pool', async (req, res) => {
     else if (a === 'effort') game.qpool.setEffort(String(req.body.value));
     else return res.status(400).json({ error: 'Unbekannte Aktion.' });
     const seen = await store.seenCounts(u.id).catch(() => new Set());
-    res.json({ source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
+    res.json({ model: ai.modelKey(), source: (await store.setting('question_source')) || 'live', ...game.qpool.stats(seen) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
