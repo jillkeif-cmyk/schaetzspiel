@@ -177,7 +177,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -324,6 +324,8 @@ const kpass = require('./lib/pass');
 const boost = require('./lib/boost');
 const potions = require('./lib/potions');
 const trophies = require('./lib/trophies');
+const solowin = require('./lib/solowin');
+store.setting('solo_win').then((v) => { if (v) solowin.set(JSON.parse(v)); }).catch(() => {});
 let trophySel = [];
 store.setting('trophies').then((v) => { if (v) trophySel = JSON.parse(v); }).catch(() => {});
 const mkKind = (row) => (row.card_id === 'pack' ? (String(row.variant).startsWith('disp_') ? 'displays' : 'packs') : row.card_id === 'graded' ? 'graded' : 'cards');
@@ -1662,6 +1664,11 @@ app.post('/api/admin/banner', async (req, res) => {
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
+});
+app.post('/api/admin/solowin', async (req, res) => { // Solo-Sieg an/aus, Punktgrenze, höchstens Fragen
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const c = solowin.set({ ...solowin.get(), ...req.body }); await store.setting('solo_win', JSON.stringify(c));
+  console.log(`Solo-Sieg: ${c.on ? 'an' : 'aus'}, ab ${c.min} Punkten in höchstens ${c.maxQ} Fragen, durch ${u.name}`); res.json(c);
 });
 app.get('/api/admin/trophies', async (req, res) => { const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' }); res.json({ lib: trophies.LIB, sel: trophySel }); });
 app.post('/api/admin/trophies', async (req, res) => {
