@@ -1689,7 +1689,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '151';
+const AVER = '152';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1818,9 +1818,9 @@ function sfx(name) {
     if (name.startsWith('jcstop')) { const k = Number(name.slice(6)) || 0, f = [523, 659, 784, 988, 1175][k]; tone(f, 0, 0.2, 'triangle', 0.022); tone(f * 2, 0, 0.12, 'sine', 0.008); tone(110, 0, 0.06, 'sine', 0.03); } // jede Walze eigener, ansteigender Ton
     if (name === 'jcbell') { [262, 330, 392, 523, 659, 784, 1047, 1319, 1568, 1760].forEach((f, i) => { tone(f, i * 0.12, 0.3, 'triangle', 0.014); tone(f * 2, i * 0.12 + 0.03, 0.12, 'sine', 0.006); }); for (let k = 0; k < 8; k++) tone(2093 + (k % 2) * 300, 0.2 + k * 0.13, 0.08, 'sine', 0.006); } // aufsteigender Glitzerlauf mit Schellen
     if (name === 'jcpop') { tone(660, 0, 0.08, 'sine', 0.035); tone(990, 0.05, 0.12, 'sine', 0.03); } // Kappe landet
-    if (name === 'jccount') tone(1047, 0, 0.05, 'triangle', 0.012); // Glockenton beim Hochzählen
-    if (name === 'jcbass') { tone(130, 0, 0.16, 'sine', 0.05); tone(65, 0, 0.12, 'sine', 0.03); } // Bass-Schlag beim Gewinn
-    if (name === 'jcline') { tone(1047, 0, 0.18, 'triangle', 0.016); tone(1568, 0.06, 0.2, 'triangle', 0.012); tone(1976, 0.12, 0.25, 'sine', 0.008); } // Gewinnlinie
+    if (name === 'jccount') tone(1047, 0, 0.06, 'triangle', 0.022); // Glockenton beim Hochzählen
+    if (name === 'jcbass') { tone(130, 0, 0.18, 'sine', 0.075); tone(65, 0, 0.14, 'sine', 0.045); } // Bass-Schlag beim Gewinn
+    if (name === 'jcline') { tone(1047, 0, 0.2, 'triangle', 0.03); tone(1568, 0.06, 0.22, 'triangle', 0.024); tone(1976, 0.12, 0.28, 'sine', 0.016); } // Gewinnlinie
     if (name === 'jcnone') {} // bei Nieten bleibt es still
     if (name === 'pkbeep') { tone(196, 0, 0.09, 'square', 0.05); tone(147, 0.1, 0.09, 'square', 0.045); } // „pork pork“
     if (name === 'pkbeep2') tone(262, 0, 0.08, 'square', 0.06);
@@ -1887,6 +1887,12 @@ function anmStep(s, t) { // ruhig: Bordun auf D, Handtrommel, gezupfte Melodie
 }
 const MUSIC_V = '1'; // bei neuen Musikdateien erhöhen
 const GM = { el: null, src: '', g: null, want: '', pos: {} }; // pos: wo jedes Stück zuletzt stand
+const gmVol = (src) => (src === '/music/an_fs.mp3' ? 0.38 : src === '/music/jc_bg.mp3' ? 0.18 : 0.26); // Halloween-Musik leiser, damit die Effekte durchkommen
+function gmDuck(ms = 1500, depth = 0.3) { // Musik kurz leiser, damit Gewinne, Linien und Kappe gut zu hören sind
+  if (!GM.g || !actx || !GM.src || GM.switching) return; const g = GM.g.gain, t = actx.currentTime, v = gmVol(GM.src);
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v * depth, t + 0.15);
+  clearTimeout(GM.duckT); GM.duckT = setTimeout(() => { if (!GM.g || !actx) return; const t2 = actx.currentTime, gg = GM.g.gain; gg.cancelScheduledValues(t2); gg.setValueAtTime(gg.value, t2); gg.linearRampToValueAtTime(gmVol(GM.src), t2 + 0.9); }, ms);
+}
 function gmWant() {
   if (!TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return '';
   if (tc.game === 'jester') return '/music/jc_bg.mp3';
@@ -1897,7 +1903,7 @@ function gmusic(gesture) {
   if (!actx) return; const want = gmWant();
   if (!GM.el) { GM.el = new Audio(); GM.el.loop = true; GM.el.preload = 'auto'; try { const srcNode = actx.createMediaElementSource(GM.el); GM.g = actx.createGain(); GM.g.gain.value = 0; srcNode.connect(GM.g).connect(master); } catch (e) {} }
   if (gesture && !GM.src && GM.el.paused) { GM.el.play().then(() => { if (!GM.src) GM.el.pause(); }).catch(() => {}); } // beim ersten Tippen freischalten (iPhone)
-  const g = GM.g, now = actx.currentTime, vol = want === '/music/an_fs.mp3' ? 0.42 : 0.3;
+  const g = GM.g, now = actx.currentTime, vol = gmVol(want);
   if (want === GM.src) { if (want && GM.el.paused) GM.el.play().catch(() => {}); return; }
   if (GM.switching) return; GM.switching = true;
   if (g) { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 0.6); }
@@ -3309,7 +3315,7 @@ function tcBigWin(total, bet) {
   const root = $('#tcRoot'); if (!root) return Promise.resolve();
   const el = document.createElement('div'); el.className = 'tc-bigwin ' + lvl[1];
   el.innerHTML = `<div class="bw-rays"></div>${Array.from({ length: 18 }, (_, i) => `<i class="bw-coin" style="--x:${Math.round(Math.random() * 200 - 100)}px;--d:${(i * 0.08).toFixed(2)}s;--r:${Math.round(Math.random() * 720 - 360)}deg"></i>`).join('')}<b class="bw-t">${lvl[0]}</b><b class="bw-n" id="bwN">0</b><small>${Math.round(x)}-facher Einsatz · tippen zum Überspringen</small>`;
-  root.appendChild(el); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 50, 200]); } catch (e) {}
+  root.appendChild(el); gmDuck(4600, 0.2); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 50, 200]); } catch (e) {}
   return new Promise((done) => {
     const dur = tc.turbo ? 1200 : x >= 100 ? 4200 : x >= 50 ? 3400 : 2600, t0 = performance.now(); let fin = false;
     const end = () => { if (fin) return; fin = true; el.classList.add('out'); setTimeout(() => { el.remove(); done(); }, 350); };
@@ -3413,7 +3419,7 @@ async function jcCap(cap, after) { // Kappe schüttelt sich, dann fliegt sie Fel
   const capCells = []; tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === 'N') capCells.push([c, r]); }));
   const cellEl = (c, r) => document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r];
   capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.add('jc-shake'); });
-  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1200);
+  gmDuck(cap.turned.length * (tc.turbo ? 200 : 450) + 2200); tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1200);
   capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capped'); el.classList.add('jc-src'); el.style.backgroundImage = `url('/jc/s_N.webp?v=${AVER}'), repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,70,50,.8) 0 10deg, rgba(110,10,15,.95) 10deg 22deg)`; el.style.backgroundSize = '86% 86%, 100% 100%'; } }); // die Kappe selbst ist Narr: rote Strahlen wie im Original
   if (!cap.turned.length) { tcSetMsg('🃏 Die Kappe selbst zählt als Narr'); await tcSleep(tc.turbo ? 300 : 700); tc.jgrid = after; return; }
   tcSetMsg(`🃏 Die Kappe verteilt sich auf ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld' : 'Felder'}!`);
@@ -3424,6 +3430,7 @@ async function jcCap(cap, after) { // Kappe schüttelt sich, dann fliegt sie Fel
   await tcSleep(tc.turbo ? 200 : 450); tc.jgrid = after;
 }
 async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzählen
+  gmDuck(lines.length * (tc.turbo ? 350 : 900) + 800);
   const svg = $('#tcLines'), lw = $('#tcLineWin'), reels = $('#tcReels'); let sum = 0;
   if (reels) reels.classList.add('dim'); // übrige Felder abdunkeln wie am Original
   for (const L of lines) {
@@ -3495,7 +3502,7 @@ async function anBeam(lvlAfter, lvlBefore = 0) { // wie im Original: Kopf lädt 
   const R = root.getBoundingClientRect(), sr = src.getBoundingClientRect();
   const sx = sr.left + sr.width * 0.5 - R.left, sy = sr.top + sr.height * 0.16 - R.top; // Kopf des Anubis
   // 1. Aufladen: Kopf glüht, tiefes Grollen
-  const ch = document.createElement('div'); ch.className = 'an-charge'; ch.style.cssText = `left:${sx}px;top:${sy}px`; root.appendChild(ch);
+  gmDuck(3200); const ch = document.createElement('div'); ch.className = 'an-charge'; ch.style.cssText = `left:${sx}px;top:${sy}px`; root.appendChild(ch);
   src.classList.add('an-glow'); sfx('anchg'); await tcSleep(tc.turbo ? 300 : 850);
   // 2. Strahl zur Tafel, heller Ton; jeder betroffene Platz blitzt auf und verwandelt sich
   sfx('anlaser');
