@@ -1613,6 +1613,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .tr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tr-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:0;border-radius:14px;background:radial-gradient(circle at 50% 35%,rgba(255,230,160,.18),rgba(0,0,0,.25));color:#fff;text-align:center}.tr-item img{width:100%;height:84px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.6))}.tr-item b{font:800 12.5px/1.2 Archivo}.tr-item small{font-size:10.5px;color:#FFE27A}
 .tr-lib{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto}.tr-pick{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:rgba(255,255,255,.05)}.tr-pick img{width:90px;height:50px;object-fit:contain}.tr-pick b{display:block;font:800 13px Archivo}.tr-pick small{color:#cfe}
 #layer2{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,10,14,.78);backdrop-filter:blur(3px)}#layer2.on{display:flex}#layer2>.panel{width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.lg-pdf{display:flex;gap:8px;align-items:center;margin-bottom:10px}.lg-pdf select{flex:1}
 </style>
 </head>
 <body>
@@ -1632,7 +1633,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '112';
+const AVER = '113';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3042,6 +3043,7 @@ async function tcWatchRun() {
   if (tc.wbusy) return; tc.wbusy = true;
   while (tc.watch && tc.wq && tc.wq.length) {
     const ev = tc.wq.shift();
+    if (ev.dia !== null && ev.dia !== undefined) { tc.wdia = ev.type === 'spin' ? ev.dia - (ev.total || 0) : ev.dia; tcSync(); } // Guthaben des Spielers: beim Dreh erst ohne Gewinn
     try {
       if (ev.type === 'spin') {
         $('#tcOver').innerHTML = ''; tcClearLines(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
@@ -3066,6 +3068,7 @@ async function tcWatchRun() {
         else await tcSleep(300);
       } else if (ev.type === 'left') { tcSetMsg('Der Spieler ist aufgestanden'); await tcSleep(1500); if (tc.watch) { tc.watch = null; socket.emit('tc:unwatch'); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } } }
     } catch (e) { console.warn(e); }
+    if (tc.watch && ev.dia !== null && ev.dia !== undefined) { tc.wdia = ev.dia; tcSync(); } // nach der Runde: Guthaben inklusive Gewinn
   }
   tc.wbusy = false;
 }
@@ -3112,7 +3115,7 @@ function renderTriple(box) {
 }
 function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   if (!$('#tcRoot')) return;
-  $('#tcBal').textContent = tc.watch ? '—' : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
+  $('#tcBal').textContent = tc.watch ? (tc.wdia !== null && tc.wdia !== undefined ? fmt(tc.wdia) + ' 💎' : '—') : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
   $('#tcBet').textContent = fmt(tc.watch ? (tc.wbet || 0) : TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
   $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : '5 Linien · 3 gleiche Symbole gewinnen');
@@ -4008,11 +4011,24 @@ let adminD = null, adminTimer = null, adminUsers = null;
 let adminLocks = null;
 const LG_SRC = [['/api/casino/board', '🎡 Roulette'], ['/api/casino/roulette', '🎡 Roulette'], ['/api/casino/triple/risk', '👑 Triple Crown Risiko'], ['/api/casino/triple', '👑 Triple Crown'], ['/api/casino/bj', '🃏 Blackjack'], ['Socket bj', '🃏 Blackjack-Tisch'], ['Socket pk', '♠️ Poker'], ['/api/casino/wheel', '🎡 Glücksrad'], ['/api/casino/cashback', '💸 Cashback'], ['/api/pass', '👑 Kronen-Pass'], ['/api/news', '📰 Update gelesen'], ['/api/admin', '🛠 Admin'], ['Quiz-Match', '🎯 Quiz-Match'], ['/api/market', '🏪 Marktplatz'], ['/api/tcg', '🃏 Karten/Booster'], ['/api/daily', '📅 Tagesbonus'], ['/api/code', '🎟 Code'], ['/api/gift', '🎁 Geschenk'], ['Socket bet', '💰 Wette'], ['Socket', '🔌 Spiel']];
 const lgSrc = (s) => { const x = LG_SRC.find(([k]) => String(s || '').includes(k)); return x ? x[1] : esc(String(s || 'System').replace(/^(POST|GET) /, '')); };
-let lgKind = 'dia';
+let lgKind = 'dia', lgHours = 24;
+async function ledgerPdf(name) { // Verlauf als PDF: teilen (Dateien, Drucken) oder herunterladen
+  const b = $('#lgPdf'); if (b) { b.disabled = true; b.textContent = 'Erstelle PDF …'; }
+  try {
+    const r = await fetch('/api/admin/ledger.pdf?name=' + encodeURIComponent(name) + '&kind=' + lgKind + '&hours=' + lgHours, { headers: { authorization: 'Bearer ' + localStorage.getItem('sz_token') } });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'PDF ging nicht.');
+    const blob = await r.blob(), fn = `Verlauf_${name}_${lgKind}.pdf`, file = new File([blob], fn, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: fn });
+    else { const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
+  } catch (e) { if (e.name !== 'AbortError') toast(e.message); }
+  if (b) { b.disabled = false; b.textContent = '📄 Als PDF'; }
+}
 function loadLedger() {
   const n = ($('#lgName') || {}).value; if (!n) return;
   const out = $('#lgOut'); out.innerHTML = '<p class="sub">Lädt …</p>';
   api('/api/admin/ledger?name=' + encodeURIComponent(n.trim()) + '&kind=' + lgKind).then((r) => {
+    setTimeout(() => { if (!$('#lgPdfBar')) out.insertAdjacentHTML('afterbegin', `<div id="lgPdfBar" class="lg-pdf"><select class="field" id="lgHours">${[[1, 'letzte Stunde'], [6, 'letzte 6 Stunden'], [24, 'letzte 24 Stunden'], [72, 'letzte 3 Tage'], [168, 'letzte 7 Tage'], [720, 'letzte 30 Tage'], [0, 'alles']].map(([h, l]) => `<option value="${h}" ${h === lgHours ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="btn small" id="lgPdf">📄 Als PDF</button></div>`);
+      $('#lgHours').onchange = (e) => { lgHours = Number(e.target.value); }; $('#lgPdf').onclick = () => ledgerPdf(r.name); }, 0);
     const sums = {}; r.rows.forEach((x) => { const k = lgSrc(x.src); sums[k] = (sums[k] || 0) + x.delta; });
     const d = (ts) => new Date(ts).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     out.innerHTML = `<p class="sub" style="margin:10px 0 6px"><b>${esc(r.name)}</b> · aktuell ${fmt(r.now)} ${{ dia: '💎', xp: 'XP', cxp: 'Casino-XP', pxp: 'Pass-XP' }[r.kind]} · ${r.rows.length} Einträge</p>
@@ -4515,7 +4531,7 @@ function connect() {
     else if (ev.type === 'state') { cw.bj = ev.state; cw.won = ev.won; sfx('dart'); }
     if (page === 'casino' && cgame === 'watch') renderCasino();
   });
-  socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
+  socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; tc.wdia = sn.dia; setTimeout(() => { if ($('#tcBal')) tcSync(); }, 0); if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
   socket.on('tc:ev', (ev) => { if (!tc.watch || ev.machine !== tc.watch) return; tc.wq = tc.wq || []; tc.wq.push(ev); tcWatchRun(); });
   socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); if (!S && page === 'home') update(); });
   socket.on('bj:state', (t) => {

@@ -522,6 +522,47 @@ app.get('/api/admin/ledger', async (req, res) => { // Guthaben-Verlauf eines Spi
     res.json({ name: t.name, kind, diamonds: Number(t.diamonds) || 0, now: { dia: Number(t.diamonds) || 0, xp: Number(t.xp) || 0, cxp: Number(t.casino_xp) || 0, pxp: Number(t.pass_xp) || 0 }[kind], rows: await store.ledgerOf(t.id, 500, kind) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+let LG_NAMES = []; // gleiche Quellen-Namen wie in der App (aus index.html gelesen)
+try { const m = require('fs').readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').match(/const LG_SRC = (\[[^\n]*\]);/); if (m) LG_NAMES = JSON.parse(m[1].replace(/'/g, '"')); } catch (e) { console.warn('LG_SRC nicht gelesen', e.message); }
+const lgName = (src) => { const x = LG_NAMES.find(([k]) => String(src || '').includes(k)); return x ? x[1] : String(src || 'System').replace(/^(POST|GET) /, ''); };
+app.get('/api/admin/ledger.pdf', async (req, res) => { // Guthaben-Verlauf als PDF, mit Zeitfenster
+  try {
+    const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const t = await store.userByName(String(req.query.name || '').trim()); if (!t) return res.status(404).json({ error: 'Spieler nicht gefunden.' });
+    const kind = ['dia', 'xp', 'cxp', 'pxp'].includes(String(req.query.kind)) ? String(req.query.kind) : 'dia';
+    const hours = Math.max(0, Number(req.query.hours) || 0), since = hours ? Date.now() - hours * 3600000 : 0;
+    const rows = (await store.ledgerOf(t.id, 5000, kind)).filter((r) => Number(r.ts) >= since);
+    const KN = { dia: 'Diamanten', xp: 'Level-XP', cxp: 'Casino-XP', pxp: 'Pass-XP' }[kind];
+    const clean = (x) => String(x || '').replace(/→/g, '->').replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '').replace(/\s+/g, ' ').trim(); // Standardschrift kennt keine Emojis
+    const d = (ts) => new Date(Number(ts)).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const n = (x) => Math.round(Number(x) || 0).toLocaleString('de-DE');
+    const PDF = require('pdfkit'); const doc = new PDF({ size: 'A4', margin: 40 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Verlauf_${encodeURIComponent(t.name)}_${kind}.pdf"`);
+    doc.pipe(res);
+    doc.font('Helvetica-Bold').fontSize(18).text(`PUNKTLANDUNG · Verlauf ${KN}`);
+    doc.font('Helvetica').fontSize(10.5).fillColor('#444').text(`Spieler: ${clean(t.name)}   ·   Zeitraum: ${hours ? 'letzte ' + (hours >= 48 && hours % 24 === 0 ? hours / 24 + ' Tage' : hours === 1 ? 'Stunde' : hours + ' Stunden') : 'alles'}   ·   erstellt ${d(Date.now())}`);
+    const sum = rows.reduce((a, r) => a + Number(r.delta || 0), 0);
+    doc.text(`Aktueller Stand: ${n({ dia: t.diamonds, xp: t.xp, cxp: t.casino_xp, pxp: t.pass_xp }[kind])}   ·   Einträge: ${rows.length}   ·   Summe im Zeitraum: ${sum >= 0 ? '+' : ''}${n(sum)}`);
+    doc.moveDown(0.8);
+    const X = [40, 145, 385, 470], W = [100, 235, 80, 85];
+    const head = () => { doc.font('Helvetica-Bold').fontSize(9).fillColor('#000'); ['Zeit', 'Quelle / Details', 'Änderung', 'Stand'].forEach((h, i) => doc.text(h, X[i], doc.y, { width: W[i], align: i >= 2 ? 'right' : 'left', continued: false, lineBreak: false }) && (i < 3 ? doc.moveUp() : 0)); doc.moveDown(0.3); doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#999').stroke(); doc.moveDown(0.3); };
+    head();
+    for (const r of rows) {
+      const src = clean(lgName(r.src)) + (r.note ? '\n' + clean(r.note) : '');
+      const h = Math.max(12, doc.font('Helvetica').fontSize(8.5).heightOfString(src, { width: W[1] })) + 4;
+      if (doc.y + h > 800) { doc.addPage(); head(); }
+      const y = doc.y;
+      doc.font('Helvetica').fontSize(8.5).fillColor('#222').text(d(r.ts), X[0], y, { width: W[0] });
+      doc.text(src, X[1], y, { width: W[1] });
+      doc.fillColor(Number(r.delta) < 0 ? '#B00020' : '#0A7A3A').text(`${Number(r.delta) > 0 ? '+' : ''}${n(r.delta)}`, X[2], y, { width: W[2], align: 'right' });
+      doc.fillColor('#222').text(n(r.after), X[3], y, { width: W[3], align: 'right' });
+      doc.y = y + h; doc.x = 40;
+    }
+    if (!rows.length) doc.font('Helvetica').fontSize(10).fillColor('#666').text('Keine Einträge im gewählten Zeitraum.');
+    doc.end();
+  } catch (e) { console.error(e); if (!res.headersSent) res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.post('/api/admin/passxp', async (req, res) => { // Admin-Test: Pass-XP setzen
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
   const x = await passUser(await store.userById(u.id)); const xp = Math.max(0, Math.round(Number(req.body.xp) || 0));
@@ -785,7 +826,7 @@ const tcSeats = new Map(); // Maschine -> { uid, name, last, grid }
 const tcSeatOf = (uid) => { for (const [m, st] of tcSeats) if (st.uid === uid) return m; return null; };
 const tcList = () => Array.from({ length: TC_MACHINES }, (_, i) => { const st = tcSeats.get(i + 1); return { id: i + 1, user: st ? { id: st.uid, name: st.name } : null, watchers: (io.sockets.adapter.rooms.get('tc' + (i + 1)) || { size: 0 }).size }; });
 const tcPush = () => io.emit('tc:list', tcList());
-const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (m) io.to('tc' + m).emit('tc:ev', { machine: m, ...ev }); };
+const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (!m) return; store.userById(uid).then((f) => io.to('tc' + m).emit('tc:ev', { machine: m, dia: f ? Number(f.diamonds) || 0 : null, ...ev })).catch(() => io.to('tc' + m).emit('tc:ev', { machine: m, ...ev })); }; // mit Guthaben des Spielers für die Zuschauer
 async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gutgeschrieben
   const m = tcSeatOf(uid); if (!m) return;
   const open = tripleOpen.get(uid); if (open) await tripleFinish(uid, open, open.win).catch(() => {});
@@ -1926,7 +1967,8 @@ function tcAttach(socket, user) { // Triple-Crown-Maschinen: Liste, Zuschauen, a
     const m = Math.round(Number(id) || 0); if (m < 1 || m > TC_MACHINES) return;
     unwatch(); socket.join('tc' + m);
     const st = tcSeats.get(m), open = st ? tripleOpen.get(st.uid) : null;
-    socket.emit('tc:snap', { machine: m, user: st ? { id: st.uid, name: st.name } : null, grid: st && st.grid, risk: open ? tripleView(open) : null });
+    const snap = (dia) => socket.emit('tc:snap', { machine: m, user: st ? { id: st.uid, name: st.name } : null, grid: st && st.grid, risk: open ? tripleView(open) : null, dia });
+    if (st) store.userById(st.uid).then((f) => snap(f ? Number(f.diamonds) || 0 : null)).catch(() => snap(null)); else snap(null);
     tcPush();
   });
   socket.on('tc:unwatch', () => { unwatch(); tcPush(); });

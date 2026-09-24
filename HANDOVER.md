@@ -158,6 +158,8 @@ damit Karten jederzeit neu gerendert werden können.
 - Highroller-Prestige-Logo EX5 (pc_EX5.webp, bewegt): Casino-Strang Stufe 20 als item2; Prestige-Logo Nummer 12 (pres_shown=12, nur mit Freischaltung EX5, hasHighroller in server.js), in der Profil-Auswahl neben Master, gesperrt mit Hinweis. Update 12 (u12-casino) mit Einlöse-Baustein 'redeem' und Code GEISTERJACKPOT (10.000 💎, wird beim Start angelegt).
 - Shop-Steuerung Displays + Tränke (display_cfg): im Verkauf, Preis, Bestand, Ausverkauft, Hinweis. Tränke standardmäßig aus und ohne Preis; im Shop sichtbar sobald „im Verkauf“, ohne Preis mit „Preis folgt“ und nicht kaufbar.
 - Triple Crown Nieten: casinoStat mit risk = 10 % des Einsatzes (weniger Casino-XP pro verlorenem Dreh), Gewinne unverändert.
+- Triple Crown Zuschauer: tcEmit und tc:snap senden dia (Guthaben des Spielers); Anzeige beim Dreh erst ohne Gewinn, danach mit.
+- Verlauf als PDF: GET /api/admin/ledger.pdf?name&kind&hours (pdfkit), Zeitfenster-Auswahl + „📄 Als PDF“ im Admin-Verlauf, teilen/herunterladen. Quellen-Namen aus LG_SRC in index.html.
 - Zweite Ebene layer()/closeLayer() (#layer2) für Großansicht und Trophäen-Auswahl: Schließen führt zurück zum darunterliegenden Fenster. Trophäen-Knopf auch in „Profil bearbeiten“ (nur Admin).
 - Trophäen-Vitrine (lib/trophies.js LIB, Setting trophies): nur beim Admin (profileExtras), gold umrandet über der Vitrine, antippbar (zoomImg). Bearbeiten nur Admin (/api/admin/trophies). Bilder in public/trophies/ (karambit Pattern 387, ak47 Pattern 661, freigestellt).
 - Triple Crown Einsätze bis 50.000 (BETS in lib/triple.js und TC_BETS in index.html: ... 5000, 10000, 20000, 50000). Gewinne und Risiko-Spitze (50x) skalieren automatisch.

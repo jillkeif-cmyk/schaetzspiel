@@ -2,7 +2,7 @@
   "name": "schaetzspiel",
   "version": "1.0.0",
   "private": true,
-  "description": "Multiplayer-Sch\u00e4tzspiel f\u00fcr bis zu 6 Spieler",
+  "description": "Multiplayer-Schätzspiel für bis zu 6 Spieler",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
+    "pdfkit": "^0.20.2",
     "pg": "^8.11.5",
     "socket.io": "^4.7.5",
     "web-push": "^3.6.7"
