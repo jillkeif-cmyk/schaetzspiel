@@ -1914,6 +1914,25 @@ app.get('/api/invitable', async (req, res) => { // alle Spieler zum Einladen, on
     res.json({ players: out.slice(0, 300) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+const qLookup = (() => { const { pool: builtin } = require('./lib/questions'); const bi = new Map(builtin.map((q) => [q.id, q])); return (id) => (game.qpool && game.qpool.get && game.qpool.get(id)) || bi.get(id) || null; })();
+app.get('/api/admin/reports', async (req, res) => { // gemeldete Fragen: offen zuerst, mit Frage, Lösung, Meldern und Zeitpunkt
+  try {
+    const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const list = (await store.reportList()).filter((r) => r.n > 0 || r.status === 'blocked').map((r) => { const q = qLookup(r.qid); return { ...r, q: q ? q.q : '(Frage nicht mehr im Pool)', t: q ? q.t : '', a: q ? (q.t === 'mc' ? (q.o || [])[0] : q.a) : '', unit: q ? q.u || q.unit || '' : '', opts: q && q.t === 'mc' ? q.o : null }; });
+    const rank = (r) => (r.status === 'open' ? 0 : r.status === 'blocked' ? 1 : 2);
+    list.sort((a, b) => rank(a) - rank(b) || b.n - a.n || b.at - a.at);
+    res.json({ reports: list, open: list.filter((r) => r.status === 'open').length });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/reports', async (req, res) => { // block = dauerhaft sperren, keep = Meldungen zurücksetzen (Frage kommt wieder)
+  try {
+    const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+    const qid = String(req.body.qid || ''), act = req.body.action === 'block' ? 'blocked' : req.body.action === 'keep' ? 'kept' : null;
+    if (!qid || !act) return res.status(400).json({ error: 'Unbekannte Aktion.' });
+    await store.reportSet(qid, act); console.log(`Gemeldete Frage ${qid}: ${act === 'blocked' ? 'gesperrt' : 'freigegeben'} durch ${u.name}`);
+    res.json({ ok: true });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.get('/api/friends', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
