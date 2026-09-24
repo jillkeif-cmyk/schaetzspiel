@@ -1725,7 +1725,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '164';
+const AVER = '165';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -6200,15 +6200,15 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'closeCard') { $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); }
   else if (t.id === 'openNext') openPack(pid_last);
   else if (t.id === 'closeOpener') { $('#opener').classList.remove('on'); loadTcg(); }
-  else if (t.id === 'openProfile') { page = 'profile'; render(); }
+  else if (t.id === 'openProfile') { page = 'profile'; render(); loadHome().then(() => { if (page === 'profile') refreshProfile(); }).catch(() => {}); } // frisch freigeschaltete Stücke sofort wählbar
   else if (t.id === 'back') { freshKeep = new Set(); page = 'home'; render(); }
   else if (t.id === 'avaBtn') $('#avaFile').click();
   else if (t.dataset.frame !== undefined) {
-    if (t.classList.contains('lock')) return showLocked('frame', t.dataset.frame);
+    if (t.classList.contains('lock')) { const id = t.dataset.frame; return loadHome().then(() => { const f = (home.frames || []).find((x) => x.id === id); if (f && f.unlocked) { refreshProfile(); return api('/api/frame', { frame: id }).then(async () => { await loadHome(); refreshProfile(); }); } showLocked('frame', id); }).catch((e) => toast(e.message)); } // vielleicht gerade erst freigeschaltet
     api('/api/frame', { frame: t.dataset.frame }).then(async () => { await loadHome(); refreshProfile(); }).catch((e) => toast(e.message));
   }
   else if (t.dataset.emb !== undefined || t.dataset.title !== undefined) {
-    if (t.classList.contains('lock')) return showLocked(t.dataset.emb !== undefined ? 'emblem' : 'title', t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
+    if (t.classList.contains('lock')) { const isE = t.dataset.emb !== undefined, id = isE ? t.dataset.emb : t.dataset.title; return loadHome().then(() => { const L = (home.cards && (isE ? home.cards.emblems : home.cards.titles)) || [], it = L.find((x) => x.id === id); if (it && it.unlocked) { refreshProfile(); setTimeout(() => { const el = document.querySelector(isE ? `[data-emb="${id}"]` : `[data-title="${id}"]`); if (el && !el.classList.contains('lock')) el.click(); }, 60); return; } showLocked(isE ? 'emblem' : 'title', id); }).catch((e) => toast(e.message)); } // vielleicht gerade erst freigeschaltet
     const me = home.me, cur = t.dataset.emb !== undefined ? me.emblem : (me.title || '');
     const val = (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title) === cur ? '' : (t.dataset.emb !== undefined ? t.dataset.emb : t.dataset.title);
     const body = t.dataset.emb !== undefined ? { emblem: val, title: me.title || '' } : { emblem: me.emblem || '', title: val };
