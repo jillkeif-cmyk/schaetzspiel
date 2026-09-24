@@ -1904,6 +1904,15 @@ app.post('/api/tag', async (req, res) => {
 });
 
 // Freunde
+app.get('/api/invitable', async (req, res) => { // alle Spieler zum Einladen, online zuerst (nicht nur Freunde)
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    const all = (await store.allUsers()).filter((o) => o.id !== u.id);
+    const out = all.map((o) => { const m = game.matches.get(game.userMatch.get(o.id)); return { ...publicStats(o), online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', idle: game.isIdle(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished' }; });
+    out.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0) || (b.idle ? 0 : 1) - (a.idle ? 0 : 1) || String(a.name).localeCompare(String(b.name), 'de'));
+    res.json({ players: out.slice(0, 300) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
 app.get('/api/friends', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });

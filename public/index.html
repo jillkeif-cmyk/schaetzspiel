@@ -1725,7 +1725,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '165';
+const AVER = '166';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -5582,19 +5582,22 @@ function modEdit(id, page) {
     api('/api/admin/user', body).then((res) => { toast('Gespeichert'); modUsers = modUsers.map((x) => x.id === res.user.id ? res.user : x); modLoad($('#modQ') ? $('#modQ').value : ''); modEdit(id, ''); }).catch((er) => toast(er.message));
   };
 }
-function showInvite() {
+function showInvite() { // oben Freunde, darunter alle anderen Spieler (online zuerst), mit Suche
   const inMatch = S ? S.players.map((p) => p.id) : [];
-  const list = friends.filter((f) => f.status === 'ok' && !f.playing && !inMatch.includes(f.id))
-    .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
-  $('#modal').innerHTML = `<div class="panel" style="gap:12px"><h2>Freunde einladen</h2>
-    ${list.length ? `<div class="plist">${list.map((f) => `<div class="pl" style="--c:var(--line)">${avatar(f, 36)}<span class="nm">${withTag(f)}<br><span class="lv">${rankText(f)} · ${esc(onlineText(f))}</span></span><button class="mini go" data-fight="${f.id}">Einladen</button></div>`).join('')}</div>`
-      : '<p class="sub">Du hast noch keine Freunde für eine Einladung. Über die Ranglisten kannst du jeden herausfordern, oder du teilst den Code.</p>'}
+  const fr = friends.filter((f) => f.status === 'ok' && !inMatch.includes(f.id)).sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
+  const frIds = new Set(fr.map((f) => f.id));
+  const row = (f) => `<div class="pl" style="--c:var(--line)" data-inv-name="${esc(String(f.name).toLowerCase())}">${avatar(f, 36)}<span class="nm">${withTag(f)}<br><span class="lv">${rankText(f)} · ${f.playing ? 'spielt gerade ein Match' : esc(onlineText(f))}</span></span>${f.playing ? '<span class="sub" style="font-size:12px">im Match</span>' : `<button class="mini go" data-fight="${f.id}">Einladen</button>`}</div>`;
+  $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:90vh;overflow:auto"><h2>Freunde einladen</h2>
+    <input class="field" id="invQ" placeholder="🔍 Spieler suchen" autocomplete="off" style="padding:10px 12px">
+    <div id="invList">${fr.length ? `<p class="sub" style="margin:0 0 6px">👥 Deine Freunde</p><div class="plist">${fr.map(row).join('')}</div>` : ''}<p class="sub" style="margin:12px 0 6px">🌍 Alle Spieler</p><div class="plist" id="invAll"><p class="sub">Lädt …</p></div></div>
     <p class="sub">Wer offline ist, bekommt eine Benachrichtigung aufs Handy, sofern er sie erlaubt hat.</p>
     <button class="btn small" id="inviteShare" style="width:100%">Einladungslink kopieren</button>
     <p class="sub">Match-Code: <b>${S ? esc(S.code) : ''}</b></p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
   $('#inviteShare').onclick = () => { const url = location.origin + '/?join=' + S.code; (navigator.share ? navigator.share({ title: 'PUNKTLANDUNG', text: 'Spiel mit! Code ' + S.code, url }) : navigator.clipboard.writeText(url).then(() => toast('Link kopiert'))).catch(() => {}); };
+  api('/api/invitable').then((d) => { const box = $('#invAll'); if (!box) return; const rest = d.players.filter((p) => !frIds.has(p.id) && !inMatch.includes(p.id)); box.innerHTML = rest.length ? rest.map(row).join('') : '<p class="sub">Keine weiteren Spieler.</p>'; }).catch(() => { const box = $('#invAll'); if (box) box.innerHTML = '<p class="sub">Liste konnte nicht geladen werden.</p>'; });
+  $('#invQ').oninput = () => { const q = $('#invQ').value.trim().toLowerCase(); document.querySelectorAll('#invList [data-inv-name]').forEach((el) => { el.style.display = !q || el.dataset.invName.includes(q) ? '' : 'none'; }); };
 }
 async function showUser(id) {
   try {
