@@ -1669,6 +1669,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .an-charge{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;z-index:23;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(124,232,255,.8) 35%,rgba(58,160,255,0) 70%);animation:ancharge .85s ease-in forwards}
 @keyframes ancharge{0%{transform:scale(.2);opacity:.2}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1.35);opacity:.95}}
 .an-flip{animation:anflip .48s ease-in-out}@keyframes anflip{0%{transform:perspective(300px) rotateY(0)}45%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}55%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}100%{transform:perspective(300px) rotateY(0)}}
+.an-scatglow{animation:anscat 1s ease-in-out infinite;z-index:2}@keyframes anscat{0%,100%{box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.7);filter:brightness(1.1)}50%{box-shadow:inset 0 0 0 3px #FFF6C9,0 0 34px rgba(255,220,100,1),0 0 60px rgba(255,180,40,.8);filter:brightness(1.6)}}
 </style>
 </head>
 <body>
@@ -1688,7 +1689,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '149';
+const AVER = '150';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1875,9 +1876,33 @@ function anmStep(s, t) { // ruhig: Bordun auf D, Handtrommel, gezupfte Melodie
   if (st === 4 || st === 12) mhat(t, 0.018);
   if (st % 4 === 0 && !(bar === 3 && st > 8)) { const m = ANM_SCALE[ANM_MEL[(Math.floor(s / 4) + bar) % 16]] + 12; mtone(mf(m), t, 0.45, 'triangle', 0.016); mtone(mf(m + 12), t + 0.01, 0.2, 'sine', 0.005); } // gezupfte Melodie
 }
+const MUSIC_V = '1'; // bei neuen Musikdateien erhöhen
+const GM = { el: null, src: '', g: null, want: '' };
+function gmWant() {
+  if (!TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return '';
+  if (tc.game === 'jester') return '/music/jc_bg.mp3';
+  if (tc.game === 'anubis') return tc.fsMusic ? '/music/an_fs.mp3' : '/music/an_bg.mp3';
+  return '';
+}
+function gmusic(gesture) {
+  if (!actx) return; const want = gmWant();
+  if (!GM.el) { GM.el = new Audio(); GM.el.loop = true; GM.el.preload = 'auto'; try { const srcNode = actx.createMediaElementSource(GM.el); GM.g = actx.createGain(); GM.g.gain.value = 0; srcNode.connect(GM.g).connect(master); } catch (e) {} }
+  if (gesture && !GM.src && GM.el.paused) { GM.el.play().then(() => { if (!GM.src) GM.el.pause(); }).catch(() => {}); } // beim ersten Tippen freischalten (iPhone)
+  const g = GM.g, now = actx.currentTime, vol = want === '/music/an_fs.mp3' ? 0.42 : 0.3;
+  if (want === GM.src) { if (want && GM.el.paused) GM.el.play().catch(() => {}); return; }
+  if (GM.switching) return; GM.switching = true;
+  if (g) { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 0.6); }
+  setTimeout(() => {
+    GM.src = want; GM.switching = false;
+    if (!want) { GM.el.pause(); return; }
+    GM.el.src = want + '?v=' + MUSIC_V; GM.el.currentTime = 0; GM.el.play().catch(() => {});
+    if (g) { const t = actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 1.2); }
+  }, g ? 620 : 0);
+}
+document.addEventListener('click', () => { try { gmusic(true); } catch (e) {} }, true);
+setInterval(() => { try { gmusic(false); } catch (e) {} }, 700);
 function tcmStep(s, t) {
-  if (tc.game === 'jester') return jcmStep(s, t);
-  if (tc.game === 'anubis') return anmStep(s, t);
+  if (tc.game === 'jester' || tc.game === 'anubis') return; // hier läuft echte Musik (gmusic)
   const bar = Math.floor(s / 16) % 8, st = s % 16, [bass, ch] = TCM_PROG[bar];
   if (st === 0 || st === 8) mtone(mf(36), t, 0.14, 'sine', 0.16); // Kick
   if ([0, 6, 8, 14].includes(st)) mtone(mf(bass - 12 + (st === 6 || st === 14 ? 12 : 0)), t, 0.22, 'triangle', 0.1); // Bass
@@ -3133,7 +3158,7 @@ async function tcSit(m) {
 }
 const machGame = (m) => (m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
 const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis' }[machGame(m)] + ' · Maschine ' + (m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
-function tcWatch(m) { tc.game = machGame(m); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+function tcWatch(m) { tc.fsMusic = false; tc.game = machGame(m); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
@@ -3402,6 +3427,7 @@ function jcClear() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; con
 async function jcSpin() {
   clearInterval(tc.awT); tc.autoPaused = false;
   const bet = TC_BETS[tc.bi];
+  if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet(); // offenen Gewinn erst gutschreiben, sonst blockiert ein leeres Konto (Ticket: 1.000 Rest, gewonnen, START ging nicht)
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
   tc.busy = true; tc.lastWin = 0; jcClear(); tcSetMsg('&nbsp;'); tcSync();
@@ -3482,13 +3508,13 @@ async function anFlipGrid(lvl) { // alle Bildsymbole unter der neuen Stufe werde
     setTimeout(() => { el.style.backgroundImage = `url('/an/s_${to}.webp?v=${AVER}')`; g[c][r] = to; }, 220); setTimeout(() => el.classList.remove('an-flip'), 480); });
   await tcSleep(tc.turbo ? 300 : 650);
 }
-async function anShowScat(grid, win) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'P') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat'); } })); tcSetMsg(`🚪 Grabtore: +${fmt(win)}`); sfx('anfs'); await tcSleep(tc.turbo ? 400 : 900); }
+async function anShowScat(grid, win, big) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'P') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat', big ? 'an-scatglow' : 'x'); } })); tcSetMsg(`🚪 Grabtore: +${fmt(win)}`); if (!big) sfx('anfs'); await tcSleep(tc.turbo ? 500 : big ? 2200 : 900); }
 async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. Freispiele
   anSetTab(0); anSetFs('');
   await jcAnimate(r.grid); await anExpand(r.wild);
   let sum = 0;
   if (r.lines.length) { await jcLines(r.lines); sum = r.lines.reduce((a, l) => a + l.win, 0); }
-  if (r.scat) { await anShowScat(r.grid, r.scat); sum += r.scat; tc.lastWin = sum; tcSync(); }
+  if (r.scat) { if (r.fs) { tc.fsMusic = true; gmusic(false); } await anShowScat(r.grid, r.scat, !!r.fs); sum += r.scat; tc.lastWin = sum; tcSync(); }
   if (r.fs) {
     sfx('anfs'); await anPopup(`<b class="an-big">12 FREISPIELE</b><img src="/an/s_W.webp?v=${AVER}" alt=""><small>Jeder Anubis gibt ein weiteres Freispiel<br>und verbessert die Tafel</small>`, 2600);
     let total = 12, fsSum = 0;
@@ -3501,7 +3527,7 @@ async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. F
       if (sp.anubis) { total += sp.anubis; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anextra'); await anPopup(`<b class="an-mid">${sp.anubis} ${sp.anubis === 1 ? 'weiteres FREISPIEL' : 'weitere FREISPIELE'}</b>`, 1300); if (sp.lvlAfter > sp.lvl) await anBeam(sp.lvlAfter, sp.lvl); }
       await tcSleep(tc.turbo ? 150 : 350);
     }
-    anSetFs(''); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); anSetTab(0);
+    anSetFs(''); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); anSetTab(0); tc.fsMusic = false; gmusic(false);
   }
   tc.lastWin = r.total; tcSync();
   await tcBigWin(r.total, bet);
@@ -3509,6 +3535,7 @@ async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. F
 async function anSpin() {
   clearInterval(tc.awT); tc.autoPaused = false;
   const bet = TC_BETS[tc.bi];
+  if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet(); // offenen Gewinn erst gutschreiben, sonst blockiert ein leeres Konto (Ticket: 1.000 Rest, gewonnen, START ging nicht)
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
   tc.busy = true; tc.lastWin = 0; anClear(); tcSetMsg('&nbsp;'); tcSync();
@@ -3539,6 +3566,7 @@ async function tcSpin() {
   if (tc.game === 'jester') return jcSpin();
   if (tc.game === 'anubis') return anSpin();
   const bet = TC_BETS[tc.bi];
+  if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet(); // offenen Gewinn erst gutschreiben, sonst blockiert ein leeres Konto (Ticket: 1.000 Rest, gewonnen, START ging nicht)
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; } // offener Gewinn wird vom Server eingesackt
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
   tc.busy = true; tc.lastWin = 0; tcClearLines(); tcSetMsg('&nbsp;'); tcSync();

@@ -2096,6 +2096,7 @@ app.get('/api/avatar/:id', async (req, res) => {
 });
 
 app.use('/emblems', express.static(path.join(__dirname, 'public/emblems'), { maxAge: '30d', immutable: true }));
+app.use('/music', express.static(path.join(__dirname, 'public/music'), { maxAge: '30d', immutable: true })); // Musik nur einmal laden (feste Versionsnummer)
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
 
 const server = http.createServer(app);
