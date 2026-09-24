@@ -1689,7 +1689,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '150';
+const AVER = '151';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1802,9 +1802,18 @@ function sfx(name) {
     if (name === 'anfs') [294, 349, 392, 440, 523, 587].forEach((f, i) => tone(f, i * 0.09, 0.32, 'triangle', 0.02));
     if (name === 'anextra') { tone(587, 0, 0.25, 'triangle', 0.024); tone(880, 0.12, 0.35, 'triangle', 0.02); }
     if (name === 'anbeam') [880, 1047, 1175, 1397, 1568].forEach((f, i) => tone(f, i * 0.06, 0.2, 'sine', 0.014));
-    if (name === 'anchg') { for (let k = 0; k < 8; k++) tone(165 + k * 5, k * 0.09, 0.2, 'sine', 0.012 + k * 0.004); whoosh(0.8, 90, 260, 0.025); } // Aufladen: tiefes, anschwellendes Grollen
-    if (name === 'anlaser') { tone(780, 0, 0.75, 'triangle', 0.018); tone(390, 0, 0.75, 'sine', 0.022); for (let k = 0; k < 6; k++) tone(780 + (k % 2 ? 12 : -12), k * 0.12, 0.12, 'sine', 0.008); } // Strahl: heller Ton mit Oktave
-    if (name === 'anflip') { const o = actx.createOscillator(), gn = actx.createGain(), t = actx.currentTime; o.type = 'sine'; o.frequency.setValueAtTime(2000, t); o.frequency.exponentialRampToValueAtTime(1050, t + 0.45); gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.03, t + 0.04); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(gn).connect(master); o.start(t); o.stop(t + 0.52); } // Umdrehen: fallender Ton
+    if (name === 'anchg') { // Aufladen: tiefes Grollen, das nach oben anschwillt
+      const o = actx.createOscillator(), g = actx.createGain(), f = actx.createBiquadFilter(), t = actx.currentTime; o.type = 'sawtooth'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(420, t + 0.8);
+      f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2200, t + 0.8); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      o.connect(f).connect(g).connect(master); o.start(t); o.stop(t + 0.95); tone(165, 0, 0.8, 'sine', 0.05); }
+    if (name === 'anlaser') { // Strahl: helles Zischen mit Flirren (wie im Original 780 Hz + Oktave)
+      const t = actx.currentTime, o = actx.createOscillator(), o2 = actx.createOscillator(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(1600, t); o.frequency.exponentialRampToValueAtTime(780, t + 0.12); o2.type = 'sine'; o2.frequency.value = 390;
+      lfo.frequency.value = 22; lg.gain.value = 0.02; lfo.connect(lg).connect(g.gain);
+      const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 0.8;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.05); g.gain.setValueAtTime(0.06, t + 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+      o.connect(f).connect(g); o2.connect(g); g.connect(master); [o, o2, lfo].forEach((x) => { x.start(t); x.stop(t + 1.05); }); whoosh(0.9, 2500, 5000, 0.03); }
+    if (name === 'anzap') { tone(2093, 0, 0.08, 'square', 0.02); tone(3136, 0.03, 0.1, 'sine', 0.025); whoosh(0.15, 4000, 7000, 0.03); } // Knistern auf dem Tafelplatz
     if (name === 'jcspin') { tone(3180, 0, 0.05, 'square', 0.01); tone(262, 0.05, 0.22, 'triangle', 0.02); tone(349, 0.14, 0.22, 'triangle', 0.018); whoosh(0.5, 240, 700, 0.025); } // Start: heller Klick, kurzer Anlauf
     if (name.startsWith('jcstop')) { const k = Number(name.slice(6)) || 0, f = [523, 659, 784, 988, 1175][k]; tone(f, 0, 0.2, 'triangle', 0.022); tone(f * 2, 0, 0.12, 'sine', 0.008); tone(110, 0, 0.06, 'sine', 0.03); } // jede Walze eigener, ansteigender Ton
     if (name === 'jcbell') { [262, 330, 392, 523, 659, 784, 1047, 1319, 1568, 1760].forEach((f, i) => { tone(f, i * 0.12, 0.3, 'triangle', 0.014); tone(f * 2, i * 0.12 + 0.03, 0.12, 'sine', 0.006); }); for (let k = 0; k < 8; k++) tone(2093 + (k % 2) * 300, 0.2 + k * 0.13, 0.08, 'sine', 0.006); } // aufsteigender Glitzerlauf mit Schellen
@@ -1877,7 +1886,7 @@ function anmStep(s, t) { // ruhig: Bordun auf D, Handtrommel, gezupfte Melodie
   if (st % 4 === 0 && !(bar === 3 && st > 8)) { const m = ANM_SCALE[ANM_MEL[(Math.floor(s / 4) + bar) % 16]] + 12; mtone(mf(m), t, 0.45, 'triangle', 0.016); mtone(mf(m + 12), t + 0.01, 0.2, 'sine', 0.005); } // gezupfte Melodie
 }
 const MUSIC_V = '1'; // bei neuen Musikdateien erhöhen
-const GM = { el: null, src: '', g: null, want: '' };
+const GM = { el: null, src: '', g: null, want: '', pos: {} }; // pos: wo jedes Stück zuletzt stand
 function gmWant() {
   if (!TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return '';
   if (tc.game === 'jester') return '/music/jc_bg.mp3';
@@ -1892,11 +1901,16 @@ function gmusic(gesture) {
   if (want === GM.src) { if (want && GM.el.paused) GM.el.play().catch(() => {}); return; }
   if (GM.switching) return; GM.switching = true;
   if (g) { g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now); g.gain.linearRampToValueAtTime(0, now + 0.6); }
+  if (GM.src && GM.el && !GM.el.paused) GM.pos[GM.src] = GM.el.currentTime; // Stelle merken
   setTimeout(() => {
     GM.src = want; GM.switching = false;
     if (!want) { GM.el.pause(); return; }
-    GM.el.src = want + '?v=' + MUSIC_V; GM.el.currentTime = 0; GM.el.play().catch(() => {});
-    if (g) { const t = actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 1.2); }
+    const resume = want === '/music/an_fs.mp3' ? 0 : (GM.pos[want] || 0); // Freispiel-Musik startet neu, Hintergrund läuft weiter
+    GM.el.src = want + '?v=' + MUSIC_V;
+    const seek = () => { try { if (resume) GM.el.currentTime = resume; } catch (e) {} GM.el.play().catch(() => {}); };
+    if (GM.el.readyState >= 1) seek(); else GM.el.addEventListener('loadedmetadata', seek, { once: true });
+    GM.el.play().catch(() => {});
+    if (g) { const t = actx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + (resume ? 2 : 1.2)); } // zurück: 2 s sanft lauter
   }, g ? 620 : 0);
 }
 document.addEventListener('click', () => { try { gmusic(true); } catch (e) {} }, true);
@@ -3490,7 +3504,7 @@ async function anBeam(lvlAfter, lvlBefore = 0) { // wie im Original: Kopf lädt 
     const tr = targets[k].getBoundingClientRect(), tx = tr.left + tr.width / 2 - R.left, ty = tr.top + tr.height / 2 - R.top;
     const len = Math.hypot(tx - sx, ty - sy), ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
     const b = document.createElement('div'); b.className = 'an-laser'; b.style.cssText = `left:${sx}px;top:${sy}px;width:${len}px;transform:rotate(${ang}deg)`; root.appendChild(b);
-    targets[k].classList.add('zap'); await tcSleep(tc.turbo ? 140 : 300);
+    targets[k].classList.add('zap'); sfx('anzap'); await tcSleep(tc.turbo ? 140 : 300);
     targets[k].style.backgroundImage = `url('/an/s_${AN_TIERS[lvlAfter]}.webp?v=${AVER}')`; targets[k].classList.add('up');
     setTimeout(() => { b.remove(); targets[k].classList.remove('zap'); }, 320);
   }
