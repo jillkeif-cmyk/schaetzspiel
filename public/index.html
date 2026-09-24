@@ -1659,6 +1659,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .an-pop{position:absolute;inset:0;z-index:25;display:grid;place-items:center;background:rgba(3,6,20,.55);cursor:pointer;animation:bwin .3s ease-out}.an-pop.out{animation:bwout .3s ease-in forwards}
 .an-parch{min-width:62%;max-width:86%;padding:18px 20px;border-radius:14px;text-align:center;color:#4A2E0A;background:linear-gradient(160deg,#F6E3B4,#E3C487 60%,#CFA968);box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 0 0 2px #B98A3A;display:flex;flex-direction:column;align-items:center;gap:8px}.an-parch img{width:70px;height:70px;border-radius:10px}.an-parch small{font:700 13px/1.3 Archivo}.an-big{font:400 32px/1 Anton,Impact,sans-serif;letter-spacing:.5px}.an-mid{font:400 24px/1.1 Anton,Impact,sans-serif}
 .an-beam{position:absolute;left:10%;top:14%;width:4px;height:52%;z-index:22;background:linear-gradient(180deg,#fff,#7CE8FF,transparent);box-shadow:0 0 18px #7CE8FF;transform-origin:top;animation:anbeam .8s ease-out forwards}@keyframes anbeam{0%{transform:scaleY(0);opacity:1}60%{transform:scaleY(1);opacity:1}100%{opacity:0}}
+.an-wild{transition:transform .45s ease}.an-wild.an-turn{transform:scaleX(-1);filter:drop-shadow(0 0 14px #7CE8FF) brightness(1.15)}
+.an-laser{position:absolute;height:6px;margin-top:-3px;z-index:24;transform-origin:0 50%;border-radius:6px;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,.95),#7CE8FF 30%,#3AA0FF 70%,rgba(255,255,255,.9));box-shadow:0 0 12px #7CE8FF,0 0 26px #3AA0FF;animation:anlaser .38s ease-out}
+@keyframes anlaser{0%{clip-path:inset(0 100% 0 0);opacity:.2}60%{clip-path:inset(0 0 0 0);opacity:1}100%{opacity:1}}
+.an-ti.zap{box-shadow:0 0 0 2px #fff,0 0 18px #7CE8FF!important;filter:brightness(1.8)}
 </style>
 </head>
 <body>
@@ -1678,7 +1682,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '137';
+const AVER = '138';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3408,9 +3412,23 @@ function anPopup(html, ms) { // Pergament-Tafel über dem Automaten
   const root = $('#tcRoot'); if (!root) return Promise.resolve(); const el = document.createElement('div'); el.className = 'an-pop'; el.innerHTML = `<div class="an-parch">${html}</div>`; root.appendChild(el);
   return new Promise((done) => { let fin = false; const end = () => { if (fin) return; fin = true; el.classList.add('out'); setTimeout(() => { el.remove(); done(); }, 300); }; el.onclick = end; setTimeout(end, tc.turbo ? Math.min(ms, 900) : ms); });
 }
-async function anBeam(lvlAfter) { // Lichtstrahl von Anubis zur Tafel, dann Verbesserung
-  const root = $('#tcRoot'); if (root) { const b = document.createElement('div'); b.className = 'an-beam'; root.appendChild(b); setTimeout(() => b.remove(), 900); }
-  sfx('anbeam'); await tcSleep(tc.turbo ? 250 : 650); anSetTab(lvlAfter, true); await tcSleep(tc.turbo ? 200 : 500);
+async function anBeam(lvlAfter, lvlBefore = 0) { // Anubis dreht sich zur Tafel und strahlt die Symbole mit einem Laser an
+  const root = $('#tcRoot'), wilds = [...document.querySelectorAll('.an-wild')], src = wilds[wilds.length - 1], slots = [...document.querySelectorAll('#anTab .an-ti')];
+  if (!root || !src || !slots.length) { sfx('anbeam'); await tcSleep(400); anSetTab(lvlAfter, true); return; }
+  src.classList.add('an-turn'); sfx('anexp'); await tcSleep(tc.turbo ? 200 : 550); // Kopf zur Tafel drehen
+  const R = root.getBoundingClientRect(), sr = src.getBoundingClientRect();
+  const sx = sr.left + sr.width * 0.5 - R.left, sy = sr.top + sr.height * 0.16 - R.top; // Augen des Anubis
+  const targets = slots.slice(0, lvlAfter); // alle Plätze unter der neuen Stufe werden umgewandelt
+  for (let k = Math.max(0, lvlBefore - 1); k < targets.length; k++) {
+    const tr = targets[k].getBoundingClientRect(), tx = tr.left + tr.width / 2 - R.left, ty = tr.top + tr.height / 2 - R.top;
+    const len = Math.hypot(tx - sx, ty - sy), ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
+    const b = document.createElement('div'); b.className = 'an-laser'; b.style.cssText = `left:${sx}px;top:${sy}px;width:${len}px;transform:rotate(${ang}deg)`; root.appendChild(b);
+    targets[k].classList.add('zap'); sfx('anbeam');
+    await tcSleep(tc.turbo ? 160 : 380);
+    targets[k].style.backgroundImage = `url('/an/s_${AN_TIERS[lvlAfter]}.webp?v=${AVER}')`; targets[k].classList.add('up');
+    setTimeout(() => { b.remove(); targets[k].classList.remove('zap'); }, 260);
+  }
+  await tcSleep(tc.turbo ? 150 : 350); anSetTab(lvlAfter, true); src.classList.remove('an-turn');
 }
 async function anShowScat(grid, win) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'P') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat'); } })); tcSetMsg(`🚪 Grabtore: +${fmt(win)}`); sfx('anfs'); await tcSleep(tc.turbo ? 400 : 900); }
 async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. Freispiele
@@ -3428,7 +3446,7 @@ async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. F
       if (sp.lines.length) { await jcLines(sp.lines); }
       if (sp.scat) await anShowScat(sp.grid, sp.scat);
       fsSum += sp.win; tc.lastWin = sum + fsSum; tcSync();
-      if (sp.anubis) { total += sp.anubis; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anextra'); await anPopup(`<b class="an-mid">${sp.anubis} ${sp.anubis === 1 ? 'weiteres FREISPIEL' : 'weitere FREISPIELE'}</b>`, 1300); if (sp.lvlAfter > sp.lvl) await anBeam(sp.lvlAfter); }
+      if (sp.anubis) { total += sp.anubis; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anextra'); await anPopup(`<b class="an-mid">${sp.anubis} ${sp.anubis === 1 ? 'weiteres FREISPIEL' : 'weitere FREISPIELE'}</b>`, 1300); if (sp.lvlAfter > sp.lvl) await anBeam(sp.lvlAfter, sp.lvl); }
       await tcSleep(tc.turbo ? 150 : 350);
     }
     anSetFs(''); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); anSetTab(0);

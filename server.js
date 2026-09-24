@@ -58,7 +58,7 @@ const publicStats = (u) => ({
   id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
   playMinutes: Number(u.play_minutes) || 0, pokerMinutes: Number(u.poker_minutes) || 0, casinoXp: Number(u.casino_xp) || 0, passCxp: Number(u.pass_cxp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
-  bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp),
+  bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp, u.prestige),
   ...(() => { const kp = require('./lib/pass'); return kp.state() !== 'off' && u.pass_season === kp.SEASON.id ? { passTier: kp.tierOf(u.pass_xp), passXp: Number(u.pass_xp) || 0, passPrem: !!Number(u.pass_prem) } : {}; })(),
 });
 const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
@@ -411,7 +411,7 @@ async function passGive(u, rw, save, got) { // eine Belohnung gutschreiben
   const num = (k) => (save[k] ?? (Number(u[k]) || 0));
   if (rw.dia) { save.diamonds = num('diamonds') + rw.dia; got.dia += rw.dia; }
   if (rw.spin) { save.wheel_bonus = num('wheel_bonus') + rw.spin; got.spins += rw.spin; }
-  if (rw.xp) { save.xp = Math.min(progress.CAP, num('xp') + rw.xp); got.xp += rw.xp; }
+  if (rw.xp) { save.xp = Math.min(progress.capFor(u.prestige), num('xp') + rw.xp); got.xp += rw.xp; }
   if (rw.cxp) { save.casino_xp = num('casino_xp') + rw.cxp; got.cxp += rw.cxp; }
   if (rw.pack) { await store.packAdd(u.id, rw.pack, 1); got.packs.push(rw.pack); } // Gruselnacht-Booster gibt es schon vor der Freischaltung, geöffnet werden sie erst danach
   for (const [id, name] of [[rw.item, rw.name], [rw.item2, rw.name2]]) if (id) {
@@ -779,7 +779,7 @@ async function checkProgress(uid) {
     }
     if (pay || payCasino) {
       const upd = { chal_paid: JSON.stringify(paid) };
-      if (pay) upd.xp = Math.min(progress.CAP, (Number(u.xp) || 0) + pay);
+      if (pay) upd.xp = Math.min(progress.capFor(u.prestige), (Number(u.xp) || 0) + pay);
       if (payCasino) upd.casino_xp = (Number(u.casino_xp) || 0) + payCasino;
       if (payCasino && kpass.active()) upd.pass_cxp = (Number(u.pass_cxp) || 0) + payCasino; // zählt auch für den Casino-Strang
       await store.save(uid, upd);
@@ -1522,7 +1522,7 @@ app.post('/api/gifts/:id/claim', async (req, res) => {
     if (g.diamonds) { dia += Number(g.diamonds); await store.save(u.id, { diamonds: dia }); }
     if (g.pack && g.n) await store.packAdd(u.id, g.pack, Number(g.n));
     const gxp = Number(g.xp) || 0, gitems = String(g.items || '').split(',').filter((id) => GIFT_ITEMS[id]);
-    if (gxp || gitems.length) { const f = await store.userById(u.id), save = {}; if (gxp) save.xp = Math.min(progress.CAP, (Number(f.xp) || 0) + gxp);
+    if (gxp || gitems.length) { const f = await store.userById(u.id), save = {}; if (gxp) save.xp = Math.min(progress.capFor(f.prestige), (Number(f.xp) || 0) + gxp);
       if (gitems.length) { const un = new Set(String(f.unlocks || '').split(',').filter(Boolean)); gitems.forEach((id) => un.add(id)); save.unlocks = [...un].join(','); }
       await store.save(u.id, save); }
     res.json({ ok: true, xp: gxp, items: gitems.map((id) => ({ id, name: GIFT_ITEMS[id], kind: id[0] === 'T' ? 'title' : id[0] === 'E' ? 'emblem' : 'frame' })), diamonds: Number(g.diamonds) || 0, pack: g.pack, packName: g.pack ? tcg.PACKS[g.pack].name : '', n: Number(g.n) || 0, reason: g.reason, source: g.source || 'support', message: g.message || '', total: dia });
@@ -1945,7 +1945,7 @@ app.post('/api/admin/user', async (req, res) => {
       if (req.body[k] === undefined || req.body[k] === '') continue;
       const v = Math.max(0, Math.round(Number(req.body[k])));
       if (!Number.isFinite(v)) continue;
-      if (k === 'level') f.xp = progress.xpForLevel(Math.min(v, progress.MAX_LEVEL));
+      if (k === 'level') f.xp = progress.xpForLevel(Math.min(v, progress.MAX_LEVEL), f.prestige !== undefined ? f.prestige : t.prestige);
       else if (k === 'prestige') f.prestige = Math.min(v, progress.MAX_PRESTIGE);
       else f[k] = v;
     }
