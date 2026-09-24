@@ -1670,6 +1670,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 @keyframes ancharge{0%{transform:scale(.2);opacity:.2}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1.35);opacity:.95}}
 .an-flip{animation:anflip .48s ease-in-out}@keyframes anflip{0%{transform:perspective(300px) rotateY(0)}45%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}55%{transform:perspective(300px) rotateY(90deg);filter:brightness(1.8)}100%{transform:perspective(300px) rotateY(0)}}
 .an-scatglow{animation:anscat 1s ease-in-out infinite;z-index:2}@keyframes anscat{0%,100%{box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.7);filter:brightness(1.1)}50%{box-shadow:inset 0 0 0 3px #FFF6C9,0 0 34px rgba(255,220,100,1),0 0 60px rgba(255,180,40,.8);filter:brightness(1.6)}}
+[data-pzoom]{cursor:zoom-in}
 </style>
 </head>
 <body>
@@ -1689,7 +1690,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '154';
+const AVER = '155';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1701,7 +1702,7 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img class="embimg" data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; /* antippen = groß ansehen */ return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(12, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
   const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
@@ -2988,6 +2989,12 @@ function layer(html) { // zweite Ebene über dem offenen Fenster: Schließen fü
   L.innerHTML = html; L.classList.add('on'); return L;
 }
 function closeLayer() { const L = document.getElementById('layer2'); if (L) { L.classList.remove('on'); L.innerHTML = ''; } }
+document.addEventListener('click', (e) => { // Prestige-Logos überall antippbar
+  const im = e.target.closest && e.target.closest('[data-pzoom]'); if (!im) return;
+  const t = Number(im.dataset.pzoom), names = (home && home.progress && home.progress.names) || [];
+  e.stopPropagation(); e.preventDefault();
+  zoomImg(im.getAttribute('src'), t === 12 ? 'Highroller' : `Prestige ${t}${names[t] ? ' · ' + names[t] : ''}`, t === 12 ? 'Sonderlogo aus dem Casino-Strang' : t >= 11 ? 'Höchste Prestige-Stufe' : '');
+}, true);
 function zoomImg(src, title, sub) { // Abzeichen oder Emblem groß ansehen (bewegte Bilder laufen mit)
   layer(`<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${AVER}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`);
   $('#zoomX').onclick = closeLayer; sfx('tick');
@@ -5418,7 +5425,7 @@ async function showUser(id) {
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
     }).join('')}</div>${!u.showcase || !u.showcase.length ? `<small class="sub">${u.self ? 'Stell deine liebsten Karten aus: im Profil unter „Vitrine“.' : 'Hier ist noch nichts ausgestellt.'}</small>` : ''}</div>`;
     const sum = `<div class="psum">
-      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(12, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img src="/emblems/p${t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
+      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(12, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
       <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
       <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
       <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div>
