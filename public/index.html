@@ -1686,6 +1686,18 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cr-front{border-radius:0 4px 4px 0;box-shadow:inset 10px 0 14px -8px rgba(80,50,10,.55)}.cr-back{transform:rotateY(180deg);border-radius:4px 0 0 4px;box-shadow:inset -10px 0 14px -8px rgba(80,50,10,.55)}
 .cr-exp{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:repeat(3,1fr);border-radius:10px;background:rgba(40,20,10,.85);box-shadow:inset 0 0 0 2px #FFD23F,0 0 20px rgba(255,210,63,.7);animation:crexp .45s cubic-bezier(.2,1,.4,1) both}.cr-exp i{background:center/82% no-repeat}
 @keyframes crexp{from{clip-path:inset(40% 0 40% 0);filter:brightness(2.2)}to{clip-path:inset(0);filter:none}}.jc-reels .tc-cell.cr-dim{opacity:.35}
+.jc-reels .tc-cell.cr-grey{filter:grayscale(1) brightness(.5);opacity:.75}
+.cr-scene{position:absolute;inset:0;border-radius:8px;overflow:hidden;z-index:3;pointer-events:none}.cr-scene i{position:absolute;inset:0}
+.cr-door{background:radial-gradient(ellipse 45% 60% at 50% 68%,#050806 0 55%,transparent 56%),linear-gradient(#1b1410,#0b0806);box-shadow:inset 0 0 0 3px #6b4a1e;animation:crdoor 3.9s linear forwards}
+.cr-light{background:radial-gradient(ellipse 40% 55% at 50% 66%,rgba(170,255,200,.95),rgba(124,240,168,.55) 40%,transparent 70%);opacity:0;animation:crlight 3.9s ease-in forwards}
+.cr-bookin{background:center/78% no-repeat;opacity:0;transform:scale(.25) translateY(18%);animation:crbookin 3.9s cubic-bezier(.2,1.1,.4,1) forwards}
+.cr-flash{background:radial-gradient(circle,#fff,rgba(255,240,180,.9) 45%,rgba(255,210,63,0) 75%);opacity:0;animation:crflash 3.9s ease-out forwards}
+@keyframes crdoor{0%,75%{opacity:1}90%,100%{opacity:0}}@keyframes crlight{0%,35%{opacity:0}55%{opacity:1}85%{opacity:.8}100%{opacity:0}}
+@keyframes crbookin{0%,50%{opacity:0;transform:scale(.25) translateY(18%)}72%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}@keyframes crflash{0%,74%{opacity:0}82%{opacity:1}100%{opacity:0}}
+.jc-reels .tc-cell.cr-bookset{background-color:#5a1010!important;box-shadow:inset 0 0 0 3px #FFD23F,inset 0 0 0 5px #9e1b1b,0 0 14px rgba(255,210,63,.6)}
+.jc-reels .tc-cell.cr-fill{animation:crfill .3s ease-out}@keyframes crfill{from{transform:scaleY(.2);filter:brightness(2)}to{transform:none}}
+.jc-reels .tc-cell.cr-exp-on{background-color:#3a1206!important;box-shadow:inset 0 0 0 2px #FFD23F;animation:crglowx .5s ease-in-out infinite alternate}@keyframes crglowx{from{filter:brightness(1) saturate(1)}to{filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 6px rgba(255,120,40,.8))}}
+.jc-reels .tc-cell.cr-flashw::after{content:'';position:absolute;inset:0;border-radius:8px;background:#fff;animation:crflw .45s ease-out forwards;pointer-events:none}@keyframes crflw{0%{opacity:.95}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -1705,7 +1717,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '158';
+const AVER = '160';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3632,7 +3644,18 @@ const CR_SYM = { R: 'Grabräuber', M: 'Mumien-Pharao', G: 'Gargoyle', C: 'Totenk
 const CR_PAY = { R: [10, 100, 1000, 5000], M: [5, 40, 400, 2000], G: [5, 30, 100, 750], C: [5, 30, 100, 750], A: [0, 5, 40, 150], K: [0, 5, 40, 150], Q: [0, 5, 25, 100], J: [0, 5, 25, 100], T: [0, 5, 25, 100] }; // wie lib/crypt.js
 const CR_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 2, 2, 2, 1], [1, 0, 0, 0, 1], [2, 2, 1, 0, 0], [0, 0, 1, 2, 2], [2, 1, 1, 1, 0]];
 function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${AVER}')"></i>` : ''; e.classList.toggle('on', !!sym); }
-async function crShowBooks(grid, win, big) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'B') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat', big ? 'an-scatglow' : 'x'); } })); tcSetMsg(`📖 Grimoires: +${fmt(win)}`); sfx('crbook'); await tcSleep(tc.turbo ? 500 : big ? 2000 : 900); }
+async function crShowBooks(grid, win, big) {
+  if (!win) return; const cells = [];
+  grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'B') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) cells.push(el); } }));
+  if (big) crLinesOff();
+  if (!big) { cells.forEach((el) => el.classList.add('hit', 'an-scat')); tcSetMsg(`📖 Grimoires: +${fmt(win)}`); sfx('crbook'); await tcSleep(tc.turbo ? 400 : 900); return; }
+  document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => { if (!cells.includes(e)) e.classList.add('cr-grey'); }); // Rest wird grau
+  cells.forEach((el) => { el.style.position = 'relative'; el.insertAdjacentHTML('beforeend', `<div class="cr-scene"><i class="cr-door"></i><i class="cr-light"></i><i class="cr-bookin" style="background-image:url('/cr/s_B.webp?v=${AVER}')"></i><i class="cr-flash"></i></div>`); el.classList.add('cr-booking'); });
+  tcSetMsg(`📖 3 Grimoires! +${fmt(win)}`); gmDuck(4200);
+  await tcSleep(tc.turbo ? 1200 : 3900); // Szene läuft per CSS: Tür, Licht, Buch, Blitz
+  cells.forEach((el) => { el.classList.remove('cr-booking'); el.classList.add('cr-bookset'); });
+  await tcSleep(tc.turbo ? 200 : 600);
+}
 const CR_RUNE = `<svg viewBox="0 0 60 60" class="cr-rune"><g fill="none" stroke="#5a3b16" stroke-width="3" stroke-linecap="round"><path d="M8 30c8-10 36-10 44 0-8 10-36 10-44 0z"/><circle cx="30" cy="30" r="6" fill="#5a3b16"/><path d="M30 38v12M30 50c-4 0-8-3-8-6M12 40l6-4"/></g></svg>`;
 async function crPick(special) { // wie im Original: Buch erscheint, klappt auf, Seiten blättern um, Symbol erscheint auf der linken Seite
   const root = $('#tcRoot'); if (!root) return; const el = document.createElement('div'); el.className = 'an-pop cr-pick';
@@ -3656,17 +3679,34 @@ async function crPick(special) { // wie im Original: Buch erscheint, klappt auf,
   L.classList.add('chosen'); smp('cr_chosen', 0.5); el.querySelector('.cr-s').textContent = `Bonus-Symbol: ${CR_SYM[special]}`; crSetSpec(special);
   await tcSleep(tc.turbo ? 700 : 1800); el.classList.add('out'); await tcSleep(300); el.remove();
 }
-async function crExpand(ex, special) { // Walzen mit dem Bonus-Symbol füllen sich, dann zahlt es auf allen Linien
+async function crExpand(ex, special) {
   if (!ex || !ex.win) return;
-  gmDuck(3200); smp('cr_expand', 0.45); document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => e.classList.add('cr-dim'));
-  for (let c = 0; c < 5; c++) if (ex.reels[c]) {
-    const reel = ($('#tcStrip' + c) || {}).parentElement; if (!reel) continue; reel.style.position = 'relative';
-    reel.insertAdjacentHTML('beforeend', `<div class="cr-exp">${`<i style="background-image:url('/cr/s_${special}.webp?v=${AVER}')"></i>`.repeat(3)}</div>`);
-    await tcSleep(tc.turbo ? 180 : 480);
+  crLinesOff(); gmDuck(6000); smp('cr_expand', 0.45);
+  document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => e.classList.add('cr-grey')); // alles grau, Bonus-Symbol bleibt farbig
+  const cellsOf = (c) => [...document.querySelectorAll(`#tcStrip${c} .tc-cell`)];
+  tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === special && ex.reels[c]) { const el = cellsOf(c)[r]; if (el) el.classList.remove('cr-grey'); } }));
+  await tcSleep(tc.turbo ? 200 : 600);
+  for (let c = 0; c < 5; c++) if (ex.reels[c]) { // Feld für Feld füllen
+    for (let r = 0; r < 3; r++) { const el = cellsOf(c)[r]; if (!el) continue; if (tc.jgrid[c][r] !== special) { el.style.backgroundImage = `url('/cr/s_${special}.webp?v=${AVER}')`; el.classList.remove('cr-grey'); el.classList.add('cr-fill'); await tcSleep(tc.turbo ? 50 : 140); } }
+    await tcSleep(tc.turbo ? 60 : 180);
   }
-  tcSetMsg(`📖 ${CR_SYM[special]} auf ${ex.n} Walzen: +${fmt(ex.win)}`); sfx('jcline'); await tcSleep(tc.turbo ? 500 : 1300);
+  const exCells = []; for (let c = 0; c < 5; c++) if (ex.reels[c]) exCells.push(...cellsOf(c));
+  exCells.forEach((el) => { el.classList.add('cr-exp-on'); }); await tcSleep(tc.turbo ? 300 : 1000); // Symbole leuchten
+  exCells.forEach((el) => { el.classList.remove('cr-flashw'); void el.offsetWidth; el.classList.add('cr-flashw'); }); sfx('crexp'); await tcSleep(tc.turbo ? 200 : 450);
+  // Linien einzeln über die gefüllten Walzen
+  const svg = $('#tcLines'), lw = $('#tcLineWin'), per = Math.round(ex.win / 10); let sum = 0;
+  for (let n = 0; n < 10; n++) {
+    const pts = CR_LINES[n].map((r, c) => `${c * 100 + 50},${r * 100 + 50}`).join(' ');
+    if (svg) svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${JC_COL[n]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".95"/>`;
+    sum += per; tc.lastWin += per; tcSync(); if (lw) lw.textContent = `Linie ${n + 1}: ${CR_SYM[special]} · ${fmt(per)}`;
+    sfx(n % 3 === 0 ? 'jcbass' : 'jccount'); await tcSleep(tc.turbo ? 90 : 260);
+  }
+  if (svg) svg.innerHTML = ''; if (lw) lw.textContent = '';
+  exCells.forEach((el) => { el.classList.remove('cr-flashw'); void el.offsetWidth; el.classList.add('cr-flashw'); });
+  tcSetMsg(`📖 ${CR_SYM[special]} auf ${ex.n} Walzen: +${fmt(ex.win)}`); sfx('jcline'); await tcSleep(tc.turbo ? 400 : 1100);
 }
-function crClear() { document.querySelectorAll('.cr-exp').forEach((e) => e.remove()); document.querySelectorAll('.cr-dim').forEach((e) => e.classList.remove('cr-dim')); jcClear(); }
+function crLinesOff() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; const rl = $('#tcReels'); if (rl) rl.classList.remove('dim'); document.querySelectorAll('.jc-lwin').forEach((e) => e.remove()); document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); const lw = $('#tcLineWin'); if (lw) lw.textContent = ''; } // vorherige Gewinnlinien ausblenden
+function crClear() { document.querySelectorAll('.cr-exp, .cr-scene').forEach((e) => e.remove()); document.querySelectorAll('.cr-dim, .cr-grey, .cr-fill, .cr-exp-on, .cr-flashw, .cr-booking, .cr-bookset').forEach((e) => e.classList.remove('cr-dim', 'cr-grey', 'cr-fill', 'cr-exp-on', 'cr-flashw', 'cr-booking', 'cr-bookset')); jcClear(); }
 async function crPlay(r, bet) {
   crSetSpec(null); anSetFs('');
   await jcAnimate(r.grid);
