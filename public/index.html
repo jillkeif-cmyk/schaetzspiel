@@ -1689,7 +1689,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '152';
+const AVER = '153';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1780,7 +1780,7 @@ function tone(f, t0, dur, type = 'triangle', vol = 0.12) {
   o.connect(g).connect(master); o.start(actx.currentTime + t0); o.stop(actx.currentTime + t0 + dur + 0.05);
 }
 function sfx(name) {
-  if (muted || !actx) return;
+  if (muted || !actx || document.hidden) return; // im Hintergrund keine Klänge
   if (actx.state !== 'running') { try { actx.resume().catch(() => {}); } catch (e) {} } // hängende Tonausgabe anstoßen
   try {
     if (name === 'tick') tone(880, 0, 0.07, 'square', 0.05);
@@ -1894,7 +1894,7 @@ function gmDuck(ms = 1500, depth = 0.3) { // Musik kurz leiser, damit Gewinne, L
   clearTimeout(GM.duckT); GM.duckT = setTimeout(() => { if (!GM.g || !actx) return; const t2 = actx.currentTime, gg = GM.g.gain; gg.cancelScheduledValues(t2); gg.setValueAtTime(gg.value, t2); gg.linearRampToValueAtTime(gmVol(GM.src), t2 + 0.9); }, ms);
 }
 function gmWant() {
-  if (!TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return '';
+  if (document.hidden || !TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return ''; // App im Hintergrund: keine Musik
   if (tc.game === 'jester') return '/music/jc_bg.mp3';
   if (tc.game === 'anubis') return tc.fsMusic ? '/music/an_fs.mp3' : '/music/an_bg.mp3';
   return '';
@@ -1920,6 +1920,13 @@ function gmusic(gesture) {
   }, g ? 620 : 0);
 }
 document.addEventListener('click', () => { try { gmusic(true); } catch (e) {} }, true);
+function appAway() { // App verlassen oder Handy gesperrt: sofort still, Stelle merken
+  try { if (GM.el && !GM.el.paused) { if (GM.src) GM.pos[GM.src] = GM.el.currentTime; GM.el.pause(); } GM.src = ''; GM.switching = false; if (GM.g && actx) GM.g.gain.setValueAtTime(0, actx.currentTime); } catch (e) {}
+  try { if (actx && actx.state === 'running') actx.suspend(); } catch (e) {}
+}
+function appBack() { try { if (actx && actx.state === 'suspended') actx.resume(); } catch (e) {} setTimeout(() => { try { gmusic(false); } catch (e) {} }, 300); }
+document.addEventListener('visibilitychange', () => (document.hidden ? appAway() : appBack()));
+window.addEventListener('pagehide', appAway); window.addEventListener('blur', () => { if (document.hidden) appAway(); });
 setInterval(() => { try { gmusic(false); } catch (e) {} }, 700);
 function tcmStep(s, t) {
   if (tc.game === 'jester' || tc.game === 'anubis') return; // hier läuft echte Musik (gmusic)
