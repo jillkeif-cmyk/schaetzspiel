@@ -1617,6 +1617,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ps-next{margin-top:8px}.ps-next b{color:#FFD23F!important}.ps-num{flex-direction:column}.ps-mini{width:36px!important;margin-top:3px}.ps-mini b{background:linear-gradient(90deg,#FFE27A,#E0A21E)!important}
 .solo-win{margin:6px 0 10px;padding:10px 12px;border-radius:14px;text-align:center;font:900 15px/1.3 Archivo;color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E);box-shadow:0 0 18px rgba(255,210,63,.5)}.sw-hint{background:linear-gradient(135deg,rgba(255,210,63,.18),rgba(255,106,0,.12))!important}
 .solo-rule{padding:10px 12px;border-radius:12px;background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.4);margin:0}
+.pk-lobby{position:relative}.pk-lobby.pk-lux1{background:linear-gradient(135deg,#2a1147,#140a26)!important;box-shadow:inset 0 0 0 1.5px #B98CFF,0 0 20px rgba(180,120,255,.35)!important}.pk-lobby.pk-lux2{background:linear-gradient(135deg,#3a1560,#1b0b2e 60%,#2a1a05)!important;box-shadow:inset 0 0 0 2px #FFD23F,0 0 26px rgba(180,92,255,.55),0 0 10px rgba(255,210,63,.4)!important;animation:psglow 2.4s ease-in-out infinite}
+.pk-lux1 b,.pk-lux2 b{color:#E6D2FF}.pk-lux2 b{background:linear-gradient(90deg,#FFE27A,#E6B8FF,#FFE27A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pk-luxtag{position:absolute;top:-9px;right:12px;padding:3px 10px;border-radius:99px;font:900 11px/1.2 Archivo;letter-spacing:.6px;color:#fff;background:linear-gradient(135deg,#B45CFF,#6A2BD6);box-shadow:0 0 12px rgba(180,92,255,.7)}.pk-lux2 .pk-luxtag{color:#2A1B00;background:linear-gradient(135deg,#FFE27A,#F5B82E)}
+.pk-table.pk-lux1{box-shadow:0 0 30px rgba(180,120,255,.45)}.pk-table.pk-lux2{box-shadow:0 0 40px rgba(180,92,255,.6),0 0 16px rgba(255,210,63,.45)}
 </style>
 </head>
 <body>
@@ -1636,7 +1640,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '121';
+const AVER = '123';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2231,8 +2235,8 @@ function renderPoker(box) {
   if (!pkState || pkState.me < 0) {
     if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     if (!pkState) {
-      box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an zwei festen Tischen. Sitzt du allein, spielt ein Bot gegen dich. Kommt jemand dazu, geht der Bot nach der laufenden Hand. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
-        ${pkList.map((t) => `<div class="pk-lobby"><img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)} <span class="pk-solo">🤖 Solo möglich</span></b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
+      box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an vier festen Tischen, vom Einstieg bis zum Royal-Tisch mit 150.000 Einkauf. Sitzt du allein, spielt ein Bot gegen dich. Kommt jemand dazu, geht der Bot nach der laufenden Hand. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
+        ${pkList.map((t) => `<div class="pk-lobby ${t.lux ? 'pk-lux' + t.lux : ''}">${t.lux ? `<span class="pk-luxtag">${t.lux === 2 ? '👑 ROYAL' : '💎 VIP'}</span>` : ''}<img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)} <span class="pk-solo">🤖 Solo möglich</span></b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
           <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
       box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
       box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
@@ -2274,7 +2278,7 @@ function renderPoker(box) {
   box.innerHTML = `
     <div class="row pk-head" style="margin-bottom:8px;gap:6px"><b class="grow">${esc(t.name)}<small> · Blinds ${t.sb}/${t.bb}</small></b>${me ? '<button class="btn small ghost pk-emobtn" id="pkEmoBtn">😀</button><button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
     ${me ? `<div class="pk-emopop" id="pkEmoPop" hidden>${EMOJIS.map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div>` : ''}
-    <div class="pk-table" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
+    <div class="pk-table ${t.lux ? 'pk-lux' + t.lux : ''}" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
       ${chipsHtml}
       <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => { if (!pkSeen.has(`b${k}:${c.r}${c.s}`)) setTimeout(() => sfx('tick'), (k % 3) * 160); return pkCard(c, false, `b${k}:${c.r}${c.s}`, (k < 3 ? k : 0) * 160); }).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
         <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable, true)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
@@ -4137,6 +4141,7 @@ function loadAdmin() {
   if (pt0()) { api('/api/pass').then(pmInfo).catch(() => {}); document.querySelectorAll('[data-pmode]').forEach((b) => { b.onclick = () => { const at = $('#pmAt').value; api('/api/admin/passmode', { mode: b.dataset.pmode, unlockAt: b.dataset.pmode === 'locked' && at ? new Date(at).toISOString() : 0 }).then((r) => { pmInfo(r); passV = null; passRanks = null; toast('Kronen-Pass: ' + (r.mode === 'on' ? 'an' : r.mode === 'locked' ? 'gesperrt' : 'aus')); }).catch((e) => toast(e.message)); }; }); }
   const pt = $('#ptGo'); if (pt && !pt.onclick) { api('/api/pass').then((v) => { const i = $('#ptXp'); if (i && !i.value) i.value = v.perTier; }).catch(() => {}); pt.onclick = () => api('/api/admin/passtier', { xp: Number($('#ptXp').value) }).then((r) => { toast(`Pass: ${fmt(r.perTier)} XP pro Stufe`); passV = null; }).catch((e) => toast(e.message)); }
   document.querySelectorAll('[data-boost]').forEach((b) => { if (b.onclick) return; b.onclick = () => { const cur = { ...((home && home.boost) || {}) }, k = b.dataset.boost; const nb = k === 'all' ? { xp: true, cxp: true, pxp: true } : k === 'none' ? { xp: false, cxp: false, pxp: false } : { ...cur, [k]: !cur[k] }; api('/api/admin/boost', nb).then((r) => { if (home) home.boost = r; document.querySelectorAll('[data-boost]').forEach((x) => x.classList.toggle('on-miss', !!r[x.dataset.boost])); toast(r.xp || r.cxp || r.pxp ? '⚡ Doppel-XP aktiv' : 'Doppel-XP aus'); }).catch((e) => toast(e.message)); }; });
+  const bws = $('#bwSave'); if (bws && !bws.dataset.bound) { bws.dataset.bound = 1; bws.onclick = () => api('/api/admin/bigwin', { min: Number($('#bwMin').value) }).then((r) => { if (home) home.bigWinMin = r.min; toast(r.min ? `📣 Meldung ab ${fmt(r.min)} 💎` : '📣 Gewinn-Meldung aus'); }).catch((e) => toast(e.message)); }
   const qpb = $('#qpBox'); if (qpb && !qpb.dataset.bound) { qpb.dataset.bound = 1; qpb.ontoggle = () => { if (!qpb.open) return; const c = (home && home.quizPay) || {};
     $('#qpAdm').innerHTML = `<div class="row"><b class="grow">Status</b><span class="adm-st ${c.on ? 'on' : ''}">${c.on ? 'aktiv' : 'aus (alte Werte)'}</span></div>
       <p class="sub" style="margin:6px 0">Sieger bekommt bis zum Höchstwert, voll ab der Punktzahl, darunter anteilig. Alle anderen anteilig nach Punkten × Verlierer-Faktor. Erstes Match des Tages und Hot Time verdoppeln weiterhin.</p>
@@ -4657,6 +4662,9 @@ function build() {
     <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
+    <details class="panel lg-box" id="bwBox"><summary><b>📣 Gewinn-Meldung an alle</b><small> · ab welchem Casino-Gewinn alle Online-Spieler eine Meldung bekommen</small></summary>
+      <div style="margin-top:10px"><div class="row" style="gap:6px;flex-wrap:wrap"><label style="flex:1">Ab Gewinn (💎) <input class="field" type="number" min="0" step="10000" id="bwMin" value="${home && home.bigWinMin !== undefined ? home.bigWinMin : 50000}"></label><button class="btn small" id="bwSave" style="align-self:flex-end">Speichern</button></div>
+      <p class="sub" style="margin:6px 0 0">0 = Meldung ausgeschaltet.</p></div></details>
     <details class="panel lg-box" id="qpBox"><summary><b>💎 Quiz-Belohnung</b><small> · Diamanten für Sieger, andere und Solo</small></summary><div id="qpAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="swBox"><summary><b>🏆 Solo-Sieg</b><small> · Solo-Quiz zählt ab einer Punktzahl als Sieg</small></summary><div id="swAdm" style="margin-top:10px"></div></details>
     <div class="panel lg-box" id="boostBox"><b>⚡ Doppel-XP-Aktion</b><small style="display:block;color:#cfe">Unabhängig von der Hot Time. Aktiv wird sie allen auf der Startseite angezeigt</small>
