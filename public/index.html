@@ -1672,10 +1672,18 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .an-scatglow{animation:anscat 1s ease-in-out infinite;z-index:2}@keyframes anscat{0%,100%{box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.7);filter:brightness(1.1)}50%{box-shadow:inset 0 0 0 3px #FFF6C9,0 0 34px rgba(255,220,100,1),0 0 60px rgba(255,180,40,.8);filter:brightness(1.6)}}
 [data-pzoom]{cursor:zoom-in}
 .cr-top{justify-content:space-between}.cr-special{display:none;align-items:center;gap:6px;padding:4px 8px;border-radius:10px;background:rgba(20,10,30,.8);box-shadow:inset 0 0 0 1.5px #7CF0A8;font:700 11px Archivo;color:#CFFFE0}.cr-special.on{display:flex}.cr-special i{width:30px;height:30px;background:center/contain no-repeat;border-radius:6px}
-.cr-pick{flex-direction:column;gap:6px;background:rgba(5,10,8,.62)}.cr-book{position:relative;width:min(80%,300px)}.cr-book img{width:100%;display:block;filter:drop-shadow(0 0 22px rgba(124,240,168,.55))}
-.cr-page{position:absolute;left:50%;top:44%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);background:center/contain no-repeat}.cr-page.flip{animation:crflip .12s ease-out}@keyframes crflip{from{transform:translate(-50%,-50%) rotateY(70deg);opacity:.3}to{transform:translate(-50%,-50%);opacity:1}}
-.cr-page.chosen{animation:crchosen .9s ease-out forwards;filter:drop-shadow(0 0 16px #7CF0A8)}@keyframes crchosen{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.35)}100%{transform:translate(-50%,-50%) scale(1.2)}}
-.cr-t{color:#FFE27A;text-shadow:0 2px 0 #3a2400,0 0 16px rgba(124,240,168,.6)}.cr-s{color:#DFFFE8;font:700 13px Archivo;text-shadow:0 1px 3px #000}
+.cr-pick{background:rgba(4,8,6,.55)}.cr-tab{width:min(92%,340px);padding:16px 14px 18px;border-radius:16px;text-align:center;background:radial-gradient(circle at 50% 30%,#2b3a2c,#101712 70%);box-shadow:0 14px 40px rgba(0,0,0,.7),inset 0 0 0 2px #6f5a2a,inset 0 0 30px rgba(124,240,168,.15);display:flex;flex-direction:column;align-items:center;gap:4px;animation:anparch .35s cubic-bezier(.2,1.3,.4,1)}
+.cr-t{font:400 30px/1 Anton,Impact,sans-serif;color:#FFE27A;letter-spacing:.5px;text-shadow:0 2px 0 #3a2400,0 0 16px rgba(124,240,168,.6)}.cr-s{color:#CFFFE0;font:700 13px Archivo;margin-bottom:8px}
+.cr-bk{position:relative;width:230px;height:150px;perspective:900px}.cr-cover{position:absolute;left:50%;top:50%;width:120px;transform:translate(-50%,-50%);filter:drop-shadow(0 0 22px rgba(124,240,168,.9));animation:crcover 1.1s ease-out both;transition:opacity .35s,transform .45s}
+@keyframes crcover{0%{transform:translate(-50%,-50%) scale(.2) rotate(-8deg);opacity:0}60%{transform:translate(-50%,-50%) scale(1.12);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+.cr-bk.opened .cr-cover{opacity:0;transform:translate(-50%,-50%) scale(1.3) rotateY(80deg)}
+.cr-open{position:absolute;inset:0;opacity:0;transform:scale(.85);transition:opacity .4s,transform .45s cubic-bezier(.2,1.2,.4,1);transform-style:preserve-3d;background:linear-gradient(#3b2410,#2a180a);border-radius:8px;box-shadow:0 10px 26px rgba(0,0,0,.6),0 0 24px rgba(124,240,168,.35);padding:8px}
+.cr-bk.opened .cr-open{opacity:1;transform:none}
+.cr-pg{position:absolute;top:8px;bottom:8px;width:calc(50% - 8px);background:linear-gradient(90deg,#e9d7ab,#f3e6c3 40%,#e3cc97);display:grid;place-items:center}.cr-l{left:8px;border-radius:4px 0 0 4px;box-shadow:inset -10px 0 14px -8px rgba(80,50,10,.55)}.cr-r{right:8px;border-radius:0 4px 4px 0;box-shadow:inset 10px 0 14px -8px rgba(80,50,10,.55)}
+.cr-rune{width:58%;opacity:.85}.cr-sym{width:72%;aspect-ratio:1;background:center/contain no-repeat;filter:sepia(.35) contrast(1.05) saturate(.9);mix-blend-mode:multiply;outline:2px solid rgba(90,59,22,.55);outline-offset:3px;border-radius:3px}
+.cr-sym.chosen{mix-blend-mode:normal;filter:none;animation:crchose .9s ease-out forwards}@keyframes crchose{0%{transform:scale(1)}40%{transform:scale(1.25);filter:drop-shadow(0 0 14px #7CF0A8)}100%{transform:scale(1.12);filter:drop-shadow(0 0 10px #7CF0A8)}}
+.cr-flip{position:absolute;top:8px;bottom:8px;left:50%;width:calc(50% - 8px);transform-origin:left center;transform-style:preserve-3d}.cr-face{position:absolute;inset:0;display:grid;place-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:linear-gradient(90deg,#e3cc97,#f3e6c3 60%,#e9d7ab)}
+.cr-front{border-radius:0 4px 4px 0;box-shadow:inset 10px 0 14px -8px rgba(80,50,10,.55)}.cr-back{transform:rotateY(180deg);border-radius:4px 0 0 4px;box-shadow:inset -10px 0 14px -8px rgba(80,50,10,.55)}
 .cr-exp{position:absolute;inset:0;z-index:4;display:grid;grid-template-rows:repeat(3,1fr);border-radius:10px;background:rgba(40,20,10,.85);box-shadow:inset 0 0 0 2px #FFD23F,0 0 20px rgba(255,210,63,.7);animation:crexp .45s cubic-bezier(.2,1,.4,1) both}.cr-exp i{background:center/82% no-repeat}
 @keyframes crexp{from{clip-path:inset(40% 0 40% 0);filter:brightness(2.2)}to{clip-path:inset(0);filter:none}}.jc-reels .tc-cell.cr-dim{opacity:.35}
 </style>
@@ -1697,7 +1705,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '156';
+const AVER = '157';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1787,6 +1795,15 @@ function tone(f, t0, dur, type = 'triangle', vol = 0.12) {
   g.gain.setValueAtTime(0, actx.currentTime + t0); g.gain.linearRampToValueAtTime(vol, actx.currentTime + t0 + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + t0 + dur);
   o.connect(g).connect(master); o.start(actx.currentTime + t0); o.stop(actx.currentTime + t0 + dur + 0.05);
 }
+const SMP = {}; // Klangdateien (einmal geladen, über WebAudio abgespielt)
+function smp(name, vol = 0.5) {
+  if (muted || !actx || document.hidden) return;
+  const play = (buf) => { const s = actx.createBufferSource(), g = actx.createGain(); s.buffer = buf; g.gain.value = vol; s.connect(g).connect(master); s.start(); };
+  if (SMP[name] instanceof AudioBuffer) return play(SMP[name]);
+  if (!SMP[name]) SMP[name] = fetch(`/sfx/${name}.mp3?v=${MUSIC_V}`).then((r) => r.arrayBuffer()).then((a) => new Promise((ok, no) => actx.decodeAudioData(a, ok, no))).then((b) => { SMP[name] = b; return b; }).catch(() => { SMP[name] = null; });
+  if (SMP[name] && SMP[name].then) SMP[name].then((b) => b && play(b));
+}
+function smpPreload(names) { names.forEach((n) => { if (!SMP[n] && actx) smp(n, 0); }); }
 function sfx(name) {
   if (muted || !actx || document.hidden) return; // im Hintergrund keine Klänge
   if (actx.state !== 'running') { try { actx.resume().catch(() => {}); } catch (e) {} } // hängende Tonausgabe anstoßen
@@ -1897,9 +1914,9 @@ function anmStep(s, t) { // ruhig: Bordun auf D, Handtrommel, gezupfte Melodie
   if (st === 4 || st === 12) mhat(t, 0.018);
   if (st % 4 === 0 && !(bar === 3 && st > 8)) { const m = ANM_SCALE[ANM_MEL[(Math.floor(s / 4) + bar) % 16]] + 12; mtone(mf(m), t, 0.45, 'triangle', 0.016); mtone(mf(m + 12), t + 0.01, 0.2, 'sine', 0.005); } // gezupfte Melodie
 }
-const MUSIC_V = '1'; // bei neuen Musikdateien erhöhen
+const MUSIC_V = '2'; // bei neuen Musikdateien erhöhen
 const GM = { el: null, src: '', g: null, want: '', pos: {} }; // pos: wo jedes Stück zuletzt stand
-const gmVol = (src) => (src === '/music/an_fs.mp3' ? 0.38 : src === '/music/jc_bg.mp3' ? 0.18 : 0.26); // Halloween-Musik leiser, damit die Effekte durchkommen
+const gmVol = (src) => (src === '/music/an_fs.mp3' || src === '/music/cr_fs.mp3' ? 0.38 : src === '/music/jc_bg.mp3' ? 0.18 : 0.26); // Halloween-Musik leiser, damit die Effekte durchkommen
 function gmDuck(ms = 1500, depth = 0.3) { // Musik kurz leiser, damit Gewinne, Linien und Kappe gut zu hören sind
   if (!GM.g || !actx || !GM.src || GM.switching) return; const g = GM.g.gain, t = actx.currentTime, v = gmVol(GM.src);
   g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v * depth, t + 0.15);
@@ -1907,7 +1924,8 @@ function gmDuck(ms = 1500, depth = 0.3) { // Musik kurz leiser, damit Gewinne, L
 }
 function gmWant() {
   if (document.hidden || !TCM.on || muted || page !== 'casino' || !(tc.seat || tc.watch)) return ''; // App im Hintergrund: keine Musik
-  if (tc.game === 'jester' || tc.game === 'crypt') return '/music/jc_bg.mp3';
+  if (tc.game === 'crypt') return tc.fsMusic ? '/music/cr_fs.mp3' : '/music/jc_bg.mp3';
+  if (tc.game === 'jester') return '/music/jc_bg.mp3';
   if (tc.game === 'anubis') return tc.fsMusic ? '/music/an_fs.mp3' : '/music/an_bg.mp3';
   return '';
 }
@@ -1923,7 +1941,7 @@ function gmusic(gesture) {
   setTimeout(() => {
     GM.src = want; GM.switching = false;
     if (!want) { GM.el.pause(); return; }
-    const resume = want === '/music/an_fs.mp3' ? 0 : (GM.pos[want] || 0); // Freispiel-Musik startet neu, Hintergrund läuft weiter
+    const resume = want === '/music/an_fs.mp3' || want === '/music/cr_fs.mp3' ? 0 : (GM.pos[want] || 0); // Freispiel-Musik startet neu, Hintergrund läuft weiter
     GM.el.src = want + '?v=' + MUSIC_V;
     const seek = () => { try { if (resume) GM.el.currentTime = resume; } catch (e) {} GM.el.play().catch(() => {}); };
     if (GM.el.readyState >= 1) seek(); else GM.el.addEventListener('loadedmetadata', seek, { once: true });
@@ -3425,7 +3443,7 @@ function jcAnimate(g) { // Walzen laufen weich durch und halten nacheinander von
   return new Promise((done) => {
     const cell = $('#tcRoot .jc-cell'), cellH = (cell && cell.offsetHeight) || 60; let left = 5;
     const cur = tc.jgrid || jcRand(), L = G_LOW();
-    sfx(tc.game === 'anubis' ? 'anspin' : 'jcspin');
+    if (tc.game === 'crypt') { smpPreload(['cr_start', 'cr_stop', 'cr_boom', 'cr_flip', 'cr_chosen', 'cr_expand']); smp('cr_start', 0.35); } else sfx(tc.game === 'anubis' ? 'anspin' : 'jcspin');
     [0, 1, 2, 3, 4].forEach((c) => {
       const strip = $('#tcStrip' + c), reel = strip && strip.parentElement; if (!strip) { if (!--left) done(); return; }
       reel.style.height = cellH * 3 + 'px'; // Fenster bleibt 3 Felder hoch, der Streifen läuft darin
@@ -3436,7 +3454,7 @@ function jcAnimate(g) { // Walzen laufen weich durch und halten nacheinander von
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const dur = (tc.turbo ? 0.35 : 0.75) + c * (tc.turbo ? 0.1 : 0.22);
         strip.style.transition = `transform ${dur}s cubic-bezier(.3,.1,.3,1.04)`; strip.style.transform = 'translateY(0)';
-        setTimeout(() => { strip.classList.remove('spinning'); strip.style.transition = 'none'; while (strip.children.length > 3) strip.lastElementChild.remove(); sfx((tc.game === 'anubis' ? 'anstop' : 'jcstop') + c); if (!--left) { tc.jgrid = g; done(); } }, dur * 1000 + 30);
+        setTimeout(() => { strip.classList.remove('spinning'); strip.style.transition = 'none'; while (strip.children.length > 3) strip.lastElementChild.remove(); if (tc.game === 'crypt') smp('cr_stop', 0.45); else sfx((tc.game === 'anubis' ? 'anstop' : 'jcstop') + c); if (!--left) { tc.jgrid = g; done(); } }, dur * 1000 + 30);
       }));
     });
   });
@@ -3615,23 +3633,36 @@ const CR_PAY = { R: [10, 100, 1000, 5000], M: [5, 40, 400, 2000], G: [5, 30, 100
 const CR_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 2, 2, 2, 1], [1, 0, 0, 0, 1], [2, 2, 1, 0, 0], [0, 0, 1, 2, 2], [2, 1, 1, 1, 0]];
 function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${AVER}')"></i>` : ''; e.classList.toggle('on', !!sym); }
 async function crShowBooks(grid, win, big) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'B') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat', big ? 'an-scatglow' : 'x'); } })); tcSetMsg(`📖 Grimoires: +${fmt(win)}`); sfx('crbook'); await tcSleep(tc.turbo ? 500 : big ? 2000 : 900); }
-async function crPick(special) { // Grimoire blättert auf und lost das Bonus-Symbol aus
+const CR_RUNE = `<svg viewBox="0 0 60 60" class="cr-rune"><g fill="none" stroke="#5a3b16" stroke-width="3" stroke-linecap="round"><path d="M8 30c8-10 36-10 44 0-8 10-36 10-44 0z"/><circle cx="30" cy="30" r="6" fill="#5a3b16"/><path d="M30 38v12M30 50c-4 0-8-3-8-6M12 40l6-4"/></g></svg>`;
+async function crPick(special) { // wie im Original: Buch erscheint, klappt auf, Seiten blättern um, Symbol erscheint auf der linken Seite
   const root = $('#tcRoot'); if (!root) return; const el = document.createElement('div'); el.className = 'an-pop cr-pick';
-  el.innerHTML = `<div class="cr-book"><img src="/cr/book_open.webp?v=${AVER}" alt=""><i class="cr-page" id="crPage"></i></div><b class="an-mid cr-t">10 FREISPIELE</b><small class="cr-s">Das Grimoire wählt dein Bonus-Symbol …</small>`;
-  root.appendChild(el); gmDuck(4200);
-  const pool = ['R', 'M', 'G', 'C', 'A', 'K', 'Q', 'J', 'T'], pg = el.querySelector('#crPage'); let d = 70, k = 0;
-  const total = tc.turbo ? 10 : 22;
-  for (let i = 0; i < total; i++) { const sym = i === total - 1 ? special : pool[(k++) % pool.length]; pg.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`; pg.classList.remove('flip'); void pg.offsetWidth; pg.classList.add('flip'); sfx('crpage'); await tcSleep(d); d = Math.min(260, d * 1.12); }
-  pg.classList.add('chosen'); sfx('crchosen'); el.querySelector('.cr-s').textContent = `Bonus-Symbol: ${CR_SYM[special]}`; crSetSpec(special);
+  el.innerHTML = `<div class="cr-tab"><b class="cr-t">10 FREISPIELE</b><small class="cr-s">Bonus-Symbol</small>
+    <div class="cr-bk"><img class="cr-cover" src="/cr/s_B.webp?v=${AVER}" alt="">
+      <div class="cr-open"><div class="cr-pg cr-l"><i class="cr-sym" id="crL"></i></div><div class="cr-pg cr-r">${CR_RUNE}</div>
+        <div class="cr-flip" id="crF"><div class="cr-face cr-front">${CR_RUNE}</div><div class="cr-face cr-back"><i class="cr-sym" id="crB"></i></div></div></div></div></div>`;
+  root.appendChild(el); gmDuck(6000);
+  smp('cr_boom', 0.55); await tcSleep(tc.turbo ? 350 : 1100); // geschlossenes Grimoire leuchtet auf
+  el.querySelector('.cr-bk').classList.add('opened'); await tcSleep(tc.turbo ? 250 : 650); // Buch klappt auf
+  const pool = ['R', 'M', 'G', 'C', 'A', 'K', 'Q', 'J', 'T'], flip = el.querySelector('#crF'), L = el.querySelector('#crL'), B = el.querySelector('#crB');
+  const n = tc.turbo ? 7 : 13; let d = 170, k = Math.floor(Math.random() * 9);
+  for (let i = 0; i < n; i++) {
+    const sym = i === n - 1 ? special : pool[(k++) % pool.length];
+    B.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`;
+    flip.style.transition = `transform ${d}ms ease-in-out`; flip.style.transform = 'rotateY(-180deg)'; smp('cr_flip', 0.4);
+    await tcSleep(d + 20);
+    L.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`; flip.style.transition = 'none'; flip.style.transform = 'rotateY(0)'; void flip.offsetWidth;
+    await tcSleep(i > n - 5 ? d * 0.8 : 40); d = Math.min(420, Math.round(d * 1.13));
+  }
+  L.classList.add('chosen'); smp('cr_chosen', 0.5); el.querySelector('.cr-s').textContent = `Bonus-Symbol: ${CR_SYM[special]}`; crSetSpec(special);
   await tcSleep(tc.turbo ? 700 : 1800); el.classList.add('out'); await tcSleep(300); el.remove();
 }
 async function crExpand(ex, special) { // Walzen mit dem Bonus-Symbol füllen sich, dann zahlt es auf allen Linien
   if (!ex || !ex.win) return;
-  gmDuck(3000); document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => e.classList.add('cr-dim'));
+  gmDuck(3200); smp('cr_expand', 0.45); document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => e.classList.add('cr-dim'));
   for (let c = 0; c < 5; c++) if (ex.reels[c]) {
     const reel = ($('#tcStrip' + c) || {}).parentElement; if (!reel) continue; reel.style.position = 'relative';
     reel.insertAdjacentHTML('beforeend', `<div class="cr-exp">${`<i style="background-image:url('/cr/s_${special}.webp?v=${AVER}')"></i>`.repeat(3)}</div>`);
-    sfx('crexp'); await tcSleep(tc.turbo ? 180 : 480);
+    await tcSleep(tc.turbo ? 180 : 480);
   }
   tcSetMsg(`📖 ${CR_SYM[special]} auf ${ex.n} Walzen: +${fmt(ex.win)}`); sfx('jcline'); await tcSleep(tc.turbo ? 500 : 1300);
 }
