@@ -1628,7 +1628,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .jc-machine{padding:10px 8px;border-radius:18px;background:linear-gradient(180deg,rgba(40,14,60,.92),rgba(20,8,32,.95));box-shadow:inset 0 0 0 3px #C08BFF,0 0 24px rgba(180,92,255,.45)}.jc-logo{max-height:90px;object-fit:contain}
 .jc-reels{display:grid!important;grid-template-columns:repeat(5,1fr);gap:4px;position:relative}.jc-reels .tc-reel{background:rgba(0,0,0,.35);border-radius:10px;overflow:hidden}
 .jc-cell{aspect-ratio:1;background-size:86% 86%;background-position:center;background-repeat:no-repeat;border-radius:8px}.jc-cell.hit{background-color:rgba(255,210,63,.18);box-shadow:inset 0 0 0 2px #FFD23F}
-.jc-spin .jc-cell{animation:jcblur .12s linear infinite;filter:blur(2px)}@keyframes jcblur{from{transform:translateY(-30%)}to{transform:translateY(30%)}}
+.jc-reels .tc-strip.spinning .jc-cell{filter:blur(1.5px)}
 .jc-stop{animation:jcstop .3s ease-out}@keyframes jcstop{0%{transform:translateY(-12%)}70%{transform:translateY(4%)}100%{transform:none}}
 .jc-shake{animation:jcshake .12s ease-in-out infinite;filter:drop-shadow(0 0 10px #7CF0A8)}@keyframes jcshake{0%,100%{transform:rotate(-9deg) scale(1.08)}50%{transform:rotate(9deg) scale(1.12)}}
 .jc-pop{animation:jcpop .45s cubic-bezier(.2,1.4,.4,1)}@keyframes jcpop{0%{transform:scale(.3);filter:brightness(3)}100%{transform:scale(1)}}
@@ -1638,6 +1638,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .jc-bg ~ *{position:relative;z-index:1}.jc-bg{opacity:.55}
 .jc-reels.dim .tc-cell:not(.hit){opacity:.32;filter:grayscale(.6)}.jc-reels .tc-cell{position:relative;transition:opacity .25s}
 .jc-lwin{position:absolute;left:2px;top:2px;padding:1px 6px;border-radius:6px;font:900 11px/1.4 Archivo;color:#1A0B26;background:var(--lc,#FFD23F);box-shadow:0 2px 6px rgba(0,0,0,.5);z-index:3}
+.jc-capped{background-color:rgba(200,30,40,.55)!important;box-shadow:inset 0 0 0 2px #FF5E5E,0 0 12px rgba(255,80,60,.6)}
+.jc-hat{position:absolute;left:50%;top:-16%;width:50%;transform:translateX(-50%) rotate(-8deg);filter:drop-shadow(0 3px 5px rgba(0,0,0,.6));animation:jchat .42s cubic-bezier(.2,1.3,.4,1) both;pointer-events:none}
+@keyframes jchat{0%{transform:translate(-50%,-160%) rotate(-30deg) scale(1.5);opacity:0}100%{transform:translateX(-50%) rotate(-8deg) scale(1);opacity:1}}
+.jc-capdone{animation:jccapdone .5s ease-out forwards}@keyframes jccapdone{to{transform:rotate(-22deg) scale(.9);opacity:.45}}
 </style>
 </head>
 <body>
@@ -1657,7 +1661,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '133';
+const AVER = '134';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1763,12 +1767,12 @@ function sfx(name) {
     if (name === 'srflash') { [784, 1175, 1568].forEach((f) => tone(f, 0, 1.4, 'sine', 0.05)); whoosh(0.7, 3000, 800, 0.08); }
     if (name === 'srcard') whoosh(0.35, 600, 2600, 0.1);
     // Narrenkappe: Merkur-typische Klangfolge, selbst gebaut
-    if (name === 'jcspin') [392, 440, 494, 523, 587, 659, 740, 784, 880, 988].forEach((f, i) => tone(f, i * 0.045, 0.09, 'square', 0.035)); // aufsteigender Lauf beim Start
-    if (name === 'jcstop') { tone(130, 0, 0.09, 'triangle', 0.13); tone(98, 0.01, 0.07, 'sine', 0.08); } // tiefer Anschlag je Walze
-    if (name === 'jcbell') for (let k = 0; k < 10; k++) tone([1319, 1568, 1760, 2093][k % 4], k * 0.07, 0.12, 'triangle', 0.04); // Schellen der Narrenkappe
-    if (name === 'jcpop') { tone(880, 0, 0.06, 'square', 0.05); tone(1760, 0.04, 0.12, 'sine', 0.06); } // Feld wird zum Narren
-    if (name === 'jccount') tone(1047 + Math.random() * 60, 0, 0.05, 'square', 0.03); // Hochzählen des Gewinns
-    if (name === 'jcnone') { tone(220, 0, 0.12, 'triangle', 0.05); tone(196, 0.1, 0.16, 'triangle', 0.04); }
+    if (name === 'jcspin') { whoosh(0.55, 260, 900, 0.05); tone(330, 0, 0.18, 'sine', 0.025); tone(494, 0.08, 0.18, 'sine', 0.02); } // sanfter Anlauf
+    if (name === 'jcstop') tone(120, 0, 0.07, 'sine', 0.06); // weicher Anschlag je Walze
+    if (name === 'jcbell') for (let k = 0; k < 6; k++) tone([1319, 1568, 1760][k % 3], k * 0.11, 0.16, 'sine', 0.018); // leise Schellen der Kappe
+    if (name === 'jcpop') { tone(660, 0, 0.08, 'sine', 0.035); tone(990, 0.05, 0.12, 'sine', 0.03); } // Kappe landet
+    if (name === 'jccount') tone(1047, 0, 0.04, 'sine', 0.014); // leises Ticken beim Hochzählen
+    if (name === 'jcnone') {} // bei Nieten bleibt es still
     if (name === 'pkbeep') { tone(196, 0, 0.09, 'square', 0.05); tone(147, 0.1, 0.09, 'square', 0.045); } // „pork pork“
     if (name === 'pkbeep2') tone(262, 0, 0.08, 'square', 0.06);
     const clack = (t0, v) => { const n = Math.floor(actx.sampleRate * 0.03), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / n, 3); const sc = actx.createBufferSource(); sc.buffer = b; const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200 + Math.random() * 1500; bp.Q.value = 2; const g = actx.createGain(); g.gain.value = v; sc.connect(bp).connect(g).connect(master); sc.start(actx.currentTime + t0); };
@@ -3237,21 +3241,39 @@ const jcCell = (k) => `<div class="tc-cell jc-cell" style="background-image:url(
 const jcRand = () => { const L = 'TJQKAGVPOW'; return Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => L[Math.floor(Math.random() * 7)])); };
 function jcGrid() { if (!tc.jgrid) tc.jgrid = jcRand(); return tc.jgrid; }
 function jcSetGrid(g) { tc.jgrid = g; g.forEach((col, c) => { const st = $('#tcStrip' + c); if (st) st.innerHTML = col.map(jcCell).join(''); }); }
-async function jcAnimate(g) { // Walzen nacheinander anhalten
-  const fast = tc.turbo, cols = [0, 1, 2, 3, 4];
-  cols.forEach((c) => { const st = $('#tcStrip' + c); if (st) st.classList.add('jc-spin'); });
-  sfx('jcspin');
-  for (const c of cols) { await tcSleep(fast ? 90 : 230); const st = $('#tcStrip' + c); if (st) { st.classList.remove('jc-spin'); st.innerHTML = g[c].map(jcCell).join(''); st.classList.add('jc-stop'); setTimeout(() => st.classList.remove('jc-stop'), 300); } sfx('jcstop'); }
-  tc.jgrid = g;
+function jcAnimate(g) { // Walzen laufen weich durch und halten nacheinander von links nach rechts (wie Triple Crown)
+  return new Promise((done) => {
+    const cell = $('#tcRoot .jc-cell'), cellH = (cell && cell.offsetHeight) || 60; let left = 5;
+    const cur = tc.jgrid || jcRand(), L = 'TJQKAGVPOW';
+    sfx('jcspin');
+    [0, 1, 2, 3, 4].forEach((c) => {
+      const strip = $('#tcStrip' + c), reel = strip && strip.parentElement; if (!strip) { if (!--left) done(); return; }
+      reel.style.height = cellH * 3 + 'px'; // Fenster bleibt 3 Felder hoch, der Streifen läuft darin
+      const n = (tc.turbo ? 5 : 10) + c * (tc.turbo ? 2 : 4);
+      const syms = [...g[c], ...Array.from({ length: n }, () => L[Math.floor(Math.random() * 7)]), ...cur[c]];
+      strip.style.transition = 'none'; strip.innerHTML = syms.map(jcCell).join('');
+      strip.style.transform = `translateY(${-(syms.length - 3) * cellH}px)`; strip.classList.add('spinning');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const dur = (tc.turbo ? 0.35 : 0.75) + c * (tc.turbo ? 0.1 : 0.22);
+        strip.style.transition = `transform ${dur}s cubic-bezier(.3,.1,.3,1.04)`; strip.style.transform = 'translateY(0)';
+        setTimeout(() => { strip.classList.remove('spinning'); strip.style.transition = 'none'; while (strip.children.length > 3) strip.lastElementChild.remove(); sfx('jcstop'); if (!--left) { tc.jgrid = g; done(); } }, dur * 1000 + 30);
+      }));
+    });
+  });
 }
-async function jcCap(cap, after) { // Kappe schüttelt sich, dann werden Felder zu Narren
+async function jcCap(cap, after) { // Kappe schüttelt sich, dann fliegt sie Feld für Feld auf Symbole: die tragen die Kappe und zählen als Narr
   const capCells = []; tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === 'N') capCells.push([c, r]); }));
-  capCells.forEach(([c, r]) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('jc-shake'); });
-  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1300);
-  if (!cap.turned.length) { tcSetMsg('🃏 … sie hat sich nur geschüttelt'); await tcSleep(tc.turbo ? 300 : 700); jcSetGrid(after); return; }
-  tcSetMsg(`🃏 ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld wird' : 'Felder werden'} zum Narren!`);
-  for (const [c, r] of cap.turned) { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) { el.style.backgroundImage = `url('/jc/s_W.webp?v=${AVER}')`; el.classList.add('jc-pop'); } sfx('jcpop'); await tcSleep(tc.turbo ? 90 : 220); }
-  await tcSleep(tc.turbo ? 200 : 500); tc.jgrid = after;
+  const cellEl = (c, r) => document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r];
+  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.add('jc-shake'); });
+  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1200);
+  if (!cap.turned.length) { capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.remove('jc-shake'); }); tcSetMsg('🃏 … sie hat sich nur geschüttelt'); await tcSleep(tc.turbo ? 300 : 700); tc.jgrid = after; return; }
+  tcSetMsg(`🃏 Die Kappe verteilt sich auf ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld' : 'Felder'}!`);
+  for (const [c, r] of cap.turned) { // Kappe landet auf dem Symbol, das Feld glüht rot
+    const el = cellEl(c, r); if (el) { el.classList.add('jc-capped'); el.insertAdjacentHTML('beforeend', `<img class="jc-hat" src="/jc/hat.webp?v=${AVER}" alt="">`); }
+    sfx('jcpop'); await tcSleep(tc.turbo ? 160 : 420);
+  }
+  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capdone'); } }); // leere Kappe kippt zur Seite
+  await tcSleep(tc.turbo ? 200 : 450); tc.jgrid = after;
 }
 async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzählen
   const svg = $('#tcLines'), lw = $('#tcLineWin'), reels = $('#tcReels'); let sum = 0;
@@ -3262,7 +3284,7 @@ async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzä
     JC_LINES[L.line - 1].slice(0, L.n).forEach((r, c) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit'); });
     const first = document.querySelectorAll(`#tcStrip0 .tc-cell`)[JC_LINES[L.line - 1][0]]; if (first) first.insertAdjacentHTML('beforeend', `<span class="jc-lwin" style="--lc:${JC_COL[L.line - 1]}">${fmt(L.win)}</span>`);
     if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${JC_SYM[L.sym]}`;
-    const steps = tc.turbo ? 4 : 10; for (let k = 1; k <= steps; k++) { tc.lastWin = sum + Math.round(L.win * k / steps); tcSync(); sfx('jccount'); await tcSleep(tc.turbo ? 25 : 45); } // Gewinn tickend hochzählen
+    const steps = tc.turbo ? 4 : 8; for (let k = 1; k <= steps; k++) { tc.lastWin = sum + Math.round(L.win * k / steps); tcSync(); if (k % 2) sfx('jccount'); await tcSleep(tc.turbo ? 25 : 45); } // Gewinn tickend hochzählen
     sum += L.win; tc.lastWin = sum; tcSync(); if (L.sym === 'W' || L.sym === 'O') sfx('exact'); await tcSleep(tc.turbo ? 160 : 420);
   }
   if (lw) lw.textContent = '';
