@@ -1705,6 +1705,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cseg-dot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#FF4FA3;box-shadow:0 0 8px #FF4FA3}
 .crow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}.crow::-webkit-scrollbar{display:none}
 .crow button{flex:none;white-space:nowrap}.crow .tc-tab.on::before{content:''}.crow button.on{transform:none!important}
+.nw-img.wide{padding:0 0 14px;overflow:hidden}.nw-img.wide img{width:100%;max-width:none;border-radius:20px 20px 0 0;filter:none}.nw-img.wide > div{padding:0 14px}
 </style>
 </head>
 <body>
@@ -1724,7 +1725,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '161';
+const AVER = '163';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -4343,7 +4344,7 @@ function renderNews() {
     if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="row" style="gap:6px;flex:none">${btn.split('|').map((x, k, arr) => `<span class="btn small ${arr.length > 1 && k === 0 ? 'ghost' : ''} nw-fakebtn">${esc(x)}</span>`).join('')}</span>` : ''}</div>`).join('')}</div></div>`;
     if (b.type === 'redeem') return `<div class="nw-code nw-redeem"><span class="nw-code-l">🎁 Geschenk-Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-nwredeem="${esc(b.code)}">Einlösen</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
-    if (b.type === 'image') return `<div class="nw-img"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
+    if (b.type === 'image') return `<div class="nw-img${b.wide ? ' wide' : ''}"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
     return '';
   };
