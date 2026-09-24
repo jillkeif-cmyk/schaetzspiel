@@ -1688,7 +1688,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '148';
+const AVER = '149';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1856,7 +1856,28 @@ function mhat(t, v) {
   const src = actx.createBufferSource(); src.buffer = tcmHat; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7000;
   const g = actx.createGain(); g.gain.value = v; src.connect(f).connect(g).connect(TCM.g); src.start(t);
 }
+// Eigene Musik je Automat: Narrenkappe = verspielter Gruselhof-Tanz in a-Moll, Auge des Anubis = ruhige Nacht-Ägypten-Musik (D Hijaz)
+const JCM_PROG = [[45, [57, 60, 64]], [40, [56, 59, 64]], [45, [57, 60, 64]], [41, [57, 60, 65]], [43, [55, 59, 62]], [40, [56, 59, 62]], [45, [57, 60, 64]], [40, [56, 59, 64]]];
+const JCM_MEL = [69, 72, 76, 72, 71, 74, 76, 74, 69, 72, 77, 76, 74, 71, 72, 68];
+function jcmStep(s, t) { // 6/8-Gefühl: Tanz mit Pizzicato-Bass, Cembalo-Melodie und Schellen
+  const bar = Math.floor(s / 12) % 8, st = s % 12, [bass, ch] = JCM_PROG[bar];
+  if (st === 0 || st === 6) mtone(mf(bass - 12), t, 0.2, 'triangle', 0.11); // Pizzicato-Bass
+  if (st === 3 || st === 9) ch.forEach((n) => mtone(mf(n), t, 0.09, 'square', 0.009)); // leichte Akkorde
+  if (st % 3 === 0) { const m = JCM_MEL[(Math.floor(s / 3)) % 16]; mtone(mf(m), t, 0.16, 'square', 0.012); mtone(mf(m + 12), t, 0.08, 'triangle', 0.006); } // Cembalo-Melodie
+  if (st === 2 || st === 8) mhat(t, 0.025); if (st === 5 || st === 11) mtone(mf(96 + (bar % 2) * 2), t, 0.05, 'sine', 0.006); // Schellen
+}
+const ANM_SCALE = [50, 51, 54, 55, 57, 58, 60, 62]; // D Hijaz: D Es Fis G A B C D
+const ANM_MEL = [0, 1, 2, 3, 4, 3, 2, 1, 2, 4, 5, 4, 3, 2, 1, 0];
+function anmStep(s, t) { // ruhig: Bordun auf D, Handtrommel, gezupfte Melodie
+  const bar = Math.floor(s / 16) % 8, st = s % 16;
+  if (st === 0 && bar % 2 === 0) { mtone(mf(38), t, 3.6, 'sine', 0.05); mtone(mf(45), t, 3.6, 'sine', 0.02); } // Bordun D + A
+  if (st === 0 || st === 7 || st === 10) mtone(mf(st === 0 ? 43 : 48), t, 0.18, 'sine', st === 0 ? 0.12 : 0.06); // Handtrommel (tief, hoch)
+  if (st === 4 || st === 12) mhat(t, 0.018);
+  if (st % 4 === 0 && !(bar === 3 && st > 8)) { const m = ANM_SCALE[ANM_MEL[(Math.floor(s / 4) + bar) % 16]] + 12; mtone(mf(m), t, 0.45, 'triangle', 0.016); mtone(mf(m + 12), t + 0.01, 0.2, 'sine', 0.005); } // gezupfte Melodie
+}
 function tcmStep(s, t) {
+  if (tc.game === 'jester') return jcmStep(s, t);
+  if (tc.game === 'anubis') return anmStep(s, t);
   const bar = Math.floor(s / 16) % 8, st = s % 16, [bass, ch] = TCM_PROG[bar];
   if (st === 0 || st === 8) mtone(mf(36), t, 0.14, 'sine', 0.16); // Kick
   if ([0, 6, 8, 14].includes(st)) mtone(mf(bass - 12 + (st === 6 || st === 14 ? 12 : 0)), t, 0.22, 'triangle', 0.1); // Bass
@@ -1873,7 +1894,9 @@ setInterval(() => {
   if (!run) { tcmStop(); return; }
   if (!TCM.g) { TCM.g = actx.createGain(); TCM.g.gain.value = 0.5; TCM.g.connect(master); TCM.next = actx.currentTime + 0.1; TCM.step = 0; }
   if (TCM.next < actx.currentTime - 0.2) TCM.next = actx.currentTime + 0.05; // nach Pausen nicht nachholen
-  while (TCM.next < actx.currentTime + 0.25) { tcmStep(TCM.step, TCM.next); TCM.next += TCM_STEP; TCM.step++; }
+  const stepLen = tc.game === 'jester' ? 60 / 138 / 3 : tc.game === 'anubis' ? 60 / 92 / 4 : TCM_STEP; // eigenes Tempo je Automat
+  if (TCM.game !== tc.game) { TCM.game = tc.game; TCM.step = 0; }
+  while (TCM.next < actx.currentTime + 0.25) { tcmStep(TCM.step, TCM.next); TCM.next += stepLen; TCM.step++; }
 }, 60);
 // Stumm: Tonausgabe komplett loslassen, damit Spotify, Hörbücher usw. beim Wechsel ins Spiel weiterlaufen
 function releaseAudio() {
