@@ -1625,6 +1625,17 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .pk-table.pk-lux1{box-shadow:0 0 30px rgba(180,120,255,.45)}.pk-table.pk-lux2{box-shadow:0 0 40px rgba(180,92,255,.6),0 0 16px rgba(255,210,63,.45)}
 .gift-items{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gift-items .sub{width:100%;margin:0;font-size:12px}.gi-pick{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.06);font:700 13px Archivo;color:#fff!important}
 .gift-title{width:100%;max-width:420px;margin:8px auto 0}.gift-title img{width:100%;height:auto;border-radius:12px}
+.jc-machine{padding:10px 8px;border-radius:18px;background:linear-gradient(180deg,rgba(40,14,60,.92),rgba(20,8,32,.95));box-shadow:inset 0 0 0 3px #C08BFF,0 0 24px rgba(180,92,255,.45)}.jc-logo{max-height:90px;object-fit:contain}
+.jc-reels{display:grid!important;grid-template-columns:repeat(5,1fr);gap:4px;position:relative}.jc-reels .tc-reel{background:rgba(0,0,0,.35);border-radius:10px;overflow:hidden}
+.jc-cell{aspect-ratio:1;background-size:86% 86%;background-position:center;background-repeat:no-repeat;border-radius:8px}.jc-cell.hit{background-color:rgba(255,210,63,.18);box-shadow:inset 0 0 0 2px #FFD23F}
+.jc-spin .jc-cell{animation:jcblur .12s linear infinite;filter:blur(2px)}@keyframes jcblur{from{transform:translateY(-30%)}to{transform:translateY(30%)}}
+.jc-stop{animation:jcstop .3s ease-out}@keyframes jcstop{0%{transform:translateY(-12%)}70%{transform:translateY(4%)}100%{transform:none}}
+.jc-shake{animation:jcshake .12s ease-in-out infinite;filter:drop-shadow(0 0 10px #7CF0A8)}@keyframes jcshake{0%,100%{transform:rotate(-9deg) scale(1.08)}50%{transform:rotate(9deg) scale(1.12)}}
+.jc-pop{animation:jcpop .45s cubic-bezier(.2,1.4,.4,1)}@keyframes jcpop{0%{transform:scale(.3);filter:brightness(3)}100%{transform:scale(1)}}
+.jc-pays{display:flex;flex-direction:column;gap:6px}.jc-pay{display:grid;grid-template-columns:48px 1fr;column-gap:10px;align-items:center;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.05)}.jc-pay img{width:48px;height:48px;grid-row:span 2;object-fit:contain}.jc-pay b{font:800 14px Archivo}.jc-pay small{color:#cfe;font-size:12px}
+.tc-machine.jc-machine{display:block!important;width:100%}.jc-reels{width:100%;box-sizing:border-box}.jc-reels .tc-reel{height:auto!important}.jc-reels .tc-cell{height:auto!important;aspect-ratio:1}.jc-reels .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}
+.jc-bg{position:absolute;inset:0;border-radius:inherit;background:url('/jc/bg.webp') center/cover;opacity:.9;z-index:0;pointer-events:none}.jc-machine,.jc-logo{position:relative;z-index:1}
+.jc-bg ~ *{position:relative;z-index:1}.jc-bg{opacity:.55}
 </style>
 </head>
 <body>
@@ -1644,7 +1655,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '130';
+const AVER = '132';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2374,7 +2385,7 @@ function renderCasino() {
   if (cgame === 'vip') return renderVip(box);
   if (cgame === 'setup') return renderSetup(box);
   if (cgame === 'poker') return renderPoker(box);
-  if (cgame === 'triple') return renderTriple(box);
+  if (cgame === 'triple' || cgame === 'jester') { const g = cgame; if (tc.game !== g && !tc.seat && !tc.watch) tc.game = g; return renderTriple(box); }
   if (cgame === 'watch') return renderCw(box);
   if (cgame === 'crank') {
     const list = (home && home.casinoTop) || [];
@@ -2683,13 +2694,13 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
-    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
+    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     const tabs = games.filter(([k]) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))
       .map(([k, label, extra]) => tabBtn(k === 'wheel' ? 'vip' : k, label, extra || '')).join('');
     box.innerHTML = `<div class="tabs2" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'watch'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
@@ -3028,22 +3039,23 @@ function cwStart(uid, name, game) { cw = { uid, name, game }; page = 'casino'; c
 const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}" alt="" onerror="this.style.visibility='hidden'">`;
 function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
   const me = home && home.me && home.me.id;
-  box.innerHTML = `<div class="tc-lobby" id="tcLobby"><div class="tc-lhead"><img src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown"></div>
+  const J = cgame === 'jester', LOGO = J ? '/jc/logo.webp' : '/tcg/tc_logo.webp';
+  box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${AVER}" alt="${J ? 'Narrenkappe' : 'Triple Crown'}"></div>
     <p class="sub" style="text-align:center;margin:0 0 10px">Zwei Maschinen. Setz dich an eine freie oder schau jemandem zu.</p>
-    <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1 }, { id: 2 }]).map((m) => {
+    <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1, game: 'triple' }, { id: 2, game: 'triple' }, { id: 3, game: 'jester' }, { id: 4, game: 'jester' }]).filter((m) => (m.game || 'triple') === (J ? 'jester' : 'triple')).map((m) => {
       const mine = m.user && m.user.id === me;
-      return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${m.id}</div>
-        <div class="tc-mmini"><img src="/tcg/tc_logo.webp?v=${AVER}" alt=""><div class="tc-mreels"><span></span><span></span><span></span></div></div>
+      return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${J ? m.id - 2 : m.id}</div>
+        <div class="tc-mmini"><img src="${LOGO}?v=${AVER}" alt=""><div class="tc-mreels">${'<span></span>'.repeat(J ? 5 : 3)}</div></div>
         ${m.user ? `<div class="tc-mwho">${tcAva(m.user)}<b>${esc(m.user.name)}</b></div><div class="tc-mstate">${mine ? 'Dein Platz' : 'Belegt'}${m.watchers ? ` · 👀 ${m.watchers}` : ''}</div>
           ${mine ? `<button class="btn small" data-tcsit="${m.id}">Weiterspielen</button>` : `<button class="btn small ghost" data-tcwatch="${m.id}">👀 Zuschauen</button>`}`
         : `<div class="tc-mwho"><b style="color:#7CF0A8">Frei</b></div><div class="tc-mstate">&nbsp;</div><button class="btn small" data-tcsit="${m.id}">Hinsetzen</button>`}</div>`; }).join('')}</div></div>`;
 }
 async function tcSit(m) {
   const r = await api('/api/casino/triple/sit', { machine: m }).catch((e) => { toast(e.message); return null; }); if (!r) return;
-  tcMachines = r.list; tc.seat = r.machine; tc.watch = null; if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
+  tcMachines = r.list; tc.seat = r.machine; tc.watch = null; tc.game = r.machine >= 3 ? 'jester' : 'triple'; if (r.risk) { tc.risk = r.risk; tc.lastWin = r.risk.win; }
   const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
 }
-function tcWatch(m) { tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+function tcWatch(m) { tc.game = m >= 3 ? 'jester' : 'triple'; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
@@ -3057,7 +3069,14 @@ async function tcWatchRun() {
     const ev = tc.wq.shift();
     if (ev.dia !== null && ev.dia !== undefined) { tc.wdia = ev.type === 'spin' ? ev.dia - (ev.total || 0) : ev.dia; tcSync(); } // Guthaben des Spielers: beim Dreh erst ohne Gewinn
     try {
-      if (ev.type === 'spin') {
+      if (ev.type === 'jspin') { // Narrenkappe zum Zuschauen
+        $('#tcOver').innerHTML = ''; jcClear(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
+        await jcAnimate(ev.before);
+        if (ev.cap) await jcCap(ev.cap, ev.grid); else tc.jgrid = ev.grid;
+        if (ev.lines.length) await jcLines(ev.lines);
+        if (ev.risk) { tc.lastWin = ev.total; tcSetMsg(`Gewinn ${fmt(ev.total)}`); } else tcSetMsg('Leider nichts');
+        tcSync();
+      } else if (ev.type === 'spin') {
         $('#tcOver').innerHTML = ''; tcClearLines(); tc.wbet = ev.bet; tc.lastWin = 0; tcSync(); tcSetMsg('&nbsp;');
         let shown = 0;
         for (let i = 0; i < ev.spins.length; i++) {
@@ -3092,15 +3111,17 @@ function renderTriple(box) {
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
-    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">👑 Vollbild${tc.force ? ' AN' : ''}</button>` : ''}
-      <img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
+    box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin && !tc.watch && tc.game !== 'jester' ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">👑 Vollbild${tc.force ? ' AN' : ''}</button>` : ''}
+      ${tc.game === 'jester' ? `<div class="jc-bg"></div><img class="tc-logo jc-logo" src="/jc/logo.webp?v=${AVER}" alt="Narrenkappe">
+      <div class="tc-machine jc-machine"><div class="tc-reels jc-reels" id="tcReels">${jcGrid().map((col, c) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${c}">${col.map(jcCell).join('')}</div></div>`).join('')}
+          <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
       <div class="tc-machine">
         <div class="tc-nums l"><span class="n4">4</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n5">5</span></div>
         <div class="tc-reels" id="tcReels">${[0, 1, 2].map((r) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${r}">${tc.grid[r].map(tcCell).join('')}</div></div>`).join('')}
           <svg class="tc-lines" id="tcLines" viewBox="0 0 300 300" preserveAspectRatio="none"></svg>
           <div class="tc-linewin" id="tcLineWin"></div></div>
         <div class="tc-nums r"><span class="n5">5</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n4">4</span></div>
-      </div>
+      </div>`}
       <div class="tc-msg" id="tcMsg"></div>
       <div class="tc-info"><div><small>Guthaben</small><b id="tcBal"></b></div><div><small>Einsatz</small><b id="tcBet"></b></div><div><small>Gewinn</small><b id="tcWin"></b></div></div>
       <div class="tc-over" id="tcOver"></div></div>
@@ -3121,7 +3142,7 @@ function renderTriple(box) {
     $('#tcKAuto').onclick = tcAutoWindow;
     $('#tcTurbo').onclick = () => { tc.turbo = !tc.turbo; tcSync(); };
     $('#tcMusic').onclick = () => { unlockAudio(); TCM.on = !TCM.on; try { localStorage.setItem('sz_tcmusic', TCM.on ? '1' : '0'); } catch (e) {} const b = $('#tcMusic'); b.classList.toggle('on', TCM.on); b.textContent = TCM.on ? '🎵 Musik an' : '🔇 Musik aus'; if (TCM.on && muted) toast('Der Ton ist gerade ganz aus, schalte ihn über den Lautsprecher-Knopf ein.'); };
-    $('#tcPay').onclick = tcPaytable;
+    $('#tcPay').onclick = tc.game === 'jester' ? jcPaytable : tcPaytable;
   }
   tcSync();
 }
@@ -3130,7 +3151,7 @@ function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   $('#tcBal').textContent = tc.watch ? (tc.wdia !== null && tc.wdia !== undefined ? fmt(tc.wdia) + ' 💎' : '—') : fmt((tcg && tcg.diamonds) || 0) + ' 💎';
   $('#tcBet').textContent = fmt(tc.watch ? (tc.wbet || 0) : TC_BETS[tc.bi]);
   $('#tcWin').textContent = fmt(tc.risk ? tc.risk.win : tc.lastWin);
-  $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : '5 Linien · 3 gleiche Symbole gewinnen');
+  $('#tcMsg').innerHTML = tc.msg || (tc.risk ? 'Gewinn! START nimmt ihn mit · oder riskieren' : tc.game === 'jester' ? '10 Linien · 3 gleiche von links · der Narr ersetzt alles' : '5 Linien · 3 gleiche Symbole gewinnen');
   const canRisk = !!tc.risk && !tc.busy && !tc.risk.noRisk;
   const canLad = canRisk && tc.mode !== 'ladder', canCard = canRisk && tc.mode !== 'card'; // jederzeit zwischen Leiter und Karte wechseln
   $('#tcKBet').disabled = tc.busy || !!tc.risk; $('#tcKLad').disabled = !canLad; $('#tcKCard').disabled = !canCard;
@@ -3197,7 +3218,77 @@ async function tcCountLines(lines, base) { // Linien einzeln zeigen und hochzäh
   tcClearLines(); lines.forEach((l) => tcShowLine(l, true)); $('#tcLineWin').className = 'tc-linewin';
   return sum;
 }
+// ---------- Narrenkappe (Maschinen 3 und 4): 5 Walzen, 10 Linien, Joker und schüttelnde Kappe ----------
+const JC_SYM = { T: '10', J: 'J', Q: 'Q', K: 'K', A: 'A', G: 'Geisterpferd', V: 'Rabe', P: 'Hexenprinzessin', O: 'Kürbiskönig', W: 'Kürbisnarr', N: 'Narrenkappe' };
+const JC_PAY = { T: [5, 25, 100], J: [5, 25, 100], Q: [5, 25, 100], K: [5, 40, 150], A: [5, 40, 150], G: [10, 75, 250], V: [10, 75, 250], P: [15, 150, 500], O: [25, 250, 1000], W: [50, 500, 2000] }; // wie lib/jester.js, × Einsatz/10
+const JC_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 0, 0, 0, 1], [1, 2, 2, 2, 1], [0, 0, 1, 2, 2], [2, 2, 1, 0, 0], [1, 0, 1, 2, 1]];
+const JC_COL = ['#FFD23F', '#7CF0A8', '#FF7AB6', '#5AA9FF', '#FF8A3D', '#C08BFF', '#3DDC97', '#FF5E5E', '#9FE3FF', '#FFE27A'];
+const jcCell = (k) => `<div class="tc-cell jc-cell" style="background-image:url('/jc/s_${k}.webp?v=${AVER}')"></div>`;
+const jcRand = () => { const L = 'TJQKAGVPOW'; return Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => L[Math.floor(Math.random() * 7)])); };
+function jcGrid() { if (!tc.jgrid) tc.jgrid = jcRand(); return tc.jgrid; }
+function jcSetGrid(g) { tc.jgrid = g; g.forEach((col, c) => { const st = $('#tcStrip' + c); if (st) st.innerHTML = col.map(jcCell).join(''); }); }
+async function jcAnimate(g) { // Walzen nacheinander anhalten
+  const fast = tc.turbo, cols = [0, 1, 2, 3, 4];
+  cols.forEach((c) => { const st = $('#tcStrip' + c); if (st) st.classList.add('jc-spin'); });
+  sfx('srspin');
+  for (const c of cols) { await tcSleep(fast ? 90 : 230); const st = $('#tcStrip' + c); if (st) { st.classList.remove('jc-spin'); st.innerHTML = g[c].map(jcCell).join(''); st.classList.add('jc-stop'); setTimeout(() => st.classList.remove('jc-stop'), 300); } sfx('tick'); }
+  tc.jgrid = g;
+}
+async function jcCap(cap, after) { // Kappe schüttelt sich, dann werden Felder zu Narren
+  const capCells = []; tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === 'N') capCells.push([c, r]); }));
+  capCells.forEach(([c, r]) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('jc-shake'); });
+  tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('srglow'); await tcSleep(tc.turbo ? 500 : 1300);
+  if (!cap.turned.length) { tcSetMsg('🃏 … sie hat sich nur geschüttelt'); await tcSleep(tc.turbo ? 300 : 700); jcSetGrid(after); return; }
+  tcSetMsg(`🃏 ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld wird' : 'Felder werden'} zum Narren!`);
+  for (const [c, r] of cap.turned) { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) { el.style.backgroundImage = `url('/jc/s_W.webp?v=${AVER}')`; el.classList.add('jc-pop'); } sfx('dart'); await tcSleep(tc.turbo ? 90 : 220); }
+  await tcSleep(tc.turbo ? 200 : 500); tc.jgrid = after;
+}
+async function jcLines(lines) { // Linien nacheinander zeigen und Gewinn hochzählen
+  const svg = $('#tcLines'), lw = $('#tcLineWin'); let sum = 0;
+  for (const L of lines) {
+    const pts = JC_LINES[L.line - 1].map((r, c) => `${c * 100 + 50},${r * 100 + 50}`).join(' ');
+    if (svg) svg.innerHTML += `<polyline points="${pts}" fill="none" stroke="${JC_COL[L.line - 1]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;
+    JC_LINES[L.line - 1].slice(0, L.n).forEach((r, c) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit'); });
+    sum += L.win; tc.lastWin = sum; if (lw) lw.textContent = `Linie ${L.line}: ${L.n}× ${JC_SYM[L.sym]} = ${fmt(L.win)}`; tcSync(); sfx(L.sym === 'W' || L.sym === 'O' ? 'exact' : 'dart'); await tcSleep(tc.turbo ? 220 : 600);
+  }
+  if (lw) lw.textContent = '';
+}
+function jcClear() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); }
+async function jcSpin() {
+  const bet = TC_BETS[tc.bi];
+  if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; }
+  if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
+  tc.busy = true; tc.lastWin = 0; jcClear(); tcSetMsg('&nbsp;'); tcSync();
+  try {
+    const r = await api('/api/casino/jester', { bet, machine: tc.seat });
+    tcg.diamonds = r.diamonds; if (home) home.me.diamonds = r.diamonds; tcSync();
+    await jcAnimate(r.before);
+    if (r.cap) await jcCap(r.cap, r.grid); else tc.jgrid = r.grid;
+    if (r.lines.length) await jcLines(r.lines);
+    tc.busy = false;
+    if (r.risk) { tc.risk = r.risk; tc.lastWin = r.total; tcSetMsg(r.risk.noRisk ? `Gewinn ${fmt(r.total)} · Höchstgewinn, START nimmt mit` : `Gewinn ${fmt(r.total)} · START nimmt mit · Risiko Leiter oder Karte`); if (r.total >= bet * 20) { sfx('prestige'); try { navigator.vibrate && navigator.vibrate([60, 40, 160]); } catch (e) {} } }
+    else tcSetMsg('Leider nichts');
+    tcSync();
+    if (tc.auto) {
+      if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
+      if (tc.auto < 9000) tc.auto--;
+      tcSync();
+      if (tc.auto > 0) setTimeout(() => { if (tc.auto && !tc.busy) tcSpin(); }, tc.turbo ? 150 : 450);
+      else tcSetMsg('Autoplay beendet');
+    }
+  } catch (e) { tc.busy = false; tc.auto = 0; toast(e.message); if (/belegt|Setz dich/.test(e.message)) { tc.seat = null; tc.risk = null; renderCasino(); return; } tcSync(); }
+}
+function jcPaytable() {
+  const lb = TC_BETS[tc.bi] / 10;
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/jc/logo.webp?v=${AVER}" alt="" style="width:70%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(TC_BETS[tc.bi])}.</p>
+    <div class="jc-pays">${Object.keys(JC_PAY).reverse().map((k) => `<div class="jc-pay"><img src="/jc/s_${k}.webp?v=${AVER}" alt=""><b>${esc(JC_SYM[k])}</b><small>${JC_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
+    <div class="jc-pay"><img src="/jc/s_N.webp?v=${AVER}" alt=""><b>Narrenkappe</b><small>Nur auf der mittleren Walze. Sie schüttelt sich und verwandelt zufällig Felder in Kürbisnarren, manchmal auch keins.</small></div>
+    <p class="sub" style="margin:0">🃏 Der Kürbisnarr ersetzt jedes Symbol außer der Kappe. Jeden Gewinn kannst du mit der Leiter oder der Karte riskieren.</p>
+    <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+}
 async function tcSpin() {
+  if (tc.game === 'jester') return jcSpin();
   const bet = TC_BETS[tc.bi];
   if (tc.risk) { tc.risk = null; tc.mode = 'play'; $('#tcOver').innerHTML = ''; } // offener Gewinn wird vom Server eingesackt
   if (((tcg && tcg.diamonds) || 0) < bet) { tc.auto = 0; toast('Nicht genug Diamanten'); return tcSync(); }
@@ -4554,9 +4645,9 @@ function connect() {
       const mine = tcMachines.find((m) => m.id === tc.seat);
       if (mine && !mine.user) { // Server hat den Platz vergessen (Neustart, Verbindung weg): still wieder hinsetzen
         api('/api/casino/triple/sit', { machine: tc.seat }).then((r) => { tcMachines = r.list; }).catch(() => {});
-      } else { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && cgame === 'triple') { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
+      } else { tc.seat = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; toast('Du bist von der Maschine aufgestanden.'); if (page === 'casino' && ['triple', 'jester'].includes(cgame)) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } } }
     }
-    if (page === 'casino' && cgame === 'triple' && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
+    if (page === 'casino' && ['triple', 'jester'].includes(cgame) && !tc.seat && !tc.watch) { const b = $('#cgame'); if (b) { b.innerHTML = ''; renderTriple(b); } }
     if (!S && page === 'home') update();
   });
   socket.on('cw:list', (l) => { cwList = l || []; if (!S && page === 'home') update(); });
@@ -4568,7 +4659,7 @@ function connect() {
     else if (ev.type === 'state') { cw.bj = ev.state; cw.won = ev.won; sfx('dart'); }
     if (page === 'casino' && cgame === 'watch') renderCasino();
   });
-  socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; tc.wdia = sn.dia; setTimeout(() => { if ($('#tcBal')) tcSync(); }, 0); if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
+  socket.on('tc:snap', (sn) => { if (!tc.watch || sn.machine !== tc.watch) return; tc.wdia = sn.dia; setTimeout(() => { if ($('#tcBal')) tcSync(); }, 0); if (!sn.user) { toast('An dieser Maschine sitzt gerade niemand.'); tcBackToLobby(); return; } if (sn.grid && tc.game === 'jester') { jcSetGrid(sn.grid); } else if (sn.grid) { tc.grid = sn.grid; [0, 1, 2].forEach((r) => { const el = $('#tcStrip' + r); if (el) el.innerHTML = sn.grid[r].map(tcCell).join(''); }); } if (sn.risk) { tc.wbet = sn.risk.bet; tc.lastWin = sn.risk.win; tcSync(); tcWatchLadder(sn.risk); } });
   socket.on('tc:ev', (ev) => { if (!tc.watch || ev.machine !== tc.watch) return; tc.wq = tc.wq || []; tc.wq.push(ev); tcWatchRun(); });
   socket.on('pk:list', (l) => { pkList = l; if (page === 'casino' && cgame === 'poker' && !pkState) renderCasino(); if (!S && page === 'home') update(); });
   socket.on('bj:state', (t) => {
@@ -4621,7 +4712,7 @@ function reportPresence() {
   if (!socket || !socket.connected || S) return;
   const pg = page === 'casino' ? 'casino:' + cgame : page || 'home';
   if (pg !== 'casino:watch' && cw) { socket.emit('cw:unwatch'); cw = null; }
-  if (pg !== 'casino:triple' && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
+  if (!['casino:triple', 'casino:jester'].includes(pg) && (tc.seat || tc.watch)) { if (tc.watch) socket.emit('tc:unwatch'); tc.seat = null; tc.watch = null; tc.auto = 0; tc.risk = null; tc.mode = 'play'; tc.busy = false; } // Maschine verlassen
   if (pg === lastPresence) return;
   lastPresence = pg; socket.emit('presence', pg);
 }
