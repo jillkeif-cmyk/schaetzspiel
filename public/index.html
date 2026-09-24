@@ -907,7 +907,8 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 .chipbtn.allin{color:#FFD23F;font-weight:900;box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6)}
 .chipbtn.picked{background:linear-gradient(180deg,#FFE27A,#E0A21E);color:#2A1600;box-shadow:0 0 0 2px #FFD23F,0 0 14px rgba(255,210,63,.55);transform:translateY(-1px)}
 #rres{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:15;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;background:rgba(5,26,29,.95);box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1.5px rgba(255,255,255,.12);font-size:15px;white-space:nowrap;transition:transform .35s cubic-bezier(.2,1.2,.4,1);pointer-events:none}
-#rres.on{transform:translate(-50%,0)}
+#rres:not(.on){opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,calc(-100% - 30px - env(safe-area-inset-top,0px)))}
+#rres{transition:transform .35s ease,opacity .3s ease,visibility 0s linear .35s}#rres.on{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .35s ease,opacity .2s ease,visibility 0s}
 #rres.win{box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 2px #3DDC97}#rres.win .rr-net{color:#3DDC97}
 #rres.lose{box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 2px #E05252}#rres.lose .rr-net{color:#FF8A80}
 .rr-sep{color:var(--muted)}
@@ -1643,7 +1644,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '128';
+const AVER = '129';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2444,6 +2445,7 @@ function casinoDone(d) {
   if (d.won > (d.stake || 0)) sfx('dartbest'); else sfx('sent');
 }
 // Kurze Meldung ohne Klick: welche Zahl, welche Farbe, gewonnen oder verloren. Verschwindet von selbst.
+function hideRouletteResult() { const o = document.getElementById('rres'); if (o) o.className = ''; clearTimeout(showRouletteResult.t); }
 function showRouletteResult(d, bets) {
   const net = d.won - d.stake;
   const col = d.n === 0 ? 'Grün' : RED.has(d.n) ? 'Rot' : 'Schwarz';
@@ -4625,6 +4627,7 @@ function reportPresence() {
 }
 let builtKey = '', pageFilled = '';
 function render() {
+  if (page !== 'casino' || cgame !== 'roulette') hideRouletteResult(); // Roulette-Ergebnis nie auf anderen Seiten stehen lassen
   setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab + ':' + (home && home.me ? (home.me.admin ? 'A' : 'U') : '-') : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   const keepY = window.scrollY, samePage = key === builtKey; // war vorher dieselbe Seite zu sehen?
