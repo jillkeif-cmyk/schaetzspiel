@@ -1640,7 +1640,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '125';
+const AVER = '126';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3715,7 +3715,7 @@ function dupeSellDialog() { // Doppelte ab Legendär auf die Börse, eine Karte 
     $('#dsNone').onclick = () => { list.forEach((d) => { sel[d.key] = false; }); draw(); };
     document.querySelectorAll('#modal [data-ds]').forEach((b) => { b.onclick = () => { sel[b.dataset.ds] = !sel[b.dataset.ds]; draw(); }; });
     $('#dsGo').onclick = () => {
-      if (!confirm(`${cnt} ${cnt === 1 ? 'Karte' : 'Karten'} zum Umwandlungspreis auf die Börse stellen?\\n\\nZusammen ${fmt(sum)} Diamanten, wenn alles verkauft wird. Du kannst jede Anzeige später einzeln zurückziehen.`)) return;
+      if (!confirm(`${cnt} ${cnt === 1 ? 'Karte' : 'Karten'} zum Umwandlungspreis auf die Börse stellen?\n\nZusammen ${fmt(sum)} Diamanten, wenn alles verkauft wird. Du kannst jede Anzeige später einzeln zurückziehen.`)) return;
       api('/api/tcg/sell-dupes', { items: pick.map((d) => ({ card: d.c.id, variant: d.v, n: d.extra })) }).then((r) => { tcg = r; closeModal(); sfx('exact'); toast(`${r.listed} Anzeigen erstellt`); market = null; loadMarket(); }).catch((e) => toast(e.message));
     };
   };
