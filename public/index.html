@@ -1762,7 +1762,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '194';
+const AVER = '195';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3500,7 +3500,7 @@ async function tcAutoAfter() {
       if (left <= 0) { clearInterval(tc.awT); tc.autoPaused = false; tcTakeQuiet().then(tcAutoContinue); return; }
       tcSetMsg(`⏸ Autoplay wartet: Risiko oder START nimmt an · ${left}`); sfx('tick'); left--;
     };
-    tick(); tc.awT = setInterval(tick, 1000); return;
+    clearInterval(tc.awT); tick(); tc.awT = setInterval(tick, 1000); return; // nie zwei Zähler gleichzeitig
   }
   if (tc.risk) { await tcSleep(tc.turbo ? 300 : 700); await tcTakeQuiet(); }
   tcAutoContinue();
