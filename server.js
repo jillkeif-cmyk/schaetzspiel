@@ -1323,9 +1323,10 @@ app.get('/api/tcg/market', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const rows = await store.marketList();
-    const out = [];
+    const out = [], sellers = new Map(); // jeden Verkäufer nur einmal aus der Datenbank holen (vorher: eine Abfrage je Angebot)
+    for (const id of new Set(rows.map((r) => r.seller))) sellers.set(id, await store.userById(id).catch(() => null));
     for (const r of rows) {
-      const s = await store.userById(r.seller);
+      const s = sellers.get(r.seller);
       const gx = r.card_id === 'graded' ? await store.gradedGet(Number(r.variant)) : null;
       out.push({ id: r.id, cardId: r.card_id, variant: r.variant, price: Number(r.price), seller: s ? s.name : '?', sellerId: r.seller, mine: r.seller === u.id, graded: gx ? await gView(gx) : null });
     }
@@ -2062,13 +2063,15 @@ app.get('/api/user/:id', async (req, res) => {
 });
 
 // Neu registrierte Spieler, zum Kennenlernen und Hinzufügen
+let newPlayersCache = { at: 0, rows: [] };
 app.get('/api/newplayers', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const rel = new Map((await store.friendList(u.id)).map((f) => [f.id, f.status]));
     // Testkonten aus der Entwicklung nicht anzeigen
     const TEST = /test|claude|tester|probe|dummy|demo/i;
-    const list = (await store.recentUsers(30)).filter((o) => !TEST.test(o.name)).slice(0, 12).map((o) => ({ ...publicStats(o), online: game.online.has(o.id), friend: rel.get(o.id) || null, self: o.id === u.id, joined: Number(o.created_ms) || null }));
+    if (!newPlayersCache.at || Date.now() - newPlayersCache.at > 30000) newPlayersCache = { at: Date.now(), rows: (await store.recentUsers(30)).filter((o) => !TEST.test(o.name)).slice(0, 12) }; // 30 s zwischenspeichern
+    const list = newPlayersCache.rows.map((o) => ({ ...publicStats(o), online: game.online.has(o.id), friend: rel.get(o.id) || null, self: o.id === u.id, joined: Number(o.created_ms) || null }));
     res.json({ players: list });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });

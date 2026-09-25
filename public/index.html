@@ -1762,7 +1762,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '195';
+const AVER = '196';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -5087,6 +5087,7 @@ function renderRanks() {
 }
 
 async function dailyDialog() {
+  window.__dailyC = null; // frischer Stand beim Öffnen und nach dem Abholen
   try {
     const v = await api('/api/daily');
     const D = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
@@ -5111,7 +5112,7 @@ async function dailyDialog() {
       <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
     if ($('#dailyGo')) $('#dailyGo').onclick = () => {
-      api('/api/daily/claim', {}).then((r) => {
+      api('/api/daily/claim', {}).then((r) => { window.__dailyC = null;
         sfx('exact'); closeModal(); loadHome();
         const PN2 = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
         toast(`+${fmt(r.gain)} Diamanten${r.pack ? ' und ein ' + PN2[r.pack] : ''}${r.weekDone ? ' und der Titel „Siebenfach“!' : ''}`);
@@ -5990,7 +5991,7 @@ function update() {
     $('#openProfile').innerHTML = me ? playerCard({ ...me, title: me.titleShown }, `<div class="lvrow"><span class="wp">${fmt(me.rankPoints || 0)} WP</span></div><span class="editbtn big">✏️ Profil & Spielerkarte bearbeiten</span>`) : '<span class="sub">Lädt …</span>';
     $('#stats').innerHTML = me ? `<div class="stats">${[[playTime(me.playMinutes), 'Spielzeit'], [me.matches, 'Matches'], [me.wins, 'Siege'], [me.exact, 'Punktlandungen'], [me.close, 'Doppel-Treffer'], [me.mcTotal ? Math.round(100 * me.mcRight / me.mcTotal) + ' %' : '–', 'Auswahl richtig'], [me.avgDev === null ? '–' : Math.round(me.avgDev * 100) + ' %', 'Ø Abweichung']].map(([v, l]) => `<div class="stat" ${STAT_INFO[l] ? `data-info="${STAT_INFO[l]}"` : ''}><b class="num">${v}</b><span>${l}${STAT_INFO[l] ? ' ⓘ' : ''}</span></div>`).join('')}</div>` : '<p class="sub">Lädt …</p>';
     const row = (u, i, right) => `<div class="pl ${u.id === home.me.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${embHtml(u, 26)}${avatar(u, 36)}<span class="nm">${withTag(u)} ${flameHtml(u, 18)}<br><span class="lv">${rankText(u)} · ${esc(onlineText(u))}</span></span>${right}${u.id === home.me.id ? '' : `<button class="mini" data-fight="${u.id}">⚔</button>`}</div>`;
-    api('/api/daily').then((v) => {
+    (window.__dailyC && Date.now() - window.__dailyC.at < 60000 ? Promise.resolve(window.__dailyC.v) : api('/api/daily').then((v) => { window.__dailyC = { at: Date.now(), v }; return v; })).then((v) => { // höchstens einmal pro Minute
       const d = document.getElementById('dailyDot'); if (d) d.hidden = !!v.claimed;
       const b = document.getElementById('openDaily');
       if (b) { b.classList.toggle('ready', !v.claimed); const sb = b.querySelector('.sub'); if (sb) sb.textContent = v.claimed ? 'Heute schon abgeholt' : 'Jetzt abholen: ' + fmt(v.loginDia) + ' Diamanten warten'; }
@@ -5999,7 +6000,7 @@ function update() {
     const fb = $('#firstBonus');
     const sw0 = home && home.soloWin; const swHint = sw0 && sw0.on ? `<div class="fbonus sw-hint">🏆 Solo-Sieg: ${fmt(sw0.min15 || 750)} Punkte bei 15 Fragen oder ${fmt(sw0.min)} Punkte bei 25 Fragen zählen im Solo-Quiz als Sieg</div>` : '';
     if (fb) fb.innerHTML = swHint + (home && home.me && home.me.firstBonus ? '<div class="fbonus">⚡ Dein erstes Match heute zählt doppelt: doppelte XP und doppelte Diamanten</div>' : '');
-    api('/api/newplayers').then((r) => {
+    (window.__npC && Date.now() - window.__npC.at < 60000 ? Promise.resolve(window.__npC.r) : api('/api/newplayers').then((r) => { window.__npC = { at: Date.now(), r }; return r; })).then((r) => { // höchstens einmal pro Minute
       const np = $('#newPlayers'); if (!np) return;
       const list = (r.players || []).filter((x) => !x.self).slice(0, 10);
       const rowNP = (u) => `<div class="pl" data-user="${u.id}" style="--c:${u.online ? '#8BE28B' : 'var(--line)'}">${avatar(u, 38)}<span class="nm">${withTag(u)}<br><span class="lv">${u.online ? 'gerade online' : 'Level ' + (u.level || 1)} · ${fmt(u.matches || 0)} Matches</span></span>${u.friend === 'ok' ? '<span class="rw-ok">Freund</span>' : u.friend === 'out' ? '<span class="sub">angefragt</span>' : u.friend === 'in' ? `<button class="mini go" data-fr="accept" data-id="${u.id}">Annehmen</button>` : `<button class="addfr" data-addfr="${u.id}">+</button>`}</div>`;
