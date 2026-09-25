@@ -1766,7 +1766,7 @@ body.ui2 #app:not(.maint) .brand,body.ui2 #app:not(.maint) #openProfile,body.ui2
 body.ui2 #app:not(.maint) .col:has(#stats){display:none!important}
 body.ui2 #app:not(.maint) .panel:has(#create){padding:0;background:none;box-shadow:none;gap:8px}
 body.ui2 #app:not(.maint) .panel:has(#create):not(:has(#firstBonus :not(:empty), #slots:not(:empty))){display:none}
-body.ui2[data-pg="cards"] #app #back,body.ui2[data-pg="casino"] #app #back{visibility:hidden}body.ui2[data-pg="social"] #app .row:has(> #back){display:none}
+body.ui2[data-pg="casino"] #app #back{visibility:hidden}
 body.ui2[data-pg="casino"] #app .col > h1{display:none}
 body.u2-inplay .cnav,body.u2-inplay #vipHead{display:none!important}body.u2-inplay #app .col > .row:has(> #back){display:none}body.u2-inplay .tc-logo{width:auto;max-width:78%;max-height:74px;margin:-2px auto -6px}body.u2-inplay #app{padding-top:max(10px,env(safe-area-inset-top,0px))!important}body.u2-inplay #wrap{padding-bottom:env(safe-area-inset-bottom,0px)}
 /* Kopf der Startseite */
@@ -1847,7 +1847,7 @@ body.ui2[data-pg="casino"] #cgame > .sub.center{display:none}
 
 body.ui2[data-pg="cards"] .ct-shopbig,body.ui2 #shopBack{display:none!important}
 body.ui2[data-pg="cards"][data-ct="shop"] #app .col > h1{display:none}
-body.ui2[data-pg="cards"][data-ct="shop"] #app .col > .row:has(> #back){display:none}
+body.ui2[data-pg="cards"][data-ct="shop"] #app .col > .row:has(> #back) .dia{display:none}
 
 body.ui2 #app:not(.maint) #ui2Home{order:-3}
 body.ui2 #app:not(.maint) #openList{order:-2;display:flex;flex-direction:column}
@@ -1992,6 +1992,29 @@ body.ui2 .u2-hide{display:none}
 .u2-offlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .u2-offlist > div{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.06)}
 .u2-offlist img{width:34px;height:34px;object-fit:contain;flex:none}.u2-offlist span{font:600 12.5px/1.2 Archivo,sans-serif}
+
+/* Zurück zur Startseite */
+.u2-crow{display:flex;align-items:flex-start;gap:8px}
+.u2-crow > .cnav{flex:1 1 auto;min-width:0}
+.u2-home{flex:none;width:44px;height:44px;margin-top:2px;border:0;border-radius:14px;display:grid;place-items:center;background:linear-gradient(180deg,#1C4E57,#0F333A);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55),0 4px 10px rgba(0,0,0,.35);color:#FFE27A;cursor:pointer}
+.u2-home:active{transform:translateY(1px) scale(.97)}
+body.ui2 #app #back{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:12px;background:linear-gradient(180deg,#1C4E57,#0F333A);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.55);color:#FFE27A;font:800 13px Archivo,sans-serif;text-decoration:none}
+
+/* REWIN-Rad neu: Goldring mit Birnen, Smaragd-Felder, glühende STOP-Felder, Kronen-Nabe */
+.tc-wwrap{position:relative;width:min(236px,62vw);aspect-ratio:1;margin:2px auto}
+.tc-wwrap svg{position:absolute;inset:0;width:100%;height:100%}
+.tc-wrim{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.7))}
+.tc-whub{position:absolute;left:50%;top:50%;width:24%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.tc-wwrap .tc-seg{fill:url(#tcgG);stroke:#E8C15A;stroke-width:1.4;transition:filter .08s}
+.tc-wwrap .tc-seg.stop,.tc-wwrap .tc-seg.turn{fill:url(#tcgR);animation:tcStopGlow 1.6s ease-in-out infinite}
+.tc-wwrap .tc-seg.lit{filter:brightness(1.75) drop-shadow(0 0 6px #FFF3C4)}
+.tc-wwrap .tc-seg.win{animation:tcSegWin .45s ease-in-out 4}
+.tc-wwrap .tc-segt{font:900 9.5px Archivo,sans-serif;letter-spacing:.6px;fill:#FFF3C4;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:2px;text-anchor:middle;dominant-baseline:middle}
+.tc-wwrap .tc-lamp{fill:#4A3A12;stroke:#8A6A1E;stroke-width:.8}
+.tc-wwrap .tc-lamp.on{fill:#FFF7C2;stroke:#FFE27A;filter:drop-shadow(0 0 5px #FFE27A)}
+@keyframes tcStopGlow{50%{filter:brightness(1.35) drop-shadow(0 0 5px #FF4D4D)}}
+@keyframes tcSegWin{50%{filter:brightness(2.1) drop-shadow(0 0 10px #FFF3C4)}}
+.tc-wtitle{font:400 20px/1 Anton,Impact,sans-serif!important;letter-spacing:1px;color:#FFE27A!important;text-shadow:0 2px 0 #4A2A00}
 </style>
 </head>
 <body>
@@ -2017,7 +2040,7 @@ body.ui2 .u2-hide{display:none}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '224';
+const AVER = '225';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3330,7 +3353,7 @@ function renderCards() {
     const tabs = `<div class="cseg">${seg}</div><div class="cnavrow ${curCat === 'slots' ? 'slots-row' : ''}">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
     window.__ccat = CAT; window.__cok = ok;
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
-    box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
+    box.innerHTML = `${ui2On() ? '<div class="u2-crow"><button class="u2-home" data-u2="tab:quiz" aria-label="Zur Startseite"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>' : ''}<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>${ui2On() ? '</div>' : ''}
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
@@ -4300,20 +4323,25 @@ async function tcSpin() {
 // Start-Taste: einmal drücken beschleunigt, zweites Mal bremst ab. Ohne Drücken läuft es von selbst an und aus.
 async function tcWheel(res, lines, base) {
   let sum = base;
+  const stopSegs = [TC_SEGPOS[0]]; // rote Felder: Start unten, danach wird jedes getroffene grüne Feld rot und bleibt rot
   for (let k = 0; k < res.length; k++) {
-    const round = res[k], stops = new Set(TC_SEGPOS.slice(0, round.stops));
-    const target = TC_SEGPOS[round.field]; // Segment, auf dem das Licht landet
+    const round = res[k], stops = new Set(stopSegs);
+    // Landeplatz eindeutig aus der Server-Zahl: Stop → eines der roten Felder, Rewin → eines der grünen (für Zuschauer gleich)
+    const greens = Array.from({ length: 12 }, (_, i) => i).filter((i) => !stops.has(i));
+    const target = round.rewin ? greens[(round.field - round.stops + greens.length) % greens.length] : stopSegs[round.field % stopSegs.length];
     const over = $('#tcOver');
-    const segs = Array.from({ length: 12 }, (_, i) => { const a0 = i * 30 - 90 - 15, a1 = a0 + 30, R = 118, c = 130, rad = (d) => d * Math.PI / 180;
+    const segs = Array.from({ length: 12 }, (_, i) => { const a0 = i * 30 - 90 - 15, a1 = a0 + 30, R = 104, c = 130, rad = (d) => d * Math.PI / 180;
       const p = (a, r) => `${c + r * Math.cos(rad(a))},${c + r * Math.sin(rad(a))}`; const stop = stops.has(i), mid = a0 + 15;
-      const tx = c + 78 * Math.cos(rad(mid)), ty = c + 78 * Math.sin(rad(mid));
-      return `<path id="tcSeg${i}" class="tc-seg ${stop ? 'stop' : ''}" d="M${c},${c} L${p(a0, R)} A${R},${R} 0 0 1 ${p(a1, R)} Z"/><text x="${tx}" y="${ty}" transform="rotate(${mid + 90} ${tx} ${ty})" class="tc-segt">${stop ? 'STOP' : 'REWIN'}</text>`; }).join('');
-    const lamps = Array.from({ length: 36 }, (_, i) => { const a = (i * 10 - 90) * Math.PI / 180; return `<circle id="tcLamp${i}" class="tc-lamp" cx="${130 + 124 * Math.cos(a)}" cy="${130 + 124 * Math.sin(a)}" r="5"/>`; }).join('');
-    over.innerHTML = `<div class="tc-wheelbox"><div class="tc-wtitle">REWIN · Runde ${k + 1} · ${round.stops} Stop</div><svg viewBox="0 0 260 260" class="tc-wsvg"><circle cx="130" cy="130" r="129" class="tc-rim"/>${segs}${lamps}<circle cx="130" cy="130" r="16" class="tc-hub"/></svg><div class="tc-whint" id="tcWHint">START: schneller · nochmal START: stoppen</div></div>`;
+      const tx = c + 68 * Math.cos(rad(mid)), ty = c + 68 * Math.sin(rad(mid));
+      return `<path id="tcSeg${i}" class="tc-seg ${stop ? 'stop' : ''}" d="M${c},${c} L${p(a0, R)} A${R},${R} 0 0 1 ${p(a1, R)} Z"/><text id="tcSegT${i}" x="${tx}" y="${ty}" transform="rotate(${mid + 90} ${tx} ${ty})" class="tc-segt">${stop ? 'STOP' : 'REWIN'}</text>`; }).join('');
+    const lamps = Array.from({ length: 36 }, (_, i) => { const a = (i * 10 - 90) * Math.PI / 180; return `<circle id="tcLamp${i}" class="tc-lamp" cx="${130 + 96 * Math.cos(a)}" cy="${130 + 96 * Math.sin(a)}" r="3.2"/>`; }).join('');
+    over.innerHTML = `<div class="tc-wheelbox"><div class="tc-wtitle">REWIN · Runde ${k + 1} · ${round.stops} Stop</div><div class="tc-wwrap"><svg viewBox="0 0 260 260"><defs><radialGradient id="tcgG" cx="130" cy="130" r="104" gradientUnits="userSpaceOnUse"><stop offset="0.25" stop-color="#0B5A3A"/><stop offset="1" stop-color="#1FBF77"/></radialGradient><radialGradient id="tcgR" cx="130" cy="130" r="104" gradientUnits="userSpaceOnUse"><stop offset="0.25" stop-color="#6A0D12"/><stop offset="1" stop-color="#FF3B3B"/></radialGradient></defs><circle cx="130" cy="130" r="106" fill="#0A0612"/>${segs}${lamps}</svg><img class="tc-wrim" src="/tcg/rewin_rim.webp?v=${IMGV}" alt=""><img class="tc-whub" src="/tcg/rewin_hub.webp?v=${IMGV}" alt=""></div><div class="tc-whint" id="tcWHint">START: schneller · nochmal START: stoppen</div></div>`;
     sfx('tick');
     const landed = await tcRunLight(target);
     const seg = $('#tcSeg' + target); if (seg) seg.classList.add('win');
     if (round.rewin) {
+      if (!stopSegs.includes(target)) stopSegs.push(target); // dieses Feld ist ab jetzt STOP
+      if (seg) { seg.classList.add('turn'); const tt = $('#tcSegT' + target); if (tt) tt.textContent = 'STOP'; }
       tcSetMsg(`🟢 REWIN! Das Vollbild wird nochmal gezählt`); sfx('exact'); await tcSleep(900);
       over.innerHTML = ''; sum = await tcCountLines(lines, sum); await tcSleep(400);
     } else { tcSetMsg('🔴 STOP · weiter geht es'); sfx('wrong'); await tcSleep(1100); over.innerHTML = ''; }
