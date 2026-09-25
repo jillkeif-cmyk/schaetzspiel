@@ -1733,6 +1733,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .oa-chips{display:flex;flex-wrap:wrap;gap:6px}.oa-chip{padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.07);font:700 12px Archivo}.oa-chip.r-mythic,.oa-chip.r-ghost{background:rgba(255,120,220,.2)}.oa-chip.r-ext,.oa-chip.r-legend{background:rgba(255,210,63,.18)}
 .oa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.oa-card{position:relative;text-align:center}.oa-card img{width:100%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.5)}.oa-card small{display:block;margin-top:3px;font:700 11px/1.2 Archivo}.oa-card em{font-style:normal;color:#FFD23F;font-size:10.5px}
 .oa-card.v-mythic img,.oa-card.v-ghost img{box-shadow:0 0 14px rgba(255,120,220,.8)}.oa-card.v-ext img{box-shadow:0 0 12px rgba(120,220,255,.7)}.oa-n{position:absolute;top:4px;right:4px;padding:1px 6px;border-radius:99px;background:#000c;font:900 12px Archivo;color:#FFD23F}.oa-new{position:absolute;top:4px;left:4px;padding:1px 6px;border-radius:99px;background:#FF4FA3;font:900 10px Archivo;font-style:normal;color:#fff}
+.ldisc.many .lin{transform:translate(-50%,calc(min(84vw,340px) * -0.35))}.ldisc.many .lin b{font-size:12.5px}.ldisc.many .lin b.pk{font-size:8.5px;letter-spacing:.2px}.ldisc.many .lin img{width:24px}.ldisc.many .lin img.dia{width:14px}.ldisc.many .lin i{font-size:16px}
 </style>
 </head>
 <body>
@@ -1758,7 +1759,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '188';
+const AVER = '190';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2396,7 +2397,7 @@ function renderVip(box) {
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
     <div class="lwrap">
-      <div class="ldisc" id="lwheel" style="background:conic-gradient(${conic});transform:rotate(${wheelDeg}deg)">
+      <div class="ldisc ${N > 10 ? 'many' : ''}" id="lwheel" style="background:conic-gradient(${conic});transform:rotate(${wheelDeg}deg)">
         <div class="lsheen"></div>
         ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister', Gruselnacht: 'Grusel', Toon: 'Toon' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '150.000' : l)}</b>`}</span></span>`).join('')}
       </div>
@@ -4870,15 +4871,15 @@ function loadAdmin() {
     tbb.ontoggle = () => { if (tbb.open) draw(); }; }
   const hmb = $('#hmBox'); if (hmb && !hmb.dataset.bound) { hmb.dataset.bound = 1;
     const draw = () => { const c = (home && home.homeCfg) || { newsCard: true, promo: { on: false, game: 'crypt', text: '' } }; const P = c.promo;
-      $('#hmAdm').innerHTML = `<div class="row" style="gap:8px"><span class="grow">📰 Update-Karte auf der Startseite</span><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNews">${c.newsCard ? 'wird angezeigt' : 'ausgeblendet'}</button></div>
+      $('#hmAdm').innerHTML = `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="grow">📰 Update-Karte auf der Startseite: <b style="color:${c.newsCard ? '#7CF0A8' : '#FF8A80'}">${c.newsCard ? 'sichtbar' : 'ausgeblendet'}</b></span><button class="btn small ${c.newsCard ? 'ghost' : ''}" id="hmNewsOn">📰 Anzeigen</button><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNewsOff">🙈 Ausblenden</button></div>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
         <div class="row" style="gap:8px"><span class="grow">🎰 Automaten-Werbung</span><button class="btn small ${P.on ? '' : 'ghost'}" id="hmPromoOn">${P.on ? 'an' : 'aus'}</button></div>
         <div class="hm-games">${Object.entries(PROMO_GAMES).map(([k, g]) => `<button class="hm-g ${P.game === k ? 'on' : ''}" data-hmg="${k}"><img src="${g.logo}?v=${IMGV}" alt=""><small>${esc(g.name)}</small></button>`).join('')}</div>
         <input class="field" id="hmText" maxlength="120" placeholder="Text, z. B. Probier jetzt das neue Buch der Gruft!" value="${esc(P.text || '')}" style="margin-top:8px">
         <button class="btn small" id="hmSave" style="width:100%;margin-top:8px">Werbung speichern</button>
         <p class="sub" style="margin:6px 0 0;font-size:12px">Ein Tipp auf die Karte setzt Spieler direkt an eine freie Maschine. Sind beide belegt, kommt ein Hinweis.</p>`;
-      const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); }).catch((e) => toast(e.message));
-      $('#hmNews').onclick = () => send({ newsCard: !c.newsCard }, c.newsCard ? '📰 Update-Karte ausgeblendet' : '📰 Update-Karte wird angezeigt');
+      const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); if (!newsPosts) loadNews(); else renderNewsCard(); renderPromo(); }).catch((e) => toast(e.message));
+      $('#hmNewsOn').onclick = () => send({ newsCard: true }, '📰 Update-Karte wird bei allen angezeigt'); $('#hmNewsOff').onclick = () => send({ newsCard: false }, '🙈 Update-Karte bei allen ausgeblendet');
       $('#hmPromoOn').onclick = () => send({ promo: { on: !P.on, game: P.game, text: $('#hmText').value } }, P.on ? 'Werbung aus' : '🎰 Werbung an');
       $('#hmAdm').querySelectorAll('[data-hmg]').forEach((b) => { b.onclick = () => { P.game = b.dataset.hmg; $('#hmAdm').querySelectorAll('[data-hmg]').forEach((x) => x.classList.toggle('on', x === b)); }; });
       $('#hmSave').onclick = () => send({ promo: { on: true, game: P.game, text: $('#hmText').value } }, '🎰 Werbung gespeichert und eingeschaltet'); };
