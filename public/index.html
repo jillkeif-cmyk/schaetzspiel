@@ -1952,6 +1952,8 @@ body.u2nav-on #toast{bottom:calc(66px + max(0px, env(safe-area-inset-bottom,0px)
 #u2nav i{top:2px;right:10%;min-width:15px;height:15px;font-size:9px;line-height:15px}
 body.u2nav-on #wrap{padding-bottom:calc(54px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
 body.u2nav-on #toast{bottom:calc(60px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
+.u2-hubback{align-self:flex-start;margin:0 0 6px}
+body.ui2 #app:not(.maint) #giftBox,body.ui2 #app:not(.maint) #annBar,body.ui2 #app:not(.maint) #boostBar{order:-1}
 </style>
 </head>
 <body>
@@ -1977,7 +1979,7 @@ body.u2nav-on #toast{bottom:calc(60px + max(0px, env(safe-area-inset-bottom,0px)
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '213';
+const AVER = '214';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2823,9 +2825,10 @@ function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielb
 }
 function renderSlotsHub(box) { // neues Design: alle Automaten auf einen Blick, Tipp öffnet die Maschinenwahl
   const G = [['crypt', 'Buch der Gruft'], ['anubis', 'Auge des Anubis'], ['jester', 'Narrenkappe'], ['triple', 'Triple Crown']];
+  const test = (g) => !!(home && !home.me.admin && ((g === 'crypt' && home.cryptTest) || (g === 'jester' && home.jesterTest) || (g === 'anubis' && home.anubisTest)));
   const ms = tcMachines || [], free = (g) => ms.filter((m) => m.game === g && !m.user).length, tot = (g) => ms.filter((m) => m.game === g).length || 2;
   box.innerHTML = `<div class="u2-slots">${G.map(([g, n]) => { const lock = isLocked(g), nb = home && home.tabBadges && home.tabBadges[g], f = free(g);
-    return `<button class="u2-slot ${lock ? 'locked' : ''}" ${lock ? `data-cglock="${g}"` : `data-cg="${g}"`} aria-label="${n}"><img src="/promo/${g}.webp?v=${IMGV}" alt=""><b>${n}</b><small class="${lock ? 'lk' : f ? 'ok' : 'full'}">${lock ? '🔒 gesperrt' : f ? `${f} von ${tot(g)} frei` : 'belegt · zuschauen'}</small>${nb && !lock ? `<i>${esc(nb)}</i>` : ''}</button>`; }).join('')}</div>
+    return `<button class="u2-slot ${lock ? 'locked' : ''}" ${lock ? `data-cglock="${g}"` : `data-cg="${g}"`} aria-label="${n}"><img src="/promo/${g}.webp?v=${IMGV}" alt=""><b>${n}</b><small class="${lock ? 'lk' : test(g) ? 'lk' : f ? 'ok' : 'full'}">${lock ? '🔒 gesperrt' : test(g) ? '🧪 bald verfügbar' : f ? `${f} von ${tot(g)} frei` : 'belegt · zuschauen'}</small>${nb && !lock ? `<i>${esc(nb)}</i>` : ''}</button>`; }).join('')}</div>
     <p class="sub center" style="margin:12px 0 0">Tipp auf einen Automaten und such dir eine Maschine aus.</p>`;
 }
 function renderCasino() { try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
@@ -3542,6 +3545,7 @@ function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
   const me = home && home.me && home.me.id;
   const GM = ['anubis', 'jester', 'crypt'].includes(cgame) ? cgame : 'triple', J = GM !== 'triple', LOGO = { triple: '/tcg/tc_logo.webp', jester: '/jc/logo.webp', anubis: '/an/logo.webp', crypt: '/cr/logo.webp' }[GM], TEST = GM === 'jester' ? home && home.jesterTest : GM === 'anubis' ? home && home.anubisTest : GM === 'crypt' ? home && home.cryptTest : false;
   box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${IMGV}" alt="${{ triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft' }[GM]}"></div>
+    ${ui2On() ? '<button class="btn small ghost u2-hubback" data-u2="hub">← Alle Automaten</button>' : ''}
     <p class="sub" style="text-align:center;margin:0 0 10px">Zwei Maschinen. Setz dich an eine freie oder schau jemandem zu.</p>
     <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1, game: 'triple' }, { id: 2, game: 'triple' }, { id: 3, game: 'jester' }, { id: 4, game: 'jester' }, { id: 5, game: 'anubis' }, { id: 6, game: 'anubis' }, { id: 7, game: 'crypt' }, { id: 8, game: 'crypt' }]).filter((m) => (m.game || 'triple') === GM).map((m) => {
       const mine = m.user && m.user.id === me;
@@ -3574,6 +3578,7 @@ function tcBackToLobby() {
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
   tc.watch = null; tc.seat = null; tc.risk = null; tc.mode = 'play'; tc.busy = false; tc.startHook = null; tc.startLabel = null;
   const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); }
+  try { ui2Chrome(); } catch (e) {} // Markierung „sitzt am Automaten“ aufheben, Reiter wieder zeigen
 }
 // Zuschauen: Ereignisse der Maschine nacheinander abspielen
 async function tcWatchRun() {
@@ -3624,6 +3629,7 @@ function tcWatchLadder(R) { // Leiter nur zum Ansehen, ohne Knöpfe
   over.innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? '<b>AUSSPIELUNG</b>' : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div></div>`;
 }
 function renderTriple(box) {
+  try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   if (!tc.seat && !tc.watch) { if (!$('#tcLobby')) renderTcLobby(box); return; }
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
@@ -5120,7 +5126,7 @@ function loadAdmin() {
         <textarea class="field" id="mtText" maxlength="300" rows="2" placeholder="Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!">${esc(M.text || '')}</textarea>
         <div class="row" style="gap:6px"><button class="btn small ${M.on ? 'ghost' : ''}" id="mtOn">🛠️ Wartung starten</button><button class="btn small ${M.on ? '' : 'ghost'}" id="mtOff">✅ Wartung beenden</button></div></div>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
-        <div class="row" style="gap:8px;flex-wrap:wrap"><span class="grow">📰 Update-Karte auf der Startseite: <b style="color:${c.newsCard ? '#7CF0A8' : '#FF8A80'}">${c.newsCard ? 'sichtbar' : 'ausgeblendet'}</b></span><button class="btn small ${c.newsCard ? 'ghost' : ''}" id="hmNewsOn">📰 Anzeigen</button><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNewsOff">🙈 Ausblenden</button></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><span class="grow">📰 Update-Knopf auf der Startseite: <b style="color:${c.newsCard ? '#7CF0A8' : '#FF8A80'}">${c.newsCard ? 'sichtbar' : 'ausgeblendet'}</b></span><button class="btn small ${c.newsCard ? 'ghost' : ''}" id="hmNewsOn">📰 Anzeigen</button><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNewsOff">🙈 Ausblenden</button></div>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
         <div class="row" style="gap:8px"><span class="grow">🎰 Automaten-Werbung</span><button class="btn small ${P.on ? '' : 'ghost'}" id="hmPromoOn">${P.on ? 'an' : 'aus'}</button></div>
         <div class="hm-games">${Object.entries(PROMO_GAMES).map(([k, g]) => `<button class="hm-g ${P.game === k ? 'on' : ''}" data-hmg="${k}"><img src="${g.logo}?v=${IMGV}" alt=""><small>${esc(g.name)}</small></button>`).join('')}</div>
@@ -5691,7 +5697,10 @@ function u2Act(a) {
     return;
   }
   if (k === 'daily') return dailyDialog();
+  if (k === 'hub') { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'isle') return toast('🏝️ Deine Insel wächst mit deinem Prestige. Die Welten sind noch in Arbeit, bald gibt es hier mehr zu entdecken!');
+  if (k === 'ann') { const g = $('#annBar'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (k === 'boost') { const b = home.boost || {}; return toast('⚡ Doppel-XP läuft: ' + [b.xp && 'Level-XP', b.cxp && 'Casino-XP', b.pxp && 'Pass-XP'].filter(Boolean).join(', ')); }
   if (k === 'gifts') { const g = $('#giftBox'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (k === 'promo') return home.promo ? promoGo(home.promo.game) : u2Act('tab:casino');
   if (k === 'hot') { const h = home.me.hot; return toast(h && h.active ? '🔥 Hot Time läuft: doppelte XP im Quiz' : '🔥 Hot Time: jeden Abend ab 20 Uhr doppelte XP im Quiz'); }
@@ -5702,6 +5711,7 @@ function u2Act(a) {
   }
   if (k === 'solo') { window.__u2mode = 'solo'; const b = $('#createSolo'); if (b) b.click(); return; }
   if (k === 'menu') return u2Menu();
+  if (k === 'code') { page = 'profile'; render(); loadHome().then(() => { if (page === 'profile') { refreshProfile(); setTimeout(() => { const f = $('#codeIn'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus(); } }, 300); } }).catch(() => {}); return; }
 }
 function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
   const me = home.me, row = (a, ic, l, s, n) => `<button class="u2-mi" data-u2="${a}"><span class="u2-mic">${ic}</span><span class="grow"><b>${l}</b>${s ? `<small>${s}</small>` : ''}</span>${n ? `<i class="u2-mb">${n}</i>` : ''}</button>`;
@@ -5713,6 +5723,7 @@ function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
     ${row('go:challenges', '🏆', 'Herausforderungen', 'Erfolge und Belohnungen')}
     ${row('daily', '🎁', 'Tagesbelohnung', 'Jeden Tag abholen')}
     ${row('go:ranks', '📊', 'Ranglisten', 'Welt, Punkte, Casino, Sammler')}
+    ${row('code', '🎟', 'Gutscheincode einlösen', 'Im Profil unten')}
     ${row('go:support', '🎫', 'Support & Feedback', 'Fehler melden, Ideen schicken', tk || '')}
     ${me.admin ? row('go:admin', '⚙️', 'Admin', 'Alle Einstellungen des Spiels') : ''}
   </div>`;
@@ -5728,6 +5739,7 @@ function fillU2Home() {
   const gifts = (me.gifts || []).length, wl = me.wheelLeft || 0, hv = me.hot;
   const packs = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && !d.potion && !d.display ? p.count : 0); }, 0) : 0;
   const pr = home.promo, lob = (L && L.open ? L.open.length : 0), full = L && L.running >= L.max;
+  const boostOn = !!(home.boost && (home.boost.xp || home.boost.cxp || home.boost.pxp)), passOn = me.passTier !== undefined;
   const pt = me.passTier || 0, badge = (n) => (n ? `<i class="u2-b">${n}</i>` : '');
   const sb = (a, img, label, n, sub, ring) => `<button class="u2-sb" data-u2="${a}" style="--ring:${ring}"><span class="u2-sbi"><img src="${img}" alt="">${badge(n)}</span><span class="u2-sbl">${label}</span>${sub ? `<span class="u2-sbs">${sub}</span>` : ''}</button>`;
   const hotTxt = hv ? (hv.active ? 'läuft' : 'ab 20 Uhr') : '';
@@ -5738,14 +5750,13 @@ function fillU2Home() {
       <button class="u2-banner" data-u2="go:profile" aria-label="Profil">${t && t.id ? `<img class="bg" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt="" onerror="this.remove()">` : ''}<span class="shade"></span>
         <span class="who">${avatar(me, 56)}<span class="nm"><b>${esc(me.name)}</b><small>${t ? esc(t.text || '') : 'Kein Titel'}</small><em>${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}${fmt(me.rankPoints || 0)} WP</em></span></span></button>
       <div class="u2-side"><div class="u2-icons"><button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
-        <button class="u2-pass" data-u2="go:pass" aria-label="Kronenpass"><img src="/news/pass_logo.webp?v=${IMGV}" alt=""><span><b>Stufe ${pt}</b><span class="bar"><span style="width:${Math.min(100, Math.round(100 * pt / 30))}%"></span></span></span></button></div>
+        ${passOn ? '' : '<!--'}<button class="u2-pass" data-u2="go:pass" aria-label="Kronenpass"><img src="/news/pass_logo.webp?v=${IMGV}" alt=""><span><b>Stufe ${pt}</b><span class="bar"><span style="width:${Math.min(100, Math.round(100 * pt / 30))}%"></span></span></span></button>${passOn ? '' : '-->'}</div>
     </div>
     <div class="u2-stage">
-      <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}${hv && hv.active ? sb('hot', U2('i_flame'), 'Hot Time', '🔥', 'läuft', '#FF8C50') : ''}</div>
+      <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}${hv && hv.active ? sb('hot', U2('i_flame'), 'Hot Time', '🔥', 'läuft', '#FF8C50') : ''}${boostOn ? sb('boost', U2('i_flame'), 'Doppel-XP', '2×', '', '#FFD23F') : ''}</div>
       <div class="u2-center"><button class="u2-isle" data-u2="isle" aria-label="Deine Insel"><img src="${U2('isle_' + Math.max(0, Math.min(11, me.prestige || 0)))}" alt=""><span>${esc(u2IsleName(me.prestige || 0))}</span></button><h1>SCHÄTZ-QUIZ</h1><p>Wer am nächsten dran ist, gewinnt</p></div>
-      <div class="u2-rail">${sb('go:news', (newsPosts && newsPosts[0] && newsPosts[0].hero ? newsPosts[0].hero + '?v=' + IMGV : U2('i_news')), 'Update', u2NewsNew() ? 'NEU' : '', '', '#FF4FA3')}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
+      <div class="u2-rail">${home.newsCardOff ? '' : sb('go:news', (newsPosts && newsPosts[0] && newsPosts[0].hero ? newsPosts[0].hero + '?v=' + IMGV : U2('i_news')), 'Update', u2NewsNew() ? 'NEU' : '', '', '#FF4FA3')}${gifts ? sb('gifts', '/tcg/chest.webp?v=' + IMGV, 'Geschenk', gifts, '', '#FF4FA3') : ''}${home.banner ? sb('ann', U2('i_news'), 'Nachricht', home.banner.claimable ? '🎁' : '!', '', '#FFD23F') : ''}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
     </div>
-    ${gifts ? `<button class="u2-gift" data-u2="gifts">🎁 <b>${gifts} Geschenk${gifts === 1 ? '' : 'e'} warten</b> · jetzt abholen ›</button>` : ''}
     <div class="u2-play"><button class="u2-pb" data-u2="solo" aria-label="Solo-Quiz"><img src="${U2('i_quiz')}" alt=""><span>Solo</span></button>
       <button class="u2-go ${full ? 'off' : ''}" data-u2="play"><b>SPIELEN</b><small>${full ? 'Alle Plätze belegt' : 'Freies Spiel · Themen wählen'}</small></button>
       <button class="u2-pb" data-u2="ranked" aria-label="Ranglisten-Match"><img src="${U2('i_trophy')}" alt=""><span>Rangliste</span></button></div>`;
