@@ -61,7 +61,7 @@ const publicStats = (u) => ({
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp, u.prestige),
   ...(() => { const kp = require('./lib/pass'); return kp.state() !== 'off' && u.pass_season === kp.SEASON.id ? { passTier: kp.tierOf(u.pass_xp), passXp: Number(u.pass_xp) || 0, passPrem: !!Number(u.pass_prem) } : {}; })(),
 });
-const auth = async (req) => { const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); return id ? store.userById(id) : null; };
+const auth = async (req) => { if (req._authP) return req._authP; const id = readToken((req.headers.authorization || '').replace('Bearer ', '')); req._authP = id ? store.userById(id) : Promise.resolve(null); return req._authP; }; // je Anfrage nur einmal aus der Datenbank
 
 const app = express();
 app.set('trust proxy', 1);
@@ -764,7 +764,9 @@ const takeBet = async (u, amount, min = MIN_BET) => { // min: Triple Crown erlau
 // Casino-Statistik: Runden, Gewinne, bester Gewinn, Bilanz und eigene XP
 // ---------- Erfolge melden: neue Herausforderungsstufen und frisch freigeschaltete Stücke ----------
 const progressSnap = new Map(); // userId -> { chal: {key: done}, items: Set }
-async function checkProgress(uid) {
+const progT = new Map(); // gebündelt: alle Aufrufe innerhalb von 3 s ergeben eine Prüfung (vorher nach jedem Dreh, samt ganzer Kartensammlung)
+function checkProgress(uid) { if (progT.has(uid)) return; progT.set(uid, setTimeout(() => { progT.delete(uid); checkProgressNow(uid).catch(() => {}); }, 3000)); }
+async function checkProgressNow(uid) {
   try {
     const u = await store.userById(uid); if (!u) return;
     const u2 = { ...u, ...(await cardStats(uid)), _mod: isMod(u) };
@@ -825,10 +827,11 @@ app.post('/api/admin/locks', async (req, res) => {
 });
 let BIGWIN_MIN = 50000; // ab so vielen Diamanten Gewinn sehen es alle, die online sind (Admin: Einstellung bigwin_min, 0 = aus)
 store.setting('bigwin_min').then((v) => { if (v !== null && v !== undefined && v !== '') BIGWIN_MIN = Math.max(0, Number(v) || 0); }).catch(() => {});
+const bestHit = new Map(); // von casinoStat gesetzt, wenn der Gewinn ein neuer Bestwert ist
 const bigWin = async (uid, game, won) => {
+  const hit = bestHit.get(uid) === Math.round(won); if (hit) { bestHit.delete(uid); await store.save(uid, { casino_best_game: String(game || '').slice(0, 40) }).catch(() => {}); } // neuer Bestwert: Spiel merken
+  if (!BIGWIN_MIN || won < BIGWIN_MIN) return; // normaler Dreh: kein Lesen aus der Datenbank
   const u = await store.userById(uid).catch(() => null); if (!u) return;
-  if (won > 0 && Math.round(Number(u.casino_best) || 0) === Math.round(won) && u.casino_best_game !== game) await store.save(uid, { casino_best_game: String(game || '').slice(0, 40) }).catch(() => {}); // neuer Bestwert: Spiel merken
-  if (!BIGWIN_MIN || won < BIGWIN_MIN) return;
   io.emit('bigwin', { id: uid, name: u.name, game, amount: Math.round(won) });
   console.log(`Großer Gewinn: ${u.name} ${won} bei ${game}`);
 };
@@ -840,16 +843,19 @@ const casinoStat = async (uid, stake, won, risk = stake) => {
   const today = daily.dayKey();
   const dayMove = u.casino_day && u.casino_day !== today ? { cash_prev_day: u.casino_day, cash_prev_net: Number(u.casino_day_net) || 0 } : {};
   const dayNet = (u.casino_day === today ? Number(u.casino_day_net) || 0 : 0) + net;
+  const gainX = vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp');
+  const newCxp = (Number(u.casino_xp) || 0) + gainX, newPcxp = kpass.active() ? (Number(u.pass_cxp) || 0) + gainX : Number(u.pass_cxp) || 0;
+  if (won > 0 && won > (Number(u.casino_best) || 0)) bestHit.set(uid, Math.round(won)); // neuer Bestwert: bigWin merkt sich das Spiel, ohne erneut zu lesen
   await store.save(uid, {
     ...dayMove, casino_day: today, casino_day_net: dayNet,
     casino_rounds: (Number(u.casino_rounds) || 0) + 1,
     casino_wins: (Number(u.casino_wins) || 0) + (won > stake ? 1 : 0),
     casino_best: Math.max(Number(u.casino_best) || 0, won),
     casino_net: (Number(u.casino_net) || 0) + net,
-    casino_xp: (Number(u.casino_xp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp'),
-    ...(kpass.active() ? { pass_cxp: (Number(u.pass_cxp) || 0) + vip.xpFor(risk, won, stake) * (hot.active() ? 2 : 1) * (boost.get().cxp ? 2 : 1) * potions.mult(uid, 'cxp') } : {}), // Casino-Strang im Kronen-Pass
+    casino_xp: newCxp,
+    ...(kpass.active() ? { pass_cxp: newPcxp } : {}), // Casino-Strang im Kronen-Pass
   });
-  store.userById(uid).then((f) => { if (f) io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('me:cxp', { cxp: Number(f.casino_xp) || 0, pcxp: Number(f.pass_cxp) || 0, tier: vip.tierIndex(Number(f.casino_xp) || 0) }); }); }).catch(() => {}); // Casino-XP sofort live anzeigen
+  io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('me:cxp', { cxp: newCxp, pcxp: newPcxp, tier: vip.tierIndex(newCxp) }); }); // gerade berechnet, nicht erneut lesen }).catch(() => {}); // Casino-XP sofort live anzeigen
   setTimeout(() => checkProgress(uid), 400);
 };
 const payOut = async (uid, n) => {
@@ -901,7 +907,7 @@ const tcPush = () => io.emit('tc:list', tcList());
 // Zuschauer zählen, der Admin schaut unsichtbar zu (keine Meldung, nicht im 👀-Zähler)
 const roomWatchers = (room) => [...(io.sockets.adapter.rooms.get(room) || [])].filter((sid) => { const so = io.sockets.sockets.get(sid); return !(so && so.data.user && isAdmin(so.data.user)); }).length;
 const notifyWatched = (uid, watcher, game) => { if (!uid || !watcher || uid === watcher.id || isAdmin(watcher)) return; io.sockets.sockets.forEach((so) => { if (so.data.user && so.data.user.id === uid) so.emit('watch:new', { name: watcher.name, game }); }); }; // „X schaut dir zu“
-const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (!m) return; store.userById(uid).then((f) => io.to('tc' + m).emit('tc:ev', { machine: m, dia: f ? Number(f.diamonds) || 0 : null, ...ev })).catch(() => io.to('tc' + m).emit('tc:ev', { machine: m, ...ev })); }; // mit Guthaben des Spielers für die Zuschauer
+const tcEmit = (uid, ev) => { const m = tcSeatOf(uid); if (!m) return; const room = io.sockets.adapter.rooms.get('tc' + m); if (!room || !room.size) return; /* niemand schaut zu: nichts lesen, nichts senden */ store.userById(uid).then((f) => io.to('tc' + m).emit('tc:ev', { machine: m, dia: f ? Number(f.diamonds) || 0 : null, ...ev })).catch(() => io.to('tc' + m).emit('tc:ev', { machine: m, ...ev })); }; // mit Guthaben des Spielers für die Zuschauer
 async function tcRelease(uid) { // aufstehen: offener Gewinn wird automatisch gutgeschrieben
   const m = tcSeatOf(uid); if (!m) return;
   const open = tripleOpen.get(uid); if (open) await tripleFinish(uid, open, open.win).catch(() => {});
@@ -2000,9 +2006,10 @@ app.post('/api/admin/reports', async (req, res) => { // block = dauerhaft sperre
 app.get('/api/friends', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    const out = [];
-    for (const f of await store.friendList(u.id)) {
-      const o = await store.userById(f.id); if (!o) continue;
+    const out = [], fl = await store.friendList(u.id);
+    const byIdF = new Map((await store.usersByIds(fl.map((f) => f.id))).map((o) => [o.id, o])); // alle Freunde mit einer Abfrage
+    for (const f of fl) {
+      const o = byIdF.get(f.id); if (!o) continue;
       const m = game.matches.get(game.userMatch.get(o.id));
       out.push({ ...publicStats(o), status: f.status, online: game.online.has(o.id), act: game.online.has(o.id) ? game.activityOf(o.id) : '', idle: game.isIdle(o.id), playing: !!m && m.phase !== 'lobby' && m.phase !== 'finished', watchCode: m && m.phase !== 'lobby' && m.phase !== 'finished' ? m.code : '',
         joinCode: f.status === 'ok' && m && !m.setup && (m.phase === 'lobby' || m.phase === 'countdown') && m.players.size < 8 ? m.code : null });
