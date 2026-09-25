@@ -1742,6 +1742,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .ann.ann-maint{background:linear-gradient(135deg,rgba(255,70,70,.25),rgba(80,15,15,.55));box-shadow:inset 0 0 0 2px #FF6B6B;animation:annpulse 2s ease-in-out infinite}
 @keyframes annpulse{50%{box-shadow:inset 0 0 0 2px #FF6B6B,0 0 18px rgba(255,90,90,.45)}}
 .ann.ann-info .ann-ic,.ann.ann-warn .ann-ic,.ann.ann-maint .ann-ic{font-size:26px}
+.cnavrow button.locked{opacity:.55;filter:grayscale(.7);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}.tab-lock{font:800 10px Archivo;color:#FFB4B4;letter-spacing:.2px}
 </style>
 </head>
 <body>
@@ -1767,7 +1768,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '197';
+const AVER = '198';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2961,7 +2962,7 @@ function renderCards() {
     const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
     const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
     const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${l}${catDot(c)}</button>`).join('');
-    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow">${CAT[curCat].filter(ok).map((k) => { const [l, e] = lab[k] || [k, '']; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
+    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
     window.__ccat = CAT; window.__cok = ok;
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
@@ -4963,7 +4964,7 @@ function loadAdmin() {
   const ae = document.activeElement; if (ae && (/^gf/.test(ae.id || '') || (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.closest('#adminBody')))) { adminTimer = setTimeout(loadAdmin, 4000); return; } // nicht mitten im Tippen neu zeichnen // nicht mitten im Tippen neu zeichnen
   if (!adminUsers) api('/api/admin/users').then((r) => { adminUsers = (r.users || []).sort((a, b) => a.name.localeCompare(b.name)); renderAdmin(); }).catch(() => {});
   api('/api/admin/pool').then((d) => { adminD = d; renderAdmin(); }).catch((e) => { const b = $('#adminBody'); if (b) b.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
-  adminTimer = setTimeout(() => { if (page === 'admin' && !S) loadAdmin(); }, 4000); // live mitlaufen
+  adminTimer = setTimeout(() => { if (page === 'admin' && !S) { if (document.hidden) { adminTimer = setTimeout(loadAdmin, 10000); return; } loadAdmin(); } }, 10000); // alle 10 s mitlaufen, im Hintergrund nicht (spart Server-Last)
 }
 function toggleLock(key) { // Spiel sperren oder freigeben
   const g = (adminLocks || []).find((x) => x.key === key); if (!g) return;
@@ -6380,6 +6381,7 @@ document.addEventListener('click', (e) => {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
   else if (t.dataset.ccat) { const C = window.__ccat || {}, ok = window.__cok || (() => true), last = (window.__clast || {})[t.dataset.ccat]; const list = (C[t.dataset.ccat] || []).filter(ok); const k = last && list.includes(last) ? last : list[0]; if (k) { tcStandQuiet(k); cgame = k === 'wheel' ? 'vip' : k; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); } }
+  else if (t.dataset.cglock) { toast('🔒 Dieses Spiel ist gerade gesperrt. Schau später wieder vorbei!'); }
   else if (t.dataset.promo) { promoGo(t.dataset.promo); }
   else if (t.dataset.cg) { tcStandQuiet(t.dataset.cg === 'vip' ? 'wheel' : t.dataset.cg); cgame = t.dataset.cg; bj = null; window.__clast = window.__clast || {}; const C = window.__ccat || {}; const kk = cgame === 'vip' ? 'wheel' : cgame; Object.keys(C).forEach((c) => { if (C[c].includes(kk)) window.__clast[c] = kk; }); renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbstep) { // Einsatz in 100er-Schritten ändern, ohne zu tippen
