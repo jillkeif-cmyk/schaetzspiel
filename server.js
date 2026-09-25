@@ -178,7 +178,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1700,6 +1700,8 @@ app.post('/api/card', async (req, res) => {
 });
 
 // Code einlösen
+let homeCfg = { newsCard: true, promo: { on: false, game: 'crypt', text: '' } }; // Startseite: Update-Karte und Automaten-Werbung (Admin-Menü)
+store.setting('home_cfg').then((v) => { if (v) { try { const c = JSON.parse(v); homeCfg = { ...homeCfg, ...c, promo: { ...homeCfg.promo, ...(c.promo || {}) } }; } catch (e) {} } }).catch(() => {});
 let tabBadges = { jester: 'NEU', anubis: 'NEU' }; // Abzeichen an den Casino-Reitern, im Admin-Menü änderbar
 store.setting('tab_badges').then((v) => { if (v) tabBadges = JSON.parse(v); if (!('crypt' in tabBadges)) tabBadges.crypt = 'NEU'; }).catch(() => {});
 if (!('crypt' in tabBadges)) tabBadges.crypt = 'NEU';
@@ -1742,6 +1744,18 @@ app.post('/api/admin/banner', async (req, res) => {
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
+});
+app.post('/api/admin/home', async (req, res) => { // Startseite: Update-Karte an/aus, Automaten-Werbung (Spiel, Text, an/aus)
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  const b = req.body || {};
+  if ('newsCard' in b) homeCfg.newsCard = !!b.newsCard;
+  if (b.promo && typeof b.promo === 'object') {
+    const p = b.promo;
+    if ('on' in p) homeCfg.promo.on = !!p.on;
+    if (['triple', 'jester', 'anubis', 'crypt'].includes(p.game)) homeCfg.promo.game = p.game;
+    if ('text' in p) homeCfg.promo.text = String(p.text || '').slice(0, 120);
+  }
+  await store.setting('home_cfg', JSON.stringify(homeCfg)); io.emit('home:cfg', { newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null }); res.json({ homeCfg });
 });
 app.post('/api/admin/tabbadge', async (req, res) => { // Abzeichen setzen oder entfernen (leerer Text = weg)
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
