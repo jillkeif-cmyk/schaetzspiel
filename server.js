@@ -1766,7 +1766,7 @@ store.setting('admin_codes').then(async (v) => { if (v) adminCodes = JSON.parse(
 const saveCodes = () => store.setting('admin_codes', JSON.stringify(adminCodes));
 let banner = { on: false };
 store.setting('banner').then((v) => { if (v) banner = JSON.parse(v); }).catch(() => {});
-const bannerFor = (u) => { if (!banner.on) return null; if (!banner.all && !(banner.ids || []).includes(u.id)) return null; const done = (banner.claimed || []).some((x) => x.id === u.id); if (banner.reward && done) return null; return { id: banner.id, text: banner.text, reward: banner.reward ? rewardText(banner.reward) : '', claimable: !!banner.reward }; };
+const bannerFor = (u) => { if (!banner.on) return null; if (!banner.all && !(banner.ids || []).includes(u.id)) return null; const done = (banner.claimed || []).some((x) => x.id === u.id); if (banner.reward && done) return null; return { id: banner.id, kind: banner.kind || 'ann', text: banner.text, reward: banner.reward ? rewardText(banner.reward) : '', claimable: !!banner.reward }; };
 app.post('/api/banner/claim', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
@@ -1789,7 +1789,8 @@ app.post('/api/admin/banner', async (req, res) => {
   const reward = req.body.reward ? cleanReward(req.body.reward) : null;
   const ids = []; if (!req.body.all) for (const n of (req.body.names || [])) { const t = await store.userByName(String(n)); if (t) ids.push(t.id); }
   if (!req.body.all && !ids.length) return res.status(400).json({ error: 'Bitte Spieler auswählen oder „Alle“.' });
-  banner = { on: true, id: Date.now(), text, reward: reward && (reward.dia || reward.items.length) ? reward : null, all: !!req.body.all, ids, claimed: [] };
+  const kind = ['ann', 'info', 'warn', 'maint'].includes(req.body.kind) ? req.body.kind : 'ann'; // Art der Meldung: Symbol und Farbe
+  banner = { on: true, id: Date.now(), kind, text, reward: reward && (reward.dia || reward.items.length) ? reward : null, all: !!req.body.all, ids, claimed: [] };
   await store.setting('banner', JSON.stringify(banner)); io.emit('banner:changed');
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
