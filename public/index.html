@@ -1748,6 +1748,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .maint-card img{width:min(62vw,240px);height:auto;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));animation:maintbob 3s ease-in-out infinite}@keyframes maintbob{50%{transform:translateY(-6px)}}
 .maint-card h2{margin:4px 0 0;font:400 28px/1.1 Anton,Impact,sans-serif;color:#FFE27A;letter-spacing:.5px}.maint-card p{margin:0;font:700 15px/1.45 Archivo;color:#F3EAFF}.maint-card small{color:var(--muted);font:600 12.5px/1.4 Archivo}
 .maint-adm{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}.maint-adm.on{box-shadow:inset 0 0 0 2px #FF6B6B;background:rgba(255,90,90,.08)}
+.fill-auto,.fill-now{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);margin-top:6px}.fill-auto.on{box-shadow:inset 0 0 0 2px rgba(124,240,168,.6)}
 </style>
 </head>
 <body>
@@ -1773,7 +1774,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '200';
+const AVER = '201';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -5000,20 +5001,19 @@ function renderAdmin() {
       <p class="sub">${d.source === 'pool' ? 'Runden nehmen Fragen aus dem Pool, die keiner der Mitspieler je hatte. Reicht der Pool nicht, wird der Rest live erstellt.' : 'Jede Runde wird live erstellt. Die neuen Fragen wandern trotzdem automatisch in den Pool.'}</p>
     </div>
     <div class="panel adm">
-      <div class="row"><b class="grow">Befüllung</b><span class="adm-st ${d.running ? 'on' : ''}">${!d.running ? (d.aiOk === false ? 'aus · KI-Schlüssel fehlt' : d.themes.some((t) => !t.skip && t.count < t.target) ? `pausiert · ${d.themes.filter((t) => !t.skip && t.count < t.target).length} Kategorien unter dem Ziel` : 'bereit · alle Kategorien am Ziel') : d.batchStatus ? `läuft · 📦 ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'läuft · Sammelauftrag wird vorbereitet' : `läuft · ${d.inFlight} Anfragen gleichzeitig`}</span></div>
-      <div class="row" style="gap:8px;flex-wrap:wrap">
-        <button class="btn small ${d.running ? 'ghost' : ''}" id="admStart" ${d.running ? 'disabled' : ''}>▶ Bis zum Ziel füllen</button>
-        <button class="btn small ghost" id="admStop" ${d.running ? '' : 'disabled'}>⏸ Anhalten</button>
-        <label class="row" style="gap:6px;margin:0"><span class="sub">Standard-Ziel</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label>
-      </div>
+      <div class="row"><b class="grow">Befüllung</b></div>
+      <div class="fill-auto ${d.auto ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🤖 Automatik: ${d.auto ? '<span style="color:#7CF0A8">AN</span>' : '<span style="color:#FF8A80">AUS</span>'}</b><div class="seg"><button data-admauto="1" class="${d.auto ? 'on' : ''}">An</button><button data-admauto="0" class="${d.auto ? '' : 'on'}">Aus</button></div></div>
+        <small class="sub">${d.auto ? 'Der Server füllt selbst nach: nach jedem Match und alle 5 Minuten wird geprüft, ob ein Spieler in einer Kategorie 80 % gesehen hat. Dann werden neue Fragen erstellt.' : 'Es werden keine Fragen von selbst erstellt. Nachfüllen nur, wenn du unten auf „Jetzt nachfüllen“ tippst.'}</small></div>
+      <div class="fill-now"><div class="row" style="gap:8px"><b class="grow">${d.running ? '▶ Jetzt gerade: <span style="color:#7CF0A8">erstellt Fragen</span>' : '⏸ Jetzt gerade: es werden keine Fragen erstellt'}</b></div>
+        <small class="sub">${d.running ? (d.batchStatus ? `📦 Sammelauftrag: ${esc(d.batchStatus)}` : d.mode === 'batch' ? 'Sammelauftrag wird vorbereitet' : `${d.inFlight} Anfragen laufen`) : d.aiOk === false ? '⚠️ KI-Schlüssel fehlt, Erstellen ist nicht möglich.' : d.themes.some((t) => !t.skip && t.count < t.target) ? `${d.themes.filter((t) => !t.skip && t.count < t.target).length} Kategorien liegen unter dem Ziel.` : 'Alle Kategorien sind am Ziel.'}</small>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px">${d.running ? '<button class="btn small" id="admStop">⏹ Anhalten</button><button id="admStart" hidden></button>' : '<button class="btn small" id="admStart">▶ Jetzt nachfüllen (bis zum Ziel)</button><button id="admStop" hidden></button>'}
+        <label class="row" style="gap:6px;margin:0"><span class="sub">Ziel je Kategorie</span><input class="field" id="admTarget" inputmode="numeric" value="${d.target}" style="width:90px;padding:8px"></label></div></div>
       <div class="need-box"><div class="row" style="gap:8px"><button class="btn small ghost" id="admNeed">🔍 Bedarf prüfen</button><small class="sub grow">Zeigt pro Kategorie, wie viele neue Fragen der Spieler noch hat, der am meisten gesehen hat.</small></div><div id="admNeedOut"></div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">Modus</span><div class="seg"><button data-admmode="batch" class="${d.mode === 'batch' ? 'on' : ''}">📦 Sammelauftrag · halber Preis</button><button data-admmode="direct" class="${d.mode === 'direct' ? 'on' : ''}">⚡ Direkt</button></div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub">KI-Modell</span><div class="seg"><button data-admmodel="sonnet" class="${d.model !== 'haiku' ? 'on' : ''}">Sonnet 5 · genauer</button><button data-admmodel="haiku" class="${d.model === 'haiku' ? 'on' : ''}">Haiku 4.5 · halber Preis</button></div></div>
       <p class="sub" style="margin:-4px 0 0;font-size:12px">${d.model === 'haiku' ? '⚡ Haiku: halb so teuer, macht aber häufiger Faktenfehler. „Nachdenken“ gilt bei Haiku nicht.' : '🎯 Sonnet 5: genauere Zahlen und Fakten, doppelt so teuer wie Haiku.'} Gilt für Befüllung und frische Match-Fragen.</p>
       <div class="row" style="gap:8px;flex-wrap:wrap"><span class="sub" style="${d.model === 'haiku' ? 'opacity:.45' : ''}">Nachdenken${d.model === 'haiku' ? ' (nur Sonnet)' : ''}</span><div class="seg"><button data-admeff="low" class="${d.effort === 'low' ? 'on' : ''}">wenig · günstig</button><button data-admeff="medium" class="${d.effort === 'medium' ? 'on' : ''}">mittel</button><button data-admeff="high" class="${d.effort === 'high' ? 'on' : ''}">viel · teuer</button></div></div>
       ${d.batchStatus ? `<p class="sub">📦 Sammelauftrag läuft: ${esc(d.batchStatus)}. Ergebnisse kommen meist nach einigen Minuten, spätestens nach 24 Stunden.</p>` : ''}
-      <label class="row" style="gap:8px;margin:0"><input type="checkbox" id="admAuto" ${d.auto ? 'checked' : ''}> <span>Automatisch nachfüllen, wenn die aktivsten Spieler 80 % einer Kategorie gesehen haben</span></label>
-      <p class="sub" style="margin:0">${d.auto ? '🤖 <b style="color:#7CF0A8">Automatik an:</b> prüft nach jedem Match die Mitspieler und alle 5 Minuten alle aktiven Spieler. Hat jemand 80 % einer Kategorie gesehen, wird so viel nachbestellt, dass er wieder mindestens 30 % neue Fragen hat.' : '🤖 Automatik aus: nachgefüllt wird nur, wenn du oben startest.'}${!d.running && !d.themes.some((t) => t.count < t.target) ? ' „Bis zum Ziel füllen“ hat gerade nichts zu tun, weil alle Kategorien ihr Ziel erreicht haben.' : ''}</p>
       <div class="adm-kpi"><div><b>${fmt(d.distinct || tot)}</b><small>verschiedene Fragen</small></div><div><b>${fmt(d.made)}</b><small>erstellt seit Neustart</small></div><div><b>${fmt(d.rejected)}</b><small>aussortiert seit Neustart</small></div><div><b>${fmt(Math.round(tk.output / 1000))}k</b><small>Tokens seit Neustart</small></div></div>
       <p class="sub">Im Pool liegen ${fmt(tot)} spielbare Fragen, davon ${fmt(d.distinct || tot)} inhaltlich verschieden. ${fmt(d.blocked || 0)} sind gesperrt (Klassiker, Lösung in der Frage oder abgeschnittene Antworten). Gleiche Fragen in anderer Formulierung gelten als gesehen, sobald man eine davon hatte.</p>
       <p class="sub">Tokens dieser Befüllung: ${fmt(tk.input)} Eingabe, ${fmt(tk.output)} Ausgabe in ${fmt(tk.calls)} Anfragen${d.made ? ` · etwa ${fmt(Math.round(tk.output / Math.max(1, d.made)))} Ausgabe-Tokens pro Frage` : ''}.</p>
@@ -5053,7 +5053,7 @@ function renderAdmin() {
   $('#admStart').onclick = () => api('/api/admin/pool', { action: 'start' }).then((d) => { adminD = d; renderAdmin(); if (!d.running) toast(d.aiOk === false ? 'KI-Schlüssel fehlt' : d.themes.some((t) => !t.skip && t.count < t.target) ? 'Befüllung konnte nicht starten' : '✅ Alle aktiven Kategorien sind schon am Ziel. Zum Nachfüllen ein Ziel erhöhen.'); else toast('▶ Befüllung läuft'); }).catch((e) => toast(e.message));
   $('#admStop').onclick = () => adminAct('stop');
   $('#admTarget').onchange = (e) => adminAct('target', e.target.value);
-  $('#admAuto').onchange = (e) => adminAct('auto', e.target.checked);
+  document.querySelectorAll('[data-admauto]').forEach((b) => { b.onclick = () => adminAct('auto', b.dataset.admauto === '1'); });
   document.querySelectorAll('[data-tt]').forEach((x) => { x.onfocus = () => clearTimeout(adminTimer); x.onchange = () => api('/api/admin/pool', { action: 'ttarget', key: x.dataset.tt, value: x.value }).then((d) => { adminD = d; renderAdmin(); loadAdmin(); }).catch((er) => toast(er.message)); });
   document.querySelectorAll('[data-admmode]').forEach((x) => { x.onclick = () => adminAct('mode', x.dataset.admmode); });
   document.querySelectorAll('[data-admeff]').forEach((x) => { x.onclick = () => adminAct('effort', x.dataset.admeff); });
