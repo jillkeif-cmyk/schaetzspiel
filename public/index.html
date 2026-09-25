@@ -1758,7 +1758,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '187';
+const AVER = '188';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -4265,7 +4265,7 @@ const tierName = (t) => TIER_NAMES[Math.max(0, Math.min(TIER_NAMES.length - 1, N
 function casinoRow(u, i, me2) {
   return `<div class="pl crow ${me2 && u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}">
     <span class="pos">${i + 1}</span>${avatar(u, 40)}
-    <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span>${titleHtml(u)}</span>
+    <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? ` · ${esc(u.casinoBestGame)}` : ''}</span>${titleHtml(u)}</span>
     <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(tierName(u.casinoTier))}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
@@ -6011,7 +6011,7 @@ function update() {
       const list = (home && home.casinoTop) || [];
       const me2 = home && home.me;
       ct.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Casino-Rangliste</h2>
-        <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
+        <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? ` · ${esc(u.casinoBestGame)}` : ''}</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
     }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));

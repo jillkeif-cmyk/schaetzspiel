@@ -56,7 +56,7 @@ const ROLES = ['', 'coadmin', 'supporter'];
 
 const publicStats = (u) => ({
   id: u.id, name: u.name, diamonds: Number(u.diamonds) || 0,
-  playMinutes: Number(u.play_minutes) || 0, pokerMinutes: Number(u.poker_minutes) || 0, casinoXp: Number(u.casino_xp) || 0, passCxp: Number(u.pass_cxp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
+  playMinutes: Number(u.play_minutes) || 0, pokerMinutes: Number(u.poker_minutes) || 0, casinoXp: Number(u.casino_xp) || 0, casinoBestGame: u.casino_best_game || '', passCxp: Number(u.pass_cxp) || 0, casinoTier: vip.tierIndex(Number(u.casino_xp) || 0), casinoRounds: Number(u.casino_rounds) || 0, casinoWins: Number(u.casino_wins) || 0, casinoBest: Number(u.casino_best) || 0, casinoNet: Number(u.casino_net) || 0, frame: u.frame || '', frameAnim: frames.animOf(u.frame), role: u.role || '', streak: u.streak || 0, lastSeen: Number(u.last_seen) || 0, presShown: shownPrestige(u), tag: u.tag || '', tagColor: u.tag_color || '', emblem: u.emblem || '', title: cards.titleById(u.title) ? { id: u.title === 'secret' ? 'tsecret' : u.title, text: cards.titleById(u.title).text, style: cards.titleById(u.title).style } : null, matches: u.matches, wins: u.wins, answered: u.answered, exact: u.exact, close: u.close,
   mcRight: u.mc_right, mcTotal: u.mc_total, points: u.points, rankPoints: u.rank_points, avgDev: u.dev_n ? u.dev_sum / u.dev_n : null,
   bestScore: u.best_score, bestStreak: u.best_streak, prestige: Number(u.prestige) || 0, av: Number(u.av) || 0, ...progress.levelInfo(u.xp, u.prestige),
   ...(() => { const kp = require('./lib/pass'); return kp.state() !== 'off' && u.pass_season === kp.SEASON.id ? { passTier: kp.tierOf(u.pass_xp), passXp: Number(u.pass_xp) || 0, passPrem: !!Number(u.pass_prem) } : {}; })(),
@@ -819,11 +819,14 @@ app.post('/api/admin/locks', async (req, res) => {
 let BIGWIN_MIN = 50000; // ab so vielen Diamanten Gewinn sehen es alle, die online sind (Admin: Einstellung bigwin_min, 0 = aus)
 store.setting('bigwin_min').then((v) => { if (v !== null && v !== undefined && v !== '') BIGWIN_MIN = Math.max(0, Number(v) || 0); }).catch(() => {});
 const bigWin = async (uid, game, won) => {
-  if (!BIGWIN_MIN || won < BIGWIN_MIN) return;
   const u = await store.userById(uid).catch(() => null); if (!u) return;
+  if (won > 0 && Math.round(Number(u.casino_best) || 0) === Math.round(won) && u.casino_best_game !== game) await store.save(uid, { casino_best_game: String(game || '').slice(0, 40) }).catch(() => {}); // neuer Bestwert: Spiel merken
+  if (!BIGWIN_MIN || won < BIGWIN_MIN) return;
   io.emit('bigwin', { id: uid, name: u.name, game, amount: Math.round(won) });
   console.log(`Großer Gewinn: ${u.name} ${won} bei ${game}`);
 };
+// Bestwerte vor dieser Änderung: Spiel aus dem Server-Protokoll nachtragen (nur wenn der Bestwert noch genau passt)
+setTimeout(async () => { for (const [name, amt, game] of [['ZimmerBiest', 19800000, 'Roulette'], ['Smiiezeh', 1151560, 'Roulette'], ['paddy', 824000, 'Auge des Anubis']]) { try { const u = await store.userByName(name); if (u && !u.casino_best_game && Math.round(Number(u.casino_best) || 0) === amt) await store.save(u.id, { casino_best_game: game }); } catch (e) {} } }, 15000);
 const casinoStat = async (uid, stake, won, risk = stake) => {
   const u = await store.userById(uid); if (!u) return;
   const net = won - stake;
