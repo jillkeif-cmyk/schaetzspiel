@@ -1960,6 +1960,14 @@ body.ui2 #ctabs{display:none!important}
 body.ui2[data-ct="khub"] .u2-kback,body.ui2[data-ct="shop"] .u2-kback{display:none}
 .u2-back{align-self:flex-start;flex:none}
 .u2-slot img.sm{height:78px}
+
+body.ui2 .shop-cats{display:none!important}
+.u2-slot.wide{grid-column:1 / -1;flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 16px;text-align:left;background:radial-gradient(circle at 15% 50%,rgba(255,210,63,.3),rgba(12,36,42,.96) 70%);box-shadow:inset 0 0 0 2px rgba(255,210,63,.75),0 10px 22px rgba(0,0,0,.4)}
+.u2-slot.wide img{width:84px;height:84px;flex:none}
+.u2-slot.wide b{font:400 24px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFE27A}
+.u2-slot.wide small{display:block;margin-top:4px}
+.u2-frow{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.u2-frow::-webkit-scrollbar{display:none}.u2-frow > *{flex:none}
 </style>
 </head>
 <body>
@@ -1985,7 +1993,7 @@ body.ui2[data-ct="khub"] .u2-kback,body.ui2[data-ct="shop"] .u2-kback{display:no
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '215';
+const AVER = '216';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2414,7 +2422,7 @@ function pushUI() {
 // ---------- Sammelkarten ----------
 let rtab = 'pass', passRanks = null;
 let meltSel = {};
-let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle';
+let tcg = null, ctab = 'sammlung', market = null, trades = null, cfilter = 'alle', colSet = null; // colSet: gewähltes Set im neuen Design
 let bjList = [], bjT = null;
 const bjDrawn = {}; // wie viele Karten je Hand schon auf dem Tisch lagen
 const bjNew = (key, k) => k >= (bjDrawn[key] || 0);
@@ -2830,14 +2838,15 @@ function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielb
   b.__ro.observe(b);
 }
 function u2Tiles(items) { // gemeinsame Kachel-Übersicht (Casino-Tische, Mehr, Karten)
-  return `<div class="u2-slots">${items.map((it) => `<button class="u2-slot ${it.lock ? 'locked' : ''}" ${it.lock ? `data-cglock="${it.key}"` : it.attr} aria-label="${esc(it.name)}"><img src="${it.img}" alt="" class="${it.small ? 'sm' : ''}"><b>${esc(it.name)}</b><small class="${it.lock ? 'lk' : it.warn ? 'full' : 'ok'}">${it.lock ? '🔒 gesperrt' : esc(it.sub || '')}</small>${it.badge && !it.lock ? `<i>${esc(String(it.badge))}</i>` : ''}</button>`).join('')}</div>`;
+  return `<div class="u2-slots">${items.map((it) => `<button class="u2-slot ${it.lock ? 'locked' : ''} ${it.wide ? 'wide' : ''}" ${it.lock ? `data-cglock="${it.key}"` : it.attr} aria-label="${esc(it.name)}"><img src="${it.img}" alt="" class="${it.small ? 'sm' : ''}"><b>${esc(it.name)}</b><small class="${it.lock ? 'lk' : it.warn ? 'full' : 'ok'}">${it.lock ? '🔒 gesperrt' : esc(it.sub || '')}</small>${it.badge && !it.lock ? `<i>${esc(String(it.badge))}</i>` : ''}</button>`).join('')}</div>`;
 }
 function renderKartenHub() {
   const packs = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && !d.potion && !d.display ? p.count : 0); }, 0) : 0;
   const pots = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && d.potion ? p.count : 0); }, 0) : 0;
   const mk = ['cards', 'packs', 'displays', 'graded'].reduce((a, k) => a + (typeof mkNewCount === 'function' ? mkNewCount(k) : 0), 0);
   const items = [
-    { key: 'sammlung', name: 'Sammlung', img: U2('i_album'), sub: 'Alle Karten ansehen' },
+    { key: 'shop', name: 'Shop', img: U2('i_shop'), sub: 'Booster, Displays und Tränke kaufen', wide: true, attr2: 'data-u2="tab:shop"' },
+    { key: 'sammlung', name: 'Sammlung', img: U2('i_album'), sub: 'Nach Sets geordnet' },
     { key: 'inventar', name: 'Booster', img: '/tcg/pack_gn.webp?v=' + IMGV, sub: packs ? packs + ' zum Öffnen' : 'Keine ungeöffneten', badge: packs || '' },
     { key: 'traenke', name: 'Tränke', img: '/tcg/pot_xp.webp?v=' + IMGV, sub: pots ? pots + ' im Vorrat' : 'XP- und Casino-Tränke', badge: pots || '' },
     { key: 'boerse', name: 'Börse', img: U2('i_market'), sub: 'Kaufen und verkaufen', badge: mk || '' },
@@ -2846,7 +2855,7 @@ function renderKartenHub() {
     { key: 'melt', name: 'Umwandeln', img: U2('i_melt'), sub: 'Karten zu Diamanten' },
     { key: 'verlauf', name: 'Verlauf', img: U2('i_history'), sub: 'Was du bekommen hast' },
   ];
-  return u2Tiles(items.map((it) => ({ ...it, attr: `data-ct="${it.key}"` })));
+  return u2Tiles(items.map((it) => ({ ...it, attr: it.attr2 || `data-ct="${it.key}"` })));
 }
 function renderCasHub(box, hub) {
   const tb = (k) => (home && home.tabBadges && home.tabBadges[k]) || '';
@@ -3083,6 +3092,25 @@ function renderCards() {
     const have = all.filter((x) => x.n && cnt(x)).length, allN = all.filter(cnt).length; // Entwickler- und (noch) Gruselnacht-Karten zählen nicht mit
     const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['mythic', 'Mythisch ✦']];
     const SF = [['set:gn', 'Gruselnacht 🎃' + (home && home.gnOpen ? '' : ' bald')], ['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
+    if (ui2On()) { // neues Design: erst die Sets als Kacheln, dann die Karten des Sets mit einer Filterreihe
+      const SETS = [['alle', 'Alle Karten', U2('i_album')], ['gn', 'Gruselnacht' + (home && home.gnOpen ? '' : ' · bald'), '/tcg/pack_gn.webp?v=' + IMGV], ['standard', 'Standard', '/tcg/pack_standard.webp?v=' + IMGV], ['premium', 'Premium', '/tcg/pack_premium.webp?v=' + IMGV], ['toon', 'Toon-Welt', '/tcg/pack_toon.webp?v=' + IMGV], ...(hasDev ? [['dev', 'Entwickler', '/tcg/pack_secret.webp?v=' + IMGV]] : [])];
+      const inSet = (k) => (k === 'alle' ? all.filter(cnt) : all.filter((x) => x.c.set === k));
+      if (colSet === null) {
+        box.innerHTML = `<p class="sub" style="margin-bottom:10px">${have} von ${allN} Varianten gesammelt</p>` + u2Tiles(SETS.map(([k, n, img]) => { const L2 = inSet(k), h = L2.filter((x) => x.n).length; return { key: k, name: n, img, sub: `${h} von ${L2.length} gesammelt`, warn: !h, attr: `data-colset="${k}"`, small: k !== 'alle' }; }));
+        return;
+      }
+      const base = inSet(colSet), vs = [...new Set(base.map((x) => x.v))];
+      const F2 = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ...F.filter(([k]) => vs.includes(k))];
+      if (!F2.some(([k]) => k === cfilter)) cfilter = 'alle';
+      const rank2 = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
+      const L3 = base.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : x.v === cfilter)).sort((a, b) => (b.n ? 1 : 0) - (a.n ? 1 : 0) || rank2(b.v) - rank2(a.v) || a.c.name.localeCompare(b.c.name));
+      const st = SETS.find(([k]) => k === colSet) || SETS[0];
+      box.innerHTML = `<div class="row" style="gap:8px;align-items:center;margin-bottom:8px"><button class="btn small ghost" data-colset="">← Alle Sets</button><b class="grow">${esc(st[1])}</b><span class="sub">${base.filter((x) => x.n).length} / ${base.length}</span></div>
+        <div class="cfilter u2-frow">${F2.map(([k, n]) => `<button data-cf="${k}" class="${cfilter === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+        <div class="cgrid">${L3.map((x) => `<figure class="${x.n ? '' : x.c.set === 'gn' && gnSoon ? 'soon' : 'miss'}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}${x.n > 1 ? `<span class="cnt">×${x.n}</span>` : ''}
+          <figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))}${x.n ? `<br><button class="mini" data-sell="${x.c.id}:${x.v}">Verkaufen</button>` : x.c.set === 'gn' && gnSoon ? '<br>🎃 bald erhältlich' : '<br>fehlt noch'}</figcaption></figure>`).join('') || '<p class="sub">Nichts in diesem Filter.</p>'}</div>`;
+      return;
+    }
     let list = all.filter((x) => cfilter === 'alle' || (cfilter === 'haben' ? x.n : cfilter === 'fehlen' ? !x.n : cfilter.startsWith('set:') ? x.c.set === cfilter.slice(4) : x.v === cfilter));
     // Besitz zuerst, dann nach Seltenheit
     const rank = (v) => tcg.def.order ? tcg.def.order.indexOf(v) : 0;
@@ -3108,17 +3136,18 @@ function renderCards() {
     const pots = tcg.def.packs.filter((p) => p.potion && !p.off).sort(byPrice);
     const packs = tcg.def.packs.filter((p) => !p.hidden && !p.offsale).sort(byPrice);
     const cats = [['alle', '✨ Alles'], ['booster', '📦 Booster'], disps.length && ['displays', '🗃 Displays'], pots.length && ['traenke', '🧪 Tränke']].filter(Boolean);
-    if (!cats.some(([k]) => k === shopCat)) shopCat = 'alle';
+    if (!(ui2On() && shopCat === 'hub') && !cats.some(([k]) => k === shopCat)) shopCat = ui2On() ? 'hub' : 'alle';
     const sec = (k, title, list, card) => (list.length && (shopCat === 'alle' || shopCat === k) ? `<h3 class="shop-sec">${title}</h3>` + list.map((p) => `${card(p)}`).join('') : '');
-    box.innerHTML = `<div class="shop-hero"><button class="btn small ghost" id="shopBack">← Karten</button><div class="shop-sign"><span>🛒</span><div><b>Shop</b><small>Booster, Displays und Tränke</small></div></div><span class="dia">${D} ${fmt(tcg.diamonds || 0)}</span></div>
+    box.innerHTML = `<div class="shop-hero">${ui2On() ? (shopCat === 'hub' ? '' : '<button class="btn small ghost" data-shopcat="hub">← Shop</button>') : '<button class="btn small ghost" id="shopBack">← Karten</button>'}<div class="shop-sign"><span>🛒</span><div><b>Shop</b><small>Booster, Displays und Tränke</small></div></div><span class="dia">${D} ${fmt(tcg.diamonds || 0)}</span></div>
       <div class="shop-cats">${cats.map(([k, l]) => `<button class="chipbtn ${shopCat === k ? 'on-miss' : ''}" data-shopcat="${k}">${l}</button>`).join('')}</div>`
+      + (ui2On() && shopCat === 'hub' ? u2Tiles([{ key: 'booster', name: 'Booster', img: '/tcg/pack_premium.webp?v=' + IMGV, sub: packs.length + ' Sorten', small: true, badge: packs.some((x) => x.isNew && !x.hidden) ? 'NEU' : '' }, ...(disps.length ? [{ key: 'displays', name: 'Displays', img: '/tcg/pack_disp_gn.webp?v=' + IMGV, sub: disps.length + ' Sorten', small: true }] : []), ...(pots.length ? [{ key: 'traenke', name: 'Tränke', img: '/tcg/pot_xp.webp?v=' + IMGV, sub: pots.length + ' Sorten', small: true }] : [])].map((it) => ({ ...it, attr: `data-shopcat="${it.key}"` }))) : '')
       + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
       + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br>${p.price > 0 ? `<span class="dia">${D} ${fmt(p.price)}</span>` : '<span class="dia" style="opacity:.8">Preis folgt</span>'}<p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
-    $('#shopBack').onclick = () => { ctab = 'sammlung'; renderCards(); window.scrollTo(0, 0); };
+    if ($('#shopBack')) $('#shopBack').onclick = () => { ctab = 'sammlung'; renderCards(); window.scrollTo(0, 0); }; // im neuen Design gibt es den Knopf nicht
     box.querySelectorAll('[data-shopcat]').forEach((b) => { b.onclick = () => { shopCat = b.dataset.shopcat; renderCards(); }; });
   } else if (ctab === 'boerse') {
     if (!market) { box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
@@ -5718,8 +5747,8 @@ function u2Act(a) {
   const go = (fn) => { fn(); window.scrollTo(0, 0); };
   if (k === 'tab') {
     if (v === 'quiz') return go(() => { page = 'home'; render(); });
-    if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; render(); loadTcg(); });
-    if (v === 'cards') return go(() => { page = 'cards'; ctab = 'khub'; render(); loadTcg(); });
+    if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; shopCat = 'hub'; render(); loadTcg(); });
+    if (v === 'cards') return go(() => { page = 'cards'; ctab = 'khub'; colSet = null; render(); loadTcg(); });
     if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; else if (['roulette', 'bj'].includes(cgame) || (cgame === 'tables' && !bjT) || (cgame === 'poker' && !(pkState && pkState.me >= 0))) cgame = 'tablesHub'; else if (['vip', 'rewards', 'crank', 'setup'].includes(cgame)) cgame = 'moreHub'; render(); loadTcg(); loadVip(); }); return; }
     if (v === 'social') return go(() => { page = 'social'; render(); loadFriends(); });
   }
@@ -5793,13 +5822,13 @@ function fillU2Home() {
     <div class="u2-head">
       <button class="u2-banner" data-u2="go:profile" aria-label="Profil">${t && t.id ? `<img class="bg" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt="" onerror="this.remove()">` : ''}<span class="shade"></span>
         <span class="who">${avatar(me, 56)}<span class="nm"><b>${esc(me.name)}</b><small>${t ? esc(t.text || '') : 'Kein Titel'}</small><em>${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}${fmt(me.rankPoints || 0)} WP</em></span></span></button>
-      <div class="u2-side"><div class="u2-icons"><button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
+      <div class="u2-side"><div class="u2-icons">${home.newsCardOff ? '' : `<button class="u2-ib" data-u2="go:news" aria-label="Neuigkeiten"><img src="${U2('i_news')}" alt="">${u2NewsNew() ? '<i class="u2-b">NEU</i>' : ''}</button>`}<button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
         ${passOn ? '' : '<!--'}<button class="u2-pass" data-u2="go:pass" aria-label="Kronenpass"><img src="/news/pass_logo.webp?v=${IMGV}" alt=""><span><b>Stufe ${pt}</b><span class="bar"><span style="width:${Math.min(100, Math.round(100 * pt / 30))}%"></span></span></span></button>${passOn ? '' : '-->'}</div>
     </div>
     <div class="u2-stage">
       <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}${hv && hv.active ? sb('hot', U2('i_flame'), 'Hot Time', '🔥', 'läuft', '#FF8C50') : ''}${boostOn ? sb('boost', U2('i_flame'), 'Doppel-XP', '2×', '', '#FFD23F') : ''}</div>
       <div class="u2-center"><button class="u2-isle" data-u2="isle" aria-label="Deine Insel"><img src="${U2('isle_' + Math.max(0, Math.min(11, me.prestige || 0)))}" alt=""><span>${esc(u2IsleName(me.prestige || 0))}</span></button><h1>SCHÄTZ-QUIZ</h1><p>Wer am nächsten dran ist, gewinnt</p></div>
-      <div class="u2-rail">${home.newsCardOff ? '' : sb('go:news', (newsPosts && newsPosts[0] && newsPosts[0].hero ? newsPosts[0].hero + '?v=' + IMGV : U2('i_news')), 'Update', u2NewsNew() ? 'NEU' : '', '', '#FF4FA3')}${gifts ? sb('gifts', '/tcg/chest.webp?v=' + IMGV, 'Geschenk', gifts, '', '#FF4FA3') : ''}${home.banner ? sb('ann', U2('i_news'), 'Nachricht', home.banner.claimable ? '🎁' : '!', '', '#FFD23F') : ''}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
+      <div class="u2-rail">${gifts ? sb('gifts', '/tcg/chest.webp?v=' + IMGV, 'Geschenk', gifts, '', '#FF4FA3') : ''}${home.banner ? sb('ann', U2('i_news'), 'Nachricht', home.banner.claimable ? '🎁' : '!', '', '#FFD23F') : ''}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
     </div>
     <div class="u2-play"><button class="u2-pb" data-u2="solo" aria-label="Solo-Quiz"><img src="${U2('i_quiz')}" alt=""><span>Solo</span></button>
       <button class="u2-go ${full ? 'off' : ''}" data-u2="play"><b>SPIELEN</b><small>${full ? 'Alle Plätze belegt' : 'Freies Spiel · Themen wählen'}</small></button>
@@ -6828,6 +6857,7 @@ document.addEventListener('click', (e) => {
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
   else if (t.dataset.pick) { cpick = t.dataset.pick; renderCasino(); }
+  else if (t.dataset.colset !== undefined) { colSet = t.dataset.colset || null; cfilter = 'alle'; renderCards(); window.scrollTo(0, 0); }
   else if (t.dataset.cf) { cfilter = t.dataset.cf; renderCards(); }
   else if (t.id === 'stopWatch') socket.emit('unwatch');
   else if (t.id === 'closeCard') { $('#cardview').classList.remove('on'); if (showCard.stop) showCard.stop(); }
