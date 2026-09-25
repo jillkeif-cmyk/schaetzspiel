@@ -1895,6 +1895,41 @@ body.u2-seat .u2-grow{display:none!important}
 body.ui2[data-pg="casino"] .wheel .wnum{transform:rotate(var(--a)) translate(-50%,-50%) translateY(calc(var(--W) * -0.41))!important;font-size:8px}
 body.ui2[data-pg="casino"] .wheel .wnum b{width:14px;height:14px;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
 body.ui2[data-cg="bj"] .u2-cdia{display:none}
+
+/* Level mit Prestige-Logo */
+.u2-logo{position:relative;width:38px;height:38px;margin:-4px 0 -4px -2px;flex:none;display:grid;place-items:center}
+.u2-logo img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.u2-logo b{position:absolute;right:-6px;bottom:-4px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:linear-gradient(135deg,#B18CFF,#5B2FB8);box-shadow:0 0 0 1.5px #FFD23F;font:400 11px/18px Anton,Impact,sans-serif;color:#fff;text-align:center}
+/* „0 von 4 Matches laufen gerade“ ordentlich */
+body.ui2 #app:not(.maint) .panel:has(#create){padding:10px 14px!important;text-align:center}
+body.ui2 #app:not(.maint) #slots{margin:0;text-align:center}
+/* dunkler Grund überall, Leiste nach unten verlängert */
+html,body{background:#06161A}
+#u2nav::after{content:"";position:absolute;left:0;right:0;top:100%;height:160px;background:#06161A}
+
+body.ui2 #wrap{min-height:100dvh}
+/* Roulette: Setzfeld passt genau in die Breite, alle Chips sichtbar */
+body.ui2[data-pg="casino"] .rboard{overflow:visible;padding:8px}
+body.ui2[data-pg="casino"] .rgrid{width:100%;grid-template-columns:24px repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,32px) 26px 26px;gap:2px}
+body.ui2[data-pg="casino"] .rgrid button{font-size:11.5px;padding:0;min-width:0}
+body.ui2[data-cg="roulette"] #cgame .chips{flex-wrap:wrap;justify-content:center;overflow:visible;gap:6px 7px;margin:4px 0;padding:0}
+body.ui2[data-cg="roulette"] #cgame .chips button{width:38px;height:38px;font-size:10px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.55),0 3px 8px rgba(0,0,0,.5)}
+body.ui2[data-pg="casino"] .wheelwrap{width:min(36vw,138px)!important;--W:min(36vw,138px)!important}
+/* Poker: Tisch und Aktionen ohne Verrutschen */
+body.ui2 #app.pk-on .u2-grow{display:none!important}
+body.ui2 .pk-dock{background:linear-gradient(to top,rgba(6,12,20,.97) 78%,rgba(6,12,20,0))}
+body.ui2 #app.pk-on .pk-actions{min-height:0}
+body.ui2 #app.pk-on .pk-table{height:min(calc(100vw * 1.15),calc(100dvh - 380px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))}
+
+/* schlankere Leiste */
+#u2nav{height:calc(62px + env(safe-area-inset-bottom,0px))!important}
+#u2nav button img{width:36px;height:36px}
+#u2nav button.on{padding-bottom:calc(5px + env(safe-area-inset-bottom,0px))!important}
+#u2nav button.on img{width:50px;height:50px;margin-top:-20px}
+#u2nav button.on span{font-size:12.5px}
+#u2nav i{top:4px}
+body.u2nav-on #wrap{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}
+body.u2nav-on #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
 </style>
 </head>
 <body>
@@ -1920,7 +1955,7 @@ body.ui2[data-cg="bj"] .u2-cdia{display:none}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '208';
+const AVER = '211';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -5057,12 +5092,8 @@ function loadAdmin() {
     tbb.ontoggle = () => { if (tbb.open) draw(); }; }
   const hmb = $('#hmBox'); if (hmb && !hmb.dataset.bound) { hmb.dataset.bound = 1;
     const draw = () => { const c = (home && home.homeCfg) || { newsCard: true, promo: { on: false, game: 'crypt', text: '' } }; const P = c.promo;
-      const M = (home && home.maintAdmin) || { on: false, text: '' }, me2 = localStorage.getItem('ui2me') === '1', live2 = !!c.ui2Live;
-      $('#hmAdm').innerHTML = `<div class="maint-adm ${live2 ? 'on2' : ''}"><div class="row" style="gap:8px"><b class="grow">🎨 Neues Design: <span style="color:${live2 ? '#7CF0A8' : me2 ? '#FFD23F' : '#9FC3C9'}">${live2 ? 'LIVE für alle' : me2 ? 'nur bei dir aktiv' : 'aus'}</span></b></div>
-        <small class="sub">Leiste unten mit Shop, Karten, Quiz, Casino und Freunden. Erst für dich testen, dann für alle live schalten. „Aus“ bringt alle zurück zum bisherigen Design.</small>
-        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small ${me2 ? 'ghost' : ''}" id="u2Me">${me2 ? '↩️ Für mich aus' : '👀 Für mich testen'}</button><button class="btn small ${live2 ? 'ghost' : ''}" id="u2Live">🚀 Für alle live</button><button class="btn small ${live2 ? '' : 'ghost'}" id="u2Off">Für alle aus</button></div></div>
-        <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
-        <div class="maint-adm ${M.on ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🛠️ Wartungsmodus: <span style="color:${M.on ? '#FF8A80' : '#7CF0A8'}">${M.on ? 'AKTIV' : 'aus'}</span></b></div>
+      const M = (home && home.maintAdmin) || { on: false, text: '' };
+      $('#hmAdm').innerHTML = `<div class="maint-adm ${M.on ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🛠️ Wartungsmodus: <span style="color:${M.on ? '#FF8A80' : '#7CF0A8'}">${M.on ? 'AKTIV' : 'aus'}</span></b></div>
         <small class="sub">Aktiv: Alle außer dir sehen nur die Wartungsseite, können ihr Profil bearbeiten und Tickets schreiben. Quiz, Casino und alles andere ist gesperrt. Offene Automaten-Gewinne werden gutgeschrieben.</small>
         <textarea class="field" id="mtText" maxlength="300" rows="2" placeholder="Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!">${esc(M.text || '')}</textarea>
         <div class="row" style="gap:6px"><button class="btn small ${M.on ? 'ghost' : ''}" id="mtOn">🛠️ Wartung starten</button><button class="btn small ${M.on ? '' : 'ghost'}" id="mtOff">✅ Wartung beenden</button></div></div>
@@ -5076,9 +5107,6 @@ function loadAdmin() {
         <p class="sub" style="margin:6px 0 0;font-size:12px">Ein Tipp auf die Karte setzt Spieler direkt an eine freie Maschine. Sind beide belegt, kommt ein Hinweis.</p>`;
       const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.ui2Live = !!r.homeCfg.ui2Live; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); if (!newsPosts) loadNews(); else renderNewsCard(); renderPromo(); }).catch((e) => toast(e.message));
       const mt = (on) => api('/api/admin/maintenance', { on, text: $('#mtText').value }).then((r) => { home.maintAdmin = r; toast(on ? '🛠️ Wartung aktiv: alle anderen sehen jetzt die Wartungsseite' : '✅ Wartung beendet, alles ist wieder offen'); draw(); }).catch((e) => toast(e.message));
-      $('#u2Me').onclick = () => { try { localStorage.setItem('ui2me', me2 ? '0' : '1'); } catch (e) {} toast(me2 ? 'Neues Design für dich aus' : '👀 Neues Design für dich an: tippe unten auf die Leiste'); viewKey = ''; draw(); render(); };
-      $('#u2Live').onclick = () => { if (confirm('Neues Design für ALLE Spieler live schalten?')) send({ ui2Live: true }, '🚀 Neues Design ist für alle live'); };
-      $('#u2Off').onclick = () => send({ ui2Live: false }, 'Neues Design für alle aus');
       $('#mtOn').onclick = () => { if (confirm('Wartung starten? Alle außer dir können dann nur noch ihr Profil bearbeiten und Tickets schreiben.')) mt(true); }; $('#mtOff').onclick = () => mt(false);
       $('#hmNewsOn').onclick = () => send({ newsCard: true }, '📰 Update-Karte wird bei allen angezeigt'); $('#hmNewsOff').onclick = () => send({ newsCard: false }, '🙈 Update-Karte bei allen ausgeblendet');
       $('#hmPromoOn').onclick = () => send({ promo: { on: !P.on, game: P.game, text: $('#hmText').value } }, P.on ? 'Werbung aus' : '🎰 Werbung an');
@@ -5592,8 +5620,8 @@ function reportPresence() {
 }
 let builtKey = '', pageFilled = '';
 // ===== Neues Design (ui2): Leiste unten, Quiz in der Mitte. Baut auf den bestehenden Seiten und Knöpfen auf =====
-const U2 = (n) => `/ui2/${n}.webp?v=${IMGV}`;
-function ui2On() { return !!(token && home && home.me && (home.ui2Live || (home.me.admin && localStorage.getItem('ui2me') === '1'))); }
+function U2(n) { return `/ui2/${n}.webp?v=${IMGV}`; } // Funktion statt Konstante: beim App-Start sofort nutzbar
+function ui2On() { return !!token; } // es gibt nur noch das neue Design
 function u2Tab() { if (page === 'cards') return ctab === 'shop' ? 'shop' : 'cards'; if (page === 'casino') return 'casino'; if (['social', 'ranks', 'support'].includes(page)) return 'social'; if (page === 'home') return 'quiz'; return ''; }
 function u2Playing() { try { return !!((cgame === 'poker' && pkState && pkState.me >= 0) || (cgame === 'tables' && bjT)); } catch (e) { return false; } } // Automaten: Leiste bleibt sichtbar
 function u2Seated() { try { return !!(tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)); } catch (e) { return false; } }
@@ -5605,9 +5633,10 @@ function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match,
   let nav = document.getElementById('u2nav');
   document.body.classList.toggle('u2nav-on', bar);
   if (!bar) { if (nav) nav.hidden = true; return; }
+  if (!home || !home.me) { if (nav) nav.hidden = true; return; } // Leiste erst mit geladenen Daten
   if (!nav) { nav = document.createElement('nav'); nav.id = 'u2nav'; nav.setAttribute('aria-label', 'Hauptmenü'); document.body.appendChild(nav); }
   nav.hidden = false;
-  const cur = u2Tab(), wl = (home.me && home.me.wheelLeft) || 0, fr = (friends || []).filter((f) => f.status === 'in').length, sn = tcg && tcg.def && (tcg.def.packs || []).some((x) => x.isNew && !x.hidden) ? '!' : 0;
+  const cur = u2Tab(), wl = (home && home.me && home.me.wheelLeft) || 0, fr = (friends || []).filter((f) => f.status === 'in').length, sn = tcg && tcg.def && (tcg.def.packs || []).some((x) => x.isNew && !x.hidden) ? '!' : 0;
   const html = [['shop', 'Shop', 'i_shop', sn], ['cards', 'Karten', 'i_cards', 0], ['quiz', 'Quiz', 'i_quiz', 0], ['casino', 'Casino', 'i_casino', wl], ['social', 'Freunde', 'i_friends', fr]]
     .map(([k, l, ic, n]) => `<button data-u2="tab:${k}" class="${cur === k ? 'on' : ''}" aria-label="${l}"><img src="${U2(ic)}" alt=""><span>${l}</span>${n ? `<i>${n}</i>` : ''}</button>`).join('');
   if (nav.dataset.h !== html) { nav.innerHTML = html; nav.dataset.h = html; }
@@ -5645,10 +5674,12 @@ function u2Act(a) {
   if (k === 'promo') return home.promo ? promoGo(home.promo.game) : u2Act('tab:casino');
   if (k === 'hot') { const h = home.me.hot; return toast(h && h.active ? '🔥 Hot Time läuft: doppelte XP im Quiz' : '🔥 Hot Time: jeden Abend ab 20 Uhr doppelte XP im Quiz'); }
   if (k === 'lobbies') { const el = $('#openList'); if (L.open.length && el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); else toast('Gerade ist kein Match offen. Eröffne einfach selbst eins!'); return; }
-  if (k === 'play') { const b = $('#create'); if (b && !b.disabled) b.click(); else toast('Gerade laufen schon alle möglichen Matches. Gleich wieder frei!'); return; }
-  if (k === 'solo') { const b = $('#createSolo'); if (b) b.click(); return; }
+  if (k === 'play' || k === 'ranked') { // Modus steht mit dem Knopf fest, keine Vorauswahl mehr
+    if (L && L.running >= L.max) return toast('Gerade laufen schon alle möglichen Matches. Gleich wieder frei!');
+    soloIntent = false; window.__u2mode = k === 'ranked' ? 'ranked' : 'free'; socket.emit('create'); setTimeout(() => socket.emit('settings', { ranked: k === 'ranked' }), 400); return;
+  }
+  if (k === 'solo') { window.__u2mode = 'solo'; const b = $('#createSolo'); if (b) b.click(); return; }
   if (k === 'menu') return u2Menu();
-  if (k === 'me') { try { localStorage.setItem('ui2me', localStorage.getItem('ui2me') === '1' ? '0' : '1'); } catch (e) {} closeModal(); viewKey = ''; render(); toast(ui2On() ? '🎨 Neues Design für dich an' : '🎨 Wieder das bisherige Design'); return; }
 }
 function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
   const me = home.me, row = (a, ic, l, s, n) => `<button class="u2-mi" data-u2="${a}"><span class="u2-mic">${ic}</span><span class="grow"><b>${l}</b>${s ? `<small>${s}</small>` : ''}</span>${n ? `<i class="u2-mb">${n}</i>` : ''}</button>`;
@@ -5662,13 +5693,11 @@ function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
     ${row('go:ranks', '📊', 'Ranglisten', 'Welt, Punkte, Casino, Sammler')}
     ${row('go:support', '🎫', 'Support & Feedback', 'Fehler melden, Ideen schicken', tk || '')}
     ${me.admin ? row('go:admin', '⚙️', 'Admin', 'Alle Einstellungen des Spiels') : ''}
-    ${me.admin && !home.ui2Live ? row('me', '🎨', 'Design umschalten', 'Nur für dich: zurück zum bisherigen Design') : ''}
   </div>`;
   $('#modal').classList.add('on'); $('#u2mClose').onclick = closeModal; $('#modal').onclick = (e) => { if (e.target.id === 'modal') closeModal(); };
 }
-const U2_ISLE = ['Startinsel', 'Bronzewinkel', 'Messschieber', 'Volltreffer', 'Silbereule', 'Goldkompass', 'Goldwolf', 'Smaragdkobra', 'Sturmadler', 'Rubinkrone', 'Flamme', 'Meisterprestige'];
-const u2IsleName = (p) => (p ? 'Insel ' : '') + U2_ISLE[Math.max(0, Math.min(11, p))];
-const u2NewsNew = () => !!(newsPosts && newsPosts[0] && localStorage.getItem('news_seen') !== newsPosts[0].id);
+function u2IsleName(p) { const N = ['Startinsel', 'Bronzewinkel', 'Messschieber', 'Volltreffer', 'Silbereule', 'Goldkompass', 'Goldwolf', 'Smaragdkobra', 'Sturmadler', 'Rubinkrone', 'Flamme', 'Meisterprestige']; return (p ? 'Insel ' : '') + N[Math.max(0, Math.min(11, p))]; }
+function u2NewsNew() { try { return !!(newsPosts && newsPosts[0] && localStorage.getItem('news_seen') !== newsPosts[0].id); } catch (e) { return false; } }
 function fillU2Home() {
   const box = $('#ui2Home'); if (!box || !home || !home.me) return;
   const me = home.me, t = me.titleShown, pct = me.max ? 100 : Math.max(2, Math.round(100 * (me.into || 0) / Math.max(1, me.next || 1)));
@@ -5681,7 +5710,7 @@ function fillU2Home() {
   const sb = (a, img, label, n, sub, ring) => `<button class="u2-sb" data-u2="${a}" style="--ring:${ring}"><span class="u2-sbi"><img src="${img}" alt="">${badge(n)}</span><span class="u2-sbl">${label}</span>${sub ? `<span class="u2-sbs">${sub}</span>` : ''}</button>`;
   const hotTxt = hv ? (hv.active ? 'läuft' : 'ab 20 Uhr') : '';
   const html = `
-    <div class="u2-top"><button class="u2-lv" data-u2="go:profile" aria-label="Level"><span class="gem"><b>${me.level || 1}</b></span><span class="xp"><small>${me.max ? 'Level 30' : fmt(me.into || 0) + ' / ' + fmt(me.next || 0) + ' XP'}</small><span class="bar"><span style="width:${pct}%"></span></span></span></button>
+    <div class="u2-top"><button class="u2-lv" data-u2="go:profile" aria-label="Level">${(() => { const t = me.presShown === undefined || me.presShown === null ? me.prestige : me.presShown; const src = t ? (t === 12 ? 'pc_EX5' : 'p' + t) : me.emblem ? 'pc_' + me.emblem : ''; return src ? `<span class="u2-logo"><img src="/emblems/${esc(src)}.webp?v=${IMGV}" alt=""><b>${me.level || 1}</b></span>` : `<span class="gem"><b>${me.level || 1}</b></span>`; })()}<span class="xp"><small>${me.max ? 'Level 30' : fmt(me.into || 0) + ' / ' + fmt(me.next || 0) + ' XP'}</small><span class="bar"><span style="width:${pct}%"></span></span></span></button>
       <span class="grow"></span><button class="u2-dia" data-u2="tab:shop" aria-label="Diamanten"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>${fmt(me.diamonds || 0)}</b><span class="plus">+</span></button></div>
     <div class="u2-head">
       <button class="u2-banner" data-u2="go:profile" aria-label="Profil">${t && t.id ? `<img class="bg" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt="" onerror="this.remove()">` : ''}<span class="shade"></span>
@@ -5696,8 +5725,8 @@ function fillU2Home() {
     </div>
     ${gifts ? `<button class="u2-gift" data-u2="gifts">🎁 <b>${gifts} Geschenk${gifts === 1 ? '' : 'e'} warten</b> · jetzt abholen ›</button>` : ''}
     <div class="u2-play"><button class="u2-pb" data-u2="solo" aria-label="Solo-Quiz"><img src="${U2('i_quiz')}" alt=""><span>Solo</span></button>
-      <button class="u2-go ${full ? 'off' : ''}" data-u2="play"><b>SPIELEN</b><small>${full ? 'Alle Plätze belegt' : 'Match eröffnen · ' + (L.online || 1) + ' online'}</small></button>
-      <button class="u2-pb" data-u2="lobbies" aria-label="Offene Matches"><img src="${U2('i_friends')}" alt=""><span>Matches</span>${badge(lob)}</button></div>`;
+      <button class="u2-go ${full ? 'off' : ''}" data-u2="play"><b>SPIELEN</b><small>${full ? 'Alle Plätze belegt' : 'Freies Spiel · Themen wählen'}</small></button>
+      <button class="u2-pb" data-u2="ranked" aria-label="Ranglisten-Match"><img src="${U2('i_trophy')}" alt=""><span>Rangliste</span></button></div>`;
   if (box.dataset.h !== html) { box.innerHTML = html; box.dataset.h = html; }
 }
 function buildSocial() {
@@ -5907,10 +5936,11 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
 
   if (S.phase === 'lobby' && S.setup) return `<div class="col">
     <div class="center" style="padding-top:2vh"><h1>Match einrichten</h1><p class="sub" style="margin-top:8px">Erst einstellen, dann eröffnen. Danach können Freunde beitreten.</p></div>
+    ${window.__u2mode === 'ranked' ? '<div class="fbonus">🏆 Ranglisten-Match: Allgemeinwissen, zählt für die Weltrangliste</div>' : window.__u2mode === 'free' ? '<div class="fbonus">🎯 Freies Spiel: wähle unten deine Themen</div>' : ''}
     ${soloIntent && home && home.soloWin && home.soloWin.on ? `<div class="fbonus sw-hint">🏆 Solo-Sieg: ${fmt(home.soloWin.min15 || 750)} Punkte bei 15 Fragen oder ${fmt(home.soloWin.min)} Punkte bei 25 Fragen zählen im Solo-Quiz als Sieg</div>` : ''}
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
-      <div class="modepick" id="modepick" style="${soloIntent ? 'display:none' : ''}"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
+      <div class="modepick" id="modepick" style="${soloIntent || window.__u2mode ? 'display:none' : ''}"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
       <div id="themeBox"></div>
       <label style="margin:6px 0 0">Tempo</label>
       <div class="seg"><button id="quickOff">Normal</button><button id="quickOn">Schnellmodus ⚡</button></div>
