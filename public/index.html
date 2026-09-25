@@ -409,15 +409,15 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 /* Effekte direkt im Emblem: per Maske auf die Form des Bildes begrenzt */
 .pglow::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
   -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
-.pglow.p9::after{-webkit-mask-image:url(/emblems/p9.webp?v=${AVER});mask-image:url(/emblems/p9.webp?v=${AVER});
+.pglow.p9::after{-webkit-mask-image:url(/emblems/p9.webp?v=${IMGV});mask-image:url(/emblems/p9.webp?v=${IMGV});
   background:radial-gradient(circle at 50% 52%,rgba(255,255,255,.95),rgba(255,70,110,.75) 22%,rgba(255,40,80,.15) 40%,transparent 60%);
   animation:gemflash 2.4s ease-in-out infinite}
 @keyframes gemflash{0%,100%{opacity:.12;transform:scale(.97)}40%{opacity:1;transform:scale(1.03)}55%{opacity:.55}70%{opacity:.85}}
-.pglow.p10::after{-webkit-mask-image:url(/emblems/p10.webp?v=${AVER});mask-image:url(/emblems/p10.webp?v=${AVER});
+.pglow.p10::after{-webkit-mask-image:url(/emblems/p10.webp?v=${IMGV});mask-image:url(/emblems/p10.webp?v=${IMGV});
   background:radial-gradient(ellipse 42% 60% at 50% 70%,rgba(255,235,150,.95),rgba(255,150,30,.55) 45%,rgba(255,70,0,.12) 70%,transparent 85%);
   background-size:100% 190%;animation:burn 1.9s ease-in-out infinite alternate;opacity:.75}
 @keyframes burn{from{background-position:0 88%;opacity:.45}to{background-position:0 22%;opacity:.95}}
-.pglow.p11::after{-webkit-mask-image:url(/emblems/p11.webp?v=${AVER});mask-image:url(/emblems/p11.webp?v=${AVER});
+.pglow.p11::after{-webkit-mask-image:url(/emblems/p11.webp?v=${IMGV});mask-image:url(/emblems/p11.webp?v=${IMGV});
   background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.1) 45%,rgba(255,245,200,.85) 50%,rgba(255,255,255,.1) 55%,transparent 65%);
   background-size:300% 300%;animation:sheen 3s ease-in-out infinite}
 @keyframes sheen{0%{background-position:140% 140%}50%,100%{background-position:-70% -70%}}
@@ -1748,7 +1748,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '184';
+const AVER = '185';
+const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1760,32 +1761,32 @@ const initials = (n) => n.trim().slice(0, 2).toUpperCase();
 // Eigene Prestige-Embleme (Rang 1-10), als SVG gezeichnet
 const PAL = ['#FFD23F', '#FF7A6B', '#4FD1C5', '#C4A5FF', '#8BE28B', '#FFA94D'];
 const TIER = ['', '#C8843C', '#C8843C', '#C9D3D6', '#C9D3D6', '#FFD23F', '#FFD23F', '#3DDC97', '#5AA9FF', '#FF4D6D', '#FF8A00'];
-function emblem(t) { const i = `<img class="embimg" data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="" draggable="false">`; /* antippen = groß ansehen */ return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
+function emblem(t) { const i = `<img class="embimg" data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${IMGV}" alt="" draggable="false">`; /* antippen = groß ansehen */ return t >= 9 ? `<span class="pglow p${t}" style="width:100%;height:100%">${i}</span>` : i; }
 function avatar(p, size = 40, emb = true) {
   const t = Math.max(0, Math.min(12, Number(p.presShown === undefined || p.presShown === null ? p.prestige : p.presShown) || 0));
-  const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${AVER}" alt="">` : '';
+  const fr = p.frame ? `<img class="frm ${esc(p.frameAnim || '')}" src="/emblems/${esc(p.frame)}.webp?v=${IMGV}" alt="">` : '';
   const zz = p.idle ? `<span class="ava-zz" title="abwesend">😴</span>` : '';
   return `${zz ? '<span class="ava-wrap">' : ''}<span class="ava t${t} ${p.frame ? 'hasfrm' : ''}" data-bigava="${esc(String(p.id || ''))}" data-bigname="${esc(p.name || '')}" style="--s:${size}px;--c:${p.color || PAL[(p.id || 0) % 6]}">${p.av ? `<img src="/api/avatar/${p.id}?v=${p.av}" alt="">` : `<span class="ini">${esc(initials(p.name))}</span>`}${fr}${t && emb ? `<span class="emb">${emblem(t)}</span>` : ''}</span>${zz ? zz + '</span>' : ''}`;
 }
-const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${AVER}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
+const flameHtml = (p, size) => (p && p.streak ? `<span class="fl"><img src="/emblems/streak${Math.min(5, p.streak)}.webp?v=${IMGV}" style="width:${size || 20}px;height:${size || 20}px" alt=""><b>${Math.min(99, p.streak)}</b></span>` : '');
 function streakHtml(p) {
   const n = Math.min(5, p.streak || 0);
-  return n ? `<div class="streak"><img src="/emblems/streak${n}.webp?v=${AVER}" alt=""><b>${n}</b></div>` : '';
+  return n ? `<div class="streak"><img src="/emblems/streak${n}.webp?v=${IMGV}" alt=""><b>${n}</b></div>` : '';
 }
 function playerCard(p, extra) {
   const lv = p.max ? 1 : (p.next ? p.into / p.next : 0);
   return `<div class="pcard">
     <div class="mid"><div class="who">${tagHtml(p)}<b>${esc(p.name)}</b></div>
       <div class="trow">${avatar(p, 56)}${p.title ? titleHtml(p) : '<span class="sub grow" style="font-size:13px">Kein Titel</span>'}
-        ${p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}</div>
+        ${p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:50px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${IMGV}" alt="">` : ''}</div>
       <div class="lvrow"><span class="num" style="font-size:16px;color:var(--paper)">Lv ${p.level}</span><span class="bar"><i style="width:${Math.round(lv * 100)}%"></i></span><span>${p.max ? 'max' : fmt(p.into) + ' / ' + fmt(p.next) + ' XP'}</span></div>
       ${p.xpCap ? `<div class="lvsub">${p.max ? `<b>${fmt(p.xpTotal)} XP</b> · Level 30 erreicht${home && home.me && p.id === home.me.id && home.progress && home.progress.prestige ? (home.progress.prestige.can ? ' · Prestige möglich' : home.progress.prestige.next ? ' · für Prestige fehlt noch etwas' : '') : ''}` : `<b>${fmt(p.xpTotal)}</b> von ${fmt(p.xpCap)} XP bis Level 30 · noch ${fmt(p.next - p.into)} bis Lv ${p.level + 1}`}</div>` : ''}
       ${extra || ''}</div>
     ${streakHtml(p)}</div>`;
 }
 const animOf = (id) => { const c = home && home.cards; if (!c || !id) return ''; const x = [...c.emblems, ...c.titles].find((y) => y.id === id); return x && x.anim ? ' a-' + x.anim : ''; };
-const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : '');
-const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}${animOf(p.title.id)}" src="/emblems/title_${esc(p.title.id)}.webp?v=${AVER}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
+const embHtml = (p, size) => (p && p.emblem ? `<img class="pcemb${animOf(p.emblem)}" style="--s:${size || 34}px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${IMGV}" alt="">` : '');
+const titleHtml = (p, big) => (p && p.title ? `<img class="titleimg${big ? ' big' : ''}${animOf(p.title.id)}" src="/emblems/title_${esc(p.title.id)}.webp?v=${IMGV}" alt="${esc(p.title.text)}" title="${esc(p.title.text)}">` : '');
 const tagHtml = (p) => (p && p.tag ? `<span class="ctag c-${esc(p.tagColor || 'cyan')}">[${esc(p.tag)}]</span>` : '');
 const withTag = (p, name) => tagHtml(p) + esc(name === undefined ? p.name : name);
 function seenText(u) {
@@ -2055,7 +2056,7 @@ window.addEventListener('pageshow', unlockAudio);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') unlockAudio(); else if (silentEl) { try { silentEl.pause(); } catch (e) {} } });
 function showBulls(names) {
   const el = $('#bullsfx');
-  el.innerHTML = `<div class="rays"></div><div class="in"><img src="/emblems/bullseye.webp?v=${AVER}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
+  el.innerHTML = `<div class="rays"></div><div class="in"><img src="/emblems/bullseye.webp?v=${IMGV}" alt=""><h1>PUNKTLANDUNG</h1><p>${esc(names)}</p></div>`;
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(showBulls.t); showBulls.t = setTimeout(() => el.classList.remove('on'), 2500);
 }
@@ -2070,13 +2071,13 @@ function showCodeReveal(r) {
   const u = $('#unlock'); const it = r.items || { emblems: [], titles: [], frames: [] };
   const me = (home && home.me) || {};
   const tiles = [
-    ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
-    ...it.emblems.map((e) => `<div class="cr-item"><img class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
+    ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
+    ...it.emblems.map((e) => `<div class="cr-item"><img class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${IMGV}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
     ...it.frames.map((f) => `<div class="cr-item">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 74, false)}<b>${esc(f.name)}</b><small>Rahmen</small></div>`),
   ];
   u.innerHTML = `<div class="rays"></div><div class="in cr">
     <p class="sub">Code eingelöst</p><h1 class="cr-code">${esc(r.code || '')}</h1>
-    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
     <div class="cr-grid">${tiles.map((h, i) => h.replace('class="cr-item', `style="--d:${i}" class="cr-item`)).join('')}</div>
     <button class="btn" id="unlockOk" style="min-width:220px">Stark!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
@@ -2331,9 +2332,9 @@ function renderRewards(box) {
     <h2 class="rw-h">Herausforderungen</h2>
     <div class="chalhint">${chals.map((c) => `<div class="ch ${c.isNew ? 'isnew' : ''}" data-chal="${c.key}"><img src="${chalImg(c.key)}" alt=""><span class="t"><b>${esc(c.name)} · Stufe ${c.done} von ${c.total}${c.isNew ? ' <span class="nw-badge">NEU</span>' : ''}</b>${esc(c.desc)}: ${fmt(c.cur)}${c.goal ? ' von ' + fmt(c.goal) : ' (alles geschafft)'}${c.goal ? `<span class="bar"><i style="width:${Math.min(100, Math.round(100 * c.cur / c.goal))}%"></i></span>` : ''}</span>${c.reward ? `<span class="wp">+${fmt(c.reward)} ${xpL(c)}</span>` : ''}</div>`).join('')}</div>
     <h2 class="rw-h">Titel <span class="sub">${titles.filter((t) => t.unlocked).length} / ${titles.length}</span></h2>
-    <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${AVER}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
+    <div class="rw-list">${titles.map((t) => `<button class="rw-item ${t.unlocked ? '' : 'lk'}" data-rwk="title" data-rwid="${t.id}"><img class="titleimg${t.anim ? ' a-' + t.anim : ''}" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt=""><span class="rw-t"><b>${esc(t.text)}</b><small>${esc(needTxt(t))}</small>${prog(t.id, t.unlocked)}</span></button>`).join('')}</div>
     <h2 class="rw-h">Embleme <span class="sub">${embs.filter((e) => e.unlocked).length} / ${embs.length}</span></h2>
-    <div class="rw-grid">${embs.map((e) => `<button class="rw-cell ${e.unlocked ? '' : 'lk'}" data-rwk="emblem" data-rwid="${e.id}"><img class="pcemb${e.anim ? ' a-' + e.anim : ''}" style="--s:78px" src="/emblems/pc_${esc(e.id)}.webp?v=${AVER}" alt=""><b>${esc(e.name)}</b><small>${esc(needTxt(e))}</small>${prog(e.id, e.unlocked)}</button>`).join('')}</div>
+    <div class="rw-grid">${embs.map((e) => `<button class="rw-cell ${e.unlocked ? '' : 'lk'}" data-rwk="emblem" data-rwid="${e.id}"><img class="pcemb${e.anim ? ' a-' + e.anim : ''}" style="--s:78px" src="/emblems/pc_${esc(e.id)}.webp?v=${IMGV}" alt=""><b>${esc(e.name)}</b><small>${esc(needTxt(e))}</small>${prog(e.id, e.unlocked)}</button>`).join('')}</div>
     <h2 class="rw-h">Rahmen <span class="sub">${frs.filter((f) => f.unlocked).length} / ${frs.length}</span></h2>
     <div class="rw-grid">${frs.map((f) => `<button class="rw-cell ${f.unlocked ? '' : 'lk'}" data-rwk="frame" data-rwid="${f.id}">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 78, false)}<b>${esc(f.name)}</b><small>${esc(needTxt(f))}</small>${prog(f.id, f.unlocked)}</button>`).join('')}</div>`;
   box.querySelectorAll('[data-rwid]').forEach((b) => { b.onclick = () => showLocked(b.dataset.rwk, b.dataset.rwid); });
@@ -2341,7 +2342,7 @@ function renderRewards(box) {
 }
 
 const isLocked = (k) => !!(home && home.locked && home.locked.includes(k)); // vom Admin gesperrt
-const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(10, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(10, t || 0))}.webp?v=${AVER}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
+const vipBadge = (t, size) => `<img class="vipb t${Math.max(0, Math.min(10, t || 0))}" src="/emblems/vip${Math.max(0, Math.min(10, t || 0))}.webp?v=${IMGV}" style="width:${size || 22}px;height:${size || 22}px" alt="">`;
 function loadVip() { return api('/api/casino/vip').then((v) => { vipD = v; renderVipHead(); if (cgame === 'vip') renderCasino(); }).catch(() => {}); }
 function renderVipHead() {
   const h = $('#vipHead'); if (!h || !vipD) return;
@@ -2381,7 +2382,7 @@ function renderVip(box) {
   const FILL = ['#5B0E1B', '#101214', '#0E4733', '#101214', '#5B0E1B', '#0E4733', '#101214', '#5B0E1B', '#0E4733'];
   const conic = v.wheel.map((l, i) => `${l === 'JACKPOT' ? '#C8922A' : FILL[i % FILL.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
   const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost', Gruselnacht: 'gn', Toon: 'toon' };
-  const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
+  const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${IMGV}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${IMGV}" alt="">`);
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
     <div class="lwrap">
@@ -2389,9 +2390,9 @@ function renderVip(box) {
         <div class="lsheen"></div>
         ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister', Gruselnacht: 'Grusel', Toon: 'Toon' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '150.000' : l)}</b>`}</span></span>`).join('')}
       </div>
-      <img class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
-      <img class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
-      <img class="lptrimg" src="/tcg/lw_ptr.webp?v=${AVER}" alt="">
+      <img class="lrim" src="/tcg/lw_rim.webp?v=${IMGV}" alt="">
+      <img class="lhubimg" src="/tcg/lw_hub.webp?v=${IMGV}" alt="">
+      <img class="lptrimg" src="/tcg/lw_ptr.webp?v=${IMGV}" alt="">
     </div>
     <button class="btn" id="lspin" style="width:100%;margin-top:12px" ${v.spinsLeft ? '' : 'disabled'}>${v.spinsLeft ? `Drehen · noch ${v.spinsLeft} ${v.spinsLeft === 1 ? 'Drehung' : 'Drehungen'}${v.spinsBonus ? ` (davon ${v.spinsBonus} Bonus)` : ` von ${v.spinsTotal} heute`}` : 'Morgen wieder drehen'}</button>
     <p class="sub center" style="margin-top:6px">Je höher deine VIP-Stufe, desto öfter darfst du drehen und desto mehr Diamanten bringt ein Treffer.</p>
@@ -2451,7 +2452,7 @@ function renderPoker(box) {
     if (!pkList) { socket && socket.emit('pk:list'); box.innerHTML = '<p class="sub">Lädt …</p>'; return; }
     if (!pkState) {
       box.innerHTML = `<p class="sub" style="margin-bottom:10px">Texas Hold'em an vier festen Tischen, vom Einstieg bis zum Royal-Tisch mit 150.000 Einkauf. Sitzt du allein, spielt ein Bot gegen dich. Kommt jemand dazu, geht der Bot nach der laufenden Hand. Beim Aufstehen bekommst du deine restlichen Chips als Diamanten zurück.</p>
-        ${pkList.map((t) => `<div class="pk-lobby ${t.lux ? 'pk-lux' + t.lux : ''}">${t.lux ? `<span class="pk-luxtag">${t.lux === 2 ? '👑 ROYAL' : '💎 VIP'}</span>` : ''}<img src="/tcg/poker_${t.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(t.name)} <span class="pk-solo">🤖 Solo möglich</span></b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
+        ${pkList.map((t) => `<div class="pk-lobby ${t.lux ? 'pk-lux' + t.lux : ''}">${t.lux ? `<span class="pk-luxtag">${t.lux === 2 ? '👑 ROYAL' : '💎 VIP'}</span>` : ''}<img src="/tcg/poker_${t.id}.webp?v=${IMGV}" alt=""><div class="grow"><b>${esc(t.name)} <span class="pk-solo">🤖 Solo möglich</span></b><small>Einkauf ${fmt(t.buyIn)} 💎 · Blinds ${t.sb}/${t.bb}</small><small>${t.seated} von ${t.max} Plätzen belegt${t.bot ? ' · 🤖 Bot spielt mit' : ''}${t.running ? ' · Hand läuft' : ''}</small>
           <div class="row" style="gap:8px;margin-top:8px"><button class="btn small" data-pksit="${t.id}">Hinsetzen · ${fmt(t.buyIn)} 💎</button><button class="btn small ghost" data-pkwatch="${t.id}">Zuschauen</button></div></div></div>`).join('')}`;
       box.querySelectorAll('[data-pksit]').forEach((b) => { b.onclick = () => socket.emit('pk:sit', { table: b.dataset.pksit }); });
       box.querySelectorAll('[data-pkwatch]').forEach((b) => { b.onclick = () => socket.emit('pk:watch', b.dataset.pkwatch); });
@@ -2493,7 +2494,7 @@ function renderPoker(box) {
   box.innerHTML = `
     <div class="row pk-head" style="margin-bottom:8px;gap:6px"><b class="grow">${esc(t.name)}<small> · Blinds ${t.sb}/${t.bb}</small></b>${me ? '<button class="btn small ghost pk-emobtn" id="pkEmoBtn">😀</button><button class="btn small ghost" id="pkInvite">Einladen</button><button class="btn small ghost" id="pkLeave">Aufstehen</button>' : '<button class="btn small ghost" id="pkBack">Zu den Tischen</button>'}</div>
     ${me ? `<div class="pk-emopop" id="pkEmoPop" hidden>${EMOJIS.map((e, k) => `<button data-pkemo="${k}">${e}</button>`).join('')}</div>` : ''}
-    <div class="pk-table ${t.lux ? 'pk-lux' + t.lux : ''}" style="background-image:url('/tcg/poker_${t.id}.webp?v=${AVER}')">
+    <div class="pk-table ${t.lux ? 'pk-lux' + t.lux : ''}" style="background-image:url('/tcg/poker_${t.id}.webp?v=${IMGV}')">
       ${chipsHtml}
       <div class="pk-center"><div class="pk-board">${t.board.map((c, k) => { if (!pkSeen.has(`b${k}:${c.r}${c.s}`)) setTimeout(() => sfx('tick'), (k % 3) * 160); return pkCard(c, false, `b${k}:${c.r}${c.s}`, (k < 3 ? k : 0) * 160); }).join('')}${Array.from({ length: 5 - t.board.length }, () => '<span class="pkc slot"></span>').join('')}</div>
         <div class="pk-pot">${potOnTable > 0 ? `${chipPile(potOnTable, true)} Pot <b>${fmt(potOnTable)}</b>` : t.street === 'waiting' ? (t.nextIn ? 'Nächste Hand gleich …' : 'Warte auf Mitspieler …') : ''}</div>${win}</div>
@@ -2606,7 +2607,7 @@ function renderCasino() {
     const W = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const nums = W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = `<div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${IMGV}" alt=""><span class="pockets" style="background:${pocketRing(W, RED)}"></span>${nums}</div>
         <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">–</div></div>
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
@@ -2729,13 +2730,13 @@ async function bjAction(path) {
     bjMark('d', bj.dealer.filter((c) => !c.hidden).length); bjMark('dh', 2); // verdeckte Karte nicht erneut animieren
     bj.hands.forEach((h, i) => bjMark('h' + i, h.cards.length));
     if (bj.over) casinoDone(bj);
-    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(bj.diamonds)}`;
+    const head = $('#cbody .dia'); if (head && bj.diamonds != null) head.innerHTML = `<img src="/tcg/diamond.webp?v=${IMGV}" alt="">${fmt(bj.diamonds)}`;
   } catch (e) { toast(e.message); }
   finally { bjBusy = false; }
 }
 const BADGE = { holo: ['holo', '✨'], ultra: ['ultra', '💎'], ext: ['ext', '🌈'], selten: ['', '★'], legend: ['ultra', '👑'], ghost: ['ghost', '👻'], mythic: ['myth', '✦'] };
 const badge = (v) => { const b = BADGE[v]; return b ? `<span class="cbadge ${b[0]}">${b[1]}</span>` : ''; };
-const cardImg = (id, v) => `/tcg/${id}_${v}.webp?v=${AVER}`;
+const cardImg = (id, v) => `/tcg/${id}_${v}.webp?v=${IMGV}`;
 const varName = (v) => (tcg && tcg.def.names[v]) || v;
 const cardDef = (id) => (tcg ? tcg.def.cards.find((c) => c.id === id) : null);
 const owned = (id, v) => { const e = tcg && tcg.cards.find((x) => x.card_id === id && x.variant === v); return e ? e.count : 0; };
@@ -2753,7 +2754,7 @@ function renderCards() {
   const ctb = $('#ctabs'); if (ctb) ctb.hidden = ctab === 'shop';
   mkBadges();
   const cn = $('#ctNew'); if (cn) { const nw = (tcg.def.packs || []).filter((p) => p.isNew && !p.hidden); cn.hidden = !nw.length; cn.textContent = nw.length ? 'NEU: ' + nw.map((p) => p.name.replace('-Booster', '')).join(', ') : 'NEU'; }
-  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
     const all = [];
     for (const c of tcg.def.cards) for (const v of tcg.def.variants[c.id]) { const n = owned(c.id, v); if (c.set === 'dev' && !n) continue; all.push({ c, v, n }); } // Entwickler-Karten nur zeigen, wenn man sie hat
@@ -2775,7 +2776,7 @@ function renderCards() {
   } else if (ctab === 'inventar') {
     const defOf = (id) => tcg.def.packs.find((x) => x.id === id) || {};
     const invD = tcg.packs.filter((p) => defOf(p.pack_id).display), invB = tcg.packs.filter((p) => !defOf(p.pack_id).display && !defOf(p.pack_id).potion);
-    box.innerHTML = `<div class="inv-top"><span class="grow sub">${turboOn() ? 'Turbo: Booster öffnen in 2 Sekunden, alle Karten auf einmal' : ''}</span><button class="turbo-tg ${turboOn() ? 'on' : ''}" id="turboTg">⚡ Turbo ${turboOn() ? 'an' : 'aus'}</button></div>` + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${AVER}" alt="">
+    box.innerHTML = `<div class="inv-top"><span class="grow sub">${turboOn() ? 'Turbo: Booster öffnen in 2 Sekunden, alle Karten auf einmal' : ''}</span><button class="turbo-tg ${turboOn() ? 'on' : ''}" id="turboTg">⚡ Turbo ${turboOn() ? 'an' : 'aus'}</button></div>` + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
@@ -2791,8 +2792,8 @@ function renderCards() {
     const sec = (k, title, list, card) => (list.length && (shopCat === 'alle' || shopCat === k) ? `<h3 class="shop-sec">${title}</h3>` + list.map((p) => `${card(p)}`).join('') : '');
     box.innerHTML = `<div class="shop-hero"><button class="btn small ghost" id="shopBack">← Karten</button><div class="shop-sign"><span>🛒</span><div><b>Shop</b><small>Booster, Displays und Tränke</small></div></div><span class="dia">${D} ${fmt(tcg.diamonds || 0)}</span></div>
       <div class="shop-cats">${cats.map(([k, l]) => `<button class="chipbtn ${shopCat === k ? 'on-miss' : ''}" data-shopcat="${k}">${l}</button>`).join('')}</div>`
-      + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
-      + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" alt="">
+      + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
+      + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
       <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
       + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br>${p.price > 0 ? `<span class="dia">${D} ${fmt(p.price)}</span>` : '<span class="dia" style="opacity:.8">Preis folgt</span>'}<p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
@@ -2815,7 +2816,7 @@ function renderCards() {
     if (mKind === 'packs' || mKind === 'displays') {
       setTimeout(() => mkMarkSeen(mKind), 1500);
       const lst = mKind === 'displays' ? dispL : packsL;
-      box.innerHTML = seg + (lst.length ? lst.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
+      box.innerHTML = seg + (lst.length ? lst.map((l) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(l.variant)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(PACK_NAME[l.variant] || l.variant)}</b><br><span class="sub">von ${esc(l.seller)}</span><br><span class="dia">${D} ${fmt(l.price)}</span></span>
         ${l.mine ? `<button class="mini" data-mcancel="${l.id}">Zurücknehmen</button>` : `<button class="btn small" data-mbuy="${l.id}">Kaufen</button>`}</div>`).join('')
         : '<p class="sub">Gerade bietet niemand Booster an. Stell selbst welche ein, über „Verkaufen“ im Reiter Booster.</p>');
       return;
@@ -2843,7 +2844,7 @@ function renderCards() {
     api('/api/tcg/history').then((r) => {
       const el = $('#tradeHist'); if (!el) return;
       const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `vor ${Math.max(1, m)} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} Tagen`; };
-      el.innerHTML = (r.trades || []).length ? `<div class="thist">${r.trades.map((x) => `<div class="th-row">${x.card_id.startsWith('graded:') ? `<img src="${cardImg(x.card_id.slice(7), x.variant.split(':')[0])}" alt="" class="th-slab">` : x.card_id === 'pack' ? `<img src="/tcg/pack_${esc(x.variant)}.webp?v=${AVER}" alt="">` : `<img src="${cardImg(x.card_id, x.variant)}" data-card="${esc(x.card_id)}:${esc(x.variant)}" alt="">`}<span class="grow"><b>${x.card_id.startsWith('graded:') ? `🏅 ${esc((cardDef(x.card_id.slice(7)) || {}).name || '')} · ${gWord(Number(x.variant.split(':')[1]))} ${gLabel(Number(x.variant.split(':')[1]))}` : x.card_id === 'pack' ? esc(PACK_NAME[x.variant] || 'Booster') : esc(cardDef(x.card_id) ? cardDef(x.card_id).name : x.card_id)}</b><small>${x.card_id === 'pack' ? 'Booster' : esc(varName(x.variant))} · ${ago(x.created)}</small><small><span class="th-u" data-user="${x.seller}">${esc(x.seller_name)}</span> → <span class="th-u" data-user="${x.buyer}">${esc(x.buyer_name)}</span></small></span><span class="dia th-p">${D} ${fmt(x.price)}</span></div>`).join('')}</div>` : '<p class="sub">Noch wurde nichts verkauft.</p>';
+      el.innerHTML = (r.trades || []).length ? `<div class="thist">${r.trades.map((x) => `<div class="th-row">${x.card_id.startsWith('graded:') ? `<img src="${cardImg(x.card_id.slice(7), x.variant.split(':')[0])}" alt="" class="th-slab">` : x.card_id === 'pack' ? `<img src="/tcg/pack_${esc(x.variant)}.webp?v=${IMGV}" alt="">` : `<img src="${cardImg(x.card_id, x.variant)}" data-card="${esc(x.card_id)}:${esc(x.variant)}" alt="">`}<span class="grow"><b>${x.card_id.startsWith('graded:') ? `🏅 ${esc((cardDef(x.card_id.slice(7)) || {}).name || '')} · ${gWord(Number(x.variant.split(':')[1]))} ${gLabel(Number(x.variant.split(':')[1]))}` : x.card_id === 'pack' ? esc(PACK_NAME[x.variant] || 'Booster') : esc(cardDef(x.card_id) ? cardDef(x.card_id).name : x.card_id)}</b><small>${x.card_id === 'pack' ? 'Booster' : esc(varName(x.variant))} · ${ago(x.created)}</small><small><span class="th-u" data-user="${x.seller}">${esc(x.seller_name)}</span> → <span class="th-u" data-user="${x.buyer}">${esc(x.buyer_name)}</span></small></span><span class="dia th-p">${D} ${fmt(x.price)}</span></div>`).join('')}</div>` : '<p class="sub">Noch wurde nichts verkauft.</p>';
     }).catch(() => {});
   } else if (ctab === 'melt') {
     const melt = (tcg.def.melt) || {};
@@ -2853,7 +2854,7 @@ function renderCards() {
     const total = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra) * (melt[d.v] || 40), 0);
     const count = dupes.reduce((x, d) => x + Math.min(meltSel[d.key] || 0, d.extra), 0);
     const myDisp = tcg.packs.filter((p) => (tcg.def.packs.find((x) => x.id === p.pack_id) || {}).display && p.count > 0);
-    const dispHtml = myDisp.length ? `<h2 style="margin:4px 0 8px;font-size:18px">🗃 Displays umwandeln</h2>${myDisp.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), val = Math.round(d.price * 0.6), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(d.id)}.webp?v=${AVER}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${fmt(val)} 💎<br>Tipp: Öffnen bringt ${d.size} Booster</span></span>${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small ghost" data-meltdisp="${esc(d.id)}">Umwandeln</button>`}</div>`; }).join('')}` : '';
+    const dispHtml = myDisp.length ? `<h2 style="margin:4px 0 8px;font-size:18px">🗃 Displays umwandeln</h2>${myDisp.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), val = Math.round(d.price * 0.6), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(d.id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${fmt(val)} 💎<br>Tipp: Öffnen bringt ${d.size} Booster</span></span>${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small ghost" data-meltdisp="${esc(d.id)}">Umwandeln</button>`}</div>`; }).join('')}` : '';
     if (!dupes.length) { box.innerHTML = dispHtml + '<p class="sub">Du hast keine doppelten Karten.</p>'; return; }
     const groups = order.map((v) => [v, dupes.filter((d) => d.v === v)]).filter(([, l]) => l.length);
     box.innerHTML = dispHtml + `<p class="sub" style="margin-bottom:8px">Tippe eine Karte an, um sie zum Umwandeln auszuwählen. Jeder Tipp nimmt eine mehr. Von jeder Karte bleibt immer eine erhalten.</p>
@@ -2918,7 +2919,7 @@ function renderCards() {
     setTimeout(() => { const o = document.querySelector('.crow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
       <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
         ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
@@ -2956,7 +2957,7 @@ const srMask = (src) => `-webkit-mask-image:url(${src});mask-image:url(${src});-
 const srCache = {};
 async function srPackData(pid) { // Bild laden, sichtbare Fläche und Randfarben ermitteln (für die Seitenwände)
   if (srCache[pid]) return srCache[pid];
-  const src = `/tcg/pack_${pid}.webp?v=${AVER}`;
+  const src = `/tcg/pack_${pid}.webp?v=${IMGV}`;
   const img = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
   const W = img.naturalWidth, H = img.naturalHeight, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0); const px = g.getImageData(0, 0, W, H).data;
@@ -3010,7 +3011,7 @@ function srLight(pk, angDeg, tiltDeg) {
     T.el.style.filter = `brightness(${b.toFixed(3)})`;
   }
 }
-const SR_ROOM = `<div class="sr-bokeh">${['standard', 'toon', 'ghost', 'premium'].map((p, k) => `<img class="bk${k}" src="/tcg/pack_${p}.webp?v=${AVER}" alt="">`).join('')}</div><div class="sr-glass"></div><div class="sr-beam"></div><div class="sr-beam b2"></div><div class="sr-dust">${Array.from({ length: 16 }, (_, k) => `<i style="left:${(38 + (k * 37) % 26)}%;top:${(8 + (k * 53) % 60)}%;animation-delay:-${(k * 1.3) % 9}s;animation-duration:${8 + (k % 5) * 2}s"></i>`).join('')}</div><div class="sr-floor"><i class="sr-spot"></i></div>`;
+const SR_ROOM = `<div class="sr-bokeh">${['standard', 'toon', 'ghost', 'premium'].map((p, k) => `<img class="bk${k}" src="/tcg/pack_${p}.webp?v=${IMGV}" alt="">`).join('')}</div><div class="sr-glass"></div><div class="sr-beam"></div><div class="sr-beam b2"></div><div class="sr-dust">${Array.from({ length: 16 }, (_, k) => `<i style="left:${(38 + (k * 37) % 26)}%;top:${(8 + (k * 53) % 60)}%;animation-delay:-${(k * 1.3) % 9}s;animation-duration:${8 + (k % 5) * 2}s"></i>`).join('')}</div><div class="sr-floor"><i class="sr-spot"></i></div>`;
 function srShell(inner, cls) { const el = $('#showroom'); el.innerHTML = `<div class="sr-studio ${cls || ''}">${SR_ROOM}${inner}</div>`; el.classList.add('on'); return el; }
 function packView(pid) { // Booster frei drehen: ziehen dreht, loslassen dreht mit Schwung weiter
   const p = (tcg.def.packs || []).find((x) => x.id === pid); closeModal();
@@ -3028,7 +3029,7 @@ function packView(pid) { // Booster frei drehen: ziehen dreht, loslassen dreht m
 }
 const easeIO = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 async function openShowroom(pid, r) { // wie im Video: sanft drehen, aufleuchten, Hülle klappt auf, Licht füllt alles, Karte gleitet aus dem Licht
-  const src = `/tcg/pack_${pid}.webp?v=${AVER}`;
+  const src = `/tcg/pack_${pid}.webp?v=${IMGV}`;
   const el = srShell(`<div class="sr-stage" id="srStage"></div><div class="sr-bloom"></div><div class="sr-hint">Tippen zum Überspringen</div>`);
   let skip = false; el.onclick = () => { skip = true; };
   const stage = $('#srStage'), pk = await srBuildPack(stage, pid).catch(() => null);
@@ -3088,14 +3089,14 @@ document.addEventListener('click', (e) => { // Prestige-Logos überall antippbar
   zoomImg(im.getAttribute('src'), t === 12 ? 'Highroller' : `Prestige ${t}${names[t] ? ' · ' + names[t] : ''}`, t === 12 ? 'Sonderlogo aus dem Casino-Strang' : t >= 11 ? 'Höchste Prestige-Stufe' : '');
 }, true);
 function zoomImg(src, title, sub) { // Abzeichen oder Emblem groß ansehen (bewegte Bilder laufen mit)
-  layer(`<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${AVER}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`);
+  layer(`<div class="panel zoom-box" id="zoomBox"><div class="zoom-rays"></div><img src="${esc(src)}?v=${IMGV}" alt=""><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}<button class="btn ghost" id="zoomX">Schließen</button></div>`);
   $('#zoomX').onclick = closeLayer; sfx('tick');
 }
 const turboOn = () => { try { return localStorage.getItem('turbo_open') === '1'; } catch (e) { return false; } };
 function openTurbo(pid, r) { // Turbo: kurz drehen, aufreißen, alle Karten auf einmal
   const TOP = ['ultra', 'ext', 'legend', 'ghost', 'mythic'];
   let el = document.getElementById('turbo'); if (!el) { el = document.createElement('div'); el.id = 'turbo'; document.body.appendChild(el); }
-  el.innerHTML = `<div class="tb-stage"><img class="tb-pack" src="/tcg/pack_${esc(pid)}.webp?v=${AVER}" alt=""><div class="tb-flash"></div></div>`;
+  el.innerHTML = `<div class="tb-stage"><img class="tb-pack" src="/tcg/pack_${esc(pid)}.webp?v=${IMGV}" alt=""><div class="tb-flash"></div></div>`;
   el.classList.add('on'); sfx('srcard');
   setTimeout(() => { sfx('srtear'); el.querySelector('.tb-stage').classList.add('burst'); }, 650);
   setTimeout(() => {
@@ -3116,7 +3117,7 @@ async function openPack(pid) {
     const r = await api('/api/tcg/open', { pack: pid });
     if (r.display) { // Display: Booster ins Inventar, kurze Einblendung
       tcg = r.state; sfx('exact'); try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch (e) {}
-      const u = $('#unlock'); u.innerHTML = `<div class="rays"></div><div class="in"><p class="sub">Display geöffnet</p><img src="/tcg/pack_${esc(pid)}.webp?v=${AVER}" alt="" style="width:170px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))"><h1 style="margin:6px 0">+${r.added} Booster</h1><p class="sub">${esc(PACK_NAME[r.of] || 'Booster')} liegen jetzt in deinem Inventar</p><button class="btn" id="unlockOk" style="min-width:220px">Zu den Boostern</button></div>`;
+      const u = $('#unlock'); u.innerHTML = `<div class="rays"></div><div class="in"><p class="sub">Display geöffnet</p><img src="/tcg/pack_${esc(pid)}.webp?v=${IMGV}" alt="" style="width:170px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))"><h1 style="margin:6px 0">+${r.added} Booster</h1><p class="sub">${esc(PACK_NAME[r.of] || 'Booster')} liegen jetzt in deinem Inventar</p><button class="btn" id="unlockOk" style="min-width:220px">Zu den Boostern</button></div>`;
       u.classList.add('on'); $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; ctab = 'inventar'; renderCards(); };
       return;
     }
@@ -3197,7 +3198,7 @@ const TC_LINES = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
 const TC_LINE_COL = ['#3DDC97', '#8CF06B', '#8CF06B', '#FFD23F', '#FF5A6A'];
 const TC_SEGPOS = [6, 0, 3, 9, 1, 7, 4, 10, 2, 8, 5, 11]; // Stop-Feld Nr. f liegt auf Segment TC_SEGPOS[f], verteilt ums Rad
 let tc = { bi: 3, grid: [['B', 'S', 'R'], ['T', 'K', 'M'], ['R', 'C', 'B']], busy: false, auto: 0, turbo: false, risk: null, mode: 'play', lastWin: 0, msg: '', startHook: null };
-Object.keys(TC_SYM).forEach((k) => { const im = new Image(); im.src = `/tcg/tc_${k}.webp?v=${AVER}`; }); // vorladen
+Object.keys(TC_SYM).forEach((k) => { const im = new Image(); im.src = `/tcg/tc_${k}.webp?v=${IMGV}`; }); // vorladen
 const tcCell = (k) => `<div class="tc-cell s-${k}"></div>`;
 const tcRandSym = () => 'KSHBRTMCBRTMCCBRTM'[Math.floor(Math.random() * 18)];
 const tcSleep = (ms) => new Promise((r) => setTimeout(r, tc.turbo ? ms * 0.45 : ms));
@@ -3215,7 +3216,7 @@ function renderCw(box) { // Zuschauen bei Roulette oder Blackjack, nur ansehen
     if ($('#cwRou') && box.contains($('#cwRou'))) { cwRouParts(); return; } // Rad bleibt stehen, nur Tableau und Verlauf erneuern
     const nums = CW_W.map((n, i) => `<span class="wnum ${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}" style="--a:${(i * 360 / 37).toFixed(2)}deg"><b style="display:block;transform:rotate(calc(var(--a) * -1))">${n}</b></span>`).join('');
     box.innerHTML = head + `<div id="cwRou"><div class="wheelwrap"><span class="pointer"></span>
-        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${AVER}" alt=""><span class="pockets" style="background:${pocketRing(CW_W, RED)}"></span>${nums}</div>
+        <div class="wheel" id="wheel"><img src="/tcg/wheel.webp?v=${IMGV}" alt=""><span class="pockets" style="background:${pocketRing(CW_W, RED)}"></span>${nums}</div>
         <div class="balltrack" id="balltrack" hidden><span class="ball" id="ball"></span></div>
         <div class="ballnum" id="ballnum">${cw.spin ? cw.spin.n : '–'}</div></div>
       <div class="rhist" id="cwHist"></div>
@@ -3266,12 +3267,12 @@ const tcAva = (u) => `<img class="tc-mava" src="/api/avatar/${esc(String(u.id))}
 function renderTcLobby(box) { // Auswahl: zwei Maschinen, frei oder belegt
   const me = home && home.me && home.me.id;
   const GM = ['anubis', 'jester', 'crypt'].includes(cgame) ? cgame : 'triple', J = GM !== 'triple', LOGO = { triple: '/tcg/tc_logo.webp', jester: '/jc/logo.webp', anubis: '/an/logo.webp', crypt: '/cr/logo.webp' }[GM], TEST = GM === 'jester' ? home && home.jesterTest : GM === 'anubis' ? home && home.anubisTest : GM === 'crypt' ? home && home.cryptTest : false;
-  box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${AVER}" alt="${{ triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft' }[GM]}"></div>
+  box.innerHTML = `<div class="tc-lobby ${J ? 'jc-lobby' : ''}" id="tcLobby"><div class="tc-lhead"><img src="${LOGO}?v=${IMGV}" alt="${{ triple: 'Triple Crown', jester: 'Narrenkappe', anubis: 'Auge des Anubis', crypt: 'Buch der Gruft' }[GM]}"></div>
     <p class="sub" style="text-align:center;margin:0 0 10px">Zwei Maschinen. Setz dich an eine freie oder schau jemandem zu.</p>
     <div class="tc-mgrid">${(tcMachines.length ? tcMachines : [{ id: 1, game: 'triple' }, { id: 2, game: 'triple' }, { id: 3, game: 'jester' }, { id: 4, game: 'jester' }, { id: 5, game: 'anubis' }, { id: 6, game: 'anubis' }, { id: 7, game: 'crypt' }, { id: 8, game: 'crypt' }]).filter((m) => (m.game || 'triple') === GM).map((m) => {
       const mine = m.user && m.user.id === me;
       return `<div class="tc-mcard ${m.user ? 'busy' : 'free'}"><div class="tc-mtitle">Maschine ${GM === 'crypt' ? m.id - 6 : GM === 'anubis' ? m.id - 4 : J ? m.id - 2 : m.id}</div>
-        <div class="tc-mmini"><img src="${LOGO}?v=${AVER}" alt=""><div class="tc-mreels">${'<span></span>'.repeat(J ? 5 : 3)}</div></div>
+        <div class="tc-mmini"><img src="${LOGO}?v=${IMGV}" alt=""><div class="tc-mreels">${'<span></span>'.repeat(J ? 5 : 3)}</div></div>
         ${m.user ? `<div class="tc-mwho">${tcAva(m.user)}<b>${esc(m.user.name)}</b></div><div class="tc-mstate">${mine ? 'Dein Platz' : 'Belegt'}${m.watchers ? ` · 👀 ${m.watchers}` : ''}</div>
           ${mine ? `<button class="btn small" data-tcsit="${m.id}">Weiterspielen</button>` : `<button class="btn small ghost" data-tcwatch="${m.id}">👀 Zuschauen</button>`}`
         : J && TEST && !home.me.admin ? `<div class="tc-mwho"><b style="color:#C9A2FF">🔒 Testphase</b></div><div class="tc-mstate">bald spielbar</div><button class="btn small ghost" disabled>🔒 Noch gesperrt</button>`
@@ -3353,9 +3354,9 @@ function renderTriple(box) {
   if (!$('#tcRoot')) {
     const wm = tc.watch && tcMachines.find((x) => x.id === tc.watch);
     box.innerHTML = `${tc.watch ? `<div class="tc-watchbar">👀 Du schaust ${wm && wm.user ? `<b>${esc(wm.user.name)}</b>` : ''} an Maschine ${tc.watch} zu <button class="btn small ghost" id="tcBack">Zurück</button></div>` : `<div class="tc-watchbar mine">🎰 Maschine ${tc.seat} <button class="btn small ghost" id="tcBack">Aufstehen</button></div>`}<div class="tc ${tc.watch ? 'watching' : ''}" id="tcRoot"><div class="tc-top">${home && home.me && home.me.admin ? `<button class="tc-force ${tc.force ? 'on' : ''}" id="tcForce" title="Nur für dich sichtbar">${tc.watch ? '🎁 ' : ''}${tc.game === 'jester' ? '🃏 Kappe' : tc.game === 'anubis' ? '👁 Freispiele' : tc.game === 'crypt' ? '📖 Freispiele' : '👑 Vollbild'}${tc.force ? ' AN' : ''}</button>` : ''}
-      ${tc.game === 'jester' || tc.game === 'anubis' || tc.game === 'crypt' ? `<div class="jc-bg" ${tc.game === 'anubis' || tc.game === 'crypt' ? `style="background-image:url('${G_DIR()}bg.webp')"` : ''}></div><img class="tc-logo jc-logo" src="${G_DIR()}logo.webp?v=${AVER}" alt="">${tc.game === 'anubis' ? `<div class="an-top"><div class="an-tab" id="anTab">${anTabHtml(0)}</div><div class="an-fs" id="anFs"></div></div>` : ''}${tc.game === 'crypt' ? `<div class="an-top cr-top"><div class="cr-special" id="crSpec"></div><div class="an-fs" id="anFs"></div></div>` : ''}
+      ${tc.game === 'jester' || tc.game === 'anubis' || tc.game === 'crypt' ? `<div class="jc-bg" ${tc.game === 'anubis' || tc.game === 'crypt' ? `style="background-image:url('${G_DIR()}bg.webp')"` : ''}></div><img class="tc-logo jc-logo" src="${G_DIR()}logo.webp?v=${IMGV}" alt="">${tc.game === 'anubis' ? `<div class="an-top"><div class="an-tab" id="anTab">${anTabHtml(0)}</div><div class="an-fs" id="anFs"></div></div>` : ''}${tc.game === 'crypt' ? `<div class="an-top cr-top"><div class="cr-special" id="crSpec"></div><div class="an-fs" id="anFs"></div></div>` : ''}
       <div class="tc-machine jc-machine"><div class="tc-reels jc-reels" id="tcReels">${jcGrid().map((col, c) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${c}">${col.map(jcCell).join('')}</div></div>`).join('')}
-          <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${AVER}" alt="Triple Crown">
+          <svg class="tc-lines" id="tcLines" viewBox="0 0 500 300" preserveAspectRatio="none"></svg><div class="tc-linewin" id="tcLineWin"></div></div></div>` : `<img class="tc-logo" src="/tcg/tc_logo.webp?v=${IMGV}" alt="Triple Crown">
       <div class="tc-machine">
         <div class="tc-nums l"><span class="n4">4</span><span class="n2">2</span><span class="n1">1</span><span class="n3">3</span><span class="n5">5</span></div>
         <div class="tc-reels" id="tcReels">${[0, 1, 2].map((r) => `<div class="tc-reel"><div class="tc-strip" id="tcStrip${r}">${tc.grid[r].map(tcCell).join('')}</div></div>`).join('')}
@@ -3507,7 +3508,7 @@ const JC_PAY = { T: [5, 25, 100], J: [5, 25, 100], Q: [5, 25, 100], K: [5, 40, 1
 const JC_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 0, 0, 0, 1], [1, 2, 2, 2, 1], [0, 0, 1, 2, 2], [2, 2, 1, 0, 0], [1, 0, 1, 2, 1]];
 const JC_COL = ['#FFD23F', '#7CF0A8', '#FF7AB6', '#5AA9FF', '#FF8A3D', '#C08BFF', '#3DDC97', '#FF5E5E', '#9FE3FF', '#FFE27A'];
 const G_DIR = () => (tc.game === 'anubis' ? '/an/' : tc.game === 'crypt' ? '/cr/' : '/jc/'), G_LOW = () => (tc.game === 'anubis' ? 'JQKALHSBXE' : tc.game === 'crypt' ? 'TJQKAGCMR' : 'TJQKAGVPOW');
-const jcCell = (k) => `<div class="tc-cell jc-cell" style="background-image:url('${G_DIR()}s_${k}.webp?v=${AVER}')"></div>`;
+const jcCell = (k) => `<div class="tc-cell jc-cell" style="background-image:url('${G_DIR()}s_${k}.webp?v=${IMGV}')"></div>`;
 const jcRand = () => { const L = G_LOW(); return Array.from({ length: 5 }, () => Array.from({ length: 3 }, () => L[Math.floor(Math.random() * 7)])); };
 function jcGrid() { if (!tc.jgrid) tc.jgrid = jcRand(); return tc.jgrid; }
 function jcSetGrid(g) { tc.jgrid = g; g.forEach((col, c) => { const st = $('#tcStrip' + c); if (st) st.innerHTML = col.map(jcCell).join(''); }); }
@@ -3536,11 +3537,11 @@ async function jcCap(cap, after) { // Kappe schüttelt sich, dann fliegt sie Fel
   const cellEl = (c, r) => document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r];
   capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) el.classList.add('jc-shake'); });
   gmDuck(cap.turned.length * (tc.turbo ? 200 : 450) + 2200); tcSetMsg('🃏 Die Narrenkappe schüttelt sich …'); sfx('jcbell'); await tcSleep(tc.turbo ? 500 : 1200);
-  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capped'); el.classList.add('jc-src'); el.style.backgroundImage = `url('/jc/s_N.webp?v=${AVER}'), repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,70,50,.8) 0 10deg, rgba(110,10,15,.95) 10deg 22deg)`; el.style.backgroundSize = '86% 86%, 100% 100%'; } }); // die Kappe selbst ist Narr: rote Strahlen wie im Original
+  capCells.forEach(([c, r]) => { const el = cellEl(c, r); if (el) { el.classList.remove('jc-shake'); el.classList.add('jc-capped'); el.classList.add('jc-src'); el.style.backgroundImage = `url('/jc/s_N.webp?v=${IMGV}'), repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,70,50,.8) 0 10deg, rgba(110,10,15,.95) 10deg 22deg)`; el.style.backgroundSize = '86% 86%, 100% 100%'; } }); // die Kappe selbst ist Narr: rote Strahlen wie im Original
   if (!cap.turned.length) { tcSetMsg('🃏 Die Kappe selbst zählt als Narr'); await tcSleep(tc.turbo ? 300 : 700); tc.jgrid = after; return; }
   tcSetMsg(`🃏 Die Kappe verteilt sich auf ${cap.turned.length} ${cap.turned.length === 1 ? 'Feld' : 'Felder'}!`);
   for (const [c, r] of cap.turned) { // Kappe landet auf dem Symbol, das Feld glüht rot
-    const el = cellEl(c, r); if (el) { el.classList.add('jc-capped'); el.insertAdjacentHTML('beforeend', `<img class="jc-hat" src="/jc/hat.webp?v=${AVER}" alt="">`); }
+    const el = cellEl(c, r); if (el) { el.classList.add('jc-capped'); el.insertAdjacentHTML('beforeend', `<img class="jc-hat" src="/jc/hat.webp?v=${IMGV}" alt="">`); }
     sfx('jcpop'); await tcSleep(tc.turbo ? 160 : 420);
   }
   await tcSleep(tc.turbo ? 200 : 450); tc.jgrid = after;
@@ -3586,9 +3587,9 @@ async function jcSpin() {
 }
 function jcPaytable() {
   const lb = TC_BETS[tc.bi] / 10;
-  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/jc/logo.webp?v=${AVER}" alt="" style="width:70%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(TC_BETS[tc.bi])}.</p>
-    <div class="jc-pays">${Object.keys(JC_PAY).reverse().map((k) => `<div class="jc-pay"><img src="/jc/s_${k}.webp?v=${AVER}" alt=""><b>${esc(JC_SYM[k])}</b><small>${JC_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
-    <div class="jc-pay"><img src="/jc/s_N.webp?v=${AVER}" alt=""><b>Narrenkappe</b><small>Nur auf der mittleren Walze. Sie zählt selbst als Kürbisnarr, schüttelt sich und setzt sich oft auf weitere Symbole, bis zu 12. Die zählen dann ebenfalls als Narr.</small></div>
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/jc/logo.webp?v=${IMGV}" alt="" style="width:70%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(TC_BETS[tc.bi])}.</p>
+    <div class="jc-pays">${Object.keys(JC_PAY).reverse().map((k) => `<div class="jc-pay"><img src="/jc/s_${k}.webp?v=${IMGV}" alt=""><b>${esc(JC_SYM[k])}</b><small>${JC_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
+    <div class="jc-pay"><img src="/jc/s_N.webp?v=${IMGV}" alt=""><b>Narrenkappe</b><small>Nur auf der mittleren Walze. Sie zählt selbst als Kürbisnarr, schüttelt sich und setzt sich oft auf weitere Symbole, bis zu 12. Die zählen dann ebenfalls als Narr.</small></div>
     <p class="sub" style="margin:0">🃏 Der Kürbisnarr ersetzt jedes Symbol außer der Kappe. Jeden Gewinn kannst du mit der Leiter oder der Karte riskieren.</p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -3597,14 +3598,14 @@ function jcPaytable() {
 const AN_SYM = { J: 'J', Q: 'Q', K: 'K', A: 'A', L: 'Lotus', H: 'Ankh', S: 'Skarabäus', B: 'Falke', X: 'Schakal', E: 'Auge', W: 'Anubis', P: 'Grabtor' };
 const AN_PAY = { J: [5, 20, 100], Q: [5, 20, 100], K: [5, 20, 100], A: [5, 20, 100], L: [10, 50, 200], H: [10, 50, 200], S: [20, 100, 250], B: [20, 125, 300], X: [50, 200, 400], E: [100, 250, 500] }; // wie lib/anubis.js
 const AN_TIERS = ['L', 'H', 'S', 'B', 'X', 'E'];
-const anTabHtml = (lvl) => AN_TIERS.map((t, i) => `<i class="an-ti ${i < lvl ? 'up' : ''}" style="background-image:url('/an/s_${i < lvl ? AN_TIERS[lvl] : t}.webp?v=${AVER}')"></i>`).join('');
+const anTabHtml = (lvl) => AN_TIERS.map((t, i) => `<i class="an-ti ${i < lvl ? 'up' : ''}" style="background-image:url('/an/s_${i < lvl ? AN_TIERS[lvl] : t}.webp?v=${IMGV}')"></i>`).join('');
 function anSetTab(lvl, flash) { const t = $('#anTab'); if (!t) return; t.innerHTML = anTabHtml(lvl); if (flash) { t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); } }
 function anSetFs(txt) { const f = $('#anFs'); if (f) f.innerHTML = txt || ''; }
 async function anExpand(wild) { // Anubis wächst über die ganze Walze
   if (!wild || !wild.some(Boolean)) return;
   for (let c = 0; c < 5; c++) if (wild[c]) {
     const reel = ($('#tcStrip' + c) || {}).parentElement; if (!reel) continue;
-    reel.style.position = 'relative'; reel.insertAdjacentHTML('beforeend', `<div class="an-wild" style="background-image:url('/an/wild_tall.webp?v=${AVER}')"></div>`);
+    reel.style.position = 'relative'; reel.insertAdjacentHTML('beforeend', `<div class="an-wild" style="background-image:url('/an/wild_tall.webp?v=${IMGV}')"></div>`);
     sfx('anexp'); await tcSleep(tc.turbo ? 200 : 650);
   }
 }
@@ -3629,7 +3630,7 @@ async function anBeam(lvlAfter, lvlBefore = 0) { // wie im Original: Kopf lädt 
     const len = Math.hypot(tx - sx, ty - sy), ang = Math.atan2(ty - sy, tx - sx) * 180 / Math.PI;
     const b = document.createElement('div'); b.className = 'an-laser'; b.style.cssText = `left:${sx}px;top:${sy}px;width:${len}px;transform:rotate(${ang}deg)`; root.appendChild(b);
     targets[k].classList.add('zap'); sfx('anzap'); await tcSleep(tc.turbo ? 140 : 300);
-    targets[k].style.backgroundImage = `url('/an/s_${AN_TIERS[lvlAfter]}.webp?v=${AVER}')`; targets[k].classList.add('up');
+    targets[k].style.backgroundImage = `url('/an/s_${AN_TIERS[lvlAfter]}.webp?v=${IMGV}')`; targets[k].classList.add('up');
     setTimeout(() => { b.remove(); targets[k].classList.remove('zap'); }, 320);
   }
   await tcSleep(tc.turbo ? 150 : 400); ch.remove(); anSetTab(lvlAfter, true); src.classList.remove('an-glow');
@@ -3643,7 +3644,7 @@ async function anFlipGrid(lvl) { // alle Bildsymbole unter der neuen Stufe werde
   if (!flips.length) return;
   sfx('anflip');
   flips.forEach(([c, r]) => { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (!el) return; el.classList.add('an-flip');
-    setTimeout(() => { el.style.backgroundImage = `url('/an/s_${to}.webp?v=${AVER}')`; g[c][r] = to; }, 220); setTimeout(() => el.classList.remove('an-flip'), 480); });
+    setTimeout(() => { el.style.backgroundImage = `url('/an/s_${to}.webp?v=${IMGV}')`; g[c][r] = to; }, 220); setTimeout(() => el.classList.remove('an-flip'), 480); });
   await tcSleep(tc.turbo ? 300 : 650);
 }
 async function anShowScat(grid, win, big) { if (!win) return; grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'P') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) el.classList.add('hit', 'an-scat', big ? 'an-scatglow' : 'x'); } })); tcSetMsg(`🚪 Grabtore: +${fmt(win)}`); if (!big) sfx('anfs'); await tcSleep(tc.turbo ? 500 : big ? 2200 : 900); }
@@ -3654,7 +3655,7 @@ async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. F
   if (r.lines.length) { await jcLines(r.lines); sum = r.lines.reduce((a, l) => a + l.win, 0); }
   if (r.scat) { if (r.fs) { tc.fsMusic = true; gmusic(false); } await anShowScat(r.grid, r.scat, !!r.fs); sum += r.scat; tc.lastWin = sum; tcSync(); }
   if (r.fs) {
-    sfx('anfs'); await anPopup(`<b class="an-big">12 FREISPIELE</b><img src="/an/s_W.webp?v=${AVER}" alt=""><small>Jeder Anubis gibt ein weiteres Freispiel<br>und verbessert die Tafel</small>`, 2600);
+    sfx('anfs'); await anPopup(`<b class="an-big">12 FREISPIELE</b><img src="/an/s_W.webp?v=${IMGV}" alt=""><small>Jeder Anubis gibt ein weiteres Freispiel<br>und verbessert die Tafel</small>`, 2600);
     let total = 12, fsSum = 0;
     for (let i = 0; i < r.fs.spins.length; i++) {
       const sp = r.fs.spins[i]; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`);
@@ -3691,10 +3692,10 @@ async function anSpin() {
 }
 function anPaytable() {
   const lb = TC_BETS[tc.bi] / 10, b = TC_BETS[tc.bi];
-  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/an/logo.webp?v=${AVER}" alt="" style="width:74%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(b)}.</p>
-    <div class="jc-pay"><img src="/an/s_W.webp?v=${AVER}" alt=""><b>Anubis</b><small>Dehnt sich auf die ganze Walze aus und ersetzt alle Symbole außer dem Grabtor.</small></div>
-    <div class="jc-pay"><img src="/an/s_P.webp?v=${AVER}" alt=""><b>Grabtor</b><small>Zählt überall: 3× ${fmt(b)} · 4× ${fmt(b * 10)} · 5× ${fmt(b * 25)}. 3 oder mehr ergeben 12 Freispiele.</small></div>
-    <div class="jc-pays">${['E', 'X', 'B', 'S', 'H', 'L', 'A'].map((k) => `<div class="jc-pay"><img src="/an/s_${k}.webp?v=${AVER}" alt=""><b>${k === 'A' ? 'A, K, Q, J' : esc(AN_SYM[k])}</b><small>${AN_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/an/logo.webp?v=${IMGV}" alt="" style="width:74%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links mit 3, 4 oder 5 gleichen. Beträge für deinen Einsatz von ${fmt(b)}.</p>
+    <div class="jc-pay"><img src="/an/s_W.webp?v=${IMGV}" alt=""><b>Anubis</b><small>Dehnt sich auf die ganze Walze aus und ersetzt alle Symbole außer dem Grabtor.</small></div>
+    <div class="jc-pay"><img src="/an/s_P.webp?v=${IMGV}" alt=""><b>Grabtor</b><small>Zählt überall: 3× ${fmt(b)} · 4× ${fmt(b * 10)} · 5× ${fmt(b * 25)}. 3 oder mehr ergeben 12 Freispiele.</small></div>
+    <div class="jc-pays">${['E', 'X', 'B', 'S', 'H', 'L', 'A'].map((k) => `<div class="jc-pay"><img src="/an/s_${k}.webp?v=${IMGV}" alt=""><b>${k === 'A' ? 'A, K, Q, J' : esc(AN_SYM[k])}</b><small>${AN_PAY[k].map((v, i) => `${i + 3}× ${fmt(Math.round(v * lb))}`).join(' · ')}</small></div>`).join('')}</div>
     <p class="sub" style="margin:0">👁 In den Freispielen gibt jeder Anubis ein weiteres Freispiel und verbessert die Tafel: Lotus → Ankh → Skarabäus → Falke → Schakal → Auge. Jeden Gewinn kannst du mit Leiter oder Karte riskieren.</p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -3712,7 +3713,7 @@ function fsWinHtml(r) { // Freispiel-Tafel: bei Gewinn im auslösenden Dreh auch
   if (!base) return `<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`;
   return `<small>GESAMTGEWINN</small><b class="an-big">${fmt(r.total)}</b><small class="fs-split">Freispiele ${fmt(r.fs.total)} + Auslöse-Dreh ${fmt(base)}</small>`;
 }
-function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${AVER}')"></i>` : ''; e.classList.toggle('on', !!sym); }
+function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${IMGV}')"></i>` : ''; e.classList.toggle('on', !!sym); }
 async function crShowBooks(grid, win, big) {
   if (!win) return; const cells = [];
   grid.forEach((col, c) => col.forEach((x, r) => { if (x === 'B') { const el = document.querySelectorAll(`#tcStrip${c} .tc-cell`)[r]; if (el) cells.push(el); } }));
@@ -3733,7 +3734,7 @@ const CR_RUNE = `<svg viewBox="0 0 60 60" class="cr-rune"><g fill="none" stroke=
 async function crPick(special) { // wie im Original: Buch erscheint, klappt auf, Seiten blättern um, Symbol erscheint auf der linken Seite
   const root = $('#tcRoot'); if (!root) return; const el = document.createElement('div'); el.className = 'an-pop cr-pick';
   el.innerHTML = `<div class="cr-tab"><b class="cr-t">10 FREISPIELE</b><small class="cr-s">Bonus-Symbol</small>
-    <div class="cr-bk"><img class="cr-cover" src="/cr/s_B.webp?v=${AVER}" alt="">
+    <div class="cr-bk"><img class="cr-cover" src="/cr/s_B.webp?v=${IMGV}" alt="">
       <div class="cr-open"><div class="cr-pg cr-l"><i class="cr-sym" id="crL"></i></div><div class="cr-pg cr-r">${CR_RUNE}</div>
         <div class="cr-flip" id="crF"><div class="cr-face cr-front">${CR_RUNE}</div><div class="cr-face cr-back"><i class="cr-sym" id="crB"></i></div></div></div></div></div>`;
   root.appendChild(el); gmDuck(6000);
@@ -3743,10 +3744,10 @@ async function crPick(special) { // wie im Original: Buch erscheint, klappt auf,
   const n = tc.turbo ? 7 : 13; let d = 170, k = Math.floor(Math.random() * 9);
   for (let i = 0; i < n; i++) {
     const sym = i === n - 1 ? special : pool[(k++) % pool.length];
-    B.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`;
+    B.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${IMGV}')`;
     flip.style.transition = `transform ${d}ms ease-in-out`; flip.style.transform = 'rotateY(-180deg)'; smp('cr_flip', 0.4);
     await tcSleep(d + 20);
-    L.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${AVER}')`; flip.style.transition = 'none'; flip.style.transform = 'rotateY(0)'; void flip.offsetWidth;
+    L.style.backgroundImage = `url('/cr/s_${sym}.webp?v=${IMGV}')`; flip.style.transition = 'none'; flip.style.transform = 'rotateY(0)'; void flip.offsetWidth;
     await tcSleep(i > n - 5 ? d * 0.8 : 40); d = Math.min(420, Math.round(d * 1.13));
   }
   L.classList.add('chosen'); smp('cr_chosen', 0.5); el.querySelector('.cr-s').textContent = `Bonus-Symbol: ${CR_SYM[special]}`; crSetSpec(special);
@@ -3760,7 +3761,7 @@ async function crExpand(ex, special) {
   tc.jgrid.forEach((col, c) => col.forEach((x, r) => { if (x === special && ex.reels[c]) { const el = cellsOf(c)[r]; if (el) el.classList.remove('cr-grey'); } }));
   await tcSleep(tc.turbo ? 200 : 600);
   for (let c = 0; c < 5; c++) if (ex.reels[c]) { // Feld für Feld füllen
-    for (let r = 0; r < 3; r++) { const el = cellsOf(c)[r]; if (!el) continue; if (tc.jgrid[c][r] !== special) { el.style.backgroundImage = `url('/cr/s_${special}.webp?v=${AVER}')`; el.classList.remove('cr-grey'); el.classList.add('cr-fill'); await tcSleep(tc.turbo ? 50 : 140); } }
+    for (let r = 0; r < 3; r++) { const el = cellsOf(c)[r]; if (!el) continue; if (tc.jgrid[c][r] !== special) { el.style.backgroundImage = `url('/cr/s_${special}.webp?v=${IMGV}')`; el.classList.remove('cr-grey'); el.classList.add('cr-fill'); await tcSleep(tc.turbo ? 50 : 140); } }
     await tcSleep(tc.turbo ? 60 : 180);
   }
   const exCells = []; for (let c = 0; c < 5; c++) if (ex.reels[c]) exCells.push(...cellsOf(c));
@@ -3829,9 +3830,9 @@ async function crSpin() {
 }
 function crPaytable() {
   const lb = TC_BETS[tc.bi] / 10, b = TC_BETS[tc.bi];
-  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/cr/logo.webp?v=${AVER}" alt="" style="width:74%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links. Beträge für deinen Einsatz von ${fmt(b)}.</p>
-    <div class="jc-pay"><img src="/cr/s_B.webp?v=${AVER}" alt=""><b>Grimoire</b><small>Ersetzt alle Symbole und zählt überall: 3× ${fmt(b * 2)} · 4× ${fmt(b * 20)} · 5× ${fmt(b * 200)}. 3 oder mehr ergeben 10 Freispiele mit Bonus-Symbol.</small></div>
-    <div class="jc-pays">${['R', 'M', 'G', 'C', 'A', 'Q'].map((k) => `<div class="jc-pay"><img src="/cr/s_${k}.webp?v=${AVER}" alt=""><b>${k === 'A' ? 'A, K' : k === 'Q' ? 'Q, J, 10' : esc(CR_SYM[k])}</b><small>${CR_PAY[k].map((v, i) => (v ? `${i + 2}× ${fmt(Math.round(v * lb))}` : '')).filter(Boolean).join(' · ')}</small></div>`).join('')}</div>
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><img src="/cr/logo.webp?v=${IMGV}" alt="" style="width:74%;margin:0 auto"><p class="sub" style="margin:0">10 Linien, gewonnen wird von links. Beträge für deinen Einsatz von ${fmt(b)}.</p>
+    <div class="jc-pay"><img src="/cr/s_B.webp?v=${IMGV}" alt=""><b>Grimoire</b><small>Ersetzt alle Symbole und zählt überall: 3× ${fmt(b * 2)} · 4× ${fmt(b * 20)} · 5× ${fmt(b * 200)}. 3 oder mehr ergeben 10 Freispiele mit Bonus-Symbol.</small></div>
+    <div class="jc-pays">${['R', 'M', 'G', 'C', 'A', 'Q'].map((k) => `<div class="jc-pay"><img src="/cr/s_${k}.webp?v=${IMGV}" alt=""><b>${k === 'A' ? 'A, K' : k === 'Q' ? 'Q, J, 10' : esc(CR_SYM[k])}</b><small>${CR_PAY[k].map((v, i) => (v ? `${i + 2}× ${fmt(Math.round(v * lb))}` : '')).filter(Boolean).join(' · ')}</small></div>`).join('')}</div>
     <p class="sub" style="margin:0">📖 Vor den Freispielen wählt das Grimoire ein Bonus-Symbol. In den Freispielen füllt es jede Walze, auf der es steht, und zahlt auf allen 10 Linien, auch wenn die Walzen nicht nebeneinander liegen. 3 Grimoires in den Freispielen geben 10 weitere.</p>
     <button class="btn ghost" id="pwCancel">Schließen</button></div>`;
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -4074,7 +4075,7 @@ function priceChart(sales) {
     <div class="row sub" style="justify-content:space-between;font-size:11.5px"><span>${new Date(t0).toLocaleDateString('de-DE')}</span><span>höchster ${fmt(hi)} · niedrigster ${fmt(lo)}</span><span>${new Date(t1).toLocaleDateString('de-DE')}</span></div>`;
 }
 function priceBox(d) {
-  const D2 = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:14px;height:14px;vertical-align:-2px" alt="">`;
+  const D2 = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:14px;height:14px;vertical-align:-2px" alt="">`;
   return `<div class="pstats">
     ${d.melt !== null ? `<div><small>Händler zahlt beim Umwandeln</small><b>${D2} ${fmt(d.melt)}</b></div>` : ''}
     <div><small>Ø Verkaufspreis</small><b>${d.avg !== null ? D2 + ' ' + fmt(d.avg) : '–'}</b></div>
@@ -4113,7 +4114,7 @@ function packInfo(pid) {
   const p = tcg.def.packs.find((x) => x.id === pid); if (!p) return;
   if (p.display || p.potion) { // Display oder Trank: einfach, nur kaufen
     const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = !!base.locked;
-    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${p.price > 0 ? '💎 ' + fmt(p.price) : 'Preis folgt'}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
+    $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${p.price > 0 ? '💎 ' + fmt(p.price) : 'Preis folgt'}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
       <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
       ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : !(p.price > 0) ? '<button class="btn" id="packBuy" disabled>Preis folgt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
@@ -4121,7 +4122,7 @@ function packInfo(pid) {
     if (!locked && !p.soldout && p.price > 0) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + (p.potion ? ' Trank gekauft' : ' Display gekauft')); if (p.potion) { ctab = 'traenke'; renderCards(); } }).catch((e) => toast(e.message)); };
     return;
   }
-  const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
+  const D = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   // die drei stärksten Karten, die aus diesem Booster kommen können
   const rank = tcg.def.order || [];
   const pool = [];
@@ -4143,7 +4144,7 @@ function packInfo(pid) {
   const byVar = rank.slice().reverse().filter((v) => pool.some((x) => x.v === v)).map((v) => [v, pool.filter((x) => x.v === v).sort((a, b) => (owned(b.c.id, b.v) ? 1 : 0) - (owned(a.c.id, a.v) ? 1 : 0) || a.c.name.localeCompare(b.c.name))]);
   const thumb = (x) => { const n = owned(x.c.id, x.v); return `<button class="pk-th ${n ? 'have' : ''}" data-card="${x.c.id}:${x.v}" title="${esc(x.c.name)}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" alt="">${n ? `<span class="pk-ok">✓${n > 1 ? n : ''}</span>` : ''}</button>`; };
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:90vh;overflow:auto">
-    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<button class="pk-view" data-packview="${esc(p.id)}" title="Ansehen"><img src="/tcg/pack_${esc(p.id)}.webp?v=${AVER}" style="width:74px;height:auto" alt=""><span>👀 Ansehen</span></button>
+    <div class="row" style="gap:12px;position:relative">${p.isNew ? '<span class="newtag">NEU</span>' : ''}<button class="pk-view" data-packview="${esc(p.id)}" title="Ansehen"><img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" style="width:74px;height:auto" alt=""><span>👀 Ansehen</span></button>
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></div>
     <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
       <button class="chipbtn" id="packMax">Max</button></div>
@@ -4213,8 +4214,8 @@ function showLocked(kind, id) {
   const pic = kind === 'frame'
     ? `<div style="display:grid;place-items:center;padding:6px">${avatar({ id: home.me.id, name: home.me.name, av: home.me.av, color: '#4FD1C5', frame: item.id, frameAnim: item.anim }, 108, false)}</div>`
     : kind === 'emblem'
-      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:min(62vw,240px)" src="/emblems/pc_${esc(item.id)}.webp?v=${AVER}" alt=""></div>`
-      : `<img class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${AVER}" alt="">`;
+      ? `<div style="display:grid;place-items:center"><img class="pcemb${anim}" style="--s:min(62vw,240px)" src="/emblems/pc_${esc(item.id)}.webp?v=${IMGV}" alt=""></div>`
+      : `<img class="titleimg${anim}" style="max-width:100%" src="/emblems/title_${esc(item.id === 'secret' ? 'tsecret' : item.id)}.webp?v=${IMGV}" alt="">`;
   $('#modal').innerHTML = `<div class="panel" style="gap:12px">
     <h2>${esc(item.secret && !item.unlocked ? 'Geheim' : name)}</h2>
     ${pic}
@@ -4243,42 +4244,42 @@ const passWhen = (ts) => new Date(ts).toLocaleString('de-DE', { weekday: 'short'
 const passLeft = (v) => { const ms = Date.parse(v.season.end) - Date.now(); if (ms <= 0) return 'beendet'; const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5); return d ? `${d} T ${h} Std` : `${h} Std`; };
 function renderPassCard() {
   const el = $('#passCard'); if (!el || !passV || passV.mode === 'off') { if (el) el.innerHTML = ''; return; }
-  if (passV.mode === 'locked') { el.innerHTML = `<button class="passcard locked" id="openPass"><img class="pc-logo" src="/news/pass_logo.webp?v=${AVER}" alt=""><span class="pc-t"><span class="nc-tag">Saison ${passV.season.nr} · ${esc(passV.season.name)}</span><b>🔒 Noch gesperrt</b><small>${passV.unlockAt ? 'Freischaltung ' + passWhen(passV.unlockAt) : 'Wird bald freigeschaltet'}</small></span></button>`; return; }
+  if (passV.mode === 'locked') { el.innerHTML = `<button class="passcard locked" id="openPass"><img class="pc-logo" src="/news/pass_logo.webp?v=${IMGV}" alt=""><span class="pc-t"><span class="nc-tag">Saison ${passV.season.nr} · ${esc(passV.season.name)}</span><b>🔒 Noch gesperrt</b><small>${passV.unlockAt ? 'Freischaltung ' + passWhen(passV.unlockAt) : 'Wird bald freigeschaltet'}</small></span></button>`; return; }
   if (!passV.active) { el.innerHTML = ''; return; }
   const v = passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
   el.innerHTML = `<button class="passcard ${v.prem ? 'prem' : ''}" id="openPass">${v.claimable ? `<span class="nc-corner">🎁 ${v.claimable}</span>` : ''}
-    <img class="pc-logo" src="/news/pass_logo.webp?v=${AVER}" alt="">
+    <img class="pc-logo" src="/news/pass_logo.webp?v=${IMGV}" alt="">
     <span class="pc-t"><span class="nc-tag">Saison ${v.season.nr} · ${esc(v.season.name)}</span><b>Stufe ${v.tier} von ${v.tiersN}${v.prem ? ' · 👑 Premium' : ''}</b>
     <span class="pc-bar"><i style="width:${pct}%"></i></span><small>⏳ noch ${passLeft(v)}</small></span></button>`;
 }
 function passRw(rw, prem) { // eine Belohnung als Kachel
   if (!rw) return '';
   const parts = [];
-  if (rw.item) parts.push(rw.kind === 'title' ? `<img class="pr-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><small>Titel „${esc(rw.name)}“</small>` : `<img class="pr-ico ${rw.kind === 'frame' ? 'frame' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><small>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</small>`);
-  if (rw.item2) parts.push(`<img class="pr-ico" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><small>Emblem „${esc(rw.name2)}“</small>`);
-  if (rw.box) parts.push(`<img class="pr-ico box" src="/news/pass_box.webp?v=${AVER}" alt=""><small>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</small>`);
-  if (rw.pack) parts.push(`<img class="pr-ico pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><small>${PACK_NAME[rw.pack] || 'Booster'}</small>`);
-  if (rw.spin) parts.push(`<img class="pr-ico" src="/news/gluecksrad.webp?v=${AVER}" alt=""><small>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</small>`);
-  if (rw.xp) parts.push(`<img class="pr-ico" src="/news/pass_xp.webp?v=${AVER}" alt=""><small>${fmt(rw.xp)} Bonus-XP</small>`);
-  if (rw.cxp) parts.push(`<img class="pr-ico" src="/news/pass_cxp.webp?v=${AVER}" alt=""><small>${fmt(rw.cxp)} Casino-XP</small>`);
-  if (rw.dia) parts.push(`<span class="pr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">${fmt(rw.dia)}</span>`);
+  if (rw.item) parts.push(rw.kind === 'title' ? `<img class="pr-title" src="/emblems/title_${rw.item}.webp?v=${IMGV}" alt=""><small>Titel „${esc(rw.name)}“</small>` : `<img class="pr-ico ${rw.kind === 'frame' ? 'frame' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${IMGV}" alt=""><small>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</small>`);
+  if (rw.item2) parts.push(`<img class="pr-ico" src="/emblems/pc_${rw.item2}.webp?v=${IMGV}" alt=""><small>Emblem „${esc(rw.name2)}“</small>`);
+  if (rw.box) parts.push(`<img class="pr-ico box" src="/news/pass_box.webp?v=${IMGV}" alt=""><small>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</small>`);
+  if (rw.pack) parts.push(`<img class="pr-ico pack" src="/tcg/pack_${rw.pack}.webp?v=${IMGV}" alt=""><small>${PACK_NAME[rw.pack] || 'Booster'}</small>`);
+  if (rw.spin) parts.push(`<img class="pr-ico" src="/news/gluecksrad.webp?v=${IMGV}" alt=""><small>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</small>`);
+  if (rw.xp) parts.push(`<img class="pr-ico" src="/news/pass_xp.webp?v=${IMGV}" alt=""><small>${fmt(rw.xp)} Bonus-XP</small>`);
+  if (rw.cxp) parts.push(`<img class="pr-ico" src="/news/pass_cxp.webp?v=${IMGV}" alt=""><small>${fmt(rw.cxp)} Casino-XP</small>`);
+  if (rw.dia) parts.push(`<span class="pr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt="">${fmt(rw.dia)}</span>`);
   return parts.join('');
 }
 let passTab = 'main';
 function renderPass() {
   const box = $('#passBody'); if (!box) return;
   if (!passV) { box.innerHTML = '<p class="sub">Lädt …</p>'; loadPass(); return; }
-  if (passV.mode === 'off') { box.innerHTML = `<div class="ps-hero"><img src="${passV.season.banner}?v=${AVER}" alt=""></div><div class="panel ps-lockd"><div style="font-size:40px">🔒</div><b>Den Kronen-Pass gibt es gerade nicht</b></div>`; return; }
+  if (passV.mode === 'off') { box.innerHTML = `<div class="ps-hero"><img src="${passV.season.banner}?v=${IMGV}" alt=""></div><div class="panel ps-lockd"><div style="font-size:40px">🔒</div><b>Den Kronen-Pass gibt es gerade nicht</b></div>`; return; }
   const LOCK = passV.mode === 'locked';
   const v = LOCK ? { ...passV, tiers: passV.tiers.map((x) => ({ ...x, reached: false })), claimable: 0, tasks: passV.tasks.map((t) => ({ ...t, have: 0 })) } : passV, pct = v.tier >= v.tiersN ? 100 : Math.round(100 * v.into / v.perTier);
   const next = v.tier >= v.tiersN ? '' : `noch ${fmt(v.perTier - v.into)} Pass-XP bis Stufe ${v.tier + 1}`;
   const bats = Array.from({ length: 7 }, (_, i) => `<span class="ps-bat" style="--x:${(i * 37) % 100}%;--y:${10 + (i * 23) % 70}%;--d:${6 + i % 4}s;--s:${0.6 + (i % 3) * 0.25}">${'<svg viewBox="0 0 64 32"><path d="M32 12c2-4 5-6 8-6-1 3 0 5 2 6 3-4 8-6 14-5-4 2-6 6-6 10-4-2-8-2-11 1-2-2-4-3-7-2-3-1-5 0-7 2-3-3-7-3-11-1 0-4-2-8-6-10 6-1 11 1 14 5 2-1 3-3 2-6 3 0 6 2 8 6z"/></svg>'}</span>`).join('');
-  box.innerHTML = `<div class="ps-halloween">${bats}<svg class="ps-web l" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg><svg class="ps-web r" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg></div><div class="ps-hero"><img src="${v.season.banner}?v=${AVER}" alt=""><span class="ps-time">${LOCK ? '🔒 gesperrt' : '⏳ ' + passLeft(v)}</span></div>
+  box.innerHTML = `<div class="ps-halloween">${bats}<svg class="ps-web l" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg><svg class="ps-web r" viewBox="0 0 100 100"><path d="M0 0L100 0M0 0L0 100M0 0L90 45M0 0L45 90M0 0L75 75M20 0Q18 18 0 20M40 0Q36 36 0 40M62 0Q55 55 0 62M84 0Q72 72 0 84"/></svg></div><div class="ps-hero"><img src="${v.season.banner}?v=${IMGV}" alt=""><span class="ps-time">${LOCK ? '🔒 gesperrt' : '⏳ ' + passLeft(v)}</span></div>
     <div class="ps-tabs"><button class="${passTab === 'casino' ? '' : 'on'}" data-pstab="main"><span>👑</span><b>Kronen-Pass</b><small>Gratis & Premium</small></button><button class="cas ${passTab === 'casino' ? 'on' : ''}" data-pstab="casino"><span>🎰</span><b>Casino-Strang</b><small>💀 🎲 🃏 ${v.casino ? Math.min(100, Math.round(100 * v.casino.xp / v.casino.max)) + ' %' : ''}</small>${v.casino && !LOCK && v.casino.tiers.some((x) => x.reached && !x.got) ? '<i class="ps-dot"></i>' : ''}</button></div>
     <div class="ps-main" ${passTab === 'casino' ? 'hidden' : ''}>
     <div class="ps-status panel">
       <div class="ps-lv"><span class="ps-tier">${v.tier}</span><div class="grow"><b>Stufe ${v.tier} von ${v.tiersN}</b><span class="pc-bar big"><i style="width:${pct}%"></i></span><small>${next || '🏆 Pass komplett! Jetzt füllt sich der Bonus-Tresor.'}</small>${v.tier < v.tiersN ? `<div class="cas-next ps-next"><b>Bis Stufe ${v.tier + 1}: ${fmt(v.into)} / ${fmt(v.perTier)} Pass-XP</b><span class="pc-bar"><i style="width:${Math.round(100 * v.into / v.perTier)}%"></i></span><small>Insgesamt: ${fmt(v.xp)} / ${fmt(v.perTier * v.tiersN)} Pass-XP bis Stufe ${v.tiersN} · noch ${fmt(Math.max(0, v.perTier * v.tiersN - v.xp))}</small></div>` : ''}</div></div>
-      ${LOCK ? `<div class="ps-lockbar">🔒 <b>Noch gesperrt</b><span>${v.unlockAt ? 'Freischaltung ' + passWhen(v.unlockAt) : 'Die Freischaltung kommt bald. Schau dich schon mal um!'}</span></div>` : v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${AVER}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
+      ${LOCK ? `<div class="ps-lockbar">🔒 <b>Noch gesperrt</b><span>${v.unlockAt ? 'Freischaltung ' + passWhen(v.unlockAt) : 'Die Freischaltung kommt bald. Schau dich schon mal um!'}</span></div>` : v.prem ? '<div class="ps-premon">👑 Premium aktiv · beide Stränge freigeschaltet</div>' : `<button class="btn ps-buy" id="passBuy"><img src="/news/pass_logo.webp?v=${IMGV}" alt="">Premium holen · ${fmt(v.price)} 💎<small>Alles bis Stufe ${v.tier} sofort abholbar · 20.000 💎 garantiert + Überraschungen</small></button>`}
       ${(() => { const n = v.claimable + (v.casino && !LOCK ? v.casino.tiers.filter((x) => x.reached && !x.got).length : 0); return n ? `<button class="btn ps-all" id="passAll">🎁 Alles abholen (${n})</button>` : ''; })()}
     </div>
     <h2 style="margin:14px 0 8px">📅 Wochenaufgaben</h2>
@@ -4288,12 +4289,12 @@ function renderPass() {
       const fr = x.reached && !x.gotFree, pr = x.reached && v.prem && !x.gotPrem, cur = x.t === v.tier + 1;
       return `${cur ? '<div class="ps-now"><span>Du bist hier</span></div>' : ''}<div class="ps-row ${x.reached ? 'reached' : ''} ${[10, 20, 30].includes(x.t) ? 'big' : ''}">
         <button data-passinfo="${x.t}:free" class="ps-cell free ${x.gotFree ? 'got' : fr ? 'ready' : ''}">${passRw(x.free)}${x.gotFree ? '<span class="psk-ok">✓</span>' : fr ? '<span class="ps-claim">Abholen</span>' : ''}</button>
-        <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${AVER}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}${x.t === v.tier + 1 ? `<i class="cas-mini ps-mini"><b style="width:${Math.max(4, Math.round(100 * v.into / v.perTier))}%"></b></i>` : ''}</div>
+        <div class="ps-num">${x.t % 5 === 0 ? `<span class="pump ${x.reached ? 'lit' : ''}"><img src="/news/pumpkin.webp?v=${IMGV}" alt=""><b>${x.t}</b></span>` : `<span>${x.t}</span>`}${x.t === v.tier + 1 ? `<i class="cas-mini ps-mini"><b style="width:${Math.max(4, Math.round(100 * v.into / v.perTier))}%"></b></i>` : ''}</div>
         <button data-passinfo="${x.t}:prem" class="ps-cell prem ${x.gotPrem ? 'got' : pr ? 'ready' : ''} ${v.prem ? '' : 'locked'}">${passRw(x.prem, true)}${x.gotPrem ? '<span class="psk-ok">✓</span>' : pr ? '<span class="ps-claim">Abholen</span>' : v.prem ? '' : '<span class="ps-lock">🔒</span>'}</button></div>`; }).join('')}</div>
     </div><div class="ps-casino" ${passTab === 'casino' ? '' : 'hidden'}>${v.casino ? (() => { const c = v.casino, pc = Math.min(100, Math.round(100 * c.xp / c.max)), nx = c.tiers.find((x) => !x.reached);
-      return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${AVER}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP gesammelt</small>${nx ? (() => { const prev = nx.t > 1 ? c.tiers[nx.t - 2].need : 0, p2 = Math.max(0, Math.min(100, Math.round(100 * (c.xp - prev) / (nx.need - prev)))); return `<div class="cas-next"><b>Bis Stufe ${nx.t}: ${fmt(c.xp)} / ${fmt(nx.need)}</b><span class="pc-bar"><i style="width:${p2}%"></i></span><small>noch ${fmt(nx.need - c.xp)} Casino-XP</small></div>`; })() : '<small>🏆 Alles erreicht!</small>'}</div></div>
+      return `<div class="cas-head panel"><img src="/emblems/pc_EC4.webp?v=${IMGV}" alt="" onerror="this.style.display='none'"><div class="grow"><b>🎰 Casino-Strang</b><small>Für alle, die im Casino spielen. Zählt die Casino-XP dieser Saison. Bis zum letzten Titel: ${fmt(c.max)}.</small><span class="pc-bar"><i style="width:${pc}%"></i></span><small>${fmt(c.xp)} Casino-XP gesammelt</small>${nx ? (() => { const prev = nx.t > 1 ? c.tiers[nx.t - 2].need : 0, p2 = Math.max(0, Math.min(100, Math.round(100 * (c.xp - prev) / (nx.need - prev)))); return `<div class="cas-next"><b>Bis Stufe ${nx.t}: ${fmt(c.xp)} / ${fmt(nx.need)}</b><span class="pc-bar"><i style="width:${p2}%"></i></span><small>noch ${fmt(nx.need - c.xp)} Casino-XP</small></div>`; })() : '<small>🏆 Alles erreicht!</small>'}</div></div>
       <div class="cas-track">${c.tiers.map((x) => { const rd = !LOCK && x.reached && !x.got; return `<div class="cas-row ${x.reached && !LOCK ? 'reached' : ''} ${[5, 10, 15, 20].includes(x.t) ? 'big' : ''}"><div class="cas-num"><span>${x.t}</span><small>${fmt(x.need)}</small>${!x.reached && (x.t === 1 || c.tiers[x.t - 2].reached) ? `<i class="cas-mini"><b style="width:${Math.max(3, Math.min(100, Math.round(100 * (c.xp - (x.t > 1 ? c.tiers[x.t - 2].need : 0)) / (x.need - (x.t > 1 ? c.tiers[x.t - 2].need : 0)))))}%"></b></i>` : ''}</div><button data-passinfo="${x.t}:casino" class="ps-cell cas ${x.got ? 'got' : rd ? 'ready' : ''}">${passRw(x.rw, true)}${x.got ? '<span class="psk-ok">✓</span>' : rd ? '<span class="ps-claim">Abholen</span>' : ''}</button></div>`; }).join('')}</div>`; })() : ''}
-    </div><div class="ps-bank panel" ${passTab === 'casino' ? 'hidden' : ''}><img src="/tcg/diamonds.webp?v=${AVER}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
+    </div><div class="ps-bank panel" ${passTab === 'casino' ? 'hidden' : ''}><img src="/tcg/diamonds.webp?v=${IMGV}" alt=""><div class="grow"><b>💰 Bonus-Tresor</b><small>Nach Stufe 30 kommen pro ${fmt(v.perTier)} Pass-XP 500 💎 dazu, bis ${fmt(v.bankMax)}. Nur mit Premium.</small><span class="pc-bar"><i style="width:${Math.round(100 * v.bank / v.bankMax)}%"></i></span><small>${fmt(v.bank)} / ${fmt(v.bankMax)} 💎 · abgeholt ${fmt(v.bankGot)}</small></div>${v.prem && v.bank > v.bankGot ? `<button class="btn small" id="passBank">+${fmt(v.bank - v.bankGot)}</button>` : ''}</div>
     <p class="sub" style="text-align:center;margin:14px 0 30px">Pass-XP kommen aus jedem Quiz-Match, auch auf Level 30. Casino-XP zählen für den Casino-Strang.<br>Saison-Belohnungen gibt es nur in dieser Saison.</p>`;
   const now = box.querySelector('.ps-now'); if (now && !renderPass.scrolled) { renderPass.scrolled = true; setTimeout(() => now.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250); }
 }
@@ -4303,14 +4304,14 @@ function passInfo(t, track) { // Vorschau einer Belohnung: groß, bewegte Items 
   const rw = track === 'casino' ? x.rw : track === 'prem' ? x.prem : x.free, got = track === 'casino' ? x.got : track === 'prem' ? x.gotPrem : x.gotFree;
   const can = v.mode === 'on' && x.reached && !got && (track === 'free' || track === 'casino' || v.prem);
   const big = [];
-  if (rw.item) big.push(rw.kind === 'title' ? `<img class="pi-title" src="/emblems/title_${rw.item}.webp?v=${AVER}" alt=""><b>Titel „${esc(rw.name)}“</b>` : `<img class="pi-emb ${rw.kind === 'frame' ? 'spin' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${AVER}" alt=""><b>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</b>`);
-  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${AVER}" alt=""><b>Emblem „${esc(rw.name2)}“</b>${rw.item2 === 'EX5' ? '<small>Auch als Prestige-Logo nutzbar, egal welcher Prestige-Rang: eine Alternative zu deinen Prestige-Logos, steht in der Auswahl neben Master.</small>' : ''}`);
-  if (rw.pack) { const pk = (tcg && tcg.def && tcg.def.packs || []).find((p) => p.id === rw.pack); big.push(`<img class="pi-pack" src="/tcg/pack_${rw.pack}.webp?v=${AVER}" alt=""><b>${PACK_NAME[rw.pack] || 'Booster'}</b><small>${pk ? pk.cards + ' Karten' + (rw.pack === 'gn' && !(home && home.gnOpen) ? ' · öffnen kannst du ihn ab der Freischaltung des Sets' : ' · im Shop ' + fmt(pk.price) + ' 💎') : ''}</small>`); }
-  if (rw.box) big.push(`<img class="pi-emb" src="/news/pass_box.webp?v=${AVER}" alt=""><b>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</b><small>Wird beim Öffnen ausgelost, zum Beispiel: ${BOX_TXT[rw.box].join(' · ')}</small>`);
-  if (rw.spin) big.push(`<img class="pi-emb" src="/news/gluecksrad.webp?v=${AVER}" alt=""><b>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</b><small>Zusätzlich zu deinen täglichen Drehs, verfallen nicht</small>`);
-  if (rw.xp) big.push(`<img class="pi-emb" src="/news/pass_xp.webp?v=${AVER}" alt=""><b>${fmt(rw.xp)} Bonus-XP</b><small>für dein Level</small>`);
-  if (rw.cxp) big.push(`<img class="pi-emb" src="/news/pass_cxp.webp?v=${AVER}" alt=""><b>${fmt(rw.cxp)} Casino-XP</b><small>für deine VIP-Stufe</small>`);
-  if (rw.dia) big.push(`<img class="pi-emb" src="/tcg/diamonds.webp?v=${AVER}" alt=""><b>${fmt(rw.dia)} Diamanten</b>`);
+  if (rw.item) big.push(rw.kind === 'title' ? `<img class="pi-title" src="/emblems/title_${rw.item}.webp?v=${IMGV}" alt=""><b>Titel „${esc(rw.name)}“</b>` : `<img class="pi-emb ${rw.kind === 'frame' ? 'spin' : ''}" src="/emblems/${rw.kind === 'frame' ? rw.item : 'pc_' + rw.item}.webp?v=${IMGV}" alt=""><b>${rw.kind === 'frame' ? 'Rahmen' : 'Emblem'} „${esc(rw.name)}“</b>`);
+  if (rw.item2) big.push(`<img class="pi-emb" src="/emblems/pc_${rw.item2}.webp?v=${IMGV}" alt=""><b>Emblem „${esc(rw.name2)}“</b>${rw.item2 === 'EX5' ? '<small>Auch als Prestige-Logo nutzbar, egal welcher Prestige-Rang: eine Alternative zu deinen Prestige-Logos, steht in der Auswahl neben Master.</small>' : ''}`);
+  if (rw.pack) { const pk = (tcg && tcg.def && tcg.def.packs || []).find((p) => p.id === rw.pack); big.push(`<img class="pi-pack" src="/tcg/pack_${rw.pack}.webp?v=${IMGV}" alt=""><b>${PACK_NAME[rw.pack] || 'Booster'}</b><small>${pk ? pk.cards + ' Karten' + (rw.pack === 'gn' && !(home && home.gnOpen) ? ' · öffnen kannst du ihn ab der Freischaltung des Sets' : ' · im Shop ' + fmt(pk.price) + ' 💎') : ''}</small>`); }
+  if (rw.box) big.push(`<img class="pi-emb" src="/news/pass_box.webp?v=${IMGV}" alt=""><b>${rw.box === 'big' ? 'Große Kürbis-Überraschung' : 'Kürbis-Überraschung'}</b><small>Wird beim Öffnen ausgelost, zum Beispiel: ${BOX_TXT[rw.box].join(' · ')}</small>`);
+  if (rw.spin) big.push(`<img class="pi-emb" src="/news/gluecksrad.webp?v=${IMGV}" alt=""><b>${rw.spin} Glücksrad-${rw.spin > 1 ? 'Drehs' : 'Dreh'}</b><small>Zusätzlich zu deinen täglichen Drehs, verfallen nicht</small>`);
+  if (rw.xp) big.push(`<img class="pi-emb" src="/news/pass_xp.webp?v=${IMGV}" alt=""><b>${fmt(rw.xp)} Bonus-XP</b><small>für dein Level</small>`);
+  if (rw.cxp) big.push(`<img class="pi-emb" src="/news/pass_cxp.webp?v=${IMGV}" alt=""><b>${fmt(rw.cxp)} Casino-XP</b><small>für deine VIP-Stufe</small>`);
+  if (rw.dia) big.push(`<img class="pi-emb" src="/tcg/diamonds.webp?v=${IMGV}" alt=""><b>${fmt(rw.dia)} Diamanten</b>`);
   $('#modal').innerHTML = `<div class="panel pi-box"><small class="pi-tag">${track === 'casino' ? `🎰 CASINO-STRANG · Stufe ${t} · ${fmt(x.need)} Casino-XP` : `${track === 'prem' ? '👑 PREMIUM' : 'GRATIS'} · Stufe ${t}`}</small>
     <div class="pi-items">${big.map((b) => `<div class="pi-it">${b}</div>`).join('')}</div>
     <p class="sub" style="text-align:center">${got ? '✓ Schon abgeholt' : can ? 'Bereit zum Abholen!' : v.mode !== 'on' ? '🔒 Der Pass ist noch gesperrt' : !x.reached ? (track === 'casino' ? `Erreichbar ab ${fmt(x.need)} Casino-XP (du hast ${fmt(v.casino.xp)})` : `Erreichbar ab Stufe ${t}`) : 'Nur mit Premium'}</p>
@@ -4325,8 +4326,8 @@ function passGot(r, title) { // Belohnungs-Einblendung
   sfx('prestige');
   const u = $('#unlock');
   u.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Kronen-Pass</p><h1 class="cr-code" style="font-size:30px">${title}</h1>
-    ${g.dia ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(g.dia)}</b><span>Diamanten</span></div>` : ''}
-    ${g.boxes && g.boxes.length ? `<img src="/news/pass_box.webp?v=${AVER}" alt="" style="width:110px;margin:-6px 0 -10px;filter:drop-shadow(0 0 18px rgba(255,140,40,.8))"><p class="sub">🎃 ${g.boxes.length > 1 ? g.boxes.length + ' Kürbis-Überraschungen geöffnet' : 'Kürbis-Überraschung geöffnet'}</p>` : ''}
+    ${g.dia ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>+${fmt(g.dia)}</b><span>Diamanten</span></div>` : ''}
+    ${g.boxes && g.boxes.length ? `<img src="/news/pass_box.webp?v=${IMGV}" alt="" style="width:110px;margin:-6px 0 -10px;filter:drop-shadow(0 0 18px rgba(255,140,40,.8))"><p class="sub">🎃 ${g.boxes.length > 1 ? g.boxes.length + ' Kürbis-Überraschungen geöffnet' : 'Kürbis-Überraschung geöffnet'}</p>` : ''}
     ${g.packs.length ? `<p class="sub">📦 ${g.packs.map((p) => PACK_NAME[p] || p).join(', ')} liegen im Inventar</p>` : ''}
     ${g.spins ? `<p class="sub">🎡 ${g.spins} Glücksrad-${g.spins > 1 ? 'Drehs' : 'Dreh'} gutgeschrieben</p>` : ''}
     ${g.xp || g.cxp ? `<p class="sub">⭐ ${g.xp ? `+${fmt(g.xp)} Bonus-XP` : ''}${g.xp && g.cxp ? ' · ' : ''}${g.cxp ? `+${fmt(g.cxp)} Casino-XP` : ''}</p>` : ''}
@@ -4371,7 +4372,7 @@ function renderPromo() { // Automaten-Werbung auf der Startseite (Admin-Menü �
   const el = $('#promoCard'); if (!el) return; const p = home && home.promo, g = p && PROMO_GAMES[p.game];
   if (!g) { el.innerHTML = ''; return; }
   const free = g.ids.filter((id) => !(tcMachines || []).some((m) => m.id === id && m.user)).length;
-  el.innerHTML = `<button class="promo-card promo-${p.game}" data-promo="${p.game}"><img src="${g.logo}?v=${AVER}" alt="${esc(g.name)}"><div class="grow"><b>${esc(p.text || `Jetzt ${g.name} ausprobieren!`)}</b><small>${free ? `🎰 ${free === 2 ? 'Beide Maschinen frei' : '1 Maschine frei'} · Jetzt spielen ›` : '👀 Gerade beide belegt · Zuschauen ›'}</small></div></button>`;
+  el.innerHTML = `<button class="promo-card promo-${p.game}" data-promo="${p.game}"><img src="${g.logo}?v=${IMGV}" alt="${esc(g.name)}"><div class="grow"><b>${esc(p.text || `Jetzt ${g.name} ausprobieren!`)}</b><small>${free ? `🎰 ${free === 2 ? 'Beide Maschinen frei' : '1 Maschine frei'} · Jetzt spielen ›` : '👀 Gerade beide belegt · Zuschauen ›'}</small></div></button>`;
 }
 async function promoGo(game) { // direkt an eine freie Maschine setzen
   const g = PROMO_GAMES[game]; if (!g) return;
@@ -4386,7 +4387,7 @@ function renderNewsCard() {
   const el = $('#newsCard'); if (el && home && home.newsCardOff) { el.innerHTML = ''; return; } // im Admin-Menü ausgeblendet
   if (!el || !newsPosts || !newsPosts.length) return;
   const p = newsPosts[0]; let seen = ''; try { seen = localStorage.getItem('news_seen') || ''; } catch (e) {}
-  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? `<span class="nc-corner">${(() => { const k = newsPosts.findIndex((x) => x.id === seen); return k > 0 ? k : 1; })()} NEU · +1.000 💎</span>` : ''}<span class="nc-img"><img src="${p.hero}?v=${AVER}" alt=""></span>
+  el.innerHTML = `<button class="newscard ${seen !== p.id ? 'unread' : ''}" id="openNews">${seen !== p.id ? `<span class="nc-corner">${(() => { const k = newsPosts.findIndex((x) => x.id === seen); return k > 0 ? k : 1; })()} NEU · +1.000 💎</span>` : ''}<span class="nc-img"><img src="${p.hero}?v=${IMGV}" alt=""></span>
     <span class="nc-t"><span class="nc-tag">${esc(p.tag)}</span><b>${esc(p.title)}</b><small>${esc(newsWhen(p.date))}</small><span class="nc-more">Alle Neuigkeiten lesen ›</span></span></button>`;
 }
 function renderNews() {
@@ -4402,7 +4403,7 @@ function renderNews() {
       setTimeout(() => {
         const u = $('#unlock');
         u.innerHTML = `<div class="rays"></div><div class="in cr"><p class="sub">Danke fürs Lesen</p><h1 class="cr-code" style="font-size:30px">📰 Update gelesen!</h1>
-          <p class="sub">„${esc(r.title || '')}“</p><div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.dia)}</b><span>Diamanten</span></div>
+          <p class="sub">„${esc(r.title || '')}“</p><div class="cr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>+${fmt(r.dia)}</b><span>Diamanten</span></div>
           <button class="btn" id="unlockOk" style="min-width:220px">Super!</button></div>`;
         u.classList.add('on'); sfx('prestige');
         $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
@@ -4415,19 +4416,19 @@ function renderNews() {
     if (b.type === 'text') return `<p class="nw-p">${esc(b.text)}</p>`;
     if (b.type === 'list') return `<ul class="nw-list">${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
     if (b.type === 'cards') return `<div class="nw-cards">${b.items.map((k) => { const cut = k.lastIndexOf('_'), id = k.slice(0, cut), v = k.slice(cut + 1); return `<img src="${cardImg(id, v)}" data-card="${id}:${v}" alt="">`; }).join('')}</div>`;
-    if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
-    if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${AVER}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
-    if (b.type === 'vips') return `<div class="nw-embs">${b.items.map(([n, name, need]) => `<div class="nw-em"><img style="width:84px;height:84px;object-fit:contain" src="/emblems/vip${esc(n)}.webp?v=${AVER}" alt=""><b>${esc(name)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'titles') return `<div class="nw-titles">${b.items.map(([id, n, need]) => `<div class="nw-ti"><img class="titleimg${animOf(id)}" src="/emblems/title_${esc(id)}.webp?v=${IMGV}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'emblems') return `<div class="nw-embs">${b.items.map(([id, n, need]) => `<div class="nw-em"><img class="pcemb" style="--s:84px" src="/emblems/pc_${esc(id)}.webp?v=${IMGV}" alt=""><b>${esc(n)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
+    if (b.type === 'vips') return `<div class="nw-embs">${b.items.map(([n, name, need]) => `<div class="nw-em"><img style="width:84px;height:84px;object-fit:contain" src="/emblems/vip${esc(n)}.webp?v=${IMGV}" alt=""><b>${esc(name)}</b><small>${esc(need)}</small></div>`).join('')}</div>`;
     if (b.type === 'rows') return `<div class="nw-rows">${b.title ? `<small class="nw-rows-t">${esc(b.title)}</small>` : ''}<div class="plist">${b.items.map(([ic, t, sub, btn, col]) => `<div class="pl" style="--c:${col || 'var(--line)'}"><span class="nm">${esc(ic)} ${esc(t)}<br><small>${esc(sub)}</small></span>${btn ? `<span class="row" style="gap:6px;flex:none">${btn.split('|').map((x, k, arr) => `<span class="btn small ${arr.length > 1 && k === 0 ? 'ghost' : ''} nw-fakebtn">${esc(x)}</span>`).join('')}</span>` : ''}</div>`).join('')}</div></div>`;
     if (b.type === 'redeem') return `<div class="nw-code nw-redeem"><span class="nw-code-l">🎁 Geschenk-Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-nwredeem="${esc(b.code)}">Einlösen</button><p>${esc(b.text)}</p></div>`;
     if (b.type === 'code') return `<div class="nw-code"><span class="nw-code-l">🎟️ Code</span><b class="nw-code-c">${esc(b.code)}</b><button class="btn small" data-copycode="${esc(b.code)}">Kopieren</button><p>${esc(b.text)}</p></div>`;
-    if (b.type === 'image') return `<div class="nw-img${b.wide ? ' wide' : ''}"><img src="${b.src}?v=${AVER}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
+    if (b.type === 'image') return `<div class="nw-img${b.wide ? ' wide' : ''}"><img src="${b.src}?v=${IMGV}" alt=""><div><b>${esc(b.title)}</b><p>${esc(b.text)}</p></div></div>`;
     if (b.type === 'badges') return `<div class="nw-embs six">${b.items.map(([t, n]) => `<div class="nw-em">${vipBadge(t, 54)}<b>${esc(n)}</b></div>`).join('')}</div>`;
     return '';
   };
   // Jedes Update ein eigener, nummerierter Block: das neueste offen, ältere zum Aufklappen
   const N = newsPosts.length;
-  const hero = (p, i) => `<div class="nw-hero"><img src="${p.hero}?v=${AVER}" alt=""><div><span class="nw-ver">Update ${N - i}</span> <span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>`;
+  const hero = (p, i) => `<div class="nw-hero"><img src="${p.hero}?v=${IMGV}" alt=""><div><span class="nw-ver">Update ${N - i}</span> <span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>`;
   box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p, i) => i === 0
     ? `<article class="nw-post nw-latest"><div class="nw-ribbon">NEUESTES UPDATE</div>${hero(p, i)}<p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`
     : `${i === 1 ? '<h2 class="nw-older">Frühere Updates</h2>' : ''}<details class="nw-post nw-old"><summary>${hero(p, i)}<span class="nw-open">Anzeigen</span></summary><p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</details>`).join('');
@@ -4438,8 +4439,8 @@ function showChallenge(key) {
   const C = home.cards, F = home.frames || [];
   const find = (r) => { const [k, id] = r.split(':'); const it = k === 'e' ? C.emblems.find((x) => x.id === id) : k === 't' ? C.titles.find((x) => x.id === id) : F.find((x) => x.id === id); return it ? { k, it } : null; };
   const rw = (c.rewards || []).map(find).filter(Boolean);
-  const img = ({ k, it }) => k === 'e' ? `<img class="pcemb${it.anim ? ' a-' + it.anim : ''}" style="--s:56px" src="/emblems/pc_${esc(it.id)}.webp?v=${AVER}" alt="">`
-    : k === 't' ? `<img class="titleimg${it.anim ? ' a-' + it.anim : ''}" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt="" style="max-width:100%">`
+  const img = ({ k, it }) => k === 'e' ? `<img class="pcemb${it.anim ? ' a-' + it.anim : ''}" style="--s:56px" src="/emblems/pc_${esc(it.id)}.webp?v=${IMGV}" alt="">`
+    : k === 't' ? `<img class="titleimg${it.anim ? ' a-' + it.anim : ''}" src="/emblems/title_${esc(it.id)}.webp?v=${IMGV}" alt="" style="max-width:100%">`
     : avatar({ ...home.me, frame: it.id, frameAnim: it.anim }, 56, false);
   const kindName = { e: 'Emblem', t: 'Titel', f: 'Rahmen' };
   $('#modal').innerHTML = `<div class="panel" style="gap:12px;max-height:86vh;overflow:auto">
@@ -4489,11 +4490,11 @@ function showGiftReveal(r) {
   u.innerHTML = `<div class="rays"></div><div class="in cr">
     <p class="sub">${r.source === 'dev' ? 'Geschenk vom Entwickler-Team' : 'Dankeschön vom Support'}</p><h1 class="cr-code" style="font-size:30px">${r.source === 'dev' ? 'Für dich! 🎉' : 'Danke für deine Meldung!'}</h1>
     <p class="sub">${r.source === 'dev' ? esc(r.message || 'Viel Spaß damit!') : `„${esc(r.reason || '')}“`}</p>
-    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
+    ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
     ${r.xp ? `<div class="cr-dia"><span style="font-size:34px">⭐</span><b>+${fmt(r.xp)}</b><span>XP</span></div>` : ''}
-    ${(r.items || []).filter((it) => it.kind === 'title').map((it) => `<div class="cr-item gift-title" style="--d:0"><img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt=""><b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}
-    ${r.items && r.items.some((it) => it.kind !== 'title') ? `<div class="cr-grid">${r.items.filter((it) => it.kind !== 'title').map((it, k) => `<div class="cr-item" style="--d:${k}">${it.kind === 'title' ? `<img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${AVER}" alt="" style="width:100%;max-width:260px">` : it.kind === 'emblem' ? `<img class="pcemb a-video" style="--s:96px" src="/emblems/pc_${esc(it.id)}.webp?v=${AVER}" alt="">` : `<img src="/emblems/${esc(it.id)}.webp?v=${AVER}" alt="" style="width:96px">`}<b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}</div>` : ''}
-    ${r.pack ? `<div class="cr-grid"><div class="cr-item" style="--d:0"><img src="/tcg/pack_${esc(r.pack)}.webp?v=${AVER}" alt="" style="width:110px"><b>${r.n}× ${esc(r.packName)}</b><small>liegt in deinem Inventar</small></div></div>` : ''}
+    ${(r.items || []).filter((it) => it.kind === 'title').map((it) => `<div class="cr-item gift-title" style="--d:0"><img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${IMGV}" alt=""><b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}
+    ${r.items && r.items.some((it) => it.kind !== 'title') ? `<div class="cr-grid">${r.items.filter((it) => it.kind !== 'title').map((it, k) => `<div class="cr-item" style="--d:${k}">${it.kind === 'title' ? `<img class="titleimg a-video" src="/emblems/title_${esc(it.id)}.webp?v=${IMGV}" alt="" style="width:100%;max-width:260px">` : it.kind === 'emblem' ? `<img class="pcemb a-video" style="--s:96px" src="/emblems/pc_${esc(it.id)}.webp?v=${IMGV}" alt="">` : `<img src="/emblems/${esc(it.id)}.webp?v=${IMGV}" alt="" style="width:96px">`}<b>${esc(it.name)}</b><small>jetzt im Profil auswählbar</small></div>`).join('')}</div>` : ''}
+    ${r.pack ? `<div class="cr-grid"><div class="cr-item" style="--d:0"><img src="/tcg/pack_${esc(r.pack)}.webp?v=${IMGV}" alt="" style="width:110px"><b>${r.n}× ${esc(r.packName)}</b><small>liegt in deinem Inventar</small></div></div>` : ''}
     <button class="btn" id="unlockOk" style="min-width:220px">Danke!</button></div>`;
   u.classList.add('on'); sfx('prestige'); try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 300]); } catch (e) {}
   $('#unlockOk').onclick = () => { u.classList.remove('on'); u.innerHTML = ''; };
@@ -4530,8 +4531,8 @@ function showProgressToast() {
   if (toastBusy || !toastQ.length) return;
   toastBusy = true; const n = toastQ.shift();
   const pic = n.kind === 'challenge' ? `<img class="pt-ic" src="${chalImg(n.key)}" alt="">`
-    : n.kind === 'emblem' ? `<img class="pt-ic${n.anim ? ' a-' + n.anim : ''}" src="/emblems/pc_${esc(n.id)}.webp?v=${AVER}" alt="">`
-    : n.kind === 'title' ? `<img class="pt-title${n.anim ? ' a-' + n.anim : ''}" src="/emblems/title_${esc(n.id)}.webp?v=${AVER}" alt="">`
+    : n.kind === 'emblem' ? `<img class="pt-ic${n.anim ? ' a-' + n.anim : ''}" src="/emblems/pc_${esc(n.id)}.webp?v=${IMGV}" alt="">`
+    : n.kind === 'title' ? `<img class="pt-title${n.anim ? ' a-' + n.anim : ''}" src="/emblems/title_${esc(n.id)}.webp?v=${IMGV}" alt="">`
     : `<span class="pt-fr">${avatar({ ...home.me, frame: n.id, frameAnim: n.anim }, 40, false)}</span>`;
   const head = n.kind === 'challenge' ? '🏅 Herausforderung geschafft' : n.kind === 'title' ? '✨ Neuer Titel freigeschaltet' : n.kind === 'emblem' ? '✨ Neues Emblem freigeschaltet' : '✨ Neuer Rahmen freigeschaltet';
   const sub = n.kind === 'challenge' ? `${esc(n.name)} · Stufe ${n.tier} von ${n.total}${n.xp ? ` · +${fmt(n.xp)} ${n.group === 'casino' ? 'Casino-XP' : 'XP'}` : ''}` : esc(n.name);
@@ -4544,7 +4545,7 @@ function showProgressToast() {
 }
 const xpL = (c) => (c && c.group === 'casino' ? 'Casino-XP' : 'XP'); // Casino-Herausforderungen zahlen auf die Casino-XP
 const CHAL_IMG = { slot_full: 'pc_ES1', slot_best: 'pc_ES2', collect_unique: 'pc_EK1', casino_rounds: 'pc_e31', casino_wins: 'pc_e32', casino_best: 'pc_L1', cards_total: 'pc_e33', cards_rare: 'pc_L3', cards_ext: 'pc_e34', toon_distinct: 'pc_ET1', poker_minutes: 'pc_EPT', poker_hands: 'pc_EP1', poker_wins: 'pc_EP2', poker_best: 'pc_EP3', poker_allin_wins: 'pc_EP2' };
-const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${AVER}`;
+const chalImg = (k) => `/emblems/${CHAL_IMG[k] || 'c_' + k}.webp?v=${IMGV}`;
 // Alle freischaltbaren Stücke mit Bedingung und Fortschritt, die fast geschafften zuerst
 let chTab = 'chal', itKind = 'all';
 function renderItemsTab() {
@@ -4554,8 +4555,8 @@ function renderItemsTab() {
   const all = [...C.titles.map((i) => ({ ...i, k: 't', nm: i.text })), ...C.emblems.map((i) => ({ ...i, k: 'e', nm: i.name })), ...F.map((i) => ({ ...i, k: 'f', nm: i.name }))]
     .filter((i) => !i.dev && (!i.event || i.event === true || i.unlocked) && (itKind === 'all' || i.k === itKind)); // Pass-Items immer zeigen, Tages-Aktionen nur wenn frei
   const sn = seenSet(), open = all.filter((i) => !i.unlocked).sort((a, b) => prog(b) - prog(a)), done = all.filter((i) => i.unlocked).sort((a, b) => (sn.has(a.k + ':' + a.id) ? 1 : 0) - (sn.has(b.k + ':' + b.id) ? 1 : 0));
-  const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${AVER}" alt="">`
-    : i.k === 'e' ? `<img class="it-emb" width="52" height="52" loading="lazy" src="/emblems/pc_${esc(i.id)}.webp?v=${AVER}" alt="">`
+  const pic = (i) => i.k === 't' ? `<img class="titleimg${i.anim ? ' a-' + i.anim : ''}" src="/emblems/title_${esc(i.id)}.webp?v=${IMGV}" alt="">`
+    : i.k === 'e' ? `<img class="it-emb" width="52" height="52" loading="lazy" src="/emblems/pc_${esc(i.id)}.webp?v=${IMGV}" alt="">`
     : avatar({ ...home.me, frame: i.id, frameAnim: i.anim }, 48, false);
   const row = (i) => {
     const x = g[i.id], cur = x ? Math.min(x[1], st[x[0]] || 0) : 0, pct = Math.round(100 * prog(i));
@@ -4725,7 +4726,7 @@ function renderStaffBoxes() {
 }
 const POT_T = { xp: 'Level-XP', cxp: 'Casino-XP', pxp: 'Pass-XP' };
 const potBis = (t) => new Date(t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-const potImg = (id) => { const m = /^pot_(xp|cxp|pxp)(\d)$/.exec(id); return m ? `<span class="pot-ic"><img src="/tcg/pot_${m[1]}.webp?v=${AVER}" alt=""><b>×${m[2]}</b></span>` : ''; };
+const potImg = (id) => { const m = /^pot_(xp|cxp|pxp)(\d)$/.exec(id); return m ? `<span class="pot-ic"><img src="/tcg/pot_${m[1]}.webp?v=${IMGV}" alt=""><b>×${m[2]}</b></span>` : ''; };
 function rewardBuilder(pre) { // Diamanten + beliebig viele Items (Booster, Displays, Tränke)
   const opts = (tcg && tcg.def ? tcg.def.packs : []).filter((p) => p.id !== 'secret').map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   return `<div class="rb" id="${pre}"><label>💎 Diamanten <input class="field" type="number" min="0" data-rb="dia" placeholder="0"></label>
@@ -4778,7 +4779,7 @@ function drawBannerAdmin() {
 }
 function potionsHtml() {
     const act = (home && home.potions) || {};
-    return `<div class="pot-head"><img src="/tcg/pot_xp.webp?v=${AVER}" alt=""><img src="/tcg/pot_cxp.webp?v=${AVER}" alt=""><img src="/tcg/pot_pxp.webp?v=${AVER}" alt=""><div><b>Tränke</b><small>Mehr XP für eine Stunde</small></div></div><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft ab dem Aktivieren 60 Minuten. Gleicher Trank nochmal verlängert um 60 Minuten. ×2 und ×4 derselben Art lassen sich nicht kombinieren.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].until > Date.now(); return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft bis ${potBis(act[t].until)}</small>${n ? `<button class="btn small ghost" data-potuse="${id}">+60 Min</button>` : ''}` : on && n ? `<small>erst ab ${potBis(act[t].until)}, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
+    return `<div class="pot-head"><img src="/tcg/pot_xp.webp?v=${IMGV}" alt=""><img src="/tcg/pot_cxp.webp?v=${IMGV}" alt=""><img src="/tcg/pot_pxp.webp?v=${IMGV}" alt=""><div><b>Tränke</b><small>Mehr XP für eine Stunde</small></div></div><p class="sub" style="margin:-4px 0 8px">Ein Trank läuft ab dem Aktivieren 60 Minuten. Gleicher Trank nochmal verlängert um 60 Minuten. ×2 und ×4 derselben Art lassen sich nicht kombinieren.</p><div class="pot-grid">${['xp', 'cxp', 'pxp'].flatMap((t) => [2, 4].map((m) => { const id = `pot_${t}${m}`, n = (tcg.packs.find((p) => p.pack_id === id) || {}).count || 0, on = act[t] && act[t].until > Date.now(); return `<div class="pot-card ${n ? '' : 'empty'}">${potImg(id)}<b>${POT_T[t]}</b><small>${n}× im Inventar</small>${on && act[t].m === m ? `<small class="pot-on">läuft bis ${potBis(act[t].until)}</small>${n ? `<button class="btn small ghost" data-potuse="${id}">+60 Min</button>` : ''}` : on && n ? `<small>erst ab ${potBis(act[t].until)}, ×${act[t].m} läuft</small>` : n ? `<button class="btn small" data-potuse="${id}">Aktivieren</button>` : '<small>keiner da</small>'}</div>`; })).join('')}</div>`;
 }
 // Börse: „neu“-Zähler je Art (Karten, Booster, Displays, Gegradet), bis man die Art einmal ansieht
 const mkSeen = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('mk_seen') || '{}'); } catch (e) {} const now = Date.now(); for (const k of ['cards', 'packs', 'displays', 'graded']) if (!o[k]) o[k] = now; try { localStorage.setItem('mk_seen', JSON.stringify(o)); } catch (e) {} return o; })();
@@ -4790,11 +4791,11 @@ function drawShopAdmin() { // Admin: je Booster/Display/Trank Preis, Bestand, Hi
   const D = (window.__shopDraft = window.__shopDraft || {}); // ungespeicherte Eingaben je Stück: bleiben erhalten
   const val = (id, f, v) => (D[id] && f in D[id] ? D[id][f] : v);
   const dirty = (id) => !!(D[id] && Object.keys(D[id]).length);
-  const packRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
+  const packRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${IMGV}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${esc(String(val(p.id, 'price', p.price)))}" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${esc(String(val(p.id, 'stock', p.stock === null || p.stock === undefined ? '' : p.stock)))}" data-f="stock"></label></div>
       <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Nachschub kommt am 30.10." value="${esc(val(p.id, 'note', p.note || ''))}" data-f="note"></label>
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="chipbtn ${p.offsale ? 'on-miss' : ''}" data-f="offsale">${p.offsale ? '🙈 Nicht im Verkauf' : 'Im Verkauf'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`;
-  const dispRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-dp="${p.id}">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt="">`}<div class="grow"><b>${p.potion ? '🧪' : '🗃'} ${esc(p.name)}</b> <small>${p.potion ? '60 Min' : p.size + ' Booster'}</small>${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
+  const dispRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-dp="${p.id}">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${p.id}.webp?v=${IMGV}" alt="">`}<div class="grow"><b>${p.potion ? '🧪' : '🗃'} ${esc(p.name)}</b> <small>${p.potion ? '60 Min' : p.size + ' Booster'}</small>${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
       <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${esc(String(val(p.id, 'price', p.price || '')))}" placeholder="noch kein Preis" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${esc(String(val(p.id, 'stock', p.stock === null || p.stock === undefined ? '' : p.stock)))}" data-f="stock"></label></div>
       <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Release am 31.10. um 18 Uhr" value="${esc(val(p.id, 'note', p.note || ''))}" data-f="note"></label>
       <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '🙈 Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="dsold">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`;
@@ -4837,7 +4838,7 @@ function loadAdmin() {
       $('#hmAdm').innerHTML = `<div class="row" style="gap:8px"><span class="grow">📰 Update-Karte auf der Startseite</span><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNews">${c.newsCard ? 'wird angezeigt' : 'ausgeblendet'}</button></div>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
         <div class="row" style="gap:8px"><span class="grow">🎰 Automaten-Werbung</span><button class="btn small ${P.on ? '' : 'ghost'}" id="hmPromoOn">${P.on ? 'an' : 'aus'}</button></div>
-        <div class="hm-games">${Object.entries(PROMO_GAMES).map(([k, g]) => `<button class="hm-g ${P.game === k ? 'on' : ''}" data-hmg="${k}"><img src="${g.logo}?v=${AVER}" alt=""><small>${esc(g.name)}</small></button>`).join('')}</div>
+        <div class="hm-games">${Object.entries(PROMO_GAMES).map(([k, g]) => `<button class="hm-g ${P.game === k ? 'on' : ''}" data-hmg="${k}"><img src="${g.logo}?v=${IMGV}" alt=""><small>${esc(g.name)}</small></button>`).join('')}</div>
         <input class="field" id="hmText" maxlength="120" placeholder="Text, z. B. Probier jetzt das neue Buch der Gruft!" value="${esc(P.text || '')}" style="margin-top:8px">
         <button class="btn small" id="hmSave" style="width:100%;margin-top:8px">Werbung speichern</button>
         <p class="sub" style="margin:6px 0 0;font-size:12px">Ein Tipp auf die Karte setzt Spieler direkt an eine freie Maschine. Sind beide belegt, kommt ein Hinweis.</p>`;
@@ -5019,7 +5020,7 @@ function renderRanks() {
     if (!passRanks || Date.now() - passRanks.t > 30000) { if (!passRanks) box.innerHTML = '<p class="sub">Lädt …</p>'; api('/api/ranks/pass').then((d) => { passRanks = { ...d, t: Date.now() }; if (rtab === 'pass') renderRanks(); }).catch((e) => toast(e.message)); if (!passRanks) return; }
     const d = passRanks, lord = d.rows[0];
     if (d.mode !== 'on') { box.innerHTML = `<div class="panel ps-lockd"><div style="font-size:34px">🔒</div><b>${d.mode === 'off' ? 'Den Kronen-Pass gibt es gerade nicht' : 'Der Kronen-Pass ist noch gesperrt'}</b>${d.mode === 'locked' && d.unlockAt ? `<p class="sub">Freischaltung: <b>${passWhen(d.unlockAt)}</b></p>` : ''}</div>`; return; }
-    box.innerHTML = `<div class="pr-lord">${lord ? `<img class="pr-lordlogo" src="/news/pass_logo.webp?v=${AVER}" alt=""><div class="grow"><small>Pass-Lord · Saison ${d.season.nr} ${esc(d.season.name)}</small><b>${withTag(lord)}</b><span>${lord.prem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'} Stufe ${lord.tier} von ${d.tiers} · ${fmt(lord.passXp)} Pass-XP</span></div>${avatar(lord, 52)}` : '<div class="grow"><b>Noch kein Pass-Lord</b><span>Spiel ein Quiz-Match und hol dir Platz 1.</span></div>'}</div>
+    box.innerHTML = `<div class="pr-lord">${lord ? `<img class="pr-lordlogo" src="/news/pass_logo.webp?v=${IMGV}" alt=""><div class="grow"><small>Pass-Lord · Saison ${d.season.nr} ${esc(d.season.name)}</small><b>${withTag(lord)}</b><span>${lord.prem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'} Stufe ${lord.tier} von ${d.tiers} · ${fmt(lord.passXp)} Pass-XP</span></div>${avatar(lord, 52)}` : '<div class="grow"><b>Noch kein Pass-Lord</b><span>Spiel ein Quiz-Match und hol dir Platz 1.</span></div>'}</div>
       ${d.rows.length ? `<div class="plist">${d.rows.map((u, i) => `<div class="pl rkrow pr-row ${u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? '#FF8A1F' : i < 3 ? '#B36BFF' : 'var(--line)'}"><span class="pos">${i === 0 ? '👑' : i + 1}</span>${avatar(u, 36)}<span class="nm">${withTag(u)}<br><span class="lv">${u.prem ? '<span class="pp-chip prem">👑 PREMIUM</span>' : '<span class="pp-chip">GRATIS</span>'} Stufe ${u.tier}${u.tier >= d.tiers ? ' · 🏆 komplett' : ''}</span></span><span class="pr-xp"><b>${fmt(u.passXp)}</b><small>Pass-XP</small></span></div>`).join('')}</div>` : '<p class="sub">Hier ist noch niemand.</p>'}`;
     return;
   }
@@ -5043,14 +5044,14 @@ function renderRanks() {
 async function dailyDialog() {
   try {
     const v = await api('/api/daily');
-    const D = `<img src="/tcg/diamond.webp?v=${AVER}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
+    const D = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:15px;height:15px;vertical-align:-2px" alt="">`;
     const PN = { standard: 'Standard-Booster', premium: 'Premium-Booster', ghost: 'Geister-Booster' };
     const boxes = (v.rewards || v.days.map((d) => ({ dia: d }))).map((rw, i) => {
       const day = i + 1;
       const state = day < v.day || (day === v.day && v.claimed) ? 'done' : day === v.day && !v.claimed ? 'now' : '';
-      const pic = rw.pack ? `/tcg/pack_${rw.pack}.webp?v=${AVER}` : `/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${AVER}`;
+      const pic = rw.pack ? `/tcg/pack_${rw.pack}.webp?v=${IMGV}` : `/tcg/${state === 'done' ? 'chest_open' : 'chest'}.webp?v=${IMGV}`;
       return day === 7
-        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${AVER}" alt=""><img src="${pic}" alt="" style="width:46px;height:auto"><span><b>Tag 7</b><br>${fmt(rw.dia)} ${D} + ${PN[rw.pack] || ''}<br>und der Titel „Siebenfach“</span></div>`
+        ? `<div class="daybox d7 ${state}"><img src="/emblems/pc_ED7.webp?v=${IMGV}" alt=""><img src="${pic}" alt="" style="width:46px;height:auto"><span><b>Tag 7</b><br>${fmt(rw.dia)} ${D} + ${PN[rw.pack] || ''}<br>und der Titel „Siebenfach“</span></div>`
         : `<div class="daybox ${state} ${rw.pack ? 'haspack' : ''}"><img src="${pic}" alt="" ${rw.pack ? 'style="width:34px;height:auto"' : ''}><b>Tag ${day}</b>${fmt(rw.dia)} ${D}${rw.pack ? `<small class="pk">+ ${PN[rw.pack]}</small>` : ''}</div>`;
     }).join('');
     $('#modal').innerHTML = `<div class="panel" style="gap:12px">
@@ -5182,8 +5183,8 @@ function applyTheme(t, anim) {
   if (on && anim) { // Deko (Geister, Fledermäuse, Spinne, Netze, Kürbisse) nur, wenn sie eingeschaltet ist
     const d = document.createElement('div'); d.id = 'hwDeco'; d.setAttribute('aria-hidden', 'true');
     d.innerHTML = `<span class="hw-web l">${HW_WEB}</span><span class="hw-web r">${HW_WEB}</span>
-      <img class="hw-ghost g1" src="/news/hw_ghost.webp?v=${AVER}" alt=""><img class="hw-ghost g2" src="/news/hw_ghost.webp?v=${AVER}" alt=""><img class="hw-ghost g3" src="/news/hw_ghost.webp?v=${AVER}" alt="">
-      <img class="hw-pump p1" src="/news/pumpkin.webp?v=${AVER}" alt=""><img class="hw-pump p2" src="/news/pumpkin.webp?v=${AVER}" alt="">`;
+      <img class="hw-ghost g1" src="/news/hw_ghost.webp?v=${IMGV}" alt=""><img class="hw-ghost g2" src="/news/hw_ghost.webp?v=${IMGV}" alt=""><img class="hw-ghost g3" src="/news/hw_ghost.webp?v=${IMGV}" alt="">
+      <img class="hw-pump p1" src="/news/pumpkin.webp?v=${IMGV}" alt=""><img class="hw-pump p2" src="/news/pumpkin.webp?v=${IMGV}" alt="">`;
     document.body.appendChild(d); hwStart();
   } else { hwTimers.forEach(clearTimeout); hwTimers = []; }
   document.querySelectorAll('.brand img, img.logo').forEach((im) => { im.src = (on ? '/news/logo_hw.webp' : '/emblems/logo2.webp') + '?v=' + AVER; });
@@ -5368,7 +5369,7 @@ function render() {
 
 function build() {
   if (!token) return `
-    <div style="padding-top:3vh" class="center"><img class="logo" src="/emblems/logo2.webp?v=${AVER}" alt=""><h1 class="wordmark big" style="margin-top:14px">PUNKTLANDUNG</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
+    <div style="padding-top:3vh" class="center"><img class="logo" src="/emblems/logo2.webp?v=${IMGV}" alt=""><h1 class="wordmark big" style="margin-top:14px">PUNKTLANDUNG</h1><p class="sub" style="margin-top:10px">Wer am nächsten dran ist, punktet. Wer genau trifft, räumt ab.</p></div>
     <div class="tabs"><button data-tab="login" class="${authTab === 'login' ? 'on' : ''}">Anmelden</button><button data-tab="register" class="${authTab === 'register' ? 'on' : ''}">Neu hier</button></div>
     <form id="authForm" class="panel" style="display:flex;flex-direction:column;gap:14px">
       <div><label for="fName">Spielername</label><input class="field" id="fName" autocomplete="username" maxlength="16" required></div>
@@ -5464,12 +5465,12 @@ function build() {
     <div id="rbody"></div></div>`;
 
   if (!S && page === 'casino') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Casino</h1>
     <div id="cbody"></div></div>`;
 
   if (!S && page === 'cards') return `<div class="col">
-    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
+    <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
     <button class="ct-shopbig" data-ct="shop"><span class="csb-ic">🛒</span><span class="grow"><b>Shop</b><small>Booster kaufen</small></span><span class="ct-new" id="ctNew" hidden>NEU</span><span class="csb-go">›</span></button><div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="traenke" class="ct-pot"><img src="/tcg/pot_xp.webp" alt="">Tränke</button><button data-ct="boerse" class="ct-boerse">💱 Börse · Handeln</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
@@ -5492,7 +5493,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
     </div>`;
 
   if (!S) return `<div class="col">
-    <div class="brand"><img src="${siteTheme === 'halloween' ? '/news/logo_hw.webp' : '/emblems/logo2.webp'}?v=${AVER}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1>${siteTheme === 'halloween' ? '<span class="hw-tag">🎃 Halloween</span>' : ''}</div>
+    <div class="brand"><img src="${siteTheme === 'halloween' ? '/news/logo_hw.webp' : '/emblems/logo2.webp'}?v=${IMGV}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1>${siteTheme === 'halloween' ? '<span class="hw-tag">🎃 Halloween</span>' : ''}</div>
     <div id="pushbar" hidden></div>
     <div id="giftBox"></div>
     <div id="newsCard"></div><div id="promoCard"></div>
@@ -5514,13 +5515,13 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
     <div class="row" id="online" style="gap:10px;padding:0 4px"><span style="width:10px;height:10px;border-radius:50%;background:#8BE28B;box-shadow:0 0 10px #8BE28B;flex:none"></span><span class="sub grow" id="onlineText"></span>
     </div>
     <div id="openList"></div>
-    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten, Booster &amp; Börse</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Gruselnacht-Booster, Displays und Handeln an der Börse</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
+    <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten, Booster &amp; Börse</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Gruselnacht-Booster, Displays und Handeln an der Börse</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     ${home && home.me && home.me.admin ? '<button class="panel row" id="openAdmin" style="gap:12px;text-align:left"><span style="font-size:34px;width:46px;text-align:center">⚙️</span><span class="grow"><b>Admin</b><br><span class="sub">Fragen-Pool, Fragenquelle und Befüllung</span></span></button>' : ''}
-    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
-    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span><span class="cnt-badge" id="chalBadge" hidden></span></button>
-    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
-    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${AVER}" style="width:46px;height:46px" alt=""><span class="cnt-badge" id="casBadge" ${home && home.me && home.me.wheelLeft ? '' : 'hidden'}>${(home && home.me && home.me.wheelLeft) || ''}</span><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
+    <button class="panel row" id="openRanks" style="gap:12px;text-align:left"><img src="/emblems/trophy.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="grow"><b>Ranglisten</b><br><span class="sub">Welt, Punkte und Casino</span></span></button>
+    <button class="panel row" id="openChallenges" style="gap:12px;text-align:left"><img src="/emblems/c_exact.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="grow"><b>Herausforderungen</b><br><span class="sub" id="chalSub">Stufen schaffen, XP sammeln</span></span><span class="cnt-badge" id="chalBadge" hidden></span></button>
+    <button class="panel row" id="openDaily" style="gap:12px;text-align:left"><img src="/tcg/chest.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="grow"><b>Tagesbelohnung</b><br><span class="sub">Jeden Tag Diamanten abholen</span></span><span class="badge" id="dailyDot" hidden>!</span></button>
+    <button class="panel row" id="openCasino" style="gap:12px;text-align:left"><img src="/emblems/pc_e31.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="cnt-badge" id="casBadge" ${home && home.me && home.me.wheelLeft ? '' : 'hidden'}>${(home && home.me && home.me.wheelLeft) || ''}</span><span class="grow"><b>Casino</b><br><span class="sub">Roulette, Blackjack und Tische mit Freunden</span></span></button>
     </div><div class="col">
     <div><h2 style="margin-bottom:10px">Deine Statistik</h2><div id="stats"></div></div>
 
@@ -5587,7 +5588,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
 
   if (S.phase === 'finished') { const ps = [...S.players].sort((a, b) => b.score - a.score); const w = ps.filter((p) => S.winners.includes(p.id));
     return `<div class="col">
-    <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp?v=${AVER}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
+    <div class="center" style="padding-top:1vh">${w.length ? '<img class="trophy" src="/emblems/trophy.webp?v=${IMGV}" alt="">' : ''}<p class="sub">Match beendet</p><h1 style="margin-top:6px">${w.length ? esc(w.map((p) => p.name).join(' & ')) + ' gewinnt' : 'Kein Sieger'}</h1></div>
     <div class="plist">${ps.map((p, i) => `<div class="pl" data-pid="${p.id}" style="--c:${p.color}"><span class="num" style="font-size:24px;width:24px">${i + 1}</span>${embHtml(p, 30)}${avatar(p, 38)}<span class="nm">${withTag(p)} ${S.winners.includes(p.id) ? '<span class="crown">♛</span>' : ''}</span>${addBtn(p)}<span class="num" style="font-size:24px">${p.score}</span></div>`).join('')}</div>
     </div><div class="col"><div id="dropBox"></div><div id="xpSum"></div>
     <div id="chatBox"></div>
@@ -5641,9 +5642,9 @@ function buildReveal() {
           <span class="diff">${diffText(r)}</span></span>
         <span class="val">${r.value === null ? '–' : fmt(r.value, R.unit)}</span>
         <span class="pts ${r.points ? '' : 'zero'}">+${r.points}</span></div>`; }).join('')}</div>
-    ${given.length ? `<div class="winbox" style="animation-delay:${((steps - 1) * 0.35 + 0.25).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${AVER}" alt="">
+    ${given.length ? `<div class="winbox" style="animation-delay:${((steps - 1) * 0.35 + 0.25).toFixed(2)}s"><img class="frame" src="/emblems/winbanner.webp?v=${IMGV}" alt="">
       <div class="in">${avatar(P[rows[0].id] || { name: '?' }, 38)}<b>${esc(P[rows[0].id]?.name || '?')}</b><span class="pts">+${rows[0].points}</span></div>
-      ${rows[0].exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${AVER}" alt="">` : ''}</div>` : ''}
+      ${rows[0].exact ? `<img class="bulls" src="/emblems/bullseye.webp?v=${IMGV}" alt="">` : ''}</div>` : ''}
     </div><div class="col side deskonly"><h2>Punktestand</h2><div class="plist" id="sideboard"></div></div>` + footOnly();
 }
 
@@ -5652,7 +5653,7 @@ function chipsHtml() {
   return [...S.players].sort((a, b) => b.score - a.score).map((p) => `<span class="chip ${p.id === S.you ? 'me' : ''} ${p.connected ? '' : 'off'}" data-pid="${p.id}" style="--c:${p.color}">${avatar(p, 20, false)}${withTag(p)} <b>${p.score}</b>${S.phase === 'question' && p.answered ? '<span class="tick">✓</span>' : ''}</span>`).join('');
 }
 function playersHtml() {
-  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" data-user="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm"><span style="white-space:nowrap">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}</span>${p.title ? titleHtml(p) : `<br><span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${AVER}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
+  return S.players.map((p) => `<div class="pl" data-pid="${p.id}" data-user="${p.id}" style="--c:${p.color}">${avatar(p, 44)}<span class="nm"><span style="white-space:nowrap">${withTag(p)}${p.id === S.you ? ' <small>(du)</small>' : ''}</span>${p.title ? titleHtml(p) : `<br><span class="lv">${rankText(p)}</span>`}</span>${p.emblem ? `<img class="pcemb lineup${animOf(p.emblem)}" style="--s:44px" src="/emblems/pc_${esc(p.emblem)}.webp?v=${IMGV}" alt="">` : ''}${addBtn(p)}${p.id === S.hostId ? '<span class="tag">Host</span>' : ''}${p.connected ? '' : '<small>offline</small>'}</div>`).join('');
 }
 const isFriend = (id) => friends.some((f) => f.id === id);
 function addBtn(p) { return p.id === S.you || isFriend(p.id) ? '' : `<button class="mini" data-addfriend="${esc(p.name)}">+ Freund</button>`; }
@@ -5688,8 +5689,8 @@ function modEdit(id, page) {
   const f = (k, label, v) => `<div><label>${label}</label><input class="field" data-f="${k}" inputmode="numeric" value="${v}"></div>`;
   const body = page === 'cards'
     ? `<p class="sub">Frei = grün. Freigeschaltet gilt zusätzlich zu dem, was er selbst geschafft hat.</p>
-       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.name)}</button>`).join('')}</div>
-       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
+       <div class="cardgrid">${C.emblems.map((e) => `<button data-mu="${e.id}" class="${u.unlocks.includes(e.id) ? 'on' : ''}"><img class="pcemb" style="--s:44px" src="/emblems/pc_${e.id}.webp?v=${IMGV}" alt="">${esc(e.name)}</button>`).join('')}</div>
+       <div class="tlist">${C.titles.map((t) => `<button data-mu="${t.id}" class="${u.unlocks.includes(t.id) ? 'on' : ''}"><img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${IMGV}" alt="${esc(t.text)}"><span class="why">${esc(t.text)}</span></button>`).join('')}</div>
        <label style="margin-top:8px">Rahmen</label>
        <div class="framegrid">${(home.frames || []).map((fr) => `<button data-mu="${fr.id}" class="${u.unlocks.includes(fr.id) ? 'on' : ''}">${avatar({ id: u.id, name: u.name, av: u.av, color: '#4FD1C5', frame: fr.id, frameAnim: fr.anim }, 50, false)}${esc(fr.name)}</button>`).join('')}</div>
        ${home.me.admin ? `<label style="margin-top:8px">Booster schenken</label><div class="row" style="gap:6px"><select class="field" id="modPack" style="flex:1;padding:8px">${tcg && tcg.def ? tcg.def.packs.map((p) => `<option value="${p.id}">${esc(p.name)}${p.hidden ? ' (geheim)' : ''}</option>`).join('') : '<option value="secret">???-Booster (geheim)</option><option value="premium">Premium-Booster</option>'}</select><input class="field" id="modPackN" inputmode="numeric" value="1" style="width:60px;padding:8px"><button class="chipbtn" id="modPackGo">Schenken</button></div>` : ''}
@@ -5744,14 +5745,14 @@ async function showUser(id) {
     const slots = [0, 1, 2, 3].map((k) => u.showcase && u.showcase[k]);
     const gv = u.showcaseG || [];
     const vitG = `<div class="vit vit-g"><div class="vit-h"><b>🏅 Gegradete Karten</b>${u.self ? '<button class="link" id="vitEditG">bearbeiten</button>' : ''}</div>${gv.length ? `<div class="slabgrid four">${gv.map((x) => slabHtml(x)).join('')}</div>` : `<small class="sub">${u.self ? (u.gradedCount ? 'Stell deine gegradeten Karten aus: tippe auf „bearbeiten“.' : 'Du hast noch keine gegradeten Karten.') : 'Hat keine gegradeten Karten ausgestellt.'}</small>`}</div>`;
-    const tro = u.trophies ? `<div class="troph"><div class="vit-h"><b>🏆 Trophäen</b>${u.self ? '<button class="link" id="trEdit">bearbeiten</button>' : ''}</div>${u.trophies.length ? `<div class="tr-grid">${u.trophies.map((x) => `<button class="tr-item" data-zoom="${esc(x.img)}" data-zoomt="${esc(x.name)}" data-zooms="${esc(x.sub)}"><img src="${esc(x.img)}?v=${AVER}" alt="" onerror="this.style.opacity=.15"><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></button>`).join('')}</div>` : `<small class="sub">${u.self ? 'Tippe auf „bearbeiten“ und stell Stücke aus deiner Trophäen-Bibliothek aus.' : 'Noch nichts ausgestellt.'}</small>`}</div>` : '';
+    const tro = u.trophies ? `<div class="troph"><div class="vit-h"><b>🏆 Trophäen</b>${u.self ? '<button class="link" id="trEdit">bearbeiten</button>' : ''}</div>${u.trophies.length ? `<div class="tr-grid">${u.trophies.map((x) => `<button class="tr-item" data-zoom="${esc(x.img)}" data-zoomt="${esc(x.name)}" data-zooms="${esc(x.sub)}"><img src="${esc(x.img)}?v=${IMGV}" alt="" onerror="this.style.opacity=.15"><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></button>`).join('')}</div>` : `<small class="sub">${u.self ? 'Tippe auf „bearbeiten“ und stell Stücke aus deiner Trophäen-Bibliothek aus.' : 'Noch nichts ausgestellt.'}</small>`}</div>` : '';
     const vit = tro + (home && home.me.grading ? vitG : '') + `<div class="vit"><div class="vit-h"><b>🏛 Vitrine</b>${u.self ? '<button class="link" id="vitEdit">bearbeiten</button>' : ''}</div><div class="vit-row">${slots.map((key) => {
       if (!key) return `<div class="vit-slot empty">${u.self ? '+' : ''}</div>`;
       const [cid, v] = key.split(':');
       return `<div class="vit-slot r-${esc(v)}" data-card="${esc(key)}"><img src="${cardImg(cid, v)}" alt="">${badge(v)}</div>`;
     }).join('')}</div>${!u.showcase || !u.showcase.length ? `<small class="sub">${u.self ? 'Stell deine liebsten Karten aus: im Profil unter „Vitrine“.' : 'Hier ist noch nichts ausgestellt.'}</small>` : ''}</div>`;
     const sum = `<div class="psum">
-      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(12, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${AVER}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
+      <div><small>Level</small><b class="psum-lv">${(() => { const t = Math.max(0, Math.min(12, Number(u.presShown === undefined || u.presShown === null ? u.prestige : u.presShown) || 0)); return t ? `<img data-pzoom="${t}" src="/emblems/${t === 12 ? 'pc_EX5' : 'p' + t}.webp?v=${IMGV}" alt="">` : ''; })()}Lv ${u.level || 1}</b><small>${u.prestige ? `Prestige ${u.prestige}${PN[u.prestige] ? ' · ' + esc(PN[u.prestige]) : ''}` : 'noch kein Prestige'}</small></div>
       <div><small>Weltrangliste</small><b>${fmt(u.rankPoints || 0)} WP</b><small>${esc(onlineText(u))}</small></div>
       <div><small>Casino</small><b class="psum-vip">${vipBadge(u.vipTier || 0, 26)} ${esc(u.vipName || 'Bronze')}</b><small>VIP-Stufe</small></div>
       <div><small>Sammlung</small><b>${fmt((u.collect || {}).unique || 0)} / ${fmt((u.collect || {}).total || 0)}</b><small>verschiedene Karten</small></div>
@@ -5886,10 +5887,10 @@ function update() {
       const curEmb = C.emblems.find((e) => e.id === me.emblem);
       const curTit = C.titles.find((t) => t.id === me.title);
       $('#cardBox').innerHTML = `<b>Spielerkarte</b><p class="sub">Emblem und Titel erscheinen im Spiel neben deinem Namen.</p>
-        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span>${freshOf(C.emblems, 'e').length ? `<span class="badge">${freshOf(C.emblems, 'e').length}</span>` : ''}<span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.unlocked && !seenSet().has('e:' + e.id) ? 'fresh' : ''} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${AVER}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
-        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span>${freshOf(C.titles, 't').length ? `<span class="badge">${freshOf(C.titles, 't').length}</span>` : ''}<span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${AVER}" alt="">` : ''}</summary>
-        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.unlocked && !seenSet().has('t:' + t.id) ? 'fresh' : ''} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${AVER}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'emb' ? 'open' : ''} data-fold="emb"><summary><span class="grow">Embleme</span>${freshOf(C.emblems, 'e').length ? `<span class="badge">${freshOf(C.emblems, 'e').length}</span>` : ''}<span class="sub">${C.emblems.filter((e) => e.unlocked).length} von ${C.emblems.length}</span>${curEmb ? `<img class="pcemb" style="--s:28px" src="/emblems/pc_${curEmb.id}.webp?v=${IMGV}" alt="">` : ''}</summary>
+        <div class="cardgrid">${C.emblems.map((e) => `<button data-emb="${e.id}" class="${me.emblem === e.id ? 'on' : ''} ${e.unlocked ? '' : 'lock'} ${e.unlocked && !seenSet().has('e:' + e.id) ? 'fresh' : ''} ${e.secret && !e.unlocked ? 'secret' : ''}" title="${esc(e.unlocked ? e.name : lockNote(e))}"><img class="pcemb" style="--s:52px" src="/emblems/pc_${e.id}.webp?v=${IMGV}" alt="">${esc(e.unlocked ? e.name : e.secret ? 'GEHEIM' : '🔒 ' + e.name)}</button>`).join('')}</div></details>
+        <details class="fold" ${openFold === 'tit' ? 'open' : ''} data-fold="tit"><summary><span class="grow">Titel</span>${freshOf(C.titles, 't').length ? `<span class="badge">${freshOf(C.titles, 't').length}</span>` : ''}<span class="sub">${C.titles.filter((t) => t.unlocked).length} von ${C.titles.length}</span>${curTit && curTit.unlocked ? `<img class="titleimg" style="max-width:74px" src="/emblems/title_${curTit.id === 'secret' ? 'tsecret' : curTit.id}.webp?v=${IMGV}" alt="">` : ''}</summary>
+        <div class="tlist">${C.titles.map((t) => `<button data-title="${t.id}" class="${me.title === t.id ? 'on' : ''} ${t.unlocked ? '' : 'lock'} ${t.unlocked && !seenSet().has('t:' + t.id) ? 'fresh' : ''} ${t.secret && !t.unlocked ? 'secret' : ''}">${t.secret && !t.unlocked ? '<span class="title s-grau">???</span>' : `<img class="titleimg" src="/emblems/title_${t.id === 'secret' ? 'tsecret' : t.id}.webp?v=${IMGV}" alt="${esc(t.text)}">`}<span class="why"><b style="color:var(--paper)">${esc(t.secret && !t.unlocked ? 'GEHEIM' : t.text)}</b>${esc(t.unlocked ? 'freigeschaltet' : lockNote(t))}</span></button>`).join('')}</div></details>
         <details class="fold" ${openFold === 'frm' ? 'open' : ''} data-fold="frm"><summary><span class="grow">Rahmen</span>${freshOf(home.frames || [], 'f').length ? `<span class="badge">${freshOf(home.frames || [], 'f').length}</span>` : ''}<span class="sub">${(home.frames || []).filter((f) => f.unlocked).length} von ${(home.frames || []).length}</span>${me.frame ? `<span style="width:30px;height:30px;display:inline-block">${avatar({ ...me, av: 0, name: ' ' }, 26, false)}</span>` : ''}</summary>
         <div class="framegrid">${(home.frames || []).map((f) => `<button data-frame="${f.id}" class="${me.frame === f.id ? 'on' : ''} ${f.unlocked ? '' : 'lock'} ${f.unlocked && !seenSet().has('f:' + f.id) ? 'fresh' : ''}" title="${esc(f.unlocked ? f.name : f.need)}">${avatar({ id: me.id, name: me.name, av: me.av, color: '#4FD1C5', frame: f.id, frameAnim: f.unlocked ? f.anim : '' }, 54, false)}${esc(f.unlocked ? f.name : f.secret ? 'GEHEIM' : f.dev ? 'DEV' : '🔒 ' + f.name)}</button>`).join('')}
         <button class="chipbtn" data-frame="" style="grid-column:1/-1">Rahmen abwählen</button></div></details>
@@ -6036,7 +6037,7 @@ function update() {
       const mine2 = (S.bets || []).find((b) => b.id === S.you);
       const others = (S.bets || []).filter((b) => b.id !== S.you);
       const dia = (home && home.me && home.me.diamonds) || 0;
-      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      bb.innerHTML = `<div class="row"><b class="grow">Diamanten setzen</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
         <p class="sub">Setze darauf, dass du gewinnst. Gewinnst du, bekommst du das Doppelte. Verlierst du, geht dein Einsatz an die Sieger.</p>
         ${mine2 ? `<div class="row"><b class="grow">Dein Einsatz: ${fmt(mine2.amount)} 💎</b><button class="btn small ghost" data-bet="0">Zurücknehmen</button></div>`
           : `<div class="row" style="flex-wrap:wrap;gap:6px">${[50, 100, 250, 500].map((v) => `<button class="chipbtn" data-bet="${v}" ${dia < v ? 'disabled style="opacity:.4"' : ''}>${v} 💎</button>`).join('')}</div>`}
@@ -6092,13 +6093,13 @@ function update() {
   if (S.phase === 'reveal' && $('#report')) { $('#report').textContent = S.reported ? 'Frage gemeldet. Danke.' : 'Antwort falsch? Frage melden'; $('#report').disabled = S.reported; }
   if (S.phase === 'finished' && S.summary && !$('#xpSum').innerHTML) { const x = S.summary;
     $('#xpSum').innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row"><div class="grow"><p class="sub">Dein Fortschritt</p><b class="num xpbig">+${fmt(x.gained)} XP</b></div><div class="center"><span class="sub">Level</span><br><b class="num" style="font-size:30px">${x.levelBefore === x.levelAfter ? x.levelAfter : x.levelBefore + ' → ' + x.levelAfter}</b></div></div>
-      ${x.soloWin ? '<div class="solo-win">🏆 Solo-Sieg! Zählt als Sieg für Serie, Herausforderungen und Prestige</div>' : ''}<div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>${v < 0 ? '−' + fmt(-v) : '+' + fmt(v)}</span></div>`).join('')}</div>${x.pass && x.pass.gain ? `<div class="row" style="justify-content:space-between;font-size:13.5px"><span>👑 Kronen-Pass</span><span>+${fmt(x.pass.gain)} Pass-XP${x.pass.tierAfter > x.pass.tierBefore ? ` · Stufe ${x.pass.tierAfter}!` : ''}</span></div>` : ''}${x.canPrestige ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang erreicht</small></span><span>›</span></button>` : ''}${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${AVER}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
+      ${x.soloWin ? '<div class="solo-win">🏆 Solo-Sieg! Zählt als Sieg für Serie, Herausforderungen und Prestige</div>' : ''}<div class="parts">${x.parts.map(([l, v]) => `<div><span>${esc(l)}</span><span>${v < 0 ? '−' + fmt(-v) : '+' + fmt(v)}</span></div>`).join('')}</div>${x.pass && x.pass.gain ? `<div class="row" style="justify-content:space-between;font-size:13.5px"><span>👑 Kronen-Pass</span><span>+${fmt(x.pass.gain)} Pass-XP${x.pass.tierAfter > x.pass.tierBefore ? ` · Stufe ${x.pass.tierAfter}!` : ''}</span></div>` : ''}${x.canPrestige ? `<button class="pres-hint" id="goPrestige"><span>⭐</span><span class="grow"><b>Prestige möglich!</b><small>Du hast alles für den nächsten Rang erreicht</small></span><span>›</span></button>` : ''}${x.rankGain ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Weltrangliste</b><span class="wp">+${fmt(x.rankGain)} WP · ${fmt(x.rankTotal)} gesamt</span></div>` : ''}${S.betNote ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Wette</b><span class="dia">${esc(S.betNote)}</span></div>` : ''}${x.diamonds ? `<div class="row" style="justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)"><b>Diamanten</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt="">+${fmt(x.diamonds)}</span></div>` : ''}${x.unlocked && x.unlocked.length ? `<div class="unlocks"><b>Freigeschaltet</b>${x.unlocked.map((u2) => `<span class="uitem">${esc(u2.name)}${u2.xp ? ` <small>+${fmt(u2.xp)} XP</small>` : ''}</span>`).join('')}</div>` : ''}${x.canPrestige ? '<p><span class="tag hit">Prestige bereit</span> Aktiviere den nächsten Rang in deinem Profil.</p>' : ''}</div>`; }
   if (S.phase === 'finished' && $('#dropBox')) {
     const dr = S.drops || [];
     const key = S.code + ':' + dr.length;
     if ($('#dropBox').dataset.k !== key) {
       $('#dropBox').dataset.k = key;
-      $('#dropBox').innerHTML = dr.length ? `<div class="drops"><div class="dr-h">🎁 Zufallsfunde</div>${dr.map((d) => `<div class="dr ${d.jackpot ? 'jp' : ''}">${d.pack ? `<img src="/tcg/pack_${esc(d.pack)}.webp?v=${AVER}" alt="">` : `<img src="/tcg/diamond.webp?v=${AVER}" alt="">`}<span><b>${esc(d.id === S.you ? 'Du' : d.name)}</b> ${d.id === S.you ? 'hast' : 'hat'} ${esc(d.text)} gefunden!</span></div>`).join('')}</div>` : '';
+      $('#dropBox').innerHTML = dr.length ? `<div class="drops"><div class="dr-h">🎁 Zufallsfunde</div>${dr.map((d) => `<div class="dr ${d.jackpot ? 'jp' : ''}">${d.pack ? `<img src="/tcg/pack_${esc(d.pack)}.webp?v=${IMGV}" alt="">` : `<img src="/tcg/diamond.webp?v=${IMGV}" alt="">`}<span><b>${esc(d.id === S.you ? 'Du' : d.name)}</b> ${d.id === S.you ? 'hast' : 'hat'} ${esc(d.text)} gefunden!</span></div>`).join('')}</div>` : '';
       const mine = dr.find((d) => d.id === S.you);
       if (mine) { sfx('exact'); toast(`🎁 Zufallsfund: ${mine.text}!`); }
     }
@@ -6268,7 +6269,7 @@ document.addEventListener('click', (e) => {
   else if (e.target.closest && e.target.closest('[data-zoom]')) { const z = e.target.closest('[data-zoom]'); zoomImg(z.dataset.zoom, z.dataset.zoomt || '', z.dataset.zooms || ''); }
   else if (t.id === 'trEdit') { api('/api/admin/trophies').then((r) => { const sel = new Set(r.sel);
       layer(`<div class="panel" style="gap:10px"><h2>🏆 Trophäen-Bibliothek</h2><p class="sub" style="margin:0">Wähle, was in deinem Profil ausgestellt wird. Alle können es sehen und groß ansehen.</p>
-        <div class="tr-lib">${r.lib.map((x) => `<label class="tr-pick"><input type="checkbox" value="${esc(x.id)}" ${sel.has(x.id) ? 'checked' : ''}><img src="${esc(x.img)}?v=${AVER}" alt="" onerror="this.style.opacity=.15"><span><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></span></label>`).join('')}</div>
+        <div class="tr-lib">${r.lib.map((x) => `<label class="tr-pick"><input type="checkbox" value="${esc(x.id)}" ${sel.has(x.id) ? 'checked' : ''}><img src="${esc(x.img)}?v=${IMGV}" alt="" onerror="this.style.opacity=.15"><span><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></span></label>`).join('')}</div>
         <button class="btn" id="trSave">Speichern</button><button class="btn ghost" id="trX">Abbrechen</button></div>`);
       $('#trX').onclick = closeLayer;
       $('#trSave').onclick = () => api('/api/admin/trophies', { ids: [...document.querySelectorAll('.tr-pick input:checked')].map((i) => i.value) }).then(() => { closeLayer(); toast('🏆 Trophäen gespeichert'); if ($('#modal').classList.contains('on') && home && home.me) showUser(home.me.id); }).catch((e) => toast(e.message));

@@ -2182,7 +2182,9 @@ app.use('/emblems', express.static(path.join(__dirname, 'public/emblems'), { max
 app.use('/music', express.static(path.join(__dirname, 'public/music'), { maxAge: '30d', immutable: true }));
 app.use('/cr/v', express.static(path.join(__dirname, 'public/cr/v'), { maxAge: '30d', immutable: true })); // Buch-der-Gruft-Videos nur einmal laden
 app.use('/sfx', express.static(path.join(__dirname, 'public/sfx'), { maxAge: '30d', immutable: true })); // Klangdateien nur einmal laden // Musik nur einmal laden (feste Versionsnummer)
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, setHeaders: (res, fp) => { // Bilder, Töne, Videos 7 Tage im Handy speichern (spart Bandbreite); App-Seite bleibt frisch
+  if (/\.(webp|png|jpe?g|gif|svg|mp3|mp4|webm|woff2?|ttf)$/i.test(fp)) res.setHeader('Cache-Control', 'public, max-age=604800');
+} }));
 
 const server = http.createServer(app);
 const io = new Server(server, { pingInterval: 10000, pingTimeout: 8000 });
