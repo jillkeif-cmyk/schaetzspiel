@@ -1749,6 +1749,105 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .maint-card h2{margin:4px 0 0;font:400 28px/1.1 Anton,Impact,sans-serif;color:#FFE27A;letter-spacing:.5px}.maint-card p{margin:0;font:700 15px/1.45 Archivo;color:#F3EAFF}.maint-card small{color:var(--muted);font:600 12.5px/1.4 Archivo}
 .maint-adm{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}.maint-adm.on{box-shadow:inset 0 0 0 2px #FF6B6B;background:rgba(255,90,90,.08)}
 .fill-auto,.fill-now{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);margin-top:6px}.fill-auto.on{box-shadow:inset 0 0 0 2px rgba(124,240,168,.6)}
+/* ===== Neues Design (ui2) ===== */
+#u2nav{position:fixed;left:0;right:0;bottom:0;z-index:7;max-width:520px;margin:0 auto;height:calc(78px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;display:flex;gap:2px;background:#06161A;border-top:2px solid rgba(255,210,63,.6);box-shadow:0 -10px 24px rgba(0,0,0,.5)}
+#u2nav[hidden]{display:none}
+#u2nav button{flex:1 1 0;min-width:0;border:0;border-radius:0;padding:0;background:linear-gradient(180deg,#123840,#0B252B);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);display:grid;place-items:center;position:relative;cursor:pointer;transition:flex .18s ease,background .18s}
+#u2nav button img{width:42px;height:42px;object-fit:contain;opacity:.92}
+#u2nav button span{display:none}
+#u2nav button.on{flex:1.7 1 0;background:linear-gradient(180deg,#2C6B75,#16434B);box-shadow:inset 0 3px 0 #FFD23F,inset 0 0 0 1px rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:7px}
+#u2nav button.on img{width:58px;height:58px;margin-top:-26px;opacity:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+#u2nav button.on span{display:block;font:400 14px/1 Anton,Impact,sans-serif;letter-spacing:.6px;text-transform:uppercase;color:#FFF3C4;text-shadow:0 2px 0 #081A1F}
+#u2nav i{position:absolute;top:6px;right:12%;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#FF4FA3;color:#fff;font:900 10px/18px Archivo,sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #06161A}
+body.u2nav-on #wrap{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+body.u2nav-on #toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+/* bisherige Startseiten-Knöpfe: im neuen Design über Leiste, Seitenknöpfe und Menü erreichbar */
+body.ui2 #app:not(.maint) .brand,body.ui2 #app:not(.maint) #openProfile,body.ui2 #app:not(.maint) #passCard,body.ui2 #app:not(.maint) #promoCard,body.ui2 #app:not(.maint) #create,body.ui2 #app:not(.maint) #createSolo,body.ui2 #app:not(.maint) #openCards,body.ui2 #app:not(.maint) #openAdmin,body.ui2 #app:not(.maint) #openRanks,body.ui2 #app:not(.maint) #openChallenges,body.ui2 #app:not(.maint) #openDaily,body.ui2 #app:not(.maint) #openCasino,body.ui2 #app:not(.maint) #hotInfo,body.ui2 #app:not(.maint) .deskonly,body.ui2 #app:not(.maint) .mobonly,body.ui2 #app:not(.maint) .panel:has(#create) > p.sub{display:none!important}
+body.ui2 #app:not(.maint) .col:has(#stats){display:none!important}
+body.ui2 #app:not(.maint) .panel:has(#create){padding:0;background:none;box-shadow:none;gap:8px}
+body.ui2 #app:not(.maint) .panel:has(#create):not(:has(#firstBonus :not(:empty), #slots:not(:empty))){display:none}
+body.ui2[data-pg="cards"] #app #back,body.ui2[data-pg="casino"] #app #back{visibility:hidden}body.ui2[data-pg="social"] #app .row:has(> #back){display:none}
+body.ui2[data-pg="casino"] #app .col > h1{display:none}
+body.u2-play .cnav,body.u2-play #vipHead{display:none!important}body.u2-play #app .col > .row:has(> #back){display:none}body.u2-play .tc-logo{width:auto;max-width:78%;max-height:74px;margin:-2px auto -6px}body.u2-play #app{padding-top:max(10px,env(safe-area-inset-top,0px))!important}body.u2-play #wrap{padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Kopf der Startseite */
+#ui2Home{display:flex;flex-direction:column;gap:10px}
+#ui2Home button{font-family:Archivo,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.u2-top{display:flex;align-items:center;gap:8px}
+.u2-lv{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 6px;border:0;border-radius:99px;background:rgba(0,0,0,.42);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45);color:inherit}
+.u2-lv .gem{width:26px;height:26px;margin:2px;border-radius:7px;transform:rotate(45deg);background:linear-gradient(135deg,#B18CFF,#5B2FB8);display:grid;place-items:center;box-shadow:0 0 0 2px #FFD23F;flex:none}
+.u2-lv .gem b{transform:rotate(-45deg);font:400 13px Anton,Impact,sans-serif;color:#fff}
+.u2-lv .xp{display:flex;flex-direction:column;gap:3px;width:96px;text-align:left}
+.u2-lv small{font:800 10.5px Archivo,sans-serif;color:#FFE9A8;white-space:nowrap}
+.u2-lv .bar,.u2-pass .bar{display:block;height:5px;border-radius:9px;background:rgba(255,255,255,.14);overflow:hidden}
+.u2-lv .bar span{display:block;height:100%;background:linear-gradient(90deg,#FFD23F,#FFB347)}
+.u2-dia{display:flex;align-items:center;gap:6px;padding:4px 4px 4px 8px;border:0;border-radius:99px;background:rgba(0,0,0,.42);box-shadow:inset 0 0 0 1.5px rgba(143,211,255,.5)}
+.u2-dia img{width:22px;height:22px;object-fit:contain}.u2-dia b{font:900 15px Archivo,sans-serif;color:#EAF6FF}
+.u2-dia .plus{width:26px;height:26px;border-radius:50%;background:linear-gradient(180deg,#9DF5BE,#3FB46E);display:grid;place-items:center;font:900 18px/1 Archivo,sans-serif;color:#08331F;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.u2-head{display:flex;gap:10px;align-items:stretch}
+.u2-banner{position:relative;flex:1 1 auto;min-width:0;height:94px;border:0;border-radius:18px;overflow:hidden;padding:0;text-align:left;background:linear-gradient(135deg,#3A2466,#12343B);box-shadow:inset 0 0 0 2px rgba(255,210,63,.75),0 8px 20px rgba(0,0,0,.45);color:inherit}
+.u2-banner .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.u2-banner .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,26,31,.93) 0%,rgba(8,26,31,.6) 58%,rgba(8,26,31,.12) 100%)}
+.u2-banner .who{position:absolute;left:10px;right:8px;top:0;bottom:0;display:flex;align-items:center;gap:10px}
+.u2-banner .who > :first-child{flex:none;box-shadow:0 0 0 3px #FFD23F,0 0 0 5px #6B3FD6;border-radius:50%}
+.u2-banner .nm{display:flex;flex-direction:column;gap:1px;min-width:0}
+.u2-banner .nm b{font:400 20px/1.05 Anton,Impact,sans-serif;letter-spacing:.3px;color:#FFF3C4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u2-banner .nm small{font:800 11.5px Archivo,sans-serif;color:#FFD23F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u2-banner .nm em{font:700 10.5px Archivo,sans-serif;font-style:normal;color:#BFE3E8}
+.u2-side{display:flex;flex-direction:column;gap:8px;width:104px;flex:none}
+.u2-icons{display:flex;gap:8px;justify-content:flex-end}
+.u2-ib{position:relative;width:46px;height:46px;border:0;border-radius:14px;display:grid;place-items:center;padding:0;background:linear-gradient(180deg,#1C4E57,#0F333A);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2),0 4px 10px rgba(0,0,0,.4)}
+.u2-ib img{width:38px;height:38px;object-fit:contain}
+.u2-pass{position:relative;display:flex;align-items:center;gap:4px;padding:4px 7px 4px 4px;border:0;border-radius:12px;background:linear-gradient(180deg,#FFE27A,#E0A21E);box-shadow:inset 0 -3px 0 #9A6A00,0 4px 10px rgba(0,0,0,.4)}
+.u2-pass img{width:34px;height:30px;object-fit:contain;flex:none}.u2-pass > span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;text-align:left}
+.u2-pass b{font:900 11px Archivo,sans-serif;color:#2A1600}.u2-pass .bar{background:rgba(0,0,0,.25)}.u2-pass .bar span{display:block;height:100%;background:#6B3FD6}
+.u2-b{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:99px;background:#FF4FA3;color:#fff;font:900 11px/20px Archivo,sans-serif;font-style:normal;text-align:center;box-shadow:0 0 0 2px #081A1F}
+.u2-stage{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:4px;align-items:start;margin-top:2px}
+.u2-rail{display:flex;flex-direction:column;gap:10px;align-items:center}
+.u2-sb{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:0;color:inherit}
+.u2-sbi{position:relative;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.22),rgba(18,58,66,.95) 62%);box-shadow:inset 0 0 0 2.5px var(--ring),0 6px 14px rgba(0,0,0,.45)}
+.u2-sbi img{width:48px;height:48px;object-fit:contain}
+.u2-sbl{font:800 10.5px Archivo,sans-serif;color:#EAF6F8;text-shadow:0 1px 2px #000;white-space:nowrap}
+.u2-sbs{padding:0 7px;border-radius:99px;background:rgba(0,0,0,.55);font:800 9.5px/16px Archivo,sans-serif;color:#FFE9A8;white-space:nowrap}
+.u2-center{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding-top:6px}
+.u2-center img{width:min(150px,38vw);height:auto;filter:drop-shadow(0 14px 28px rgba(0,0,0,.6))}
+.u2-center h1{margin:6px 0 0;white-space:nowrap;font:400 clamp(22px,7vw,28px)/1 Anton,Impact,sans-serif;letter-spacing:1px;color:#FFD23F;text-shadow:0 3px 0 #6B4A00,0 0 18px rgba(255,210,63,.35)}
+.u2-center p{margin:4px 0 0;font:700 12px/1.3 Archivo,sans-serif;color:#BFE3E8}
+.u2-gift{border:0;border-radius:14px;padding:10px 12px;background:linear-gradient(90deg,rgba(255,79,163,.28),rgba(18,58,66,.9));box-shadow:inset 0 0 0 1.5px rgba(255,79,163,.6);color:#FFE3F1;font:700 13px Archivo,sans-serif;text-align:left}
+.u2-play{display:flex;align-items:stretch;gap:8px;padding:10px;border-radius:26px;background:linear-gradient(180deg,rgba(124,240,168,.25),rgba(14,48,54,.96));box-shadow:inset 0 0 0 2px rgba(124,240,168,.6),0 14px 30px rgba(0,0,0,.45)}
+.u2-pb{position:relative;width:70px;flex:none;border:0;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 0;background:linear-gradient(180deg,#1C4E57,#0F333A);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2);color:#DCEFF2}
+.u2-pb img{width:40px;height:40px;object-fit:contain}.u2-pb span{font:800 10px Archivo,sans-serif}
+.u2-go{flex:1 1 auto;min-width:0;border:0;border-radius:20px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#FFEE9A,#FFD23F 50%,#E6A51C);box-shadow:inset 0 -5px 0 #A06E00,inset 0 2px 0 rgba(255,255,255,.6),0 8px 18px rgba(255,210,63,.3);color:#2A1600}
+.u2-go b{font:400 31px/1 Anton,Impact,sans-serif;letter-spacing:1.5px}.u2-go small{margin-top:4px;font:800 11.5px Archivo,sans-serif;color:#5A3B00}
+.u2-go.off{filter:grayscale(.6) brightness(.8)}
+.u2-go:active,.u2-pb:active,.u2-sb:active .u2-sbi,.u2-ib:active,.u2-pass:active,.u2-banner:active{transform:translateY(2px) scale(.98)}
+/* Freunde-Seite und Menü */
+.u2-title{display:flex;align-items:center;gap:8px;margin:0;font:400 30px Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFD23F}
+.u2-title img{width:40px;height:40px;object-fit:contain}
+.u2-seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(0,0,0,.35)}
+.u2-seg button{flex:1;border:0;border-radius:10px;padding:10px 4px;background:none;color:#9FC3C9;font:800 13px Archivo,sans-serif}
+.u2-seg button.on{background:#FFD23F;color:#2A1600}
+.u2-menu{gap:8px!important}
+.u2-mi{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);color:inherit;text-align:left}
+.u2-mi b{display:block;font:800 14.5px Archivo,sans-serif}.u2-mi small{display:block;font:600 12px Archivo,sans-serif;color:var(--muted)}
+.u2-mic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:rgba(0,0,0,.3);flex:none}
+.u2-mb{padding:2px 8px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 11px Archivo,sans-serif;font-style:normal}
+.maint-adm.on2{box-shadow:inset 0 0 0 2px #7CF0A8;background:rgba(124,240,168,.08)}
+
+/* Roulette und Blackjack im neuen Design: Setzfeld im Mittelpunkt, Kessel nur beim Drehen */
+body.u2-game #vipHead{display:none!important}
+body.ui2[data-pg="casino"] .wheelwrap{display:none}
+body.ui2.r-spin[data-pg="casino"] .wheelwrap{display:block;position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:9;margin:0;width:min(82vw,330px);--W:min(82vw,330px);box-shadow:0 0 0 100vmax rgba(3,15,17,.74),0 0 60px rgba(255,210,63,.35)}
+body.ui2[data-pg="casino"] #cgame .modes{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin-bottom:6px;padding-bottom:2px}
+body.ui2[data-pg="casino"] #cgame .modes::-webkit-scrollbar,body.ui2[data-pg="casino"] #cgame .chips::-webkit-scrollbar{display:none}
+body.ui2[data-pg="casino"] #cgame .modes > *{flex:none}
+body.ui2[data-pg="casino"] #cgame .chips{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin:6px 0;padding:4px 2px}
+body.ui2[data-pg="casino"] #cgame .chips > *{flex:none}
+body.ui2[data-pg="casino"] #cgame > .sub.center{display:none}
+body.ui2[data-pg="casino"] .bjfelt{padding-top:10px;padding-bottom:12px;min-height:326px}body.ui2[data-pg="casino"] .betrow{margin-bottom:0}
+
+body.ui2[data-pg="cards"] .ct-shopbig,body.ui2 #shopBack{display:none!important}
+body.ui2[data-pg="cards"][data-ct="shop"] #app .col > h1{display:none}
+body.ui2[data-pg="cards"][data-ct="shop"] #app .col > .row:has(> #back){display:none}
 </style>
 </head>
 <body>
@@ -1774,7 +1873,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '203';
+const AVER = '205';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2618,7 +2717,7 @@ function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielb
   b.__ro = new ResizeObserver(() => { const k = key(); if (b.__key !== k) { b.__key = k; b.style.minHeight = ''; window.__cgH[k] = 0; } const h = b.offsetHeight; if (h > (window.__cgH[k] || 0)) { window.__cgH[k] = h; b.style.minHeight = h + 'px'; } });
   b.__ro.observe(b);
 }
-function renderCasino() {
+function renderCasino() { try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   { const b = $('#cgame'), k = cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : ''); if (b && b.__key !== k) { b.__key = k; b.style.minHeight = ''; if (window.__cgH) window.__cgH[k] = 0; } } // anderes Spiel: Höhe neu messen
   setTimeout(lockCasinoHeight, 0);
   const box = $('#cgame'); if (!box) return;
@@ -2722,7 +2821,7 @@ function showRouletteResult(d, bets) {
 async function doSpin() {
   if (spinning) return;
   if (!rbets.length) return toast('Setz zuerst einen Chip auf das Tableau.');
-  spinning = true;
+  spinning = true; document.body.classList.add('r-spin'); // neues Design: Kessel als Einblendung
   try {
     const d = await api('/api/casino/board', { bets: rbets.map((b) => ({ numbers: b.numbers, amount: b.amount })) });
     d.win = d.won > 0;
@@ -2751,9 +2850,9 @@ async function doSpin() {
       rbets = []; syncDia(d.diamonds); // jetzt das echte Ergebnis
       casinoDone(d);
       showRouletteResult(d, lastBets);
-      spinning = false;
+      spinning = false; setTimeout(() => document.body.classList.remove('r-spin'), 1700);
     }, 4700);
-  } catch (e) { spinning = false; toast(e.message); }
+  } catch (e) { spinning = false; document.body.classList.remove('r-spin'); toast(e.message); }
 }
 let bjBusy = false;
 async function bjAction(path) {
@@ -3451,7 +3550,7 @@ function renderTriple(box) {
   }
   tcSync();
 }
-function tcSync() { // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
+function tcSync() { try { if (document.body.classList.contains('ui2')) ui2Chrome(); } catch (e) {} // nur Zahlen, Beschriftungen und Knopf-Zustände anpassen
   if (!$('#tcRoot')) return;
   { const mm = tc.seat && tcMachines.find((x) => x.id === tc.seat), n = mm ? mm.watchers || 0 : 0; let e = $('#tcEye');
     if (!e) { e = document.createElement('span'); e.id = 'tcEye'; e.className = 'tc-eye'; $('#tcRoot').appendChild(e); }
@@ -4903,8 +5002,12 @@ function loadAdmin() {
     tbb.ontoggle = () => { if (tbb.open) draw(); }; }
   const hmb = $('#hmBox'); if (hmb && !hmb.dataset.bound) { hmb.dataset.bound = 1;
     const draw = () => { const c = (home && home.homeCfg) || { newsCard: true, promo: { on: false, game: 'crypt', text: '' } }; const P = c.promo;
-      const M = (home && home.maintAdmin) || { on: false, text: '' };
-      $('#hmAdm').innerHTML = `<div class="maint-adm ${M.on ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🛠️ Wartungsmodus: <span style="color:${M.on ? '#FF8A80' : '#7CF0A8'}">${M.on ? 'AKTIV' : 'aus'}</span></b></div>
+      const M = (home && home.maintAdmin) || { on: false, text: '' }, me2 = localStorage.getItem('ui2me') === '1', live2 = !!c.ui2Live;
+      $('#hmAdm').innerHTML = `<div class="maint-adm ${live2 ? 'on2' : ''}"><div class="row" style="gap:8px"><b class="grow">🎨 Neues Design: <span style="color:${live2 ? '#7CF0A8' : me2 ? '#FFD23F' : '#9FC3C9'}">${live2 ? 'LIVE für alle' : me2 ? 'nur bei dir aktiv' : 'aus'}</span></b></div>
+        <small class="sub">Leiste unten mit Shop, Karten, Quiz, Casino und Freunden. Erst für dich testen, dann für alle live schalten. „Aus“ bringt alle zurück zum bisherigen Design.</small>
+        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn small ${me2 ? 'ghost' : ''}" id="u2Me">${me2 ? '↩️ Für mich aus' : '👀 Für mich testen'}</button><button class="btn small ${live2 ? 'ghost' : ''}" id="u2Live">🚀 Für alle live</button><button class="btn small ${live2 ? '' : 'ghost'}" id="u2Off">Für alle aus</button></div></div>
+        <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
+        <div class="maint-adm ${M.on ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🛠️ Wartungsmodus: <span style="color:${M.on ? '#FF8A80' : '#7CF0A8'}">${M.on ? 'AKTIV' : 'aus'}</span></b></div>
         <small class="sub">Aktiv: Alle außer dir sehen nur die Wartungsseite, können ihr Profil bearbeiten und Tickets schreiben. Quiz, Casino und alles andere ist gesperrt. Offene Automaten-Gewinne werden gutgeschrieben.</small>
         <textarea class="field" id="mtText" maxlength="300" rows="2" placeholder="Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!">${esc(M.text || '')}</textarea>
         <div class="row" style="gap:6px"><button class="btn small ${M.on ? 'ghost' : ''}" id="mtOn">🛠️ Wartung starten</button><button class="btn small ${M.on ? '' : 'ghost'}" id="mtOff">✅ Wartung beenden</button></div></div>
@@ -4916,8 +5019,11 @@ function loadAdmin() {
         <input class="field" id="hmText" maxlength="120" placeholder="Text, z. B. Probier jetzt das neue Buch der Gruft!" value="${esc(P.text || '')}" style="margin-top:8px">
         <button class="btn small" id="hmSave" style="width:100%;margin-top:8px">Werbung speichern</button>
         <p class="sub" style="margin:6px 0 0;font-size:12px">Ein Tipp auf die Karte setzt Spieler direkt an eine freie Maschine. Sind beide belegt, kommt ein Hinweis.</p>`;
-      const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); if (!newsPosts) loadNews(); else renderNewsCard(); renderPromo(); }).catch((e) => toast(e.message));
+      const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.ui2Live = !!r.homeCfg.ui2Live; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); if (!newsPosts) loadNews(); else renderNewsCard(); renderPromo(); }).catch((e) => toast(e.message));
       const mt = (on) => api('/api/admin/maintenance', { on, text: $('#mtText').value }).then((r) => { home.maintAdmin = r; toast(on ? '🛠️ Wartung aktiv: alle anderen sehen jetzt die Wartungsseite' : '✅ Wartung beendet, alles ist wieder offen'); draw(); }).catch((e) => toast(e.message));
+      $('#u2Me').onclick = () => { try { localStorage.setItem('ui2me', me2 ? '0' : '1'); } catch (e) {} toast(me2 ? 'Neues Design für dich aus' : '👀 Neues Design für dich an: tippe unten auf die Leiste'); viewKey = ''; draw(); render(); };
+      $('#u2Live').onclick = () => { if (confirm('Neues Design für ALLE Spieler live schalten?')) send({ ui2Live: true }, '🚀 Neues Design ist für alle live'); };
+      $('#u2Off').onclick = () => send({ ui2Live: false }, 'Neues Design für alle aus');
       $('#mtOn').onclick = () => { if (confirm('Wartung starten? Alle außer dir können dann nur noch ihr Profil bearbeiten und Tickets schreiben.')) mt(true); }; $('#mtOff').onclick = () => mt(false);
       $('#hmNewsOn').onclick = () => send({ newsCard: true }, '📰 Update-Karte wird bei allen angezeigt'); $('#hmNewsOff').onclick = () => send({ newsCard: false }, '🙈 Update-Karte bei allen ausgeblendet');
       $('#hmPromoOn').onclick = () => send({ promo: { on: !P.on, game: P.game, text: $('#hmText').value } }, P.on ? 'Werbung aus' : '🎰 Werbung an');
@@ -5305,7 +5411,7 @@ function connect() {
   socket.on('admin:note', (m) => { toast(m); sfx('exact'); });
   socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
   socket.on('maint', (m) => { if (!home) return; if (home.me && home.me.admin) { home.maintAdmin = m; return; } home.maintenance = m && m.on ? { text: m.text } : null; if (!home.maintenance) { loadHome().then(render).catch(() => render()); return; } render(); });
-  socket.on('home:cfg', (c) => { if (!home) return; home.newsCardOff = c.newsCardOff; home.promo = c.promo; renderNewsCard(); renderPromo(); });
+  socket.on('home:cfg', (c) => { if (!home) return; if ('ui2Live' in c && !!c.ui2Live !== !!home.ui2Live) { home.ui2Live = !!c.ui2Live; if (home.homeCfg) home.homeCfg.ui2Live = !!c.ui2Live; viewKey = ''; render(); } home.newsCardOff = c.newsCardOff; home.promo = c.promo; renderNewsCard(); renderPromo(); });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
   socket.on('boost', (b) => { if (home) home.boost = b; if (!S && page === 'home') update(); });
   socket.on('ticket:count', (n) => { if (home) home.openTickets = n; if (!S && page === 'home') update(); });
@@ -5430,11 +5536,137 @@ function reportPresence() {
   lastPresence = pg; socket.emit('presence', pg);
 }
 let builtKey = '', pageFilled = '';
+// ===== Neues Design (ui2): Leiste unten, Quiz in der Mitte. Baut auf den bestehenden Seiten und Knöpfen auf =====
+const U2 = (n) => `/ui2/${n}.webp?v=${IMGV}`;
+function ui2On() { return !!(token && home && home.me && (home.ui2Live || (home.me.admin && localStorage.getItem('ui2me') === '1'))); }
+function u2Tab() { if (page === 'cards') return ctab === 'shop' ? 'shop' : 'cards'; if (page === 'casino') return 'casino'; if (['social', 'ranks', 'support'].includes(page)) return 'social'; if (page === 'home') return 'quiz'; return ''; }
+function u2Playing() { try { return !!((tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)) || (cgame === 'poker' && pkState && pkState.me >= 0) || (cgame === 'tables' && bjT)); } catch (e) { return false; } }
+function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match, ohne Wartung
+  const on = ui2On(), playing = on && page === 'casino' && u2Playing(), bar = on && !S && !(home && home.maintenance) && !playing;
+  document.body.classList.toggle('u2-play', !!playing); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker'].includes(cgame)));
+  document.body.classList.toggle('ui2', on); document.body.dataset.pg = S ? 'match' : page; document.body.dataset.ct = page === 'cards' ? ctab : '';
+  if (page === 'cards' && ctab !== 'shop') window.__u2ctab = ctab; // Karten-Reiter merkt sich den letzten Unterbereich
+  let nav = document.getElementById('u2nav');
+  document.body.classList.toggle('u2nav-on', bar);
+  if (!bar) { if (nav) nav.hidden = true; return; }
+  if (!nav) { nav = document.createElement('nav'); nav.id = 'u2nav'; nav.setAttribute('aria-label', 'Hauptmenü'); document.body.appendChild(nav); }
+  nav.hidden = false;
+  const cur = u2Tab(), wl = (home.me && home.me.wheelLeft) || 0, fr = (friends || []).filter((f) => f.status === 'in').length, sn = tcg && tcg.def && (tcg.def.packs || []).some((x) => x.isNew && !x.hidden) ? '!' : 0;
+  const html = [['shop', 'Shop', 'i_shop', sn], ['cards', 'Karten', 'i_cards', 0], ['quiz', 'Quiz', 'i_quiz', 0], ['casino', 'Casino', 'i_casino', wl], ['social', 'Freunde', 'i_friends', fr]]
+    .map(([k, l, ic, n]) => `<button data-u2="tab:${k}" class="${cur === k ? 'on' : ''}" aria-label="${l}"><img src="${U2(ic)}" alt=""><span>${l}</span>${n ? `<i>${n}</i>` : ''}</button>`).join('');
+  if (nav.dataset.h !== html) { nav.innerHTML = html; nav.dataset.h = html; }
+}
+function u2Act(a) {
+  const i = a.indexOf(':'), k = i < 0 ? a : a.slice(0, i), v = i < 0 ? '' : a.slice(i + 1);
+  if (k !== 'menu' && $('#modal').classList.contains('on')) closeModal();
+  const go = (fn) => { fn(); window.scrollTo(0, 0); };
+  if (k === 'tab') {
+    if (v === 'quiz') return go(() => { page = 'home'; render(); });
+    if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; render(); loadTcg(); });
+    if (v === 'cards') return go(() => { page = 'cards'; ctab = window.__u2ctab || 'sammlung'; render(); loadTcg(); });
+    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }); return; }
+    if (v === 'social') return go(() => { page = 'social'; render(); loadFriends(); });
+  }
+  if (k === 'go') {
+    const m = {
+      profile: () => { page = 'profile'; render(); loadHome().then(() => { if (page === 'profile') refreshProfile(); }).catch(() => {}); },
+      news: () => { page = 'news'; render(); },
+      pass: () => { page = 'pass'; renderPass.scrolled = false; render(); loadPass(); },
+      challenges: () => { page = 'challenges'; chalMarkSeen(); render(); },
+      ranks: () => { page = 'ranks'; render(); },
+      social: () => { page = 'social'; render(); loadFriends(); },
+      support: () => { page = 'support'; tkNewIds = new Set((home.me.openTickets || []).filter((id) => !tkSeen().has(id))); tkMarkSeen(); render(); },
+      admin: () => { page = 'admin'; render(); },
+      wheel: () => { page = 'casino'; ctab = 'casino'; cgame = 'vip'; vipD = null; render(); loadTcg(); loadVip(); },
+      booster: () => { page = 'cards'; ctab = 'inventar'; render(); loadTcg(); },
+    };
+    if (m[v]) go(m[v]);
+    return;
+  }
+  if (k === 'daily') return dailyDialog();
+  if (k === 'gifts') { const g = $('#giftBox'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (k === 'promo') return home.promo ? promoGo(home.promo.game) : u2Act('tab:casino');
+  if (k === 'hot') { const h = home.me.hot; return toast(h && h.active ? '🔥 Hot Time läuft: doppelte XP im Quiz' : '🔥 Hot Time: jeden Abend ab 20 Uhr doppelte XP im Quiz'); }
+  if (k === 'lobbies') { const el = $('#openList'); if (L.open.length && el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); else toast('Gerade ist kein Match offen. Eröffne einfach selbst eins!'); return; }
+  if (k === 'play') { const b = $('#create'); if (b && !b.disabled) b.click(); else toast('Gerade laufen schon alle möglichen Matches. Gleich wieder frei!'); return; }
+  if (k === 'solo') { const b = $('#createSolo'); if (b) b.click(); return; }
+  if (k === 'menu') return u2Menu();
+  if (k === 'me') { try { localStorage.setItem('ui2me', localStorage.getItem('ui2me') === '1' ? '0' : '1'); } catch (e) {} closeModal(); viewKey = ''; render(); toast(ui2On() ? '🎨 Neues Design für dich an' : '🎨 Wieder das bisherige Design'); return; }
+}
+function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
+  const me = home.me, row = (a, ic, l, s, n) => `<button class="u2-mi" data-u2="${a}"><span class="u2-mic">${ic}</span><span class="grow"><b>${l}</b>${s ? `<small>${s}</small>` : ''}</span>${n ? `<i class="u2-mb">${n}</i>` : ''}</button>`;
+  const tk = (me.openTickets || []).filter((id) => !tkSeen().has(id)).length;
+  $('#modal').innerHTML = `<div class="panel u2-menu"><div class="row"><h2 class="grow" style="margin:0">Menü</h2><button class="btn small ghost" id="u2mClose">Schließen</button></div>
+    ${row('go:profile', '👤', 'Profil & Spielerkarte', 'Name, Bild, Emblem, Titel, Rahmen, Statistik')}
+    ${row('go:news', '📰', 'Neuigkeiten', 'Alle Updates im Überblick', u2NewsNew() ? 'NEU' : '')}
+    ${row('go:pass', '👑', 'Kronenpass', 'Stufen, Belohnungen, Aufgaben')}
+    ${row('go:challenges', '🏆', 'Herausforderungen', 'Erfolge und Belohnungen')}
+    ${row('daily', '🎁', 'Tagesbelohnung', 'Jeden Tag abholen')}
+    ${row('go:ranks', '📊', 'Ranglisten', 'Welt, Punkte, Casino, Sammler')}
+    ${row('go:support', '🎫', 'Support & Feedback', 'Fehler melden, Ideen schicken', tk || '')}
+    ${me.admin ? row('go:admin', '⚙️', 'Admin', 'Alle Einstellungen des Spiels') : ''}
+    ${me.admin && !home.ui2Live ? row('me', '🎨', 'Design umschalten', 'Nur für dich: zurück zum bisherigen Design') : ''}
+  </div>`;
+  $('#modal').classList.add('on'); $('#u2mClose').onclick = closeModal; $('#modal').onclick = (e) => { if (e.target.id === 'modal') closeModal(); };
+}
+const u2NewsNew = () => !!(newsPosts && newsPosts[0] && localStorage.getItem('news_seen') !== newsPosts[0].id);
+function fillU2Home() {
+  const box = $('#ui2Home'); if (!box || !home || !home.me) return;
+  const me = home.me, t = me.titleShown, pct = me.max ? 100 : Math.max(2, Math.round(100 * (me.into || 0) / Math.max(1, me.next || 1)));
+  const daily = !!(window.__dailyC && window.__dailyC.v && !window.__dailyC.v.claimed);
+  const cb = document.getElementById('chalBadge'), chal = cb && !cb.hidden ? cb.textContent : '';
+  const gifts = (me.gifts || []).length, wl = me.wheelLeft || 0, hv = me.hot;
+  const packs = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && !d.potion && !d.display ? p.count : 0); }, 0) : 0;
+  const pr = home.promo, lob = (L && L.open ? L.open.length : 0), full = L && L.running >= L.max;
+  const pt = me.passTier || 0, badge = (n) => (n ? `<i class="u2-b">${n}</i>` : '');
+  const sb = (a, img, label, n, sub, ring) => `<button class="u2-sb" data-u2="${a}" style="--ring:${ring}"><span class="u2-sbi"><img src="${img}" alt="">${badge(n)}</span><span class="u2-sbl">${label}</span>${sub ? `<span class="u2-sbs">${sub}</span>` : ''}</button>`;
+  const hotTxt = hv ? (hv.active ? 'läuft' : 'ab 20 Uhr') : '';
+  const html = `
+    <div class="u2-top"><button class="u2-lv" data-u2="go:profile" aria-label="Level"><span class="gem"><b>${me.level || 1}</b></span><span class="xp"><small>${me.max ? 'Level 30' : fmt(me.into || 0) + ' / ' + fmt(me.next || 0) + ' XP'}</small><span class="bar"><span style="width:${pct}%"></span></span></span></button>
+      <span class="grow"></span><button class="u2-dia" data-u2="tab:shop" aria-label="Diamanten"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>${fmt(me.diamonds || 0)}</b><span class="plus">+</span></button></div>
+    <div class="u2-head">
+      <button class="u2-banner" data-u2="go:profile" aria-label="Profil">${t && t.id ? `<img class="bg" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt="" onerror="this.remove()">` : ''}<span class="shade"></span>
+        <span class="who">${avatar(me, 56)}<span class="nm"><b>${esc(me.name)}</b><small>${t ? esc(t.text || '') : 'Kein Titel'}</small><em>${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}${fmt(me.rankPoints || 0)} WP</em></span></span></button>
+      <div class="u2-side"><div class="u2-icons"><button class="u2-ib" data-u2="go:news" aria-label="Neuigkeiten"><img src="${U2('i_news')}" alt="">${u2NewsNew() ? '<i class="u2-b">1</i>' : ''}</button><button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
+        <button class="u2-pass" data-u2="go:pass" aria-label="Kronenpass"><img src="/news/pass_logo.webp?v=${IMGV}" alt=""><span><b>Stufe ${pt}</b><span class="bar"><span style="width:${Math.min(100, Math.round(100 * pt / 30))}%"></span></span></span></button></div>
+    </div>
+    <div class="u2-stage">
+      <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}</div>
+      <div class="u2-center"><img src="${siteTheme === 'halloween' ? '/news/logo_hw.webp' : '/emblems/logo2.webp'}?v=${IMGV}" alt="PUNKTLANDUNG"><h1>SCHÄTZ-QUIZ</h1><p>Wer am nächsten dran ist, gewinnt</p></div>
+      <div class="u2-rail">${sb('hot', U2('i_flame'), 'Hot Time', hv && hv.active ? '🔥' : '', hotTxt, '#FF8C50')}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
+    </div>
+    ${gifts ? `<button class="u2-gift" data-u2="gifts">🎁 <b>${gifts} Geschenk${gifts === 1 ? '' : 'e'} warten</b> · jetzt abholen ›</button>` : ''}
+    <div class="u2-play"><button class="u2-pb" data-u2="solo" aria-label="Solo-Quiz"><img src="${U2('i_quiz')}" alt=""><span>Solo</span></button>
+      <button class="u2-go ${full ? 'off' : ''}" data-u2="play"><b>SPIELEN</b><small>${full ? 'Alle Plätze belegt' : 'Match eröffnen · ' + (L.online || 1) + ' online'}</small></button>
+      <button class="u2-pb" data-u2="lobbies" aria-label="Offene Matches"><img src="${U2('i_friends')}" alt=""><span>Matches</span>${badge(lob)}</button></div>`;
+  if (box.dataset.h !== html) { box.innerHTML = html; box.dataset.h = html; }
+}
+function buildSocial() {
+  return `<div class="col u2-social">
+    <div class="row"><button class="link" id="back">← Zurück</button></div>
+    <h1 class="u2-title"><img src="${U2('i_friends')}" alt="">Freunde</h1>
+    <div class="u2-seg"><button class="on">Freunde</button><button data-u2="go:ranks">Ranglisten</button><button data-u2="go:support">Support</button></div>
+    <div class="row" style="gap:10px;padding:0 4px"><span style="width:10px;height:10px;border-radius:50%;background:#8BE28B;box-shadow:0 0 10px #8BE28B;flex:none"></span><span class="sub grow" id="u2online"></span></div>
+    <div class="plist frList"></div>
+    <form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" aria-label="Spielername"><button class="btn small">Hinzufügen</button></form>
+    <div id="u2np"></div>
+  </div>`;
+}
+function fillSocial() {
+  document.querySelectorAll('.frList').forEach((e) => { e.innerHTML = friendsHtml(); });
+  const on = $('#u2online'); if (on) on.textContent = `${L.online || 0} gerade online`;
+  (window.__npC && Date.now() - window.__npC.at < 60000 ? Promise.resolve(window.__npC.r) : api('/api/newplayers').then((r) => { window.__npC = { at: Date.now(), r }; return r; })).then((r) => {
+    const box = $('#u2np'); if (!box) return;
+    const list = (r.players || []).filter((x) => !x.self).slice(0, 10);
+    box.innerHTML = list.length ? `<h2 style="margin:6px 0 10px">Neue Spieler</h2><div class="plist">${list.map((u) => `<div class="pl" data-user="${u.id}" style="--c:${u.online ? '#8BE28B' : 'var(--line)'}">${avatar(u, 38)}<span class="nm">${withTag(u)}<br><span class="lv">${u.online ? 'gerade online' : 'neu dabei'}</span></span>${u.friend ? '' : `<button class="btn small ghost" data-addfr="${u.id}">+ Freund</button>`}</div>`).join('')}</div>` : '';
+  }).catch(() => {});
+}
+
 function render() {
   if (token && home && home.maintenance) { if (S) S = null; if (!['home', 'profile', 'support'].includes(page)) page = 'home'; } // Wartung: nur Start, Profil, Support
   if (page !== 'casino' || cgame !== 'roulette') hideRouletteResult(); // Roulette-Ergebnis nie auf anderen Seiten stehen lassen
   setTimeout(reportPresence, 0);
-  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab + ':' + (home && home.me ? (home.me.admin ? 'A' : 'U') : '-') : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
+  const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab + ':' + (home && home.me ? (home.me.admin ? 'A' : 'U') : '-') + (ui2On() ? '2' : '1') : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
   const keepY = window.scrollY, samePage = key === builtKey; // war vorher dieselbe Seite zu sehen?
   if (key !== viewKey) {
     const same = samePage; viewKey = key; builtKey = key; pageFilled = ''; // neu aufgebaute Seite muss wieder gefüllt werden
@@ -5442,6 +5674,7 @@ function render() {
     window.scrollTo(0, same ? keepY : 0); // gleiche Seite neu gezeichnet: Position bleiben
   }
   update();
+  try { ui2Chrome(); } catch (e) {}
   if (samePage && Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY); // nur bei derselben Seite, nie beim Seitenwechsel
 }
 
@@ -5570,7 +5803,9 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
     <div><h2 style="margin-bottom:10px">Prestige-Ränge</h2><div id="ranks" class="ranks"></div></div>
     </div>`;
 
+  if (!S && page === 'social') return buildSocial();
   if (!S) return `<div class="col">
+    ${ui2On() ? '<div id="ui2Home"></div>' : ''}
     <div class="brand"><img src="${siteTheme === 'halloween' ? '/news/logo_hw.webp' : '/emblems/logo2.webp'}?v=${IMGV}" alt=""><h1 class="wordmark">PUNKTLANDUNG</h1>${siteTheme === 'halloween' ? '<span class="hw-tag">🎃 Halloween</span>' : ''}</div>
     <div id="pushbar" hidden></div>
     <div id="giftBox"></div>
@@ -6009,8 +6244,10 @@ function update() {
     }
     return;
   }
+  if (!S && page === 'social') { fillSocial(); try { ui2Chrome(); } catch (e) {} return; }
   if (!S) {
     if (!$('#stats')) return;
+    try { fillU2Home(); ui2Chrome(); } catch (e) { console.error(e); }
     const full = L.running >= L.max;
     document.querySelectorAll('.frList').forEach((e) => { e.innerHTML = friendsHtml(); });
     $('#create').disabled = full;
@@ -6253,6 +6490,7 @@ document.addEventListener('toggle', (e) => {
 }, true);
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
+  if (t && t.dataset.u2) { e.preventDefault(); u2Act(t.dataset.u2); return; } // neues Design
   if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
   const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen
   const pvw = e.target.closest && e.target.closest('[data-packview]'); if (pvw) { packView(pvw.dataset.packview); return; } // Booster in 3D ansehen, auch innerhalb der Shop-Karte
