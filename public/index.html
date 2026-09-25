@@ -1251,7 +1251,7 @@ body.no-grading .grading-only{display:none !important}
 
 @keyframes tchit{from{box-shadow:inset 0 0 0 2px rgba(255,230,120,.5)}to{box-shadow:inset 0 0 0 3px #FFE27A}}
 .tc-lines{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}.tc-lines polyline{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor);opacity:.9}
-.tc-msg{min-height:22px;text-align:center;font:800 13.5px/1.35 Archivo;color:#FFE9A8;text-shadow:0 1px 3px #000}
+.tc-msg{height:37px;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;font:800 13.5px/1.35 Archivo;color:#FFE9A8;text-shadow:0 1px 3px #000} /* feste Höhe: nichts springt */
 .tc-info{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px}.tc-info div{padding:8px;border-radius:12px;background:rgba(10,4,24,.72);text-align:center}.tc-info small{display:block;color:#C9B8F0;font-size:11px}.tc-info b{font:400 18px/1.1 Anton,Impact,sans-serif;color:#FFE27A}
 .tc-ladder{padding:10px;border-radius:14px;background:rgba(10,4,24,.8);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.5)}
 .tc-steps{display:flex;gap:4px;margin-bottom:8px}.tc-steps span{flex:1;text-align:center;padding:7px 2px;border-radius:8px;background:rgba(255,255,255,.07);font:800 12px/1 Archivo;color:#C9B8F0}
@@ -1726,6 +1726,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .promo-card img{width:132px;height:84px;object-fit:contain;flex:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))}.promo-card b{display:block;font:900 17px/1.2 Archivo,sans-serif;color:#FFF3C4}.promo-card small{display:block;margin-top:4px;font:800 13px Archivo;color:#FFD23F}
 @keyframes promoglow{50%{box-shadow:inset 0 0 0 2px rgba(255,210,63,.9),0 0 22px rgba(255,210,63,.35),0 8px 24px rgba(0,0,0,.4)}}
 #newsCard:empty,#promoCard:empty{display:none}
+#giftBox:empty,#annBar:empty,#boostBar:empty,#presHint:empty{display:none} /* leere Bereiche ohne Abstand */
 </style>
 </head>
 <body>
@@ -1745,7 +1746,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '180';
+const AVER = '181';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -2377,14 +2378,14 @@ function renderVip(box) {
   const v = vipD, N = v.wheel.length, seg = 360 / N;
   const FILL = ['#5B0E1B', '#101214', '#0E4733', '#101214', '#5B0E1B', '#0E4733', '#101214', '#5B0E1B', '#0E4733'];
   const conic = v.wheel.map((l, i) => `${l === 'JACKPOT' ? '#C8922A' : FILL[i % FILL.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
-  const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost' };
+  const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost', Gruselnacht: 'gn', Toon: 'toon' };
   const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${AVER}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${AVER}" alt="">`);
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
     <div class="lwrap">
       <div class="ldisc" id="lwheel" style="background:conic-gradient(${conic});transform:rotate(${wheelDeg}deg)">
         <div class="lsheen"></div>
-        ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '5.000' : l)}</b>`}</span></span>`).join('')}
+        ${v.wheel.map((l, i) => `<span class="lseg ${l === 'JACKPOT' ? 'jp' : ''}" style="--a:${(i * seg + seg / 2).toFixed(2)}deg"><span class="lin">${icon(l)}${PK[l] ? `<b class="pk">${esc({ Booster: 'Standard', Premium: 'Premium', Geister: 'Geister', Gruselnacht: 'Grusel', Toon: 'Toon' }[l])}</b>` : `<b>${esc(l === 'JACKPOT' ? '150.000' : l)}</b>`}</span></span>`).join('')}
       </div>
       <img class="lrim" src="/tcg/lw_rim.webp?v=${AVER}" alt="">
       <img class="lhubimg" src="/tcg/lw_hub.webp?v=${AVER}" alt="">
@@ -2568,7 +2569,17 @@ function renderPoker(box) {
   if (myTurn && !renderPoker.buzzed) { renderPoker.buzzed = true; sfx('tick'); } if (!myTurn) renderPoker.buzzed = false;
 }
 
+function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielbereich wächst mit, schrumpft aber nicht zurück
+  const b = $('#cgame'); if (!b || typeof ResizeObserver === 'undefined') return;
+  const key = () => cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : '');
+  window.__cgH = window.__cgH || {};
+  if (b.__ro) return;
+  b.__ro = new ResizeObserver(() => { const k = key(); if (b.__key !== k) { b.__key = k; b.style.minHeight = ''; window.__cgH[k] = 0; } const h = b.offsetHeight; if (h > (window.__cgH[k] || 0)) { window.__cgH[k] = h; b.style.minHeight = h + 'px'; } });
+  b.__ro.observe(b);
+}
 function renderCasino() {
+  { const b = $('#cgame'), k = cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : ''); if (b && b.__key !== k) { b.__key = k; b.style.minHeight = ''; if (window.__cgH) window.__cgH[k] = 0; } } // anderes Spiel: Höhe neu messen
+  setTimeout(lockCasinoHeight, 0);
   const box = $('#cgame'); if (!box) return;
   if (isLocked(cgame) || (cgame === 'vip' && isLocked('wheel'))) cgame = 'setup'; // gesperrtes Spiel: zurück zu den Einstellungen
   const keepY = window.scrollY; requestAnimationFrame(() => { if (Math.abs(window.scrollY - keepY) > 2 && document.documentElement.scrollHeight - innerHeight >= keepY) window.scrollTo(0, keepY); }); // Bildschirm bleibt stehen
