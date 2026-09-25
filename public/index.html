@@ -6419,7 +6419,7 @@ function showEmote(pid, i) {
   // verstreut rund um den Spieler, damit schnelle Reaktionen sich nicht an einer Stelle stapeln
   x = Math.min(innerWidth - 40, Math.max(40, x + (Math.random() * 2 - 1) * 70)); y = Math.min(innerHeight - 60, Math.max(70, y + 10 + Math.random() * 110)); // Chips stehen oben: nach unten verstreuen
   const mk = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt || ''; d.style.left = x + 'px'; d.style.top = y + 'px'; if (p) d.style.setProperty('--c', p.color); document.body.appendChild(d); setTimeout(() => d.remove(), 2000); return d; };
-  mk('emo-ring').style.filter = 'opacity(.4)'; const fl = mk('emo-fly', EMOJIS[i]); fl.style.filter = 'opacity(.6)'; // halb durchsichtig, verdeckt nichts if (p && !el) { const n = mk('emo-name', p.name); n.style.top = y + 52 + 'px'; }
+  mk('emo-ring'); mk('emo-fly', EMOJIS[i]); if (p) { const n = mk('emo-name', p.name); n.style.top = y + 52 + 'px'; } // immer zeigen, wer es geschickt hat
   if (el) { el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 300 }); }
   sfx('emote');
 }
