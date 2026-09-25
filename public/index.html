@@ -1734,6 +1734,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .oa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.oa-card{position:relative;text-align:center}.oa-card img{width:100%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.5)}.oa-card small{display:block;margin-top:3px;font:700 11px/1.2 Archivo}.oa-card em{font-style:normal;color:#FFD23F;font-size:10.5px}
 .oa-card.v-mythic img,.oa-card.v-ghost img{box-shadow:0 0 14px rgba(255,120,220,.8)}.oa-card.v-ext img{box-shadow:0 0 12px rgba(120,220,255,.7)}.oa-n{position:absolute;top:4px;right:4px;padding:1px 6px;border-radius:99px;background:#000c;font:900 12px Archivo;color:#FFD23F}.oa-new{position:absolute;top:4px;left:4px;padding:1px 6px;border-radius:99px;background:#FF4FA3;font:900 10px Archivo;font-style:normal;color:#fff}
 .ldisc.many .lin{transform:translate(-50%,calc(min(84vw,340px) * -0.35))}.ldisc.many .lin b{font-size:12.5px}.ldisc.many .lin b.pk{font-size:8.5px;letter-spacing:.2px}.ldisc.many .lin img{width:24px}.ldisc.many .lin img.dia{width:14px}.ldisc.many .lin i{font-size:16px}
+.betrow [data-cbet]{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px;font-size:13px}
 </style>
 </head>
 <body>
@@ -1759,7 +1760,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '190';
+const AVER = '191';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2189,7 +2190,10 @@ let vipD = null, soloIntent = false, cbetPick = '';
 const THEME_OF = () => (vipD && vipD.theme) || 'gruen';
 let rbets = [], lastBets = [], rchip = 50, rmode = 'zahl', rhist = [], rsplitFirst = null;
 const MAX_CBET = 1000000000; // Roulette und Blackjack: nur das eigene Guthaben begrenzt
-const CHIPS = [[10, '#5A6B70'], [50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], [25000, '#0F6B4F'], [50000, '#1E3A8A'], [100000, 'linear-gradient(135deg,#E6E6E6,#8A8A8A)'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
+const cbStep = (v) => (v >= 1e6 ? 100000 : v >= 1e5 ? 10000 : v >= 1e4 ? 1000 : 100); // Schrittweite wächst mit dem Einsatz
+const cbStepLabels = () => { const st = chipTxt(cbStep(cbet)); document.querySelectorAll('[data-cbstep]').forEach((b) => { b.textContent = (Number(b.dataset.cbstep) < 0 ? '−' : '+') + st; }); };
+const chipTxt = (v) => (v >= 1e6 ? v / 1e6 + 'M' : v >= 1000 ? v / 1000 + 'k' : String(v)); // 1k, 250k, 1M
+const CHIPS = [[50, '#C0342F'], [100, '#2B6CB0'], [500, '#6B2FB3'], [1000, '#B8861C'], [5000, '#161616'], [10000, '#7A0F1F'], [25000, '#0F6B4F'], [50000, '#1E3A8A'], [100000, 'linear-gradient(135deg,#E6E6E6,#8A8A8A)'], [250000, 'linear-gradient(135deg,#F06BA8,#8E1E5C)'], [500000, 'linear-gradient(135deg,#4FD1C5,#0F5F63)'], [1000000, 'linear-gradient(135deg,#B18CFF,#4A1FA3)'], [5000000, 'linear-gradient(135deg,#1A1A1A,#5A4A10 55%,#FFD23F)'], ['all', 'linear-gradient(135deg,#FFE27A,#C8860F)']];
 const numAt = (c, r) => 3 * c + (3 - r);
 function boardHtml() {
   const chipOn = (nums) => { const k = nums.slice().sort((a, b) => a - b).join(','); const b = rbets.find((x) => x.key === k); return b ? `<span class="rchip">${b.amount >= 1000 ? (b.amount / 1000).toFixed(1).replace('.0', '') + 'k' : b.amount}</span>` : ''; };
@@ -2261,7 +2265,7 @@ function renderTables(box) {
             : `<span class="bjchip">${st.bet ? fmt(st.bet) : '–'}</span>`}
           ${t.phase === 'done' && st.payout ? `<span class="bjres">+${fmt(st.payout)}</span>` : ''}</div>`).join('')}</div>
     </div>
-    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${me && me.bet === v ? 'picked' : ''}" data-bjbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin" data-bjbet="all">All in</button></div>
+    ${t.phase === 'betting' ? `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${me && me.bet === v ? 'picked' : ''}" data-bjbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin" data-bjbet="all">All in</button></div>
         <p class="sub" style="margin-top:6px">${me && me.bet ? `Dein Einsatz: ${fmt(me.bet)} 💎` : 'Setz deinen Einsatz'}</p>
         <p class="sub center" style="margin-top:6px">${t.autoIn != null ? `Es wird automatisch ausgeteilt in <b id="bjAuto">${t.autoIn}</b> s` : 'Sobald jemand setzt, startet die Runde nach 15 Sekunden, oder sofort, wenn alle gesetzt haben.'}</p>
         ${t.hostId === meId && t.seats.some((x) => x.bet) ? '<button class="btn ghost" id="bjStart" style="width:100%;margin-top:6px">Sofort austeilen</button>' : ''}`
@@ -2445,7 +2449,7 @@ const pkCard = (c, big, key, delay = 0) => {
 };
 // Chipstapel: mehr Chips für mehr Diamanten, Farbe nach Größe
 // Chips nach Wert wie im echten Casino: jede Farbe eine Säule, mehr Geld = mehr und höhere Säulen
-const CHIP_DEN = [[5000, '#E0A21E'], [1000, '#141414'], [500, '#8E4BD6'], [100, '#1F1F1F'], [25, '#1FA35A'], [5, '#D63A3A'], [1, '#E6E6E6']];
+const CHIP_DEN = [[1000000, '#6B3FD6'], [100000, '#C9C9C9'], [25000, '#0F6B4F'], [5000, '#E0A21E'], [1000, '#141414'], [500, '#8E4BD6'], [100, '#1F1F1F'], [25, '#1FA35A'], [5, '#D63A3A'], [1, '#E6E6E6']];
 function chipPile(amount, big) {
   if (!amount) return '';
   let rest = amount; const cols = [];
@@ -2624,7 +2628,7 @@ function renderCasino() {
       <div class="rhist">${rhist.map((n) => `<span class="${n === 0 ? 'g' : RED.has(n) ? 'r' : 's'}">${n}</span>`).join('') || '<small class="sub">Noch keine Zahlen</small>'}</div>
       <div class="modes">${[['zahl', 'Zahl ×36'], ['split', 'Split ×18'], ['street', 'Reihe ×12'], ['ecke', 'Ecke ×9'], ['sechs', '6er ×6']].map(([k, n]) => `<button data-rmode="${k}" class="${rmode === k ? 'on' : ''}">${n}</button>`).join('')}</div>
       <div class="rboard th-${THEME_OF()}"><div class="rgrid">${boardHtml()}</div></div>
-      <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${String(rchip) === String(v) ? 'on' : ''} ${v === 'all' ? 'allchip' : ''}" style="background:${c}">${v === 'all' ? 'ALL<br>IN' : v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}</div>
+      <div class="chips">${CHIPS.map(([v, c]) => `<button data-chip="${v}" class="${String(rchip) === String(v) ? 'on' : ''} ${v === 'all' ? 'allchip' : ''}" style="background:${c}">${v === 'all' ? 'ALL<br>IN' : chipTxt(v)}</button>`).join('')}</div>
       <div class="row" style="gap:8px"><button class="btn ghost small grow" id="rClear">Löschen</button><button class="btn ghost small grow" id="rRepeat" ${lastBets.length ? '' : 'disabled'}>Wiederholen</button></div>
       <p class="sub center" style="margin:8px 0">Einsatz: <b>${fmt(rbets.reduce((x, b) => x + b.amount, 0))}</b> 💎 auf ${rbets.length} ${rbets.length === 1 ? 'Feld' : 'Felder'}</p>
       <button class="btn" id="spinBtn" style="width:100%">Drehen</button>
@@ -2956,8 +2960,8 @@ function renderCards() {
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-100" aria-label="100 weniger">−100</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="100" aria-label="100 mehr">+100</button></div><div class="betchips">
-        ${[100, 500, 1000, 5000, 10000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${v >= 1000 ? v / 1000 + 'k' : v}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
+        ${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
       `;
@@ -6366,11 +6370,12 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.promo) { promoGo(t.dataset.promo); }
   else if (t.dataset.cg) { tcStandQuiet(t.dataset.cg === 'vip' ? 'wheel' : t.dataset.cg); cgame = t.dataset.cg; bj = null; window.__clast = window.__clast || {}; const C = window.__ccat || {}; const kk = cgame === 'vip' ? 'wheel' : cgame; Object.keys(C).forEach((c) => { if (C[c].includes(kk)) window.__clast[c] = kk; }); renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); }
   else if (t.dataset.cbstep) { // Einsatz in 100er-Schritten ändern, ohne zu tippen
-    cbet = Math.max(50, Math.min(MAX_CBET, Math.round((Number(($('#cbAmount') || {}).value) || cbet) + Number(t.dataset.cbstep))));
-    cbetPick = String(cbet); const el = $('#cbAmount'); if (el) el.value = cbet;
+    const cur = Number(($('#cbAmount') || {}).value) || cbet, st = cbStep(Number(t.dataset.cbstep) < 0 ? cur - 1 : cur);
+    cbet = Math.max(50, Math.min(MAX_CBET, Math.round(cur + Math.sign(Number(t.dataset.cbstep)) * st)));
+    cbetPick = String(cbet); const el = $('#cbAmount'); if (el) el.value = cbet; cbStepLabels();
     document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x.dataset.cbet === cbetPick));
   }
-  else if (t.dataset.cbet) { cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
+  else if (t.dataset.cbet) { setTimeout(cbStepLabels, 0); cbetPick = t.dataset.cbet; document.querySelectorAll('[data-cbet]').forEach((x) => x.classList.toggle('picked', x === t)); cbet = t.dataset.cbet === 'all' ? Math.max(50, Math.min(MAX_CBET, (tcg && tcg.diamonds) || 0)) : Number(t.dataset.cbet); const el = $('#cbAmount'); if (el) el.value = cbet; if (t.dataset.cbet === 'all') toast(`All in: ${fmt(cbet)} Diamanten`); }
   else if (t.id === 'spinBtn') doSpin();
   else if (t.id === 'bjDeal') bjAction('deal');
   else if (t.dataset.pick) { cpick = t.dataset.pick; renderCasino(); }
