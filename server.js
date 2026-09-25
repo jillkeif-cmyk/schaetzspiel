@@ -1159,6 +1159,10 @@ app.get('/api/tcg', async (req, res) => {
 let shopCfg = {};
 const applyShop = () => { for (const [id, c] of Object.entries(shopCfg)) { const p = tcg.PACKS[id]; if (!p) continue; if (!p.basePrice) p.basePrice = p.price; p.price = Number(c.price) > 0 ? Math.round(Number(c.price)) : p.basePrice; p.stock = c.stock === null || c.stock === undefined || c.stock === '' ? null : Math.max(0, Math.round(Number(c.stock))); p.soldout = !!c.soldout || p.stock === 0; p.note = String(c.note || '').slice(0, 120); p.offsale = !!c.offsale; } };
 store.setting('shop_cfg').then((v) => { if (v) { shopCfg = JSON.parse(v); applyShop(); } }).catch(() => {});
+// Wer hat das letzte Stück gekauft? Öffentlich im Shop sichtbar, bis wieder aufgefüllt wird
+let shopLast = {};
+store.setting('shop_last').then((v) => { if (v) { try { shopLast = JSON.parse(v) || {}; for (const [id, x] of Object.entries(shopLast)) if (tcg.PACKS[id]) tcg.PACKS[id].lastBuyer = x.name; } catch (e) {} } }).catch(() => {});
+const setLast = (id, name) => { if (name) { shopLast[id] = { name, at: Date.now() }; if (tcg.PACKS[id]) tcg.PACKS[id].lastBuyer = name; } else { delete shopLast[id]; if (tcg.PACKS[id]) delete tcg.PACKS[id].lastBuyer; } store.setting('shop_last', JSON.stringify(shopLast)).catch(() => {}); };
 const saveShop = () => { for (const [id, p] of Object.entries(tcg.PACKS)) if (shopCfg[id]) { shopCfg[id].stock = p.stock; shopCfg[id].soldout = !!p.soldout && (shopCfg[id].soldout || p.stock === 0); } return store.setting('shop_cfg', JSON.stringify(shopCfg)); };
 // Displays (24 Booster am Stück): im Admin freischalten und Preis setzen
 store.setting('display_cfg').then((v) => { if (!v) return; for (const [id, c] of Object.entries(JSON.parse(v))) if (tcg.PACKS[id]) { tcg.PACKS[id].off = !c.on; if (Number(c.price) > 0) tcg.PACKS[id].price = Math.round(Number(c.price)); tcg.PACKS[id].note = String(c.note || ''); tcg.PACKS[id].soldout = !!c.soldout; tcg.PACKS[id].stock = c.stock === null || c.stock === undefined || c.stock === '' ? null : Math.max(0, Math.round(Number(c.stock))); } }).catch(() => {});
@@ -1168,6 +1172,7 @@ app.post('/api/admin/display', async (req, res) => {
   p.off = !req.body.on; if (Number(req.body.price) > 0) p.price = Math.round(Number(req.body.price)); if ('note' in req.body) p.note = String(req.body.note || '').trim().slice(0, 120); if ('soldout' in req.body) p.soldout = !!req.body.soldout; if ('stock' in req.body) { p.stock = req.body.stock === '' || req.body.stock === null ? null : Math.max(0, Math.round(Number(req.body.stock) || 0)); if (p.stock === 0) p.soldout = true; }
   const cfg = {}; for (const x of Object.values(tcg.PACKS)) if (x.display || x.potion) cfg[x.id] = { on: !x.off, price: x.price, note: x.note || '', soldout: !!x.soldout, stock: x.stock === undefined ? null : x.stock };
   await store.setting('display_cfg', JSON.stringify(cfg)); io.emit('shop:changed');
+  if (!p.soldout && shopLast[p.id]) setLast(p.id, null);
   console.log(`Display: ${p.name} ${p.off ? 'aus' : 'an'}, Preis ${p.price} durch ${u.name}`); res.json({ pack: p.id, on: !p.off, price: p.price, note: p.note || '', soldout: !!p.soldout, stock: p.stock === undefined ? null : p.stock });
 });
 app.post('/api/admin/shop', async (req, res) => {
@@ -1176,6 +1181,7 @@ app.post('/api/admin/shop', async (req, res) => {
   shopCfg[id] = { price: req.body.price, stock: req.body.stock === '' || req.body.stock === null || req.body.stock === undefined ? null : Number(req.body.stock), soldout: !!req.body.soldout, offsale: !!req.body.offsale, note: String(req.body.note || '').trim().slice(0, 120) };
   applyShop(); await store.setting('shop_cfg', JSON.stringify(shopCfg)); io.emit('shop:changed');
   const p = tcg.PACKS[id]; console.log(`Shop: ${p.name} Preis ${p.price}, Bestand ${p.stock === null ? 'unbegrenzt' : p.stock}${p.soldout ? ', ausverkauft' : ''} durch ${u.name}`);
+  if (!p.soldout && shopLast[id]) setLast(id, null); // wieder verfügbar: Hinweis auf den letzten Käufer weg
   res.json({ pack: id, price: p.price, stock: p.stock, soldout: !!p.soldout, offsale: !!p.offsale, note: p.note || '' });
 });
 app.post('/api/tcg/buy', async (req, res) => {
@@ -1195,7 +1201,7 @@ app.post('/api/tcg/buy', async (req, res) => {
     if (have < cost) return res.status(400).json({ error: 'Du hast nicht genug Diamanten.' });
     let soldOutNow = false;
     if (p.stock !== null && p.stock !== undefined) { p.stock -= n; if (p.stock <= 0) { p.stock = 0; p.soldout = true; soldOutNow = true; } if (p.display || p.potion) { const cfg = {}; for (const x of Object.values(tcg.PACKS)) if (x.display || x.potion) cfg[x.id] = { on: !x.off, price: x.price, note: x.note || '', soldout: !!x.soldout, stock: x.stock === undefined ? null : x.stock }; store.setting('display_cfg', JSON.stringify(cfg)).catch(() => {}); } else saveShop().catch(() => {}); io.emit('shop:changed'); } // Bestand sofort abziehen
-    if (soldOutNow) { // nur der Admin erfährt, wer den letzten Artikel gekauft hat
+    if (soldOutNow) { setLast(p.id, u.name); io.emit('shop:changed'); // letzter Käufer wird öffentlich im Shop gezeigt
       console.log(`Ausverkauft: ${p.name}, letzter Kauf von ${u.name} (${n} Stück)`);
       store.userByName(ADMIN_NAME).then((adm) => {
         if (!adm) return;

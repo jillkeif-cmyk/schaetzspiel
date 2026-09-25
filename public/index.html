@@ -886,7 +886,7 @@ h1,.code,.xpbig,.big{background:linear-gradient(180deg,#FFF3B8 0%,#FFD23F 48%,#C
 @keyframes bulbs{from{filter:brightness(1) drop-shadow(0 0 6px rgba(255,200,90,.35))}to{filter:brightness(1.12) drop-shadow(0 0 16px rgba(255,210,120,.7))}}
 .lhubimg{position:absolute;left:50%;top:50%;width:24%;transform:translate(-50%,-50%);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
 .lptrimg{position:absolute;left:50%;top:-4%;width:17%;transform:translateX(-50%);z-index:6;filter:drop-shadow(0 0 6px rgba(255,210,90,.8)) drop-shadow(0 4px 5px rgba(0,0,0,.7))}
-.crow .nm .lv{line-height:1.35}
+.crow .nm .lv{line-height:1.35}.pl.crow .nm{flex:1 1 auto;min-width:0;overflow:hidden}.pl.crow .nm .lv{white-space:normal;overflow-wrap:anywhere}.pl.crow .ctier{min-width:74px;max-width:90px}.pl.crow .ctier b{font-size:15px;line-height:1.05;overflow-wrap:anywhere}.pl.crow .ctier small{font-size:12px}
 .ctier{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:74px;text-align:center}
 .ctier b{font:400 15px/1.05 Anton,Impact,sans-serif;letter-spacing:.3px}
 .ctier small{font:400 13px/1 Anton,Impact,sans-serif;color:var(--tape)}
@@ -1709,8 +1709,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .cseg button{position:relative;padding:9px 6px!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;color:var(--muted);font:800 13.5px Archivo!important;white-space:nowrap}
 .cseg button.on{background:linear-gradient(135deg,#FFE27A,#F5B82E)!important;color:#2A1B00!important;box-shadow:0 2px 10px rgba(255,210,63,.35)!important}
 .cseg-dot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#FF4FA3;box-shadow:0 0 8px #FF4FA3}
-.crow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}.crow::-webkit-scrollbar{display:none}
-.crow button{flex:none;white-space:nowrap}.crow .tc-tab.on::before{content:''}.crow button.on{transform:none!important}
+.cnavrow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}.cnavrow::-webkit-scrollbar{display:none}
+.cnavrow button{flex:none;white-space:nowrap}.crow .tc-tab.on::before{content:''}.cnavrow button.on{transform:none!important}
 .nw-img.wide{padding:0 0 14px;overflow:hidden}.nw-img.wide img{width:100%;max-width:none;border-radius:20px 20px 0 0;filter:none}.nw-img.wide > div{padding:0 14px}
 .need-box{margin:6px 0 2px}.need-list{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}.need-row{position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05);font:700 13px Archivo;overflow:hidden}
 .need-row small{color:var(--muted);font-weight:600}.need-row i{position:absolute;left:0;bottom:0;height:3px;width:var(--p);background:#7CF0A8}.need-row.knapp{box-shadow:inset 0 0 0 1.5px #E05252}.need-row.knapp i{background:#FF8A80}
@@ -1735,6 +1735,8 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .oa-card.v-mythic img,.oa-card.v-ghost img{box-shadow:0 0 14px rgba(255,120,220,.8)}.oa-card.v-ext img{box-shadow:0 0 12px rgba(120,220,255,.7)}.oa-n{position:absolute;top:4px;right:4px;padding:1px 6px;border-radius:99px;background:#000c;font:900 12px Archivo;color:#FFD23F}.oa-new{position:absolute;top:4px;left:4px;padding:1px 6px;border-radius:99px;background:#FF4FA3;font:900 10px Archivo;font-style:normal;color:#fff}
 .ldisc.many .lin{transform:translate(-50%,calc(min(84vw,340px) * -0.35))}.ldisc.many .lin b{font-size:12.5px}.ldisc.many .lin b.pk{font-size:8.5px;letter-spacing:.2px}.ldisc.many .lin img{width:24px}.ldisc.many .lin img.dia{width:14px}.ldisc.many .lin i{font-size:16px}
 .betrow [data-cbet]{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px;font-size:13px}
+.best-game{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:10px;background:rgba(255,210,63,.12);color:#FFD23F;font-size:.92em;white-space:normal;max-width:100%}
+.last-buyer{color:#FFD9A0;font-weight:700}.last-buyer b{color:#FFE27A}
 </style>
 </head>
 <body>
@@ -1760,7 +1762,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '191';
+const AVER = '193';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2832,11 +2834,11 @@ function renderCards() {
     const sec = (k, title, list, card) => (list.length && (shopCat === 'alle' || shopCat === k) ? `<h3 class="shop-sec">${title}</h3>` + list.map((p) => `${card(p)}`).join('') : '');
     box.innerHTML = `<div class="shop-hero"><button class="btn small ghost" id="shopBack">← Karten</button><div class="shop-sign"><span>🛒</span><div><b>Shop</b><small>Booster, Displays und Tränke</small></div></div><span class="dia">${D} ${fmt(tcg.diamonds || 0)}</span></div>
       <div class="shop-cats">${cats.map(([k, l]) => `<button class="chipbtn ${shopCat === k ? 'on-miss' : ''}" data-shopcat="${k}">${l}</button>`).join('')}</div>`
-      + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
+      + sec('displays', '🗃 Displays', disps, (p) => `<button class="packcard dispcard" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left"><span class="newtag">DISPLAY</span><img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span><p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : `${p.size} ${esc(PACK_NAME[p.of] || 'Booster')} auf einmal`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + sec('booster', '📦 Booster', packs, (p) => `<button class="packcard ${p.locked || p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${p.locked ? '<span class="newtag soon">BALD</span>' : p.isNew ? '<span class="newtag">NEU</span>' : ''}<img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt="">
       <span class="t"><b>${esc(p.name)}</b><br><span class="dia">${D} ${fmt(p.price)}</span>
-      <p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
-      + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br>${p.price > 0 ? `<span class="dia">${D} ${fmt(p.price)}</span>` : '<span class="dia" style="opacity:.8">Preis folgt</span>'}<p class="odds">${p.soldout ? '<b style="color:#FF8A8A">⛔ Ausverkauft</b>' : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
+      <p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : p.locked ? '🔒 Noch gesperrt · bald erhältlich' : `${p.cards} Karten · Chancen ansehen ›`}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="pk-see" data-packview="${esc(p.id)}">👀 Ansehen</span></span></button>`)
+      + sec('traenke', '🧪 Tränke', pots, (p) => `<button class="packcard potcard ${p.soldout ? 'lockedpack' : ''}" data-pack="${esc(p.id)}" style="margin-bottom:10px;width:100%;text-align:left">${potImg(p.id)}<span class="t"><b>${esc(p.name)}</b><br>${p.price > 0 ? `<span class="dia">${D} ${fmt(p.price)}</span>` : '<span class="dia" style="opacity:.8">Preis folgt</span>'}<p class="odds">${p.soldout ? `<b style="color:#FF8A8A">⛔ Ausverkauft</b>${p.lastBuyer ? `<br><small class="last-buyer">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></small>` : ''}` : '60 Minuten ab dem Aktivieren'}${!p.soldout && p.stock !== null && p.stock !== undefined ? `<br><b style="color:#FFD23F">Nur noch ${fmt(p.stock)} Stück</b>` : ''}</p>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></button>`)
       + `<p class="sub">Diamanten gibt es für jedes Match, und zwar nach Punkten: ein Sieg bis 1000 bringt gut 230, bis 4000 Punkte über 600. Niederlagen zählen ebenfalls. Zwei kurze Siege reichen für einen Standard-Booster.</p>`;
     $('#shopBack').onclick = () => { ctab = 'sammlung'; renderCards(); window.scrollTo(0, 0); };
     box.querySelectorAll('[data-shopcat]').forEach((b) => { b.onclick = () => { shopCat = b.dataset.shopcat; renderCards(); }; });
@@ -2954,9 +2956,9 @@ function renderCards() {
     const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
     const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
     const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${l}${catDot(c)}</button>`).join('');
-    const tabs = `<div class="cseg">${seg}</div><div class="crow">${CAT[curCat].filter(ok).map((k) => { const [l, e] = lab[k] || [k, '']; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
+    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow">${CAT[curCat].filter(ok).map((k) => { const [l, e] = lab[k] || [k, '']; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
     window.__ccat = CAT; window.__cok = ok;
-    setTimeout(() => { const o = document.querySelector('.crow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
+    setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
       <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
@@ -4156,7 +4158,7 @@ function packInfo(pid) {
     const base = tcg.def.packs.find((x) => x.id === p.of) || {}, locked = !!base.locked;
     $('#modal').innerHTML = `<div class="panel" style="gap:12px"><div class="row" style="gap:12px">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" style="width:110px" alt="">`}<span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${p.price > 0 ? '💎 ' + fmt(p.price) : 'Preis folgt'}</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}<span class="sub">${p.potion ? `${POT_T[p.potion]} ×${p.mult} für 60 Minuten ab dem Aktivieren. Landet unter Karten → Tränke.` : `${p.size} ${esc(base.name || 'Booster')} in einem Display. Beim Öffnen wandern alle ${p.size} Booster in dein Inventar.`}</span></span></div>
       <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl"></div>
-      ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : !(p.price > 0) ? '<button class="btn" id="packBuy" disabled>Preis folgt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
+      ${p.soldout ? `${p.lastBuyer ? `<p class="sub center last-buyer" style="margin:0">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></p>` : ''}<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>` : locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt</button>' : !(p.price > 0) ? '<button class="btn" id="packBuy" disabled>Preis folgt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}<button class="btn ghost" id="pwCancel">Schließen</button></div>`;
     $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
     $('#packN').oninput = () => { const b = $('#packBuy'); if (b && !b.disabled) b.textContent = `Kaufen · ${fmt(Math.max(1, Math.round(Number($('#packN').value) || 1)) * p.price)} 💎`; };
     if (!locked && !p.soldout && p.price > 0) $('#packBuy').onclick = () => { const n = Math.max(1, Math.round(Number($('#packN').value) || 1)); api('/api/tcg/buy', { pack: p.id, n }).then((st) => { tcg = st; if (home && home.me) home.me.diamonds = st.diamonds; closeModal(); ctab = 'inventar'; renderCards(); toast(n + (p.potion ? ' Trank gekauft' : ' Display gekauft')); if (p.potion) { ctab = 'traenke'; renderCards(); } }).catch((e) => toast(e.message)); };
@@ -4188,7 +4190,7 @@ function packInfo(pid) {
       <span class="grow"><h2>${esc(p.name)}</h2><span class="dia">${D} ${fmt(p.price)}</span><br><span class="sub">${p.cards} Karten pro Booster, die letzte mindestens selten</span>${p.note ? `<p class="pk-note">📣 ${esc(p.note)}</p>` : ''}</span></div>
     <div class="row" style="gap:8px"><input class="field grow" id="packN" type="number" min="1" value="1" aria-label="Anzahl">
       <button class="chipbtn" id="packMax">Max</button></div>
-    ${p.soldout ? '<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>' : p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}
+    ${p.soldout ? `${p.lastBuyer ? `<p class="sub center last-buyer" style="margin:0">🏁 Das letzte Stück ging an <b>${esc(p.lastBuyer)}</b></p>` : ''}<button class="btn" id="packBuy" disabled>⛔ Ausverkauft</button>` : p.locked ? '<button class="btn" id="packBuy" disabled>🔒 Noch gesperrt, bald erhältlich</button>' : `<button class="btn" id="packBuy">Kaufen · ${fmt(p.price)} 💎</button>`}
     <details class="pk-more"><summary><span>📊 Chancen & alle Karten</span><small>${haveN} / ${pool.length}</small></summary>
     ${stars.length ? `<b>✨ Die Stars in diesem Booster</b>
     <div class="pk-stars">${stars.map((x) => { const n = owned(x.c.id, x.v); return `<figure class="${n ? 'have' : ''}"><img loading="lazy" src="${cardImg(x.c.id, x.v)}" data-card="${x.c.id}:${x.v}" alt="">${badge(x.v)}<figcaption><b>${esc(x.c.name)}</b>${esc(varName(x.v))} · ${n ? `<span class="pk-yes">✓ hast du${n > 1 ? ' ' + n + '×' : ''}</span>` : '<span class="pk-no">fehlt dir</span>'}</figcaption></figure>`; }).join('')}</div>${moreUltra ? `<small class="sub">Wische zur Seite · ${moreUltra} weitere Ultra Rares findest du unten</small>` : '<small class="sub">Wische zur Seite</small>'}` : ''}
@@ -4270,7 +4272,7 @@ const tierName = (t) => TIER_NAMES[Math.max(0, Math.min(TIER_NAMES.length - 1, N
 function casinoRow(u, i, me2) {
   return `<div class="pl crow ${me2 && u.id === me2.id ? 'me' : ''}" data-user="${u.id}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}">
     <span class="pos">${i + 1}</span>${avatar(u, 40)}
-    <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? ` · ${esc(u.casinoBestGame)}` : ''}</span>${titleHtml(u)}</span>
+    <span class="nm"><span>${withTag(u)} <span class="dia-mini">💎 ${shortNum(u.diamonds)}</span></span><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege<br>bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? `<br><span class="best-game">🎰 ${esc(u.casinoBestGame)}</span>` : ''}</span>${titleHtml(u)}</span>
     <span class="ctier">${vipBadge(u.casinoTier, 46)}<b>${esc(tierName(u.casinoTier))}</b><small>${fmt(u.casinoXp || 0)} XP</small></span>${addFr(u)}</div>`;
 }
 const frStatus = (id) => { const f = (friends || []).find((x) => x.id === id); return f ? f.status : null; };
@@ -6016,7 +6018,7 @@ function update() {
       const list = (home && home.casinoTop) || [];
       const me2 = home && home.me;
       ct.innerHTML = list.length ? `<h2 style="margin-bottom:10px">Casino-Rangliste</h2>
-        <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? ` · ${esc(u.casinoBestGame)}` : ''}</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
+        <div class="plist">${list.slice(0, 8).map((u, i) => `<div class="pl ${me2 && u.id === me2.id ? 'me' : ''}" style="--c:${i === 0 ? 'var(--tape)' : 'var(--line)'}"><span class="pos">${i + 1}</span>${avatar(u, 34, false)}<span class="nm">${withTag(u)}<br><span class="lv">${fmt(u.casinoRounds || 0)} Runden · ${fmt(u.casinoWins || 0)} Siege · bester Gewinn ${fmt(u.casinoBest || 0)} 💎${u.casinoBestGame ? `<br><span class="best-game">🎰 ${esc(u.casinoBestGame)}</span>` : ''}</span></span><span class="wp">${fmt(u.casinoXp || 0)} XP</span></div>`).join('')}</div>` : '';
     }
     $('#world').innerHTML = home && home.world && home.world.length ? home.world.map((u, i) => row(u, i, `<span class="wp">${fmt(u.rankPoints)} WP</span>`)).join('') : '<p class="sub">Noch keine Ranglisten-Matches gespielt. Eröffne eines im Modus „Rangliste“.</p>';
     if ($('#boardTabs')) document.querySelectorAll('#boardTabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === boardMode));
