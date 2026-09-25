@@ -1774,7 +1774,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '201';
+const AVER = '202';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2121,10 +2121,19 @@ function parseNum(s) {
   return /^\d+(\.\d+)?$|^\.\d+$/.test(s) ? Number(s) : NaN;
 }
 
+let tcgStatic = (() => { try { return JSON.parse(localStorage.getItem('tcg_static') || 'null'); } catch (e) { return null; } })();
+function fillDef(o) { // der Server schickt die großen Kartendefinitionen nur bei neuer Version mit
+  if (!o || !o.def || !o.def.v) return;
+  if (o.def.cards) { tcgStatic = { v: o.def.v, cards: o.def.cards, variants: o.def.variants, names: o.def.names, order: o.def.order }; try { localStorage.setItem('tcg_static', JSON.stringify(tcgStatic)); } catch (e) {} }
+  else if (tcgStatic && tcgStatic.v === o.def.v) Object.assign(o.def, { cards: tcgStatic.cards, variants: tcgStatic.variants, names: tcgStatic.names, order: tcgStatic.order });
+  else if (tcg && tcg.def && tcg.def.cards) Object.assign(o.def, { cards: tcg.def.cards, variants: tcg.def.variants, names: tcg.def.names, order: tcg.def.order });
+  else if (!fillDef.busy) { fillDef.busy = true; setTimeout(() => { loadTcg().finally(() => { fillDef.busy = false; }); }, 0); } // noch gar keine Definitionen: sofort vollständig laden
+}
 async function api(path, body) {
   const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: 'Der Server antwortet nicht.' }));
   if (!r.ok) throw Object.assign(new Error(j.error || 'Fehler'), { status: r.status });
+  fillDef(j); if (j && j.state) fillDef(j.state); // Kartendefinitionen aus dem Speicher ergänzen
   // Jede Antwort mit Diamantenstand gleicht alle Anzeigen ab
   const dn = typeof j.diamonds === 'number' ? j.diamonds : j.state && typeof j.state.diamonds === 'number' ? j.state.diamonds : null;
   // Beim Roulette erst nach dem Dreh abgleichen, sonst verrät der Stand das Ergebnis vorher
@@ -2795,7 +2804,7 @@ function openAllResult(r) { // Übersicht: nur Karten besser als Ultra, dazu die
 const cardDef = (id) => (tcg ? tcg.def.cards.find((c) => c.id === id) : null);
 const owned = (id, v) => { const e = tcg && tcg.cards.find((x) => x.card_id === id && x.variant === v); return e ? e.count : 0; };
 
-async function loadTcg() { try { tcg = await api('/api/tcg'); if (home) home.me.diamonds = tcg.diamonds; renderCards(); } catch (e) { toast(e.message); } }
+async function loadTcg() { try { tcg = await api('/api/tcg?dv=' + (tcgStatic && tcgStatic.cards ? tcgStatic.v : '')); if (home) home.me.diamonds = tcg.diamonds; renderCards(); } catch (e) { toast(e.message); } }
 async function loadMarket() { try { market = await api('/api/tcg/market'); renderCards(); } catch (e) { toast(e.message); } }
 async function loadTrades() { try { trades = await api('/api/tcg/trades'); renderCards(); } catch (e) { toast(e.message); } }
 

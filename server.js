@@ -146,7 +146,13 @@ const ITEM_GOALS = (() => {
 const DEV_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'dev').map((c) => c.id));
 const TOON_IDS = new Set(tcg.view().cards.filter((c) => c.set === 'toon').map((c) => c.id));
 const TOP = new Set(['ext', 'ghost', 'mythic']);
+const cardStatsCache = new Map(); // je Spieler, verworfen bei jeder Kartenänderung (alle laufen über store.cardAdd)
+{ const orig = store.cardAdd.bind(store); store.cardAdd = (uid, ...rest) => { cardStatsCache.delete(uid); return orig(uid, ...rest); }; }
 async function cardStats(uid) {
+  const hit = cardStatsCache.get(uid); if (hit && Date.now() - hit.at < 10 * 60000) return hit.v;
+  const v = await cardStatsRaw(uid); cardStatsCache.set(uid, { at: Date.now(), v }); return v;
+}
+async function cardStatsRaw(uid) {
   const rows = await store.cardsOf(uid).catch(() => []);
   let total = 0, rare = 0, ext = 0;
   const toon = new Set(), toonExt = new Set();
@@ -183,6 +189,8 @@ app.post('/api/admin/theme', async (req, res) => {
   io.emit('theme', { theme: siteTheme, anim: siteAnim }); console.log(`Look: ${siteTheme || 'normal'}, Animationen ${siteAnim ? 'an' : 'aus'} durch ${u.name}`);
   res.json({ theme: siteTheme, anim: siteAnim });
 });
+const shared = new Map(); // kurzlebiger Zwischenspeicher für Listen, die für alle gleich sind
+const sharedGet = (key, ms, fn) => { const c = shared.get(key); if (c && Date.now() - c.at < ms) return c.p; const p = Promise.resolve().then(fn); shared.set(key, { at: Date.now(), p }); p.catch(() => shared.delete(key)); return p; };
 app.get('/api/home', async (req, res) => {
   try {
     const u = await auth(req);
@@ -192,15 +200,15 @@ app.get('/api/home', async (req, res) => {
     const u2 = { ...u, ...(await cardStats(u.id)), _mod: isMod(u) };
     potions.load(u);
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
-    for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
+    for (const r of await sharedGet('market', 30000, () => store.marketList()).catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
-      world: (await store.worldRanking()).map(withOnline),
-      points: (await store.pointsRanking()).map(withOnline),
+    res.json({ maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await sharedGet('leader', 30000, () => store.leaderboard())).map(withOnline), ai: ai.enabled(),
+      world: (await sharedGet('world', 30000, () => store.worldRanking())).map(withOnline),
+      points: (await sharedGet('points', 30000, () => store.pointsRanking())).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
       cards: cards.view(u2),
       frames: frames.view(u2, isMod(u)),
-      casinoTop: (await store.casinoRanking().catch(() => [])).map(publicStats),
+      casinoTop: (await sharedGet('casino', 30000, () => store.casinoRanking()).catch(() => [])).map(publicStats),
       progress: { maxLevel: progress.MAX_LEVEL, maxPrestige: progress.MAX_PRESTIGE, names: progress.PRESTIGE_NAMES, prestige: progress.prestigeStatus(u), challenges: progress.challengeView(u2).map((c) => ({ ...c, rewards: CHALLENGE_REWARDS[c.key] || [] })) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
@@ -712,15 +720,9 @@ setTimeout(async () => {
 // Spielzeit: jede Minute für alle, die gerade online sind, eine Minute gutschreiben, am Pokertisch zusätzlich Pokerzeit
 setInterval(async () => {
   try {
-    const atPoker = new Set(poker.seatedIds());
-    for (const id of [...game.online.keys()]) {
-      if (game.isIdle(id) && !atPoker.has(id)) { checkProgress(id); continue; } // eingeschlafen: keine Spielzeit
-      const u = await store.userById(id); if (!u) continue;
-      const f = { play_minutes: (Number(u.play_minutes) || 0) + 1 };
-      if (atPoker.has(id)) f.poker_minutes = (Number(u.poker_minutes) || 0) + 1;
-      await store.save(id, f);
-      checkProgress(id);
-    }
+    const atPoker = new Set(poker.seatedIds()), active = [];
+    for (const id of [...game.online.keys()]) { if (!game.isIdle(id) || atPoker.has(id)) active.push(id); checkProgress(id); } // eingeschlafen: keine Spielzeit
+    await store.addMinutes(active, active.filter((id) => atPoker.has(id))); // alle mit einer Anweisung (vorher: lesen + schreiben je Spieler)
   } catch (e) { console.error('Spielzeit:', e.message); }
 }, 60 * 1000);
 
@@ -1163,16 +1165,19 @@ app.post('/api/casino/bj/act', async (req, res) => {
 });
 
 // ---------- Sammelkarten ----------
-const tcgState = async (u) => ({
+// Kartendefinitionen (≈ 58 KB) ändern sich nie im Betrieb: nur mitschicken, wenn das Handy eine andere Version hat
+const defStatic = () => { const v = tcg.view(); return { cards: v.cards, variants: v.variants, names: v.names, order: v.order }; };
+const DEF_V = require('crypto').createHash('md5').update(JSON.stringify(defStatic())).digest('hex').slice(0, 10);
+const tcgState = async (u, withStatic = false) => ({
   diamonds: Number(u.diamonds) || 0,
   cards: await store.cardsOf(u.id),
   packs: await store.packsOf(u.id),
-  def: { ...tcg.view(), melt: MELT },
+  def: { packs: tcg.view().packs, melt: MELT, v: DEF_V, ...(withStatic ? defStatic() : {}) },
 });
 app.get('/api/tcg', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    res.json(await tcgState(u));
+    res.json(await tcgState(u, String(req.query.dv || '') !== DEF_V)); // Definitionen nur, wenn das Handy sie nicht (in dieser Version) hat
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -1339,7 +1344,7 @@ app.get('/api/tcg/market', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     const rows = await store.marketList();
     const out = [], sellers = new Map(); // jeden Verkäufer nur einmal aus der Datenbank holen (vorher: eine Abfrage je Angebot)
-    for (const id of new Set(rows.map((r) => r.seller))) sellers.set(id, await store.userById(id).catch(() => null));
+    for (const x of await store.usersByIds([...new Set(rows.map((r) => r.seller))]).catch(() => [])) sellers.set(x.id, x); // alle Verkäufer mit einer Abfrage
     for (const r of rows) {
       const s = sellers.get(r.seller);
       const gx = r.card_id === 'graded' ? await store.gradedGet(Number(r.variant)) : null;
@@ -1544,9 +1549,10 @@ app.get('/api/ranks/cards', async (req, res) => {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!collectCache.data || Date.now() - collectCache.at > 60000) { // höchstens einmal pro Minute neu rechnen
       const users = await store.searchUsers('', 500).catch(() => []);
-      const rows = [];
+      const rows = [], byUser = new Map();
+      for (const r of await store.allCards().catch(() => [])) { if (!byUser.has(r.user_id)) byUser.set(r.user_id, []); byUser.get(r.user_id).push(r); } // eine Abfrage für alle
       for (const x of users) {
-        const cs = await store.cardsOf(x.id).catch(() => []);
+        const cs = byUser.get(x.id) || [];
         const have = { normal: 0, ext: 0, ghost: 0 }; let pts = 0; const seen = new Set();
         for (const r of cs) { const k = r.card_id + ':' + r.variant; if ((Number(r.count) || 0) > 0 && COLLECT.keys.has(k) && !seen.has(k)) { seen.add(k); have[COLLECT.group(r.variant)]++; pts += COLLECT_PTS[r.variant] || 1; } }
         if (seen.size) rows.push({ ...publicStats(x), have, unique: seen.size, pts });
