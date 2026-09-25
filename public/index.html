@@ -1768,7 +1768,7 @@ body.ui2 #app:not(.maint) .panel:has(#create){padding:0;background:none;box-shad
 body.ui2 #app:not(.maint) .panel:has(#create):not(:has(#firstBonus :not(:empty), #slots:not(:empty))){display:none}
 body.ui2[data-pg="cards"] #app #back,body.ui2[data-pg="casino"] #app #back{visibility:hidden}body.ui2[data-pg="social"] #app .row:has(> #back){display:none}
 body.ui2[data-pg="casino"] #app .col > h1{display:none}
-body.u2-play .cnav,body.u2-play #vipHead{display:none!important}body.u2-play #app .col > .row:has(> #back){display:none}body.u2-play .tc-logo{width:auto;max-width:78%;max-height:74px;margin:-2px auto -6px}body.u2-play #app{padding-top:max(10px,env(safe-area-inset-top,0px))!important}body.u2-play #wrap{padding-bottom:env(safe-area-inset-bottom,0px)}
+body.u2-inplay .cnav,body.u2-inplay #vipHead{display:none!important}body.u2-inplay #app .col > .row:has(> #back){display:none}body.u2-inplay .tc-logo{width:auto;max-width:78%;max-height:74px;margin:-2px auto -6px}body.u2-inplay #app{padding-top:max(10px,env(safe-area-inset-top,0px))!important}body.u2-inplay #wrap{padding-bottom:env(safe-area-inset-bottom,0px)}
 /* Kopf der Startseite */
 #ui2Home{display:flex;flex-direction:column;gap:10px}
 #ui2Home button{font-family:Archivo,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1930,6 +1930,28 @@ body.ui2 #app.pk-on .pk-table{height:min(calc(100vw * 1.15),calc(100dvh - 380px 
 #u2nav i{top:4px}
 body.u2nav-on #wrap{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}
 body.u2nav-on #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!important}
+
+/* deutlich schlankere Leiste: Home-Balken-Freiraum nur so viel wie nötig */
+#u2nav{height:calc(52px + max(0px, env(safe-area-inset-bottom,0px) - 14px))!important}
+#u2nav button{padding-bottom:max(0px, env(safe-area-inset-bottom,0px) - 14px)!important}
+#u2nav button img{width:32px;height:32px}
+#u2nav button.on{padding-bottom:calc(4px + max(0px, env(safe-area-inset-bottom,0px) - 14px))!important}
+#u2nav button.on img{width:44px;height:44px;margin-top:-18px}
+#u2nav button.on span{font-size:11.5px}
+#u2nav i{top:3px;min-width:16px;height:16px;font-size:9.5px;line-height:16px}
+body.u2nav-on #wrap{padding-bottom:calc(60px + max(0px, env(safe-area-inset-bottom,0px) - 14px))!important}
+body.u2nav-on #toast{bottom:calc(66px + max(0px, env(safe-area-inset-bottom,0px) - 14px))!important}
+
+/* Leiste, dritte Stufe: noch schlanker */
+#u2nav{height:calc(46px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
+#u2nav button{padding-bottom:max(0px, env(safe-area-inset-bottom,0px) - 18px)!important}
+#u2nav button img{width:28px;height:28px}
+#u2nav button.on{flex:1.5 1 0;padding-bottom:calc(3px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
+#u2nav button.on img{width:38px;height:38px;margin-top:-14px}
+#u2nav button.on span{font-size:10.5px;letter-spacing:.4px}
+#u2nav i{top:2px;right:10%;min-width:15px;height:15px;font-size:9px;line-height:15px}
+body.u2nav-on #wrap{padding-bottom:calc(54px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
+body.u2nav-on #toast{bottom:calc(60px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
 </style>
 </head>
 <body>
@@ -1955,7 +1977,7 @@ body.u2nav-on #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))!importa
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '211';
+const AVER = '213';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -5627,7 +5649,7 @@ function u2Playing() { try { return !!((cgame === 'poker' && pkState && pkState.
 function u2Seated() { try { return !!(tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)); } catch (e) { return false; } }
 function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match, ohne Wartung
   const on = ui2On(), playing = on && page === 'casino' && u2Playing(), bar = on && !S && !(home && home.maintenance) && !playing;
-  document.body.classList.toggle('u2-play', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame)));
+  document.body.classList.toggle('u2-inplay', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame)));
   document.body.classList.toggle('ui2', on); document.body.dataset.pg = S ? 'match' : page; document.body.dataset.ct = page === 'cards' ? ctab : ''; document.body.dataset.cg = page === 'casino' ? cgame : '';
   if (page === 'cards' && ctab !== 'shop') window.__u2ctab = ctab; // Karten-Reiter merkt sich den letzten Unterbereich
   let nav = document.getElementById('u2nav');
