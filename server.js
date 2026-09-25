@@ -1232,6 +1232,38 @@ app.post('/api/tcg/open', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+// Alle Booster auf einmal öffnen (eine Sorte oder alle): Karten werden gesammelt gebucht, Rückgabe nur als Übersicht
+const RAR_ORDER = ['haeufig', 'selten', 'holo', 'ultra', 'legend', 'ext', 'ghost', 'mythic'];
+const openAllBusy = new Set();
+app.post('/api/tcg/openall', async (req, res) => {
+  const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+  if (openAllBusy.has(u.id)) return res.status(429).json({ error: 'Deine Booster werden gerade schon geöffnet.' });
+  openAllBusy.add(u.id);
+  try {
+    const want = String(req.body.pack || 'all');
+    const ok = (id) => { const P = tcg.PACKS[id]; if (!P || P.potion || P.display) return false; if ((id === 'gn' || P.of === 'gn') && !gnOpen && !isMod(u)) return false; return true; };
+    const mine = (await store.packsOf(u.id)).filter((x) => x.count > 0 && ok(x.pack_id) && (want === 'all' || x.pack_id === want));
+    if (!mine.length) return res.status(400).json({ error: want === 'all' ? 'Du hast keine Booster, die sich öffnen lassen.' : 'Du hast diesen Booster nicht.' });
+    const LIMIT = 1000; let left = LIMIT;
+    const before = new Set((await store.cardsOf(u.id)).map((c) => c.card_id + '|' + c.variant));
+    const tally = new Map(), byRar = {}, opened = {}; let cards = 0, packsN = 0;
+    for (const m of mine) {
+      const n = Math.min(m.count, left); if (n <= 0) break; left -= n;
+      for (let i = 0; i < n; i++) for (const c of tcg.openPack(m.pack_id)) { const k = c.id + '|' + c.variant; tally.set(k, (tally.get(k) || 0) + 1); byRar[c.variant] = (byRar[c.variant] || 0) + 1; cards++; }
+      await store.packAdd(u.id, m.pack_id, -n); opened[m.pack_id] = n; packsN += n;
+    }
+    for (const [k, n] of tally) { const [id, v] = k.split('|'); await store.cardAdd(u.id, id, v, n); }
+    await store.save(u.id, { packs_opened: (Number(u.packs_opened) || 0) + packsN });
+    setTimeout(() => checkProgress(u.id), 300);
+    const special = [...tally].map(([k, n]) => { const [id, v] = k.split('|'); return { id, variant: v, count: n, isNew: !before.has(k) }; })
+      .filter((c) => RAR_ORDER.indexOf(c.variant) > RAR_ORDER.indexOf('ultra'))
+      .sort((a, b) => RAR_ORDER.indexOf(b.variant) - RAR_ORDER.indexOf(a.variant) || b.count - a.count);
+    console.log(`Alle geöffnet: ${u.name} ${packsN} Booster, ${cards} Karten, ${special.length} besondere`);
+    res.json({ opened, packs: packsN, cards, byRar, special, capped: left <= 0, state: await tcgState(await store.userById(u.id)) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+  finally { openAllBusy.delete(u.id); }
+});
+
 // Doppelte Karten umwandeln
 const MELT = { haeufig: 40, selten: 90, holo: 160, legend: 260, ultra: 420, ext: 900, ghost: 1500, mythic: 1500 };
 // Displays umwandeln: bringt 60 % des Shop-Preises

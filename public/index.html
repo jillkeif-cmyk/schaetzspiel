@@ -1729,6 +1729,10 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 #giftBox:empty,#annBar:empty,#boostBar:empty,#presHint:empty{display:none} /* leere Bereiche ohne Abstand */
 .fs-split{display:block;margin-top:6px;font:700 12.5px Archivo;opacity:.85;letter-spacing:0}
 .shop-adm.dirty{box-shadow:inset 0 0 0 1.5px #FFB84D}.dirty-tag{color:#FFB84D;font-weight:800}
+.oa-list{display:flex;flex-direction:column;gap:6px}.oa-opt{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);text-align:left}.oa-opt img{width:34px;height:44px;object-fit:contain}.oa-opt b{flex:1;font:800 14px Archivo}.oa-opt span{font:700 13px Archivo;color:var(--muted)}.oa-opt.on{box-shadow:inset 0 0 0 2px #FFD23F,0 0 12px rgba(255,210,63,.3)}
+.oa-chips{display:flex;flex-wrap:wrap;gap:6px}.oa-chip{padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.07);font:700 12px Archivo}.oa-chip.r-mythic,.oa-chip.r-ghost{background:rgba(255,120,220,.2)}.oa-chip.r-ext,.oa-chip.r-legend{background:rgba(255,210,63,.18)}
+.oa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.oa-card{position:relative;text-align:center}.oa-card img{width:100%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.5)}.oa-card small{display:block;margin-top:3px;font:700 11px/1.2 Archivo}.oa-card em{font-style:normal;color:#FFD23F;font-size:10.5px}
+.oa-card.v-mythic img,.oa-card.v-ghost img{box-shadow:0 0 14px rgba(255,120,220,.8)}.oa-card.v-ext img{box-shadow:0 0 12px rgba(120,220,255,.7)}.oa-n{position:absolute;top:4px;right:4px;padding:1px 6px;border-radius:99px;background:#000c;font:900 12px Archivo;color:#FFD23F}.oa-new{position:absolute;top:4px;left:4px;padding:1px 6px;border-radius:99px;background:#FF4FA3;font:900 10px Archivo;font-style:normal;color:#fff}
 </style>
 </head>
 <body>
@@ -1748,7 +1752,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '185';
+const AVER = '186';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2738,6 +2742,31 @@ const BADGE = { holo: ['holo', '✨'], ultra: ['ultra', '💎'], ext: ['ext', '�
 const badge = (v) => { const b = BADGE[v]; return b ? `<span class="cbadge ${b[0]}">${b[1]}</span>` : ''; };
 const cardImg = (id, v) => `/tcg/${id}_${v}.webp?v=${IMGV}`;
 const varName = (v) => (tcg && tcg.def.names[v]) || v;
+const RAR_NAME = { haeufig: 'Häufig', selten: 'Selten', holo: 'Holo', ultra: 'Ultra', legend: 'Legendär', ext: 'Extended Art', ghost: 'Ghost Rare', mythic: 'Mythisch' };
+function openAllDialog() { // Auswahl: eine Sorte oder alle, dann bestätigen
+  const packs = ((tcg && tcg.packs) || []).map((x) => ({ ...x, d: tcg.def.packs.find((p) => p.id === x.pack_id) })).filter((x) => x.d && !x.d.potion && !x.d.display && x.count > 0);
+  const gnLock = !(home && home.gnOpen) && !(home && home.me && home.me.admin);
+  const usable = packs.filter((x) => !(gnLock && (x.pack_id === 'gn' || x.d.of === 'gn')));
+  if (!usable.length) return toast('Du hast keine Booster, die sich öffnen lassen.');
+  const total = usable.reduce((a, x) => a + x.count, 0); let pick = 'all';
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>📦 Alle Booster öffnen</h2><p class="sub" style="margin:0">Ohne Einzelanimation. Danach siehst du eine Übersicht mit allen Karten besser als Ultra.</p>
+    <div class="oa-list"><button class="oa-opt on" data-oa="all"><b>Alle Booster</b><span>${fmt(total)} Stück</span></button>${usable.map((x) => `<button class="oa-opt" data-oa="${esc(x.pack_id)}"><img src="/tcg/pack_${esc(x.pack_id)}.webp?v=${IMGV}" alt=""><b>${esc(x.d.name)}</b><span>${fmt(x.count)} Stück</span></button>`).join('')}</div>
+    ${packs.length > usable.length ? '<p class="sub" style="margin:0;font-size:12px">🔒 Gruselnacht-Booster bleiben zu, bis das Set freigeschaltet ist.</p>' : ''}
+    <button class="btn" id="oaGo">Jetzt ${fmt(total)} Booster öffnen</button><button class="btn ghost" id="pwCancel">Abbrechen</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
+  const cnt = (k) => (k === 'all' ? total : (usable.find((x) => x.pack_id === k) || {}).count || 0);
+  $('#modal').querySelectorAll('[data-oa]').forEach((b) => { b.onclick = () => { pick = b.dataset.oa; $('#modal').querySelectorAll('[data-oa]').forEach((x) => x.classList.toggle('on', x === b)); $('#oaGo').textContent = `Jetzt ${fmt(cnt(pick))} Booster öffnen`; }; });
+  $('#oaGo').onclick = () => { const n = cnt(pick); if (n >= 20 && !confirm(`Wirklich ${fmt(n)} Booster auf einmal öffnen?`)) return; const g = $('#oaGo'); g.disabled = true; g.textContent = '📦 Wird geöffnet …';
+    api('/api/tcg/openall', { pack: pick }).then((r) => { if (r.state) Object.assign(tcg, r.state); openAllResult(r); renderCards(); }).catch((e) => { toast(e.message); g.disabled = false; g.textContent = `Jetzt ${fmt(n)} Booster öffnen`; }); };
+}
+function openAllResult(r) { // Übersicht: nur Karten besser als Ultra, dazu die Anzahl je Seltenheit
+  const order = ['mythic', 'ghost', 'ext', 'legend', 'ultra', 'holo', 'selten', 'haeufig'];
+  const chips = order.filter((k) => r.byRar[k]).map((k) => `<span class="oa-chip r-${k}">${BADGE[k] ? BADGE[k][1] + ' ' : ''}${RAR_NAME[k]} <b>${fmt(r.byRar[k])}</b></span>`).join('');
+  const grid = r.special.length ? `<div class="oa-grid">${r.special.map((c) => { const d = cardDef(c.id); return `<div class="oa-card v-${c.variant}"><img src="${cardImg(c.id, c.variant)}" alt="" loading="lazy">${c.count > 1 ? `<b class="oa-n">×${c.count}</b>` : ''}${c.isNew ? '<i class="oa-new">NEU</i>' : ''}<small>${esc(d ? d.name : c.id)}<br><em>${RAR_NAME[c.variant] || c.variant}</em></small></div>`; }).join('')}</div>` : '<p class="sub center">Diesmal nichts besser als Ultra dabei. Die Karten liegen trotzdem in deiner Sammlung.</p>';
+  $('#modal').innerHTML = `<div class="panel" style="gap:10px;max-height:90vh;overflow:auto"><h2>🎉 ${fmt(r.packs)} Booster geöffnet</h2><p class="sub" style="margin:0">${fmt(r.cards)} Karten sind in deiner Sammlung.${r.capped ? ' Höchstens 1.000 Booster pro Durchgang, der Rest wartet noch.' : ''}</p>
+    <div class="oa-chips">${chips}</div><h3 style="margin:6px 0 0">✨ Besser als Ultra: ${fmt(r.special.reduce((a, c) => a + c.count, 0))}</h3>${grid}<button class="btn" id="pwCancel">Super!</button></div>`;
+  $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal; sfx(r.special.some((c) => c.variant === 'mythic' || c.variant === 'ghost') ? 'prestige' : 'exact');
+}
 const cardDef = (id) => (tcg ? tcg.def.cards.find((c) => c.id === id) : null);
 const owned = (id, v) => { const e = tcg && tcg.cards.find((x) => x.card_id === id && x.variant === v); return e ? e.count : 0; };
 
@@ -2776,7 +2805,7 @@ function renderCards() {
   } else if (ctab === 'inventar') {
     const defOf = (id) => tcg.def.packs.find((x) => x.id === id) || {};
     const invD = tcg.packs.filter((p) => defOf(p.pack_id).display), invB = tcg.packs.filter((p) => !defOf(p.pack_id).display && !defOf(p.pack_id).potion);
-    box.innerHTML = `<div class="inv-top"><span class="grow sub">${turboOn() ? 'Turbo: Booster öffnen in 2 Sekunden, alle Karten auf einmal' : ''}</span><button class="turbo-tg ${turboOn() ? 'on' : ''}" id="turboTg">⚡ Turbo ${turboOn() ? 'an' : 'aus'}</button></div>` + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt="">
+    box.innerHTML = `<div class="inv-top"><span class="grow sub">${turboOn() ? 'Turbo: Booster öffnen in 2 Sekunden, alle Karten auf einmal' : ''}</span><button class="turbo-tg" id="openAllBtn">📦 Alle öffnen</button><button class="turbo-tg ${turboOn() ? 'on' : ''}" id="turboTg">⚡ Turbo ${turboOn() ? 'an' : 'aus'}</button></div>` + (invD.length ? `<h3 class="inv-h">🗃 Displays</h3>` + invD.map((p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id), lk = d.of === 'gn' && !(home && home.gnOpen); return `<div class="packcard dispcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt=""><span class="t"><b>${esc(d.name)}</b><br><span class="sub">${p.count} im Inventar · je ${d.size} Booster</span></span><span class="row" style="gap:6px;flex:none">${lk ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${lk ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`; }).join('') + (invB.length ? '<h3 class="inv-h">📦 Booster</h3>' : '') : '') + (invB.length ? invB.map((p) => `<div class="packcard" style="margin-bottom:10px"><img src="/tcg/pack_${esc(p.pack_id)}.webp?v=${IMGV}" alt="">
       <span class="t"><b>${esc(tcg.def.packs.find((x) => x.id === p.pack_id).name)}</b><br><span class="sub">${p.count} im Inventar${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<br>🎃 Öffnen ab der Freischaltung des Sets' : ''}</span></span>
       <span class="row" style="gap:6px;flex:none"><button class="btn small ghost" data-packview="${esc(p.pack_id)}" aria-label="Ansehen">👀</button>${p.pack_id === 'gn' && !(home && home.gnOpen) ? '' : `<button class="btn small ghost" data-sellpack="${esc(p.pack_id)}">Verkaufen</button>`}${p.pack_id === 'gn' && !(home && home.gnOpen) ? '<span class="btn small ghost" style="opacity:.75">🔒 bald</span>' : `<button class="btn small" data-open="${esc(p.pack_id)}">Öffnen</button>`}</span></div>`).join('')
       : (invD.length ? '' : '<p class="sub">Du hast keine Booster. Hol dir welche im Shop.</p>'));
@@ -6281,6 +6310,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.pack) packInfo(t.dataset.pack);
   else if (t.dataset.buy) api('/api/tcg/buy', { pack: t.dataset.buy, n: 1 }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; renderCards(); toast('Booster gekauft'); }).catch((e) => toast(e.message));
   else if (t.dataset.open) openPack(t.dataset.open);
+  else if (t.id === 'openAllBtn') openAllDialog();
   else if (t.dataset.sell) sellCard(t.dataset.sell);
   else if (t.dataset.mbuy) api('/api/tcg/market/buy', { id: t.dataset.mbuy }).then((st) => { tcg = st; if (home) home.me.diamonds = st.diamonds; loadMarket(); closeModal(); toast('Gekauft'); }).catch((e) => toast(e.message));
   else if (t.dataset.mcancel) api('/api/tcg/cancel', { id: t.dataset.mcancel }).then((st) => { tcg = st; loadMarket(); }).catch((e) => toast(e.message));
