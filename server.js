@@ -2166,6 +2166,7 @@ app.get('/api/avatar/:id', async (req, res) => {
 
 app.use('/emblems', express.static(path.join(__dirname, 'public/emblems'), { maxAge: '30d', immutable: true }));
 app.use('/music', express.static(path.join(__dirname, 'public/music'), { maxAge: '30d', immutable: true }));
+app.use('/cr/v', express.static(path.join(__dirname, 'public/cr/v'), { maxAge: '30d', immutable: true })); // Buch-der-Gruft-Videos nur einmal laden
 app.use('/sfx', express.static(path.join(__dirname, 'public/sfx'), { maxAge: '30d', immutable: true })); // Klangdateien nur einmal laden // Musik nur einmal laden (feste Versionsnummer)
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
 

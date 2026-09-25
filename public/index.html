@@ -1718,6 +1718,9 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 .rp-opts{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}.rp-opts span{padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.07);font:700 12.5px Archivo}.rp-opts span.ok{background:rgba(124,240,168,.18);color:#7CF0A8;box-shadow:inset 0 0 0 1px #7CF0A8}
 .cr-flyimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px}
 .jc-reels .tc-cell.cr-booking{background-image:none!important}.cr-scene{background:#060508}
+.cr-scene video.cr-flyimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px}.cr-scene.cr-flash-end{animation:crfe .35s ease-out forwards}@keyframes crfe{0%{filter:brightness(1)}40%{filter:brightness(3)}100%{opacity:0;filter:brightness(3)}}
+.cr-bookloop{position:absolute;inset:6%;z-index:3;pointer-events:none;border-radius:8px;overflow:hidden}.cr-bookloop video{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen}
+.cr-colvid{position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:10px;overflow:hidden;background:#1a0a04;animation:crcol .6s ease-out}.cr-colvid video{width:100%;height:100%;object-fit:fill}.cr-colvid.screen{background:#1a0a04}.cr-colvid.screen video{mix-blend-mode:screen}
 </style>
 </head>
 <body>
@@ -1737,7 +1740,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '177';
+const AVER = '178';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3263,7 +3266,7 @@ async function tcSit(m) {
 }
 const machGame = (m) => (m >= 7 ? 'crypt' : m >= 5 ? 'anubis' : m >= 3 ? 'jester' : 'triple'); // Maschinen 1–2 Triple Crown, 3–4 Narrenkappe, 5–6 Auge des Anubis
 const machLabel = (m) => ({ triple: '👑 Triple Crown', jester: '🃏 Narrenkappe', anubis: '👁 Auge des Anubis', crypt: '📖 Buch der Gruft' }[machGame(m)] + ' · Maschine ' + (m >= 7 ? m - 6 : m >= 5 ? m - 4 : m >= 3 ? m - 2 : m));
-function tcWatch(m) { tc.fsMusic = false; tc.game = machGame(m); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
+function tcWatch(m) { tc.fsMusic = false; tc.game = machGame(m); if (tc.game === 'crypt') crPreload(); tc.jgrid = null; tc.force = false; tc.watch = m; tc.seat = null; tc.wq = []; tc.wbusy = false; socket.emit('tc:watch', m); const box = $('#cgame'); if (box) { box.innerHTML = ''; renderTriple(box); } }
 function tcBackToLobby() {
   if (tc.watch) socket.emit('tc:unwatch');
   if (tc.seat) { tc.auto = 0; api('/api/casino/triple/leave', {}).catch(() => {}); }
@@ -3670,6 +3673,10 @@ function anPaytable() {
   $('#modal').classList.add('on'); $('#pwCancel').onclick = closeModal;
 }
 // ---------- Buch der Gruft (Maschinen 7 und 8): Grimoire = Wild + Scatter, Freispiele mit ausgedehntem Bonus-Symbol ----------
+const CR_VID = '1'; // bei neuen Videos erhöhen
+const crVid = (name, cls, loop) => `<video class="${cls}" src="/cr/v/${name}.mp4?v=${CR_VID}" muted playsinline webkit-playsinline autoplay ${loop ? 'loop' : ''} preload="auto" disablepictureinpicture></video>`;
+function crPlayVids(root) { (root || document).querySelectorAll('video.cr-v').forEach((v) => { v.muted = true; v.playsInline = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); }); }
+function crPreload() { if (window.__crPre) return; window.__crPre = true; ['fly', 'B', 'R3', 'M3', 'G3', 'C3'].forEach((n) => fetch(`/cr/v/${n}.mp4?v=${CR_VID}`).catch(() => {})); } // Videos vorab in den Speicher
 const CR_SYM = { R: 'Grabräuber', M: 'Mumien-Pharao', G: 'Gargoyle', C: 'Totenkopf-Käfer', A: 'A', K: 'K', Q: 'Q', J: 'J', T: '10', B: 'Grimoire' };
 const CR_PAY = { R: [10, 100, 1000, 5000], M: [5, 40, 400, 2000], G: [5, 30, 100, 750], C: [5, 30, 100, 750], A: [0, 5, 40, 150], K: [0, 5, 40, 150], Q: [0, 5, 25, 100], J: [0, 5, 25, 100], T: [0, 5, 25, 100] }; // wie lib/crypt.js
 const CR_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 2, 2, 2, 1], [1, 0, 0, 0, 1], [2, 2, 1, 0, 0], [0, 0, 1, 2, 2], [2, 1, 1, 1, 0]];
@@ -3680,9 +3687,13 @@ async function crShowBooks(grid, win, big) {
   if (big) crLinesOff();
   if (!big) { cells.forEach((el) => el.classList.add('hit', 'an-scat')); tcSetMsg(`📖 Grimoires: +${fmt(win)}`); sfx('crbook'); await tcSleep(tc.turbo ? 400 : 900); return; }
   document.querySelectorAll('.jc-reels .tc-cell').forEach((e) => { if (!cells.includes(e)) e.classList.add('cr-grey'); }); // Rest wird grau
-  cells.forEach((el) => { el.style.position = 'relative'; el.insertAdjacentHTML('beforeend', `<div class="cr-scene"><img class="cr-flyimg" src="/cr/book_fly.webp?v=${AVER}&t=${Date.now()}" alt=""></div>`); el.classList.add('cr-booking'); }); smp('cr_boom', 0.35);
+  cells.forEach((el) => { el.style.position = 'relative'; el.insertAdjacentHTML('beforeend', `<div class="cr-scene">${crVid('fly', 'cr-v cr-flyimg', false)}</div>`); el.classList.add('cr-booking'); }); smp('cr_boom', 0.35);
   tcSetMsg(`📖 3 Grimoires! +${fmt(win)}`); gmDuck(4200);
-  await tcSleep(tc.turbo ? 1400 : 4050); // Szene: Kameraflug durch die Gruft zum Altar, Grimoire wächst, Lichtblitz (book_fly.webp, 4 s)
+  crPlayVids(); const vs = cells.map((el) => el.querySelector('video')).filter(Boolean);
+  await Promise.race([tcSleep(tc.turbo ? 1400 : 5300), tc.turbo ? tcSleep(1400) : Promise.all(vs.map((v) => new Promise((ok) => { v.onended = ok; v.onerror = ok; })))]); // Gruft-Flug (Video, 5 s)
+  cells.forEach((el) => { const sc = el.querySelector('.cr-scene'); if (sc) { sc.classList.add('cr-flash-end'); setTimeout(() => sc.remove(), 350); } });
+  await tcSleep(260);
+  cells.forEach((el) => el.insertAdjacentHTML('beforeend', `<div class="cr-bookloop">${crVid('B', 'cr-v', true)}</div>`)); crPlayVids();
   cells.forEach((el) => { el.classList.remove('cr-booking'); el.classList.add('cr-bookset'); });
   await tcSleep(tc.turbo ? 200 : 600);
 }
@@ -3721,7 +3732,9 @@ async function crExpand(ex, special) {
     await tcSleep(tc.turbo ? 60 : 180);
   }
   const exCells = []; for (let c = 0; c < 5; c++) if (ex.reels[c]) exCells.push(...cellsOf(c));
-  for (let c = 0; c < 5; c++) if (ex.reels[c]) { const reel = ($('#tcStrip' + c) || {}).parentElement; if (reel) { reel.style.position = 'relative'; reel.insertAdjacentHTML('beforeend', '<div class="cr-col"></div>'); } }
+  const hasVid = ['R', 'M', 'G', 'C'].includes(special);
+  for (let c = 0; c < 5; c++) if (ex.reels[c]) { const reel = ($('#tcStrip' + c) || {}).parentElement; if (reel) { reel.style.position = 'relative'; reel.insertAdjacentHTML('beforeend', `${hasVid ? `<div class="cr-colvid ${['G', 'C'].includes(special) ? 'screen' : ''}">${crVid(special + '3', 'cr-v', true)}</div>` : ''}<div class="cr-col"></div>`); } }
+  if (hasVid) crPlayVids();
   exCells.forEach((el) => { el.classList.add('cr-exp-on'); }); tcSetMsg(`📖 ${CR_SYM[special]} füllt ${ex.n} Walzen!`); await tcSleep(tc.turbo ? 500 : 1500); // Symbole bewegen sich
   exCells.forEach((el) => { el.classList.remove('cr-flashw'); void el.offsetWidth; el.classList.add('cr-flashw'); }); sfx('crexp'); await tcSleep(tc.turbo ? 200 : 450);
   // Linien einzeln über die gefüllten Walzen
@@ -3737,7 +3750,7 @@ async function crExpand(ex, special) {
   tcSetMsg(`📖 ${CR_SYM[special]} auf ${ex.n} Walzen: +${fmt(ex.win)}`); sfx('jcline'); await tcSleep(tc.turbo ? 400 : 1100);
 }
 function crLinesOff() { const svg = $('#tcLines'); if (svg) svg.innerHTML = ''; const rl = $('#tcReels'); if (rl) rl.classList.remove('dim'); document.querySelectorAll('.jc-lwin').forEach((e) => e.remove()); document.querySelectorAll('.jc-reels .tc-cell.hit').forEach((e) => e.classList.remove('hit')); const lw = $('#tcLineWin'); if (lw) lw.textContent = ''; } // vorherige Gewinnlinien ausblenden
-function crClear() { document.querySelectorAll('.cr-exp, .cr-scene, .cr-col').forEach((e) => e.remove()); document.querySelectorAll('.cr-dim, .cr-grey, .cr-fill, .cr-exp-on, .cr-flashw, .cr-booking, .cr-bookset').forEach((e) => e.classList.remove('cr-dim', 'cr-grey', 'cr-fill', 'cr-exp-on', 'cr-flashw', 'cr-booking', 'cr-bookset')); jcClear(); }
+function crClear() { document.querySelectorAll('.cr-exp, .cr-scene, .cr-col, .cr-colvid, .cr-bookloop').forEach((e) => e.remove()); document.querySelectorAll('.cr-dim, .cr-grey, .cr-fill, .cr-exp-on, .cr-flashw, .cr-booking, .cr-bookset').forEach((e) => e.classList.remove('cr-dim', 'cr-grey', 'cr-fill', 'cr-exp-on', 'cr-flashw', 'cr-booking', 'cr-bookset')); jcClear(); }
 async function crPlay(r, bet) {
   crSetSpec(null); anSetFs('');
   await jcAnimate(r.grid);
@@ -3763,6 +3776,7 @@ async function crPlay(r, bet) {
   await tcBigWin(r.total, bet);
 }
 async function crSpin() {
+  crPreload();
   clearInterval(tc.awT); tc.autoPaused = false;
   const bet = TC_BETS[tc.bi];
   if (tc.risk && ((tcg && tcg.diamonds) || 0) < bet) await tcTakeQuiet();
