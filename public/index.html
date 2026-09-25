@@ -1762,7 +1762,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '193';
+const AVER = '194';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3975,21 +3975,23 @@ const tcNoRisk = () => { if (tc.risk && tc.risk.noRisk) { toast('Höchstgewinn e
 function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste hält an, Grün nimmt mit
   if (tcNoRisk()) return;
   tc.mode = 'ladder'; tcSync();
-  let blink = null, busy = false;
+  let busy = false;
   if (tc.stopBlink) tc.stopBlink();
-  const stopBlink = () => { if (blink) clearInterval(blink); blink = null; document.querySelectorAll('#tcOver .tc-ls.flash').forEach((e) => e.classList.remove('flash')); };
+  const gen = (tc.ladGen = (tc.ladGen || 0) + 1), live = () => gen === tc.ladGen; // nur die zuletzt geöffnete Leiter darf zeichnen und blinken
+  const stopBlink = () => { if (tc.ladBlink) clearInterval(tc.ladBlink); tc.ladBlink = null; document.querySelectorAll('#tcOver .tc-ls.flash').forEach((e) => e.classList.remove('flash')); }; // ein einziger Takt für alle Leitern
   tc.stopBlink = stopBlink;
   const startBlink = () => { // gleichbleibende Geschwindigkeit, egal wie oft man drückt
-    stopBlink();
+    stopBlink(); if (!live() || tc.mode !== 'ladder') return;
     const R = tc.risk; if (!R || R.pos >= R.steps.length - 1) return;
     const hi = R.pos + 1, lo = tcLow(R.pos); let on = true;
-    blink = setInterval(() => {
+    tc.ladBlink = setInterval(() => {
       on = !on;
       [hi, lo].forEach((k) => { const e = $('#tcLs' + k); if (e) e.classList.remove('flash'); });
       const e2 = $('#tcLs' + (on ? hi : lo)); if (e2) e2.classList.add('flash');
     }, Math.round(300 - 160 * (R.pos / Math.max(1, R.steps.length - 1)))); // je höher, desto schneller blinkt es
   };
   const draw = () => {
+    if (!live()) return; // veraltete Leiter: nichts mehr zeichnen
     const R = tc.risk; if (!R) { $('#tcOver').innerHTML = ''; return; }
     const top = R.steps.length - 1;
     $('#tcOver').innerHTML = `<div class="tc-ladbox"><div class="tc-lsteps">${R.steps.map((st, i) => `<div class="tc-ls ${i === R.pos ? 'cur' : ''} ${st.aus ? 'aus' : ''} ${i === 0 ? 'zero' : ''}" id="tcLs${i}" style="--w:${Math.round(38 + 62 * i / top)}%">${st.aus ? `<b>AUSSPIELUNG</b>` : `<b>${fmt(st.v)}</b>`}</div>`).reverse().join('')}</div>
@@ -4011,9 +4013,10 @@ function tcLadderOpen() { // Die Leiter blinkt von selbst; die rote Risikotaste 
       else { tcSetMsg('💥 Verloren'); sfx('wrong'); }
       setTimeout(() => { $('#tcOver').innerHTML = ''; tcSync(); }, 1800); tcSync(); return; }
     tc.risk = { ...tc.risk, win: r.win, steps: r.steps, pos: r.pos, noRisk: r.noRisk }; sfx(r.up ? 'exact' : 'wrong');
-    tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); tcSync(); draw();
+    tcSetMsg(r.up ? `⬆️ Hoch auf ${fmt(r.win)}` : `⬇️ Zurück auf ${fmt(r.win)}`); tcSync(); (live() ? draw : tc.ladRedraw || draw)(); // Ergebnis übernehmen, zeichnen nur die aktuelle Leiter
   };
   tc.startHook = () => { if (tc.mode === 'ladder') go(); }; tc.startLabel = 'RISIKO'; // große Taste riskiert ebenfalls
+  tc.ladRedraw = draw;
   draw();
 }
 async function tcSplit(redraw) {

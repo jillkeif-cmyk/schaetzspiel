@@ -65,6 +65,13 @@ const auth = async (req) => { const id = readToken((req.headers.authorization ||
 
 const app = express();
 app.set('trust proxy', 1);
+// Langsame Anfragen protokollieren (über 500 ms), mit Datenbankanteil: zeigt, woran Ruckeln liegt
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/')) return next();
+  const t = Date.now(), d0 = store.dbStat ? { ...store.dbStat } : null;
+  res.on('finish', () => { const ms = Date.now() - t; if (ms > 500) { const dn = d0 ? store.dbStat.n - d0.n : 0, dms = d0 ? store.dbStat.ms - d0.ms : 0; console.log(`LANGSAM ${req.method} ${req.path} ${ms} ms · Datenbank ${dn} Zugriffe, zusammen ${dms} ms (alle gleichzeitigen Anfragen)`); } });
+  next();
+});
 const jsonSmall = express.json({ limit: '120kb' }), jsonBig = express.json({ limit: '2mb' }); // Tickets dürfen einen Screenshot mitbringen
 app.use((req, res, next) => (req.path === '/api/tickets' ? jsonBig : jsonSmall)(req, res, next));
 app.use((req, res, next) => store.ctx.run({ src: req.method + ' ' + req.path }, next)); // Herkunft für das Guthaben-Protokoll
