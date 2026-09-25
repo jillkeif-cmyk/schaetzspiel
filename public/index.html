@@ -1762,7 +1762,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 body.u2nav-on #wrap{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))}
 body.u2nav-on #toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 /* bisherige Startseiten-Knöpfe: im neuen Design über Leiste, Seitenknöpfe und Menü erreichbar */
-body.ui2 #app:not(.maint) .brand,body.ui2 #app:not(.maint) #openProfile,body.ui2 #app:not(.maint) #passCard,body.ui2 #app:not(.maint) #promoCard,body.ui2 #app:not(.maint) #create,body.ui2 #app:not(.maint) #createSolo,body.ui2 #app:not(.maint) #openCards,body.ui2 #app:not(.maint) #openAdmin,body.ui2 #app:not(.maint) #openRanks,body.ui2 #app:not(.maint) #openChallenges,body.ui2 #app:not(.maint) #openDaily,body.ui2 #app:not(.maint) #openCasino,body.ui2 #app:not(.maint) #hotInfo,body.ui2 #app:not(.maint) .deskonly,body.ui2 #app:not(.maint) .mobonly,body.ui2 #app:not(.maint) .panel:has(#create) > p.sub{display:none!important}
+body.ui2 #app:not(.maint) .brand,body.ui2 #app:not(.maint) #openProfile,body.ui2 #app:not(.maint) #passCard,body.ui2 #app:not(.maint) #promoCard,body.ui2 #app:not(.maint) #create,body.ui2 #app:not(.maint) #createSolo,body.ui2 #app:not(.maint) #openCards,body.ui2 #app:not(.maint) #openAdmin,body.ui2 #app:not(.maint) #openRanks,body.ui2 #app:not(.maint) #openChallenges,body.ui2 #app:not(.maint) #openDaily,body.ui2 #app:not(.maint) #openCasino,body.ui2 #app:not(.maint) #hotInfo,body.ui2[data-pg="home"] #app:not(.maint) .deskonly,body.ui2[data-pg="home"] #app:not(.maint) .mobonly,body.ui2 #app:not(.maint) .panel:has(#create) > p.sub{display:none!important}
 body.ui2 #app:not(.maint) .col:has(#stats){display:none!important}
 body.ui2 #app:not(.maint) .panel:has(#create){padding:0;background:none;box-shadow:none;gap:8px}
 body.ui2 #app:not(.maint) .panel:has(#create):not(:has(#firstBonus :not(:empty), #slots:not(:empty))){display:none}
@@ -2017,7 +2017,7 @@ body.ui2 .u2-hide{display:none}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '223';
+const AVER = '224';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -6415,9 +6415,11 @@ function showEmote(pid, i) {
   const els = [...document.querySelectorAll(`[data-pid="${pid}"]`)].filter((e) => e.offsetParent !== null);
   const el = els.find((e) => e.classList.contains('pl')) || els[0]; const p = S && S.players.find((x) => x.id === pid);
   let x = innerWidth / 2, y = innerHeight / 2;
-  if (el) { const r = el.getBoundingClientRect(); x = Math.min(innerWidth - 50, Math.max(50, r.left + r.width * 0.72)); y = Math.min(innerHeight - 60, Math.max(70, r.top + r.height / 2)); }
+  if (el) { const r = el.getBoundingClientRect(); x = r.left + r.width * 0.72; y = r.top + r.height / 2; }
+  // verstreut rund um den Spieler, damit schnelle Reaktionen sich nicht an einer Stelle stapeln
+  x = Math.min(innerWidth - 40, Math.max(40, x + (Math.random() * 2 - 1) * 70)); y = Math.min(innerHeight - 60, Math.max(70, y + 10 + Math.random() * 110)); // Chips stehen oben: nach unten verstreuen
   const mk = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt || ''; d.style.left = x + 'px'; d.style.top = y + 'px'; if (p) d.style.setProperty('--c', p.color); document.body.appendChild(d); setTimeout(() => d.remove(), 2000); return d; };
-  mk('emo-ring'); mk('emo-fly', EMOJIS[i]); if (p && !el) { const n = mk('emo-name', p.name); n.style.top = y + 52 + 'px'; }
+  mk('emo-ring').style.filter = 'opacity(.4)'; const fl = mk('emo-fly', EMOJIS[i]); fl.style.filter = 'opacity(.6)'; // halb durchsichtig, verdeckt nichts if (p && !el) { const n = mk('emo-name', p.name); n.style.top = y + 52 + 'px'; }
   if (el) { el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }, { transform: 'scale(1)' }], { duration: 300 }); }
   sfx('emote');
 }
