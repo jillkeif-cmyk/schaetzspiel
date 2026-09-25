@@ -1728,6 +1728,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 #newsCard:empty,#promoCard:empty{display:none}
 #giftBox:empty,#annBar:empty,#boostBar:empty,#presHint:empty{display:none} /* leere Bereiche ohne Abstand */
 .fs-split{display:block;margin-top:6px;font:700 12.5px Archivo;opacity:.85;letter-spacing:0}
+.shop-adm.dirty{box-shadow:inset 0 0 0 1.5px #FFB84D}.dirty-tag{color:#FFB84D;font-weight:800}
 </style>
 </head>
 <body>
@@ -1747,7 +1748,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '182';
+const AVER = '184';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -1974,7 +1975,7 @@ function gmWant() {
 function gmusic(gesture) {
   if (!actx) return; const want = gmWant();
   if (!GM.el) { GM.el = new Audio(); GM.el.loop = true; GM.el.preload = 'auto'; try { const srcNode = actx.createMediaElementSource(GM.el); GM.g = actx.createGain(); GM.g.gain.value = 0; srcNode.connect(GM.g).connect(master); } catch (e) {} }
-  if (gesture && !GM.src && GM.el.paused) { GM.el.play().then(() => { if (!GM.src) GM.el.pause(); }).catch(() => {}); } // beim ersten Tippen freischalten (iPhone)
+  if (gesture && !GM.unlocked && !GM.src && GM.el.paused) { GM.unlocked = true; GM.el.muted = true; GM.el.play().then(() => { if (!GM.src) GM.el.pause(); GM.el.muted = false; }).catch(() => { GM.el.muted = false; }); } // nur einmal und stumm freischalten (iPhone), sonst spielte bei jedem Tippen kurz das letzte Stück
   const g = GM.g, now = actx.currentTime, vol = gmVol(want);
   if (want === GM.src) { if (want && GM.el.paused) GM.el.play().catch(() => {}); return; }
   if (GM.switching) return; GM.switching = true;
@@ -4784,21 +4785,38 @@ const mkSeen = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('m
 const mkNewCount = (k) => ((home && home.mkTimes && home.mkTimes[k]) || []).filter((t) => t > (mkSeen[k] || 0)).length;
 function mkMarkSeen(k) { if (!mkNewCount(k)) return; mkSeen[k] = Date.now(); try { localStorage.setItem('mk_seen', JSON.stringify(mkSeen)); } catch (e) {} const sg = document.querySelector(`[data-mkind="${k}"] .mk-segnew`); if (sg) sg.remove(); mkBadges(); }
 function mkBadges() { const b = document.querySelector('#ctabs [data-ct="boerse"]'); if (!b) return; const n = ['cards', 'packs', 'displays', 'graded'].reduce((a, k) => a + mkNewCount(k), 0); let e = b.querySelector('.mk-new'); if (n) { if (!e) { e = document.createElement('span'); e.className = 'mk-new'; b.appendChild(e); } e.textContent = n > 99 ? '99+' : n; } else if (e) e.remove(); }
-function drawShopAdmin() { // Admin: je Booster Preis, Bestand (leer = unbegrenzt), Ausverkauft
+function drawShopAdmin() { // Admin: je Booster/Display/Trank Preis, Bestand, Hinweis, Ausverkauft, Verkauf — jede Zeile für sich
   const box = $('#shopRows'); if (!box) return;
-  const draw = () => { box.innerHTML = tcg.def.packs.filter((p) => !p.hidden).map((p) => `<div class="shop-adm" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}
-      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price}" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${p.stock === null || p.stock === undefined ? '' : p.stock}" data-f="stock"></label></div>
-      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Nachschub kommt am 30.10." value="${esc(p.note || '')}" data-f="note"></label>
-      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="chipbtn ${p.offsale ? 'on-miss' : ''}" data-f="offsale">${p.offsale ? '🙈 Nicht im Verkauf' : 'Im Verkauf'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`).join(''); bind(); };
-  const send = (row, soldout, offsale) => { const id = row.dataset.sp, pk = tcg.def.packs.find((x) => x.id === id); if (offsale === undefined) offsale = !!pk.offsale; api('/api/admin/shop', { pack: id, price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, soldout, offsale, note: row.querySelector('[data-f=note]').value }).then((r) => { const p = tcg.def.packs.find((x) => x.id === id); Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout, offsale: r.offsale, note: r.note }); toast(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}${r.offsale ? ' · nicht im Verkauf' : ''}`); draw(); }).catch((e) => toast(e.message)); };
-  const bind = () => box.querySelectorAll('[data-sp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.sp); row.querySelector('[data-f=save]').onclick = () => send(row, !!p.soldout); row.querySelector('[data-f=soldout]').onclick = () => send(row, !p.soldout); row.querySelector('[data-f=offsale]').onclick = () => send(row, !!p.soldout, !p.offsale); });
-  const drawDisp = () => { const dd = tcg.def.packs.filter((p) => p.display || p.potion); box.insertAdjacentHTML('beforeend', dd.map((p) => `<div class="shop-adm" data-dp="${p.id}">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt="">`}<div class="grow"><b>${p.potion ? '🧪' : '🗃'} ${esc(p.name)}</b> <small>${p.potion ? '60 Min' : p.size + ' Booster'}</small>
-      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${p.price || ''}" placeholder="noch kein Preis" data-f="dprice"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${p.stock === null || p.stock === undefined ? '' : p.stock}" data-f="dstock"></label></div>
-      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Release am 31.10. um 18 Uhr" value="${esc(p.note || '')}" data-f="dnote"></label>
-      <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '🙈 Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="dsold">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="dsave">Speichern</button></div></div></div>`).join(''));
-    box.querySelectorAll('[data-dp]').forEach((row) => { const p = tcg.def.packs.find((x) => x.id === row.dataset.dp); const send = (on, soldout = !!p.soldout) => api('/api/admin/display', { pack: p.id, on, soldout, price: Number(row.querySelector('[data-f=dprice]').value), stock: row.querySelector('[data-f=dstock]').value, note: row.querySelector('[data-f=dnote]').value }).then((r) => { p.off = !r.on; p.price = r.price; p.note = r.note; p.soldout = r.soldout; p.stock = r.stock; toast(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${r.price ? fmt(r.price) + ' 💎' : 'kein Preis'}${r.stock === null ? '' : ' · ' + r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}`); draw(); drawDisp(); }).catch((e) => toast(e.message));
-      row.querySelector('[data-f=don]').onclick = () => send(p.off); row.querySelector('[data-f=dsold]').onclick = () => send(!p.off, !p.soldout); row.querySelector('[data-f=dsave]').onclick = () => send(!p.off); }); };
-  if (!tcg) loadTcg().then(() => { draw(); drawDisp(); }).catch(() => {}); else { draw(); drawDisp(); }
+  const D = (window.__shopDraft = window.__shopDraft || {}); // ungespeicherte Eingaben je Stück: bleiben erhalten
+  const val = (id, f, v) => (D[id] && f in D[id] ? D[id][f] : v);
+  const dirty = (id) => !!(D[id] && Object.keys(D[id]).length);
+  const packRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-sp="${p.id}"><img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt=""><div class="grow"><b>${esc(p.name)}</b>${p.locked ? ' <small>🔒 gesperrt</small>' : ''}${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${esc(String(val(p.id, 'price', p.price)))}" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${esc(String(val(p.id, 'stock', p.stock === null || p.stock === undefined ? '' : p.stock)))}" data-f="stock"></label></div>
+      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Nachschub kommt am 30.10." value="${esc(val(p.id, 'note', p.note || ''))}" data-f="note"></label>
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="soldout">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="chipbtn ${p.offsale ? 'on-miss' : ''}" data-f="offsale">${p.offsale ? '🙈 Nicht im Verkauf' : 'Im Verkauf'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`;
+  const dispRow = (p) => `<div class="shop-adm ${dirty(p.id) ? 'dirty' : ''}" data-dp="${p.id}">${p.potion ? potImg(p.id) : `<img src="/tcg/pack_${p.id}.webp?v=${AVER}" alt="">`}<div class="grow"><b>${p.potion ? '🧪' : '🗃'} ${esc(p.name)}</b> <small>${p.potion ? '60 Min' : p.size + ' Booster'}</small>${dirty(p.id) ? ' <small class="dirty-tag">● nicht gespeichert</small>' : ''}
+      <div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><label>Preis <input class="field" type="number" min="1" value="${esc(String(val(p.id, 'price', p.price || '')))}" placeholder="noch kein Preis" data-f="price"></label><label>Bestand <input class="field" type="number" min="0" placeholder="unbegrenzt" value="${esc(String(val(p.id, 'stock', p.stock === null || p.stock === undefined ? '' : p.stock)))}" data-f="stock"></label></div>
+      <label style="margin-top:6px">Hinweis im Shop (optional) <input class="field wide" maxlength="120" placeholder="z. B. Release am 31.10. um 18 Uhr" value="${esc(val(p.id, 'note', p.note || ''))}" data-f="note"></label>
+      <div class="row" style="gap:6px;margin-top:6px"><button class="chipbtn ${p.off ? '' : 'on-miss'}" data-f="don">${p.off ? '🙈 Nicht im Verkauf' : '✅ Im Verkauf'}</button><button class="chipbtn ${p.soldout ? 'on-miss' : ''}" data-f="dsold">${p.soldout ? '⛔ Ausverkauft' : 'Ausverkauft setzen'}</button><button class="btn small" data-f="save">Speichern</button></div></div></div>`;
+  const rowVals = (row) => ({ price: Number(row.querySelector('[data-f=price]').value), stock: row.querySelector('[data-f=stock]').value, note: row.querySelector('[data-f=note]').value });
+  const redrawRow = (row, p, isDisp) => { const tmp = document.createElement('div'); tmp.innerHTML = isDisp ? dispRow(p) : packRow(p); const nr = tmp.firstElementChild; row.replaceWith(nr); bindRow(nr); };
+  function bindRow(row) {
+    const isDisp = !!row.dataset.dp, id = row.dataset.sp || row.dataset.dp, p = tcg.def.packs.find((x) => x.id === id); if (!p) return;
+    row.querySelectorAll('input[data-f]').forEach((inp) => { inp.oninput = () => { D[id] = D[id] || {}; D[id][inp.dataset.f] = inp.value; row.classList.add('dirty'); if (!row.querySelector('.dirty-tag')) row.querySelector('b').insertAdjacentHTML('afterend', ' <small class="dirty-tag">● nicht gespeichert</small>'); }; });
+    const done = (msg) => { delete D[id]; toast(msg); redrawRow(row, p, isDisp); }; // nur diese Zeile neu, die anderen behalten ihre Eingaben
+    if (!isDisp) {
+      const send = (soldout, offsale = !!p.offsale) => api('/api/admin/shop', { pack: id, ...rowVals(row), soldout, offsale }).then((r) => { Object.assign(p, { price: r.price, stock: r.stock, soldout: r.soldout, offsale: r.offsale, note: r.note }); done(`${p.name}: ${fmt(r.price)} 💎 · ${r.stock === null ? 'unbegrenzt' : r.stock + ' Stück'}${r.soldout ? ' · ausverkauft' : ''}${r.offsale ? ' · nicht im Verkauf' : ''}`); }).catch((e) => toast(e.message));
+      row.querySelector('[data-f=save]').onclick = () => send(!!p.soldout); row.querySelector('[data-f=soldout]').onclick = () => send(!p.soldout); row.querySelector('[data-f=offsale]').onclick = () => send(!!p.soldout, !p.offsale);
+    } else {
+      const send = (on, soldout = !!p.soldout) => api('/api/admin/display', { pack: id, on, soldout, ...rowVals(row) }).then((r) => { p.off = !r.on; p.price = r.price; p.note = r.note; p.soldout = r.soldout; p.stock = r.stock; done(`${p.name}: ${r.on ? 'im Verkauf' : 'nicht im Verkauf'} · ${r.price ? fmt(r.price) + ' 💎' : 'kein Preis'}${r.soldout ? ' · ausverkauft' : ''}`); }).catch((e) => toast(e.message));
+      row.querySelector('[data-f=don]').onclick = () => send(p.off); row.querySelector('[data-f=dsold]').onclick = () => send(!p.off, !p.soldout); row.querySelector('[data-f=save]').onclick = () => send(!p.off);
+    }
+  }
+  const drawAll = () => {
+    box.innerHTML = tcg.def.packs.filter((p) => !p.hidden && !p.display && !p.potion).map(packRow).join('') + tcg.def.packs.filter((p) => p.display || p.potion).map(dispRow).join('');
+    box.querySelectorAll('[data-sp],[data-dp]').forEach(bindRow);
+  };
+  if (!tcg) loadTcg().then(drawAll).catch(() => {}); else drawAll();
 }
 function loadAdmin() {
   renderStaffBoxes();
@@ -4864,7 +4882,7 @@ function loadAdmin() {
     $('#swOn').onclick = () => send(true); if ($('#swOff')) $('#swOff').onclick = () => send(false); }; }
   const bb3 = $('#banBox2'); if (bb3 && !bb3.dataset.bound) { bb3.dataset.bound = 1; bb3.ontoggle = () => { if (bb3.open) drawBannerAdmin(); }; }
   const cb3 = $('#codeBox'); if (cb3 && !cb3.dataset.bound) { cb3.dataset.bound = 1; cb3.ontoggle = () => { if (cb3.open) drawCodesAdmin(); }; }
-  const sb = $('#shopBox'); if (sb && !sb.dataset.bound) { sb.dataset.bound = 1; sb.ontoggle = () => { if (sb.open) drawShopAdmin(); }; }
+  const sb = $('#shopBox'); if (sb && !sb.dataset.bound) { sb.dataset.bound = 1; sb.ontoggle = () => { window.__shopOpen = sb.open; if (sb.open) drawShopAdmin(); }; if (window.__shopOpen) { sb.open = true; drawShopAdmin(); } }
   document.querySelectorAll('[data-ostyle]').forEach((b) => { if (b.onclick) return; b.onclick = () => api('/api/admin/openstyle', { style: b.dataset.ostyle }).then((r) => { if (home) home.openStyle = r.style; document.querySelectorAll('[data-ostyle]').forEach((x) => x.classList.toggle('on-miss', x.dataset.ostyle === r.style)); toast('Booster öffnen: ' + (r.style === 'showroom' ? 'Showroom' : 'Klassisch')); }).catch((e) => toast(e.message)); });
   const gt = $('#gnToggle'); if (gt && !gt.onclick) gt.onclick = () => { const open = !(home && home.gnOpen); if (open && !confirm('Gruselnacht-Set jetzt für alle freigeben? Booster wird kaufbar, die Karten zählen zur Sammlung und das Update erscheint.')) return; api('/api/admin/gnopen', { open }).then((r) => { if (home) home.gnOpen = r.open; gt.textContent = r.open ? 'Sperren' : 'Freigeben'; toast(r.open ? '🎃 Gruselnacht freigeschaltet' : 'Gruselnacht gesperrt'); }).catch((e) => toast(e.message)); };
   const ha = $('#hwAnim'); if (ha && !ha.onclick) ha.onclick = () => api('/api/admin/theme', { anim: !siteAnim }).then((r) => { applyTheme(r.theme, r.anim); ha.textContent = r.anim ? 'Ausschalten' : 'Einschalten'; toast(r.anim ? '🦇 Halloween-Deko an' : 'Halloween-Deko ausgeblendet'); }).catch((e) => toast(e.message));
@@ -4888,7 +4906,8 @@ function loadAdmin() {
   }
   clearTimeout(adminTimer);
   if (!adminLocks) api('/api/admin/locks').then((r) => { adminLocks = r.games; renderAdmin(); }).catch(() => {});
-  if (document.activeElement && /^gf/.test(document.activeElement.id || '')) { adminTimer = setTimeout(loadAdmin, 4000); return; } // nicht mitten im Tippen neu zeichnen
+  if (window.__shopOpen && page === 'admin' && $('#shopBox') && $('#shopBox').open) { adminTimer = setTimeout(loadAdmin, 4000); return; } // Shop-Katalog offen: nicht neu zeichnen
+  const ae = document.activeElement; if (ae && (/^gf/.test(ae.id || '') || (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.closest('#adminBody')))) { adminTimer = setTimeout(loadAdmin, 4000); return; } // nicht mitten im Tippen neu zeichnen // nicht mitten im Tippen neu zeichnen
   if (!adminUsers) api('/api/admin/users').then((r) => { adminUsers = (r.users || []).sort((a, b) => a.name.localeCompare(b.name)); renderAdmin(); }).catch(() => {});
   api('/api/admin/pool').then((d) => { adminD = d; renderAdmin(); }).catch((e) => { const b = $('#adminBody'); if (b) b.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
   adminTimer = setTimeout(() => { if (page === 'admin' && !S) loadAdmin(); }, 4000); // live mitlaufen
