@@ -1738,7 +1738,13 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <body>
 <div id="wrap">
   <div id="tape" aria-hidden="true"><div id="tapeBand"></div><div id="tapeSec"></div></div>
-  <main id="app"></main>
+  <main id="app"><div id="bootSplash" style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#FFE27A;font:800 15px system-ui,sans-serif;text-align:center">
+    <img src="/icon-192.png" alt="" width="96" height="96" style="border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.5)">
+    <div style="font:900 26px system-ui,sans-serif;letter-spacing:1px">PUNKTLANDUNG</div>
+    <div id="bootMsg" style="opacity:.8">Lädt …</div>
+    <button id="bootRetry" onclick="location.reload()" style="display:none;padding:10px 18px;border:0;border-radius:12px;background:#FFD23F;color:#2A1B00;font:800 15px system-ui,sans-serif">Neu laden</button>
+  </div></main>
+  <script id="bootJs">setTimeout(function(){ var m=document.getElementById('bootMsg'), b=document.getElementById('bootRetry'); if (m && document.getElementById('bootSplash')) { m.textContent='Verbindung dauert länger als sonst … vielleicht wird die App gerade aktualisiert.'; b.style.display='inline-block'; } }, 9000);</script>
 </div>
 <button id="sound" title="Ton an/aus" aria-label="Ton an oder aus">🔊</button>
 <button id="quit" title="Match verlassen" aria-label="Match verlassen">✕</button>
@@ -1752,7 +1758,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '186';
+const AVER = '187';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
