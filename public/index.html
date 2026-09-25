@@ -1848,6 +1848,22 @@ body.ui2[data-pg="casino"] .bjfelt{padding-top:10px;padding-bottom:12px;min-heig
 body.ui2[data-pg="cards"] .ct-shopbig,body.ui2 #shopBack{display:none!important}
 body.ui2[data-pg="cards"][data-ct="shop"] #app .col > h1{display:none}
 body.ui2[data-pg="cards"][data-ct="shop"] #app .col > .row:has(> #back){display:none}
+
+body.ui2 #app:not(.maint) #ui2Home{order:-3}
+body.ui2 #app:not(.maint) #openList{order:-2;display:flex;flex-direction:column}
+body.ui2 #app:not(.maint) #openList h2{margin:0 0 8px!important;font:400 20px Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFD23F}
+body.ui2 #app:not(.maint) #openList:empty::before{content:"Gerade läuft kein Match. Eröffne einfach selbst eins oder spiel solo!";display:block;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);font:700 13px/1.4 Archivo,sans-serif;color:var(--muted);text-align:center}
+body.ui2 #app:not(.maint) #newsCard,body.ui2 #app:not(.maint) #firstBonus .sw-hint{display:none!important}
+
+body.ui2 .cnavrow.slots-row{display:none}
+.u2-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.u2-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border:0;border-radius:18px;background:linear-gradient(180deg,rgba(177,140,255,.16),rgba(12,36,42,.96));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45),0 8px 18px rgba(0,0,0,.35);color:inherit;cursor:pointer}
+.u2-slot img{width:100%;height:92px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
+.u2-slot b{font:800 13.5px Archivo,sans-serif;color:#FFF3C4}
+.u2-slot small{font:800 11.5px Archivo,sans-serif}.u2-slot small.ok{color:#7CF0A8}.u2-slot small.full{color:#FFB4B4}.u2-slot small.lk{color:#FFB4B4}
+.u2-slot i{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:99px;background:#FF4FA3;color:#fff;font:900 10px Archivo,sans-serif;font-style:normal}
+.u2-slot.locked{opacity:.55;filter:grayscale(.7)}
+.u2-slot:active{transform:translateY(2px) scale(.98)}
 </style>
 </head>
 <body>
@@ -1873,7 +1889,7 @@ body.ui2[data-pg="cards"][data-ct="shop"] #app .col > .row:has(> #back){display:
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '205';
+const AVER = '206';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2717,6 +2733,13 @@ function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielb
   b.__ro = new ResizeObserver(() => { const k = key(); if (b.__key !== k) { b.__key = k; b.style.minHeight = ''; window.__cgH[k] = 0; } const h = b.offsetHeight; if (h > (window.__cgH[k] || 0)) { window.__cgH[k] = h; b.style.minHeight = h + 'px'; } });
   b.__ro.observe(b);
 }
+function renderSlotsHub(box) { // neues Design: alle Automaten auf einen Blick, Tipp öffnet die Maschinenwahl
+  const G = [['crypt', 'Buch der Gruft'], ['anubis', 'Auge des Anubis'], ['jester', 'Narrenkappe'], ['triple', 'Triple Crown']];
+  const ms = tcMachines || [], free = (g) => ms.filter((m) => m.game === g && !m.user).length, tot = (g) => ms.filter((m) => m.game === g).length || 2;
+  box.innerHTML = `<div class="u2-slots">${G.map(([g, n]) => { const lock = isLocked(g), nb = home && home.tabBadges && home.tabBadges[g], f = free(g);
+    return `<button class="u2-slot ${lock ? 'locked' : ''}" ${lock ? `data-cglock="${g}"` : `data-cg="${g}"`} aria-label="${n}"><img src="/promo/${g}.webp?v=${IMGV}" alt=""><b>${n}</b><small class="${lock ? 'lk' : f ? 'ok' : 'full'}">${lock ? '🔒 gesperrt' : f ? `${f} von ${tot(g)} frei` : 'belegt · zuschauen'}</small>${nb && !lock ? `<i>${esc(nb)}</i>` : ''}</button>`; }).join('')}</div>
+    <p class="sub center" style="margin:12px 0 0">Tipp auf einen Automaten und such dir eine Maschine aus.</p>`;
+}
 function renderCasino() { try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   { const b = $('#cgame'), k = cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : ''); if (b && b.__key !== k) { b.__key = k; b.style.minHeight = ''; if (window.__cgH) window.__cgH[k] = 0; } } // anderes Spiel: Höhe neu messen
   setTimeout(lockCasinoHeight, 0);
@@ -2728,6 +2751,7 @@ function renderCasino() { try { if (document.body.classList.contains('ui2')) set
   setTimeout(() => showDia(((tcg && tcg.diamonds) || 0) - pendingBets()), 0);
   renderVipHead();
   if (!vipD) loadVip();
+  if (cgame === 'slotsHub') return renderSlotsHub(box);
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
@@ -3071,18 +3095,18 @@ function renderCards() {
     // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
     const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], more: ['wheel', 'rewards', 'crank', 'setup'] };
     const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
-    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
+    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
     const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
     const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
     const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
     const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${l}${catDot(c)}</button>`).join('');
-    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
+    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow ${curCat === 'slots' ? 'slots-row' : ''}">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
     window.__ccat = CAT; window.__cok = ok;
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
         ${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
       <button class="chipbtn guide-btn" id="guideBtn" hidden></button>
       <div id="cgame"></div>
@@ -5543,7 +5567,7 @@ function u2Tab() { if (page === 'cards') return ctab === 'shop' ? 'shop' : 'card
 function u2Playing() { try { return !!((tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)) || (cgame === 'poker' && pkState && pkState.me >= 0) || (cgame === 'tables' && bjT)); } catch (e) { return false; } }
 function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match, ohne Wartung
   const on = ui2On(), playing = on && page === 'casino' && u2Playing(), bar = on && !S && !(home && home.maintenance) && !playing;
-  document.body.classList.toggle('u2-play', !!playing); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker'].includes(cgame)));
+  document.body.classList.toggle('u2-play', !!playing); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame)));
   document.body.classList.toggle('ui2', on); document.body.dataset.pg = S ? 'match' : page; document.body.dataset.ct = page === 'cards' ? ctab : '';
   if (page === 'cards' && ctab !== 'shop') window.__u2ctab = ctab; // Karten-Reiter merkt sich den letzten Unterbereich
   let nav = document.getElementById('u2nav');
@@ -5564,7 +5588,7 @@ function u2Act(a) {
     if (v === 'quiz') return go(() => { page = 'home'; render(); });
     if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; render(); loadTcg(); });
     if (v === 'cards') return go(() => { page = 'cards'; ctab = window.__u2ctab || 'sammlung'; render(); loadTcg(); });
-    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; render(); loadTcg(); loadVip(); }); return; }
+    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; render(); loadTcg(); loadVip(); }); return; }
     if (v === 'social') return go(() => { page = 'social'; render(); loadFriends(); });
   }
   if (k === 'go') {
@@ -5627,13 +5651,13 @@ function fillU2Home() {
     <div class="u2-head">
       <button class="u2-banner" data-u2="go:profile" aria-label="Profil">${t && t.id ? `<img class="bg" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt="" onerror="this.remove()">` : ''}<span class="shade"></span>
         <span class="who">${avatar(me, 56)}<span class="nm"><b>${esc(me.name)}</b><small>${t ? esc(t.text || '') : 'Kein Titel'}</small><em>${me.prestige ? 'Prestige ' + me.prestige + ' · ' : ''}${fmt(me.rankPoints || 0)} WP</em></span></span></button>
-      <div class="u2-side"><div class="u2-icons"><button class="u2-ib" data-u2="go:news" aria-label="Neuigkeiten"><img src="${U2('i_news')}" alt="">${u2NewsNew() ? '<i class="u2-b">1</i>' : ''}</button><button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
+      <div class="u2-side"><div class="u2-icons"><button class="u2-ib" data-u2="menu" aria-label="Menü"><img src="${U2('i_gear')}" alt=""></button></div>
         <button class="u2-pass" data-u2="go:pass" aria-label="Kronenpass"><img src="/news/pass_logo.webp?v=${IMGV}" alt=""><span><b>Stufe ${pt}</b><span class="bar"><span style="width:${Math.min(100, Math.round(100 * pt / 30))}%"></span></span></span></button></div>
     </div>
     <div class="u2-stage">
-      <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}</div>
+      <div class="u2-rail">${sb('daily', U2('i_gift'), 'Tagesbonus', daily ? '!' : '', '', '#FFD23F')}${sb('go:wheel', '/news/u17_hero.webp?v=' + IMGV, 'Glücksrad', wl, '', '#B18CFF')}${sb('go:challenges', U2('i_trophy'), 'Aufgaben', chal, '', '#7CF0A8')}${sb('hot', U2('i_flame'), 'Hot Time', hv && hv.active ? '🔥' : '', hotTxt, '#FF8C50')}</div>
       <div class="u2-center"><img src="${siteTheme === 'halloween' ? '/news/logo_hw.webp' : '/emblems/logo2.webp'}?v=${IMGV}" alt="PUNKTLANDUNG"><h1>SCHÄTZ-QUIZ</h1><p>Wer am nächsten dran ist, gewinnt</p></div>
-      <div class="u2-rail">${sb('hot', U2('i_flame'), 'Hot Time', hv && hv.active ? '🔥' : '', hotTxt, '#FF8C50')}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
+      <div class="u2-rail">${sb('go:news', (newsPosts && newsPosts[0] && newsPosts[0].hero ? newsPosts[0].hero + '?v=' + IMGV : U2('i_news')), 'Update', u2NewsNew() ? 'NEU' : '', '', '#FF4FA3')}${sb('go:booster', '/tcg/pack_gn.webp?v=' + IMGV, 'Booster', packs, '', '#8FD3FF')}${pr ? sb('promo', '/promo/' + pr.game + '.webp?v=' + IMGV, 'Neu', '', '', '#7CF0A8') : sb('tab:casino', U2('i_casino'), 'Casino', '', '', '#7CF0A8')}</div>
     </div>
     ${gifts ? `<button class="u2-gift" data-u2="gifts">🎁 <b>${gifts} Geschenk${gifts === 1 ? '' : 'e'} warten</b> · jetzt abholen ›</button>` : ''}
     <div class="u2-play"><button class="u2-pb" data-u2="solo" aria-label="Solo-Quiz"><img src="${U2('i_quiz')}" alt=""><span>Solo</span></button>
@@ -5848,6 +5872,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
 
   if (S.phase === 'lobby' && S.setup) return `<div class="col">
     <div class="center" style="padding-top:2vh"><h1>Match einrichten</h1><p class="sub" style="margin-top:8px">Erst einstellen, dann eröffnen. Danach können Freunde beitreten.</p></div>
+    ${soloIntent && home && home.soloWin && home.soloWin.on ? `<div class="fbonus sw-hint">🏆 Solo-Sieg: ${fmt(home.soloWin.min15 || 750)} Punkte bei 15 Fragen oder ${fmt(home.soloWin.min)} Punkte bei 25 Fragen zählen im Solo-Quiz als Sieg</div>` : ''}
     </div><div class="col">
     <div class="panel" style="display:flex;flex-direction:column;gap:12px"><label style="margin:0">Modus</label>
       <div class="modepick" id="modepick" style="${soloIntent ? 'display:none' : ''}"><button data-mode="ranked"><b>Rangliste</b><small>Allgemeinwissen · Weltranglistenpunkte</small></button><button data-mode="free"><b>Freies Spiel</b><small>Themen wählbar · ohne Wertung</small></button></div>
@@ -6645,6 +6670,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
+  else if (t.dataset.ccat && t.dataset.ccat === 'slots' && document.body.classList.contains('ui2')) { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); }
   else if (t.dataset.ccat) { const C = window.__ccat || {}, ok = window.__cok || (() => true), last = (window.__clast || {})[t.dataset.ccat]; const list = (C[t.dataset.ccat] || []).filter(ok); const k = last && list.includes(last) ? last : list[0]; if (k) { tcStandQuiet(k); cgame = k === 'wheel' ? 'vip' : k; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); } }
   else if (t.dataset.cglock) { toast('🔒 Dieses Spiel ist gerade gesperrt. Schau später wieder vorbei!'); }
   else if (t.dataset.promo) { promoGo(t.dataset.promo); }
