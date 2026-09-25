@@ -8,7 +8,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const post = (p, b) => fetch(URL + p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }).then(async (r) => ({ status: r.status, ...(await r.json()) }));
 
 (async () => {
-  await sleep(1200);
+  for (let i = 0; i < 150; i++) { try { const r = await fetch(URL + '/api/version'); if (r.ok) break; } catch (e) {} await sleep(100); } // warten, bis der Server antwortet
   assert.equal((await post('/api/register', { name: 'X', password: 'geheim1', code: 'falsch' })).status, 403);
   const users = [];
   for (const name of ['Nick', 'Pascal', 'Kollege']) users.push(await post('/api/register', { name, password: 'geheim1', code: 'TEST' }));
