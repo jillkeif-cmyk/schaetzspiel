@@ -1774,7 +1774,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '202';
+const AVER = '203';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -4494,7 +4494,7 @@ function renderNews() {
   };
   // Jedes Update ein eigener, nummerierter Block: das neueste offen, ältere zum Aufklappen
   const N = newsPosts.length;
-  const hero = (p, i) => `<div class="nw-hero"><img src="${p.hero}?v=${IMGV}" alt=""><div><span class="nw-ver">Update ${N - i}</span> <span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>`;
+  const hero = (p, i) => `<div class="nw-hero"><img src="${p.hero}?v=${IMGV}" alt=""><div><span class="nw-ver">Update ${esc(String(p.ver || ((p.id.match(/^u(\d+)/) || [])[1]) || (N - i)))}</span> <span class="nc-tag">${esc(p.tag)}</span><h1>${esc(p.title)}</h1><small>${esc(newsWhen(p.date))}${p.updated ? ' · aktualisiert ' + esc(newsWhen(p.updated).split(' · ')[1]) : ''}</small></div></div>`;
   box.innerHTML = `<h1 style="font-size:30px">News & Updates</h1>` + newsPosts.map((p, i) => i === 0
     ? `<article class="nw-post nw-latest"><div class="nw-ribbon">NEUESTES UPDATE</div>${hero(p, i)}<p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</article>`
     : `${i === 1 ? '<h2 class="nw-older">Frühere Updates</h2>' : ''}<details class="nw-post nw-old"><summary>${hero(p, i)}<span class="nw-open">Anzeigen</span></summary><p class="nw-lead">${esc(p.teaser)}</p>${p.blocks.map(block).join('')}</details>`).join('');
