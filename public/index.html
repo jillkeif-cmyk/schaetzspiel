@@ -1743,6 +1743,11 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 @keyframes annpulse{50%{box-shadow:inset 0 0 0 2px #FF6B6B,0 0 18px rgba(255,90,90,.45)}}
 .ann.ann-info .ann-ic,.ann.ann-warn .ann-ic,.ann.ann-maint .ann-ic{font-size:26px}
 .cnavrow button.locked{opacity:.55;filter:grayscale(.7);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}.tab-lock{font:800 10px Archivo;color:#FFB4B4;letter-spacing:.2px}
+#app.maint > .col > :not(.brand):not(#maintBox):not(#openProfile):not(#openSupport){display:none!important}#app.maint > .col:not(:has(.brand)):not(:has(#openSupport)){display:none!important}
+.maint-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 16px 16px;border-radius:24px;background:radial-gradient(circle at 50% 20%,rgba(90,169,255,.18),transparent 60%),linear-gradient(160deg,#2a1a3a,#130f22);box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),0 10px 30px rgba(0,0,0,.45)}
+.maint-card img{width:min(62vw,240px);height:auto;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));animation:maintbob 3s ease-in-out infinite}@keyframes maintbob{50%{transform:translateY(-6px)}}
+.maint-card h2{margin:4px 0 0;font:400 28px/1.1 Anton,Impact,sans-serif;color:#FFE27A;letter-spacing:.5px}.maint-card p{margin:0;font:700 15px/1.45 Archivo;color:#F3EAFF}.maint-card small{color:var(--muted);font:600 12.5px/1.4 Archivo}
+.maint-adm{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1)}.maint-adm.on{box-shadow:inset 0 0 0 2px #FF6B6B;background:rgba(255,90,90,.08)}
 </style>
 </head>
 <body>
@@ -1768,7 +1773,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '199';
+const AVER = '200';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -4888,7 +4893,13 @@ function loadAdmin() {
     tbb.ontoggle = () => { if (tbb.open) draw(); }; }
   const hmb = $('#hmBox'); if (hmb && !hmb.dataset.bound) { hmb.dataset.bound = 1;
     const draw = () => { const c = (home && home.homeCfg) || { newsCard: true, promo: { on: false, game: 'crypt', text: '' } }; const P = c.promo;
-      $('#hmAdm').innerHTML = `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="grow">📰 Update-Karte auf der Startseite: <b style="color:${c.newsCard ? '#7CF0A8' : '#FF8A80'}">${c.newsCard ? 'sichtbar' : 'ausgeblendet'}</b></span><button class="btn small ${c.newsCard ? 'ghost' : ''}" id="hmNewsOn">📰 Anzeigen</button><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNewsOff">🙈 Ausblenden</button></div>
+      const M = (home && home.maintAdmin) || { on: false, text: '' };
+      $('#hmAdm').innerHTML = `<div class="maint-adm ${M.on ? 'on' : ''}"><div class="row" style="gap:8px"><b class="grow">🛠️ Wartungsmodus: <span style="color:${M.on ? '#FF8A80' : '#7CF0A8'}">${M.on ? 'AKTIV' : 'aus'}</span></b></div>
+        <small class="sub">Aktiv: Alle außer dir sehen nur die Wartungsseite, können ihr Profil bearbeiten und Tickets schreiben. Quiz, Casino und alles andere ist gesperrt. Offene Automaten-Gewinne werden gutgeschrieben.</small>
+        <textarea class="field" id="mtText" maxlength="300" rows="2" placeholder="Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!">${esc(M.text || '')}</textarea>
+        <div class="row" style="gap:6px"><button class="btn small ${M.on ? 'ghost' : ''}" id="mtOn">🛠️ Wartung starten</button><button class="btn small ${M.on ? '' : 'ghost'}" id="mtOff">✅ Wartung beenden</button></div></div>
+        <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
+        <div class="row" style="gap:8px;flex-wrap:wrap"><span class="grow">📰 Update-Karte auf der Startseite: <b style="color:${c.newsCard ? '#7CF0A8' : '#FF8A80'}">${c.newsCard ? 'sichtbar' : 'ausgeblendet'}</b></span><button class="btn small ${c.newsCard ? 'ghost' : ''}" id="hmNewsOn">📰 Anzeigen</button><button class="btn small ${c.newsCard ? '' : 'ghost'}" id="hmNewsOff">🙈 Ausblenden</button></div>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:12px 0">
         <div class="row" style="gap:8px"><span class="grow">🎰 Automaten-Werbung</span><button class="btn small ${P.on ? '' : 'ghost'}" id="hmPromoOn">${P.on ? 'an' : 'aus'}</button></div>
         <div class="hm-games">${Object.entries(PROMO_GAMES).map(([k, g]) => `<button class="hm-g ${P.game === k ? 'on' : ''}" data-hmg="${k}"><img src="${g.logo}?v=${IMGV}" alt=""><small>${esc(g.name)}</small></button>`).join('')}</div>
@@ -4896,6 +4907,8 @@ function loadAdmin() {
         <button class="btn small" id="hmSave" style="width:100%;margin-top:8px">Werbung speichern</button>
         <p class="sub" style="margin:6px 0 0;font-size:12px">Ein Tipp auf die Karte setzt Spieler direkt an eine freie Maschine. Sind beide belegt, kommt ein Hinweis.</p>`;
       const send = (body, msg) => api('/api/admin/home', body).then((r) => { home.homeCfg = r.homeCfg; home.newsCardOff = !r.homeCfg.newsCard; home.promo = r.homeCfg.promo.on ? { game: r.homeCfg.promo.game, text: r.homeCfg.promo.text } : null; toast(msg); draw(); if (!newsPosts) loadNews(); else renderNewsCard(); renderPromo(); }).catch((e) => toast(e.message));
+      const mt = (on) => api('/api/admin/maintenance', { on, text: $('#mtText').value }).then((r) => { home.maintAdmin = r; toast(on ? '🛠️ Wartung aktiv: alle anderen sehen jetzt die Wartungsseite' : '✅ Wartung beendet, alles ist wieder offen'); draw(); }).catch((e) => toast(e.message));
+      $('#mtOn').onclick = () => { if (confirm('Wartung starten? Alle außer dir können dann nur noch ihr Profil bearbeiten und Tickets schreiben.')) mt(true); }; $('#mtOff').onclick = () => mt(false);
       $('#hmNewsOn').onclick = () => send({ newsCard: true }, '📰 Update-Karte wird bei allen angezeigt'); $('#hmNewsOff').onclick = () => send({ newsCard: false }, '🙈 Update-Karte bei allen ausgeblendet');
       $('#hmPromoOn').onclick = () => send({ promo: { on: !P.on, game: P.game, text: $('#hmText').value } }, P.on ? 'Werbung aus' : '🎰 Werbung an');
       $('#hmAdm').querySelectorAll('[data-hmg]').forEach((b) => { b.onclick = () => { P.game = b.dataset.hmg; $('#hmAdm').querySelectorAll('[data-hmg]').forEach((x) => x.classList.toggle('on', x === b)); }; });
@@ -5282,6 +5295,7 @@ function connect() {
   socket.on('pot:update', (d) => { if (home) home.potions = d.potions; (d.ended || []).forEach((t) => toast(`🧪 Dein ${POT_T[t]}-Trank ist abgelaufen`)); if (!S && page === 'home') update(); if (page === 'cards' && ctab === 'traenke') renderCards(); });
   socket.on('admin:note', (m) => { toast(m); sfx('exact'); });
   socket.on('openstyle', (st) => { if (home) home.openStyle = st; });
+  socket.on('maint', (m) => { if (!home) return; if (home.me && home.me.admin) { home.maintAdmin = m; return; } home.maintenance = m && m.on ? { text: m.text } : null; if (!home.maintenance) { loadHome().then(render).catch(() => render()); return; } render(); });
   socket.on('home:cfg', (c) => { if (!home) return; home.newsCardOff = c.newsCardOff; home.promo = c.promo; renderNewsCard(); renderPromo(); });
   socket.on('shop:changed', () => { loadTcg().then(() => { if (page === 'cards' && ctab === 'shop') renderCards(); }).catch(() => {}); });
   socket.on('boost', (b) => { if (home) home.boost = b; if (!S && page === 'home') update(); });
@@ -5408,6 +5422,7 @@ function reportPresence() {
 }
 let builtKey = '', pageFilled = '';
 function render() {
+  if (token && home && home.maintenance) { if (S) S = null; if (!['home', 'profile', 'support'].includes(page)) page = 'home'; } // Wartung: nur Start, Profil, Support
   if (page !== 'casino' || cgame !== 'roulette') hideRouletteResult(); // Roulette-Ergebnis nie auf anderen Seiten stehen lassen
   setTimeout(reportPresence, 0);
   const key = !token ? 'auth:' + authTab + ':' + needCode : !S ? page + ':' + ctab + ':' + rtab + ':' + (home && home.me ? (home.me.admin ? 'A' : 'U') : '-') : S.phase + ':' + S.qIndex + ':' + (S.hostId === S.you) + ':' + !!S.setup;
@@ -5456,7 +5471,7 @@ function build() {
     <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
     <div class="panel lg-box" style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🎬</span><div class="grow"><b>Booster öffnen: Darstellung</b><small style="display:block;color:#cfe">Showroom: Booster dreht sich in 3D, reißt auf, Karten einzeln auf dem Podest. Klassisch: alle Karten auf einmal</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="chipbtn ${openStyle() === 'showroom' ? 'on-miss' : ''}" data-ostyle="showroom">Showroom</button><button class="chipbtn ${openStyle() === 'klassisch' ? 'on-miss' : ''}" data-ostyle="klassisch">Klassisch</button></div></div>
-    <details class="panel lg-box" id="hmBox"><summary><b>🏠 Startseite</b><small> · Update-Karte und Automaten-Werbung</small></summary><div id="hmAdm" style="margin-top:10px"></div></details>
+    <details class="panel lg-box" id="hmBox"><summary><b>🏠 Startseite & Wartung</b><small> · Wartungsmodus, Update-Karte, Automaten-Werbung</small></summary><div id="hmAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="rpBox"><summary><b>🚩 Gemeldete Fragen</b> <span class="tab-new" id="rpCount" style="display:none"></span><small> · gemeldet = sofort gesperrt, bis du entscheidest</small></summary><div id="rpAdm" style="margin-top:10px"><p class="sub">Lädt …</p></div></details>
     <details class="panel lg-box" id="tbBox"><summary><b>🏷 Abzeichen im Casino</b><small> · z. B. „NEU“ oder „UPDATE“ an einen Reiter hängen</small></summary><div id="tbAdm" style="margin-top:10px"></div></details>
     <div class="panel lg-box" id="ctBox"><div class="row"><b class="grow">📖 Buch der Gruft: Testphase</b><span class="adm-st ${home && home.cryptTest ? 'on' : ''}" id="ctSt">${home && home.cryptTest ? 'nur du' : 'für alle'}</span></div>
@@ -5554,6 +5569,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
     <div id="passCard"></div>
     <div id="annBar"></div>
     <div id="boostBar"></div>
+    <div id="maintBox"></div>
     <button class="panel pcard" id="openProfile"></button>
     <div id="presHint"></div>
     <div class="deskonly" style="flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
@@ -6016,6 +6032,8 @@ function update() {
         ${list.length > 2 ? `<details class="fold offfold" data-fold="np" style="margin-top:8px"><summary><span class="grow">Alle anzeigen</span><span class="sub">${list.length - 2} weitere</span></summary><div class="plist" style="margin-top:8px">${list.slice(2).map(rowNP).join('')}</div></details>` : ''}` : '';
     }).catch(() => {});
     const bb2 = $('#boostBar'); if (bb2) { const b = home && home.boost, on = b && [b.xp && '⭐ Level-XP', b.cxp && '🎰 Casino-XP', b.pxp && '👑 Pass-XP'].filter(Boolean); bb2.innerHTML = on && on.length ? `<div class="boost-bar"><span class="bb-ic">⚡</span><span class="grow"><b>Doppel-XP-Aktion läuft!</b><small>${on.join(' · ')} zählen gerade doppelt</small></span></div>` : ''; }
+    { const mb = $('#maintBox'), mt = home && home.maintenance; app.classList.toggle('maint', !!mt);
+      if (mb) mb.innerHTML = mt ? `<div class="maint-card"><img src="/news/maint.webp?v=${IMGV}" alt=""><h2>🛠️ Wartungsarbeiten</h2><p>${esc(mt.text || 'Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!')}</p><small>Dein Profil kannst du trotzdem bearbeiten, und der Support ist erreichbar.</small></div>` : ''; }
     const ab = $('#annBar'); if (ab) { const b = home && home.banner; ab.innerHTML = b ? `<div class="ann ann-${esc(b.kind || 'ann')}"><span class="ann-ic">${({ info: 'ℹ️', warn: '⚠️', maint: '🛠️' })[b.kind] || '📢'}</span><div class="grow"><p>${esc(b.text)}</p>${b.claimable ? `<small>🎁 ${esc(b.reward)}</small>` : ''}</div>${b.claimable ? `<button class="btn small" id="annClaim" data-id="${b.id}">Einlösen</button>` : ''}</div>` : '';
       const ac = $('#annClaim'); if (ac) ac.onclick = () => api('/api/banner/claim', { id: ac.dataset.id }).then((r) => { toast('🎁 ' + r.text); sfx('exact'); loadHome().then(() => { if (tcg) loadTcg(); }); }).catch((e) => toast(e.message)); }
     const pots = home && home.potions ? Object.entries(home.potions).filter(([, v]) => v.until > Date.now()) : []; if (bb2) bb2.insertAdjacentHTML('beforeend', pots.map(([t, v]) => `<div class="pot-bar">${potImg('pot_' + t + v.m)}<span class="grow"><b>${POT_T[t]} ×${v.m} aktiv</b><small>bis ${potBis(v.until)} Uhr · noch ${Math.ceil((v.until - Date.now()) / 60000)} Min</small></span></div>`).join(''));

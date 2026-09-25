@@ -72,6 +72,15 @@ app.use((req, res, next) => {
   res.on('finish', () => { const ms = Date.now() - t; if (ms > 500) { const dn = d0 ? store.dbStat.n - d0.n : 0, dms = d0 ? store.dbStat.ms - d0.ms : 0; console.log(`LANGSAM ${req.method} ${req.path} ${ms} ms · Datenbank ${dn} Zugriffe, zusammen ${dms} ms (alle gleichzeitigen Anfragen)`); } });
   next();
 });
+// Wartungsmodus: für alle außer dem Admin nur Profil bearbeiten und Support-Tickets
+let maint = { on: false, text: '' };
+store.setting('maintenance').then((v) => { if (v) { try { maint = { ...maint, ...JSON.parse(v) }; } catch (e) {} } }).catch(() => {});
+const MAINT_OPEN = /^\/api\/(config|version|home|login|avatar|user\/\d+|card|frame|tag|showcase|prestige-icon|seen|tickets|push\/|admin\/)/;
+app.use('/api/', async (req, res, next) => {
+  if (!maint.on || MAINT_OPEN.test(req.originalUrl.split('?')[0])) return next();
+  try { const u = await auth(req); if (u && isAdmin(u)) return next(); } catch (e) {}
+  res.status(503).json({ error: '🛠️ Wir führen gerade Wartungsarbeiten durch. Bald sind wir wieder für euch da!', maintenance: true });
+});
 const jsonSmall = express.json({ limit: '120kb' }), jsonBig = express.json({ limit: '2mb' }); // Tickets dürfen einen Screenshot mitbringen
 app.use((req, res, next) => (req.path === '/api/tickets' ? jsonBig : jsonSmall)(req, res, next));
 app.use((req, res, next) => store.ctx.run({ src: req.method + ' ' + req.path }, next)); // Herkunft für das Guthaben-Protokoll
@@ -185,7 +194,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await store.marketList().catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
+    res.json({ maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await store.leaderboard()).map(withOnline), ai: ai.enabled(),
       world: (await store.worldRanking()).map(withOnline),
       points: (await store.pointsRanking()).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1801,6 +1810,16 @@ app.post('/api/admin/banner', async (req, res) => {
   console.log(`Banner aktiv: „${text}“${banner.reward ? ' mit ' + rewardText(banner.reward) : ''} für ${banner.all ? 'alle' : ids.length + ' Spieler'} durch ${u.name}`);
   res.json({ ok: true });
 });
+app.post('/api/admin/maintenance', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  if ('text' in req.body) maint.text = String(req.body.text || '').slice(0, 300);
+  if ('on' in req.body) maint.on = !!req.body.on;
+  await store.setting('maintenance', JSON.stringify(maint));
+  if (maint.on) for (const [m, st] of [...tcSeats]) { const o = await store.userById(st.uid).catch(() => null); if (!o || !isAdmin(o)) await tcRelease(st.uid).catch(() => {}); } // Automatenplätze freigeben, offene Gewinne werden gutgeschrieben
+  io.emit('maint', { on: maint.on, text: maint.text });
+  console.log(`Wartungsmodus ${maint.on ? 'AN' : 'aus'} durch ${u.name}`);
+  res.json(maint);
+});
 app.post('/api/admin/home', async (req, res) => { // Startseite: Update-Karte an/aus, Automaten-Werbung (Spiel, Text, an/aus)
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
   const b = req.body || {};
@@ -2277,7 +2296,11 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { socket.emit('ver', APP_VER); if (socket.data.user) store.userById(socket.data.user.id).then((u) => potions.load(u)).catch(() => {}); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next));
+io.on('connection', (socket) => { socket.emit('ver', APP_VER);
+  socket.use((packet, next) => { // Wartung: Live-Aktionen (Quiz, Poker, Tische, Zuschauen) nur für den Admin
+    if (!maint.on || ['idle', 'presence'].includes(packet[0]) || (socket.data.user && isAdmin(socket.data.user))) return next();
+    socket.emit('maint', { on: true, text: maint.text }); next(new Error('Wartung'));
+  }); if (socket.data.user) store.userById(socket.data.user.id).then((u) => potions.load(u)).catch(() => {}); socket.use((pk, next) => store.ctx.run({ src: 'Socket ' + pk[0] }, next));
   socket.use(async (pk, next) => { // Casino-Sperre auch für Poker, Blackjack-Tische und Zuschauen
     if (!/^(pk:|bj:|cw:watch)/.test(String(pk[0])) || !socket.data.user) return next();
     const u = await store.userById(socket.data.user.id).catch(() => null), b = casinoBan(u);
