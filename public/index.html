@@ -1727,6 +1727,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 @keyframes promoglow{50%{box-shadow:inset 0 0 0 2px rgba(255,210,63,.9),0 0 22px rgba(255,210,63,.35),0 8px 24px rgba(0,0,0,.4)}}
 #newsCard:empty,#promoCard:empty{display:none}
 #giftBox:empty,#annBar:empty,#boostBar:empty,#presHint:empty{display:none} /* leere Bereiche ohne Abstand */
+.fs-split{display:block;margin-top:6px;font:700 12.5px Archivo;opacity:.85;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -1746,7 +1747,7 @@ body.halloween .sr-cap{color:#fff}body.halloween .sr-cap small{color:#FFB547}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '181';
+const AVER = '182';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const app = $('#app');
@@ -3663,7 +3664,7 @@ async function anPlay(r, bet) { // ganze Runde abspielen: Grunddreh, dann ggf. F
       if (sp.anubis) { total += sp.anubis; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anextra'); await anPopup(`<b class="an-mid">${sp.anubis} ${sp.anubis === 1 ? 'weiteres FREISPIEL' : 'weitere FREISPIELE'}</b>`, 1300); if (sp.lvlAfter > sp.lvl) await anBeam(sp.lvlAfter, sp.lvl); }
       await tcSleep(tc.turbo ? 150 : 350);
     }
-    anSetFs(''); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); anSetTab(0); tc.fsMusic = false; gmusic(false);
+    anSetFs(''); sfx('anfs'); await anPopup(fsWinHtml(r), (r.total - r.fs.total) > 0 ? 3000 : 2200); anSetTab(0); tc.fsMusic = false; gmusic(false);
   }
   tc.lastWin = r.total; tcSync();
   await tcBigWin(r.total, bet);
@@ -3705,6 +3706,11 @@ function crPreload() { if (window.__crPre) return; window.__crPre = true; ['fly'
 const CR_SYM = { R: 'Grabräuber', M: 'Mumien-Pharao', G: 'Gargoyle', C: 'Totenkopf-Käfer', A: 'A', K: 'K', Q: 'Q', J: 'J', T: '10', B: 'Grimoire' };
 const CR_PAY = { R: [10, 100, 1000, 5000], M: [5, 40, 400, 2000], G: [5, 30, 100, 750], C: [5, 30, 100, 750], A: [0, 5, 40, 150], K: [0, 5, 40, 150], Q: [0, 5, 25, 100], J: [0, 5, 25, 100], T: [0, 5, 25, 100] }; // wie lib/crypt.js
 const CR_LINES = [[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2], [0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [1, 2, 2, 2, 1], [1, 0, 0, 0, 1], [2, 2, 1, 0, 0], [0, 0, 1, 2, 2], [2, 1, 1, 1, 0]];
+function fsWinHtml(r) { // Freispiel-Tafel: bei Gewinn im auslösenden Dreh auch die Summe zeigen
+  const base = Math.max(0, (r.total || 0) - (r.fs ? r.fs.total : 0));
+  if (!base) return `<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`;
+  return `<small>GESAMTGEWINN</small><b class="an-big">${fmt(r.total)}</b><small class="fs-split">Freispiele ${fmt(r.fs.total)} + Auslöse-Dreh ${fmt(base)}</small>`;
+}
 function crSetSpec(sym) { const e = $('#crSpec'); if (!e) return; e.innerHTML = sym ? `<small>Bonus-Symbol</small><i style="background-image:url('/cr/s_${sym}.webp?v=${AVER}')"></i>` : ''; e.classList.toggle('on', !!sym); }
 async function crShowBooks(grid, win, big) {
   if (!win) return; const cells = [];
@@ -3795,7 +3801,7 @@ async function crPlay(r, bet) {
       if (sp.retrigger) { total += sp.retrigger; anSetFs(`Freispiel <b>${i + 1}</b> von <b>${total}</b>`); sfx('anfs'); await anPopup(`<b class="an-mid">+${sp.retrigger} FREISPIELE</b>`, 1500); }
       await tcSleep(tc.turbo ? 150 : 350);
     }
-    anSetFs(''); crClear(); sfx('anfs'); await anPopup(`<small>FREISPIEL-GEWINN</small><b class="an-big">${fmt(r.fs.total)}</b>`, 2200); crSetSpec(null); tc.fsMusic = false; gmusic(false);
+    anSetFs(''); crClear(); sfx('anfs'); await anPopup(fsWinHtml(r), (r.total - r.fs.total) > 0 ? 3000 : 2200); crSetSpec(null); tc.fsMusic = false; gmusic(false);
   }
   tc.lastWin = r.total; tcSync();
   await tcBigWin(r.total, bet);
