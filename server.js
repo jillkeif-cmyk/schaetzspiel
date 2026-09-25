@@ -1168,11 +1168,45 @@ app.post('/api/casino/bj/act', async (req, res) => {
 // Kartendefinitionen (≈ 58 KB) ändern sich nie im Betrieb: nur mitschicken, wenn das Handy eine andere Version hat
 const defStatic = () => { const v = tcg.view(); return { cards: v.cards, variants: v.variants, names: v.names, order: v.order }; };
 const DEF_V = require('crypto').createHash('md5').update(JSON.stringify(defStatic())).digest('hex').slice(0, 10);
+// ---------- Shop-Angebot „Sammler-Truhe“: einmal pro Spieler, Admin sieht Käufer und kann es abschalten ----------
+const OFFER = { id: 'truhe1', name: 'Sammler-Truhe', price: 100000, img: '/news/offer_truhe.webp',
+  items: [{ id: 'disp_gn', n: 1 }, { id: 'gn', n: 3 }, { id: 'toon', n: 3 }, { id: 'ghost', n: 5 }, { id: 'premium', n: 5 }, { id: 'standard', n: 5 }, { id: 'pot_xp4', n: 2 }, { id: 'pot_cxp4', n: 2 }, { id: 'pot_pxp4', n: 2 }] };
+let offerCfg = { on: true, buyers: [] };
+store.setting('offer_cfg').then((v) => { if (v) { try { offerCfg = { ...offerCfg, ...JSON.parse(v) }; } catch (e) {} } }).catch(() => {});
+const offerFor = (u) => (offerCfg.on && !offerCfg.buyers.some((b) => b.id === u.id) ? { id: OFFER.id, name: OFFER.name, price: OFFER.price, img: OFFER.img, items: OFFER.items.map((x) => ({ ...x, name: tcg.PACKS[x.id].name })), worth: OFFER.items.reduce((a, x) => a + (tcg.PACKS[x.id].price || 0) * x.n, 0) } : null);
 const tcgState = async (u, withStatic = false) => ({
+  offer: offerFor(u),
   diamonds: Number(u.diamonds) || 0,
   cards: await store.cardsOf(u.id),
   packs: await store.packsOf(u.id),
   def: { packs: tcg.view().packs, melt: MELT, v: DEF_V, ...(withStatic ? defStatic() : {}) },
+});
+let offerBusy = new Set();
+app.post('/api/shop/offer', async (req, res) => {
+  const u0 = await auth(req); if (!u0) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+  if (offerBusy.has(u0.id)) return res.status(429).json({ error: 'Einen Moment …' }); offerBusy.add(u0.id);
+  try {
+    if (!offerCfg.on) return res.status(400).json({ error: 'Dieses Angebot gibt es gerade nicht.' });
+    if (offerCfg.buyers.some((b) => b.id === u0.id)) return res.status(400).json({ error: 'Du hast die Sammler-Truhe schon gekauft.' });
+    const u = await store.userById(u0.id), dia = Number(u.diamonds) || 0;
+    if (dia < OFFER.price) return res.status(400).json({ error: `Dir fehlen ${(OFFER.price - dia).toLocaleString('de-DE')} 💎 für die Sammler-Truhe.` });
+    await store.save(u.id, { diamonds: dia - OFFER.price });
+    for (const x of OFFER.items) await store.packAdd(u.id, x.id, x.n);
+    offerCfg.buyers.push({ id: u.id, name: u.name, at: Date.now() });
+    await store.setting('offer_cfg', JSON.stringify(offerCfg));
+    console.log(`Angebot: ${u.name} kauft die ${OFFER.name} für ${OFFER.price} 💎`);
+    res.json({ ok: true, name: OFFER.name, items: OFFER.items.map((x) => ({ ...x, name: tcg.PACKS[x.id].name })), total: dia - OFFER.price });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); } finally { offerBusy.delete(u0.id); }
+});
+app.get('/api/admin/offer', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  res.json({ on: offerCfg.on, name: OFFER.name, price: OFFER.price, buyers: offerCfg.buyers.slice().reverse() });
+});
+app.post('/api/admin/offer', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  offerCfg.on = !!(req.body || {}).on; await store.setting('offer_cfg', JSON.stringify(offerCfg));
+  console.log(`Angebot ${OFFER.name} ${offerCfg.on ? 'aktiviert' : 'deaktiviert'} durch ${u.name}`);
+  res.json({ on: offerCfg.on, name: OFFER.name, price: OFFER.price, buyers: offerCfg.buyers.slice().reverse() });
 });
 app.get('/api/tcg', async (req, res) => {
   try {
