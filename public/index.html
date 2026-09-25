@@ -1954,6 +1954,12 @@ body.u2nav-on #wrap{padding-bottom:calc(54px + max(0px, env(safe-area-inset-bott
 body.u2nav-on #toast{bottom:calc(60px + max(0px, env(safe-area-inset-bottom,0px) - 18px))!important}
 .u2-hubback{align-self:flex-start;margin:0 0 6px}
 body.ui2 #app:not(.maint) #giftBox,body.ui2 #app:not(.maint) #annBar,body.ui2 #app:not(.maint) #boostBar{order:-1}
+
+body.ui2 .cnavrow{display:none!important}
+body.ui2 #ctabs{display:none!important}
+body.ui2[data-ct="khub"] .u2-kback,body.ui2[data-ct="shop"] .u2-kback{display:none}
+.u2-back{align-self:flex-start;flex:none}
+.u2-slot img.sm{height:78px}
 </style>
 </head>
 <body>
@@ -1979,7 +1985,7 @@ body.ui2 #app:not(.maint) #giftBox,body.ui2 #app:not(.maint) #annBar,body.ui2 #a
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '214';
+const AVER = '215';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2823,6 +2829,40 @@ function lockCasinoHeight() { // verhindert Hoch- und Runterrutschen: der Spielb
   b.__ro = new ResizeObserver(() => { const k = key(); if (b.__key !== k) { b.__key = k; b.style.minHeight = ''; window.__cgH[k] = 0; } const h = b.offsetHeight; if (h > (window.__cgH[k] || 0)) { window.__cgH[k] = h; b.style.minHeight = h + 'px'; } });
   b.__ro.observe(b);
 }
+function u2Tiles(items) { // gemeinsame Kachel-Übersicht (Casino-Tische, Mehr, Karten)
+  return `<div class="u2-slots">${items.map((it) => `<button class="u2-slot ${it.lock ? 'locked' : ''}" ${it.lock ? `data-cglock="${it.key}"` : it.attr} aria-label="${esc(it.name)}"><img src="${it.img}" alt="" class="${it.small ? 'sm' : ''}"><b>${esc(it.name)}</b><small class="${it.lock ? 'lk' : it.warn ? 'full' : 'ok'}">${it.lock ? '🔒 gesperrt' : esc(it.sub || '')}</small>${it.badge && !it.lock ? `<i>${esc(String(it.badge))}</i>` : ''}</button>`).join('')}</div>`;
+}
+function renderKartenHub() {
+  const packs = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && !d.potion && !d.display ? p.count : 0); }, 0) : 0;
+  const pots = tcg && tcg.packs ? tcg.packs.reduce((a, p) => { const d = tcg.def.packs.find((x) => x.id === p.pack_id); return a + (d && d.potion ? p.count : 0); }, 0) : 0;
+  const mk = ['cards', 'packs', 'displays', 'graded'].reduce((a, k) => a + (typeof mkNewCount === 'function' ? mkNewCount(k) : 0), 0);
+  const items = [
+    { key: 'sammlung', name: 'Sammlung', img: U2('i_album'), sub: 'Alle Karten ansehen' },
+    { key: 'inventar', name: 'Booster', img: '/tcg/pack_gn.webp?v=' + IMGV, sub: packs ? packs + ' zum Öffnen' : 'Keine ungeöffneten', badge: packs || '' },
+    { key: 'traenke', name: 'Tränke', img: '/tcg/pot_xp.webp?v=' + IMGV, sub: pots ? pots + ' im Vorrat' : 'XP- und Casino-Tränke', badge: pots || '' },
+    { key: 'boerse', name: 'Börse', img: U2('i_market'), sub: 'Kaufen und verkaufen', badge: mk || '' },
+    ...(home && home.me.grading ? [{ key: 'gegradet', name: 'Gegradet', img: U2('i_graded'), sub: 'Bewertete Karten' }] : []),
+    { key: 'tausch', name: 'Tausch', img: U2('i_trade'), sub: 'Mit Freunden tauschen' },
+    { key: 'melt', name: 'Umwandeln', img: U2('i_melt'), sub: 'Karten zu Diamanten' },
+    { key: 'verlauf', name: 'Verlauf', img: U2('i_history'), sub: 'Was du bekommen hast' },
+  ];
+  return u2Tiles(items.map((it) => ({ ...it, attr: `data-ct="${it.key}"` })));
+}
+function renderCasHub(box, hub) {
+  const tb = (k) => (home && home.tabBadges && home.tabBadges[k]) || '';
+  const items = hub === 'tablesHub' ? [
+    { key: 'roulette', name: 'Roulette', img: U2('i_roulette'), sub: 'Chips bis 5 Mio.' },
+    { key: 'bj', name: 'Blackjack', img: U2('i_blackjack'), sub: 'Allein gegen die Bank' },
+    { key: 'tables', name: 'Blackjack-Tische', img: U2('i_bjtables'), sub: 'Mit Freunden am Tisch' },
+    ...(home && home.me && home.me.pokerOk ? [{ key: 'poker', name: 'Poker', img: '/tcg/poker_royal.webp?v=' + IMGV, sub: "Texas Hold'em, 5 Tische" }] : []),
+  ] : [
+    { key: 'vip', lockKey: 'wheel', name: 'Glücksrad', img: '/news/u17_hero.webp?v=' + IMGV, sub: 'Täglich drehen', badge: (vipD ? vipD.spinsLeft : home && home.me.wheelLeft) || '' },
+    { key: 'rewards', name: 'Belohnungen', img: U2('i_trophy'), sub: 'VIP-Stufen und Cashback' },
+    { key: 'crank', name: 'Casino-Rangliste', img: '/emblems/trophy.webp?v=' + IMGV, sub: 'Wer gewinnt am meisten?' },
+    { key: 'setup', name: 'Einstellungen', img: U2('i_gear'), sub: 'Musik, Thema, Anzeige' },
+  ];
+  box.innerHTML = u2Tiles(items.map((it) => ({ ...it, lock: isLocked(it.lockKey || it.key), badge: it.badge || tb(it.lockKey || it.key), attr: `data-cg="${it.key}"` })));
+}
 function renderSlotsHub(box) { // neues Design: alle Automaten auf einen Blick, Tipp öffnet die Maschinenwahl
   const G = [['crypt', 'Buch der Gruft'], ['anubis', 'Auge des Anubis'], ['jester', 'Narrenkappe'], ['triple', 'Triple Crown']];
   const test = (g) => !!(home && !home.me.admin && ((g === 'crypt' && home.cryptTest) || (g === 'jester' && home.jesterTest) || (g === 'anubis' && home.anubisTest)));
@@ -2843,6 +2883,7 @@ function renderCasino() { try { if (document.body.classList.contains('ui2')) set
   renderVipHead();
   if (!vipD) loadVip();
   if (cgame === 'slotsHub') return renderSlotsHub(box);
+  if (cgame === 'tablesHub' || cgame === 'moreHub') return renderCasHub(box, cgame);
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
@@ -3023,6 +3064,7 @@ async function loadMarket() { try { market = await api('/api/tcg/market'); rende
 async function loadTrades() { try { trades = await api('/api/tcg/trades'); renderCards(); } catch (e) { toast(e.message); } }
 
 function renderCards() {
+  try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   const box = $('#cbody'); if (!box || (!tcg && !(page === 'casino' && banActive()))) return;
   if (page === 'casino') ctab = 'casino';
   if (page === 'cards' && ctab === 'casino') ctab = 'sammlung';
@@ -3030,6 +3072,7 @@ function renderCards() {
   const sbig = document.querySelector('.ct-shopbig'); if (sbig) { sbig.classList.toggle('on', ctab === 'shop'); sbig.hidden = ctab === 'shop'; }
   const ctb = $('#ctabs'); if (ctb) ctb.hidden = ctab === 'shop';
   mkBadges();
+  if (page === 'cards' && ui2On() && ctab === 'khub') { box.innerHTML = renderKartenHub(); return; }
   const cn = $('#ctNew'); if (cn) { const nw = (tcg.def.packs || []).filter((p) => p.isNew && !p.hidden); cn.hidden = !nw.length; cn.textContent = nw.length ? 'NEU: ' + nw.map((p) => p.name.replace('-Booster', '')).join(', ') : 'NEU'; }
   const D = `<img src="/tcg/diamond.webp?v=${IMGV}" style="width:16px;height:16px;vertical-align:-3px" alt="">`;
   if (ctab === 'sammlung') {
@@ -3186,7 +3229,7 @@ function renderCards() {
     // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
     const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], more: ['wheel', 'rewards', 'crank', 'setup'] };
     const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
-    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
+    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : cgame === 'tablesHub' ? 'tables' : cgame === 'moreHub' ? 'more' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
     const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
     const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
     const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
@@ -3196,10 +3239,10 @@ function renderCards() {
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
         ${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
-      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center"><button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
+      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center">${['roulette', 'bj', 'tables', 'poker'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:tables">← Tische</button>' : ['vip', 'rewards', 'crank', 'setup'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:more">← Mehr</button>' : ''}<button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -5676,8 +5719,8 @@ function u2Act(a) {
   if (k === 'tab') {
     if (v === 'quiz') return go(() => { page = 'home'; render(); });
     if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; render(); loadTcg(); });
-    if (v === 'cards') return go(() => { page = 'cards'; ctab = window.__u2ctab || 'sammlung'; render(); loadTcg(); });
-    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; render(); loadTcg(); loadVip(); }); return; }
+    if (v === 'cards') return go(() => { page = 'cards'; ctab = 'khub'; render(); loadTcg(); });
+    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; else if (['roulette', 'bj'].includes(cgame) || (cgame === 'tables' && !bjT) || (cgame === 'poker' && !(pkState && pkState.me >= 0))) cgame = 'tablesHub'; else if (['vip', 'rewards', 'crank', 'setup'].includes(cgame)) cgame = 'moreHub'; render(); loadTcg(); loadVip(); }); return; }
     if (v === 'social') return go(() => { page = 'social'; render(); loadFriends(); });
   }
   if (k === 'go') {
@@ -5697,6 +5740,7 @@ function u2Act(a) {
     return;
   }
   if (k === 'daily') return dailyDialog();
+  if (k === 'chub') { const h = v + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'hub') { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'isle') return toast('🏝️ Deine Insel wächst mit deinem Prestige. Die Welten sind noch in Arbeit, bald gibt es hier mehr zu entdecken!');
   if (k === 'ann') { const g = $('#annBar'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
@@ -5904,6 +5948,7 @@ function build() {
   if (!S && page === 'cards') return `<div class="col">
     <div class="row"><button class="link" id="back">← Zurück</button><span class="grow"></span><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>
     <h1 style="font-size:30px">Karten</h1>
+    ${ui2On() ? '<button class="btn small ghost u2-back u2-kback" data-ct="khub">← Alle Karten-Bereiche</button>' : ''}
     <button class="ct-shopbig" data-ct="shop"><span class="csb-ic">🛒</span><span class="grow"><b>Shop</b><small>Booster kaufen</small></span><span class="ct-new" id="ctNew" hidden>NEU</span><span class="csb-go">›</span></button><div class="tabs2" id="ctabs"><button data-ct="sammlung">Sammlung</button><button data-ct="gegradet" class="ct-gold grading-only">🏅 Gegradet</button><button data-ct="inventar">Booster</button><button data-ct="traenke" class="ct-pot"><img src="/tcg/pot_xp.webp" alt="">Tränke</button><button data-ct="boerse" class="ct-boerse">💱 Börse · Handeln</button><button data-ct="verlauf">Verlauf</button><button data-ct="tausch">Tausch</button><button data-ct="melt">Umwandeln</button></div>
     <div id="cbody"></div>
     <div class="panel" style="margin-top:8px"><b>Kartenspiel</b><p class="sub">Duelle sind noch in Arbeit. Aktuell kannst du sammeln, kaufen, verkaufen und tauschen.</p><button class="btn ghost" disabled style="opacity:.5;margin-top:8px">Duell starten · in Arbeit</button></div>
@@ -6768,7 +6813,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
-  else if (t.dataset.ccat && t.dataset.ccat === 'slots' && document.body.classList.contains('ui2')) { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); }
+  else if (t.dataset.ccat && document.body.classList.contains('ui2')) { const h = t.dataset.ccat + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); }
   else if (t.dataset.ccat) { const C = window.__ccat || {}, ok = window.__cok || (() => true), last = (window.__clast || {})[t.dataset.ccat]; const list = (C[t.dataset.ccat] || []).filter(ok); const k = last && list.includes(last) ? last : list[0]; if (k) { tcStandQuiet(k); cgame = k === 'wheel' ? 'vip' : k; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); } }
   else if (t.dataset.cglock) { toast('🔒 Dieses Spiel ist gerade gesperrt. Schau später wieder vorbei!'); }
   else if (t.dataset.promo) { promoGo(t.dataset.promo); }
