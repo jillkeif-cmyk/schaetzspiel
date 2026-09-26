@@ -2428,6 +2428,13 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 .lg-homebox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,rgba(90,20,40,.55),rgba(20,8,24,.6));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)}
 .lg-homebox > b{font:800 13px Archivo,sans-serif;color:#FFE27A}
 body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
+
+.lg-hand2{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 4px;margin-top:4px}
+.lg-card2{padding:0;border:0;background:none;border-radius:8px;transition:transform .12s}
+.lg-card2.grp{margin-left:6px}
+.lg-card2 .pkc{width:42px!important;height:60px!important;font-size:13px}
+.lg-card2 .pkc b{font-size:17px}.lg-card2 .pkc i{font-size:15px}
+.lg-card2.sel{transform:translateY(-8px)}.lg-card2.sel .pkc{box-shadow:0 0 0 3px #7CF0A8,0 6px 12px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
@@ -2454,7 +2461,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '256';
+const AVER = '258';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3951,8 +3958,7 @@ function lgDraw() {
   if (S.state === 'lobby') ctl = me >= 0 ? (S.host === (home && home.me.id) ? `<div class="lg-btns"><button class="btn ghost" data-lga="bot">🤖 Bot dazu</button><button class="km-go" data-lga="start" ${seats.filter(Boolean).length < 3 ? 'disabled' : ''}>▶ Starten</button></div><small class="sub" style="text-align:center">Mindestens 3 Spieler, Bots zählen mit. Freunde finden den Tisch unter Tische → Lügen.</small>` : '<p class="lg-wait">Warte, bis der Eröffner startet …</p>') : '<p class="lg-wait">Du schaust zu.</p>';
   else if (S.state === 'end') ctl = `<p class="lg-wait">🏆 ${esc(S.winner.name)} gewinnt${S.winner.prize ? ' ' + fmt(S.winner.prize) + ' 💎' : ''}! Gleich geht's zurück an den Tisch.</p>`;
   else if (me >= 0) {
-    const avail = Math.min(innerWidth, 480) - 40, cwid = 58, ov = hand.length > 1 ? Math.max(-cwid + 14, Math.min(4, (avail - cwid * hand.length) / (hand.length - 1))) : 0; // Karten überlappen so, dass immer alle ins Bild passen
-    const cards = `<div class="lg-hand">${hand.map((c, k) => `<button class="lg-card ${lgSel.has(c.id) ? 'sel' : ''}" data-lgc="${c.id}" style="--k:${(k - (hand.length - 1) / 2).toFixed(2)};margin-left:${k ? ov.toFixed(1) : 0}px">${pkCard(c, true)}</button>`).join('')}</div>`;
+    const cards = `<div class="lg-hand2">${hand.map((c, k) => `<button class="lg-card2 ${lgSel.has(c.id) ? 'sel' : ''} ${k && hand[k - 1].r !== c.r ? 'grp' : ''}" data-lgc="${c.id}">${pkCard(c, true)}</button>`).join('')}</div>`; // nebeneinander, gleiche Werte beieinander, alles sichtbar
     const pickRank = mine && !S.rank ? `<div class="lg-ranks">${(S.ranks || []).map((r) => `<button class="${lgPick === r ? 'on' : ''}" data-lgr="${r}">${r}</button>`).join('')}</div>` : '';
     const n = lgSel.size, rk = S.rank || lgPick;
     const btns = mine ? `<div class="lg-btns">${S.pass && S.rank ? '<button class="btn ghost" data-lga="pass">Passen</button>' : ''}<button class="km-go" data-lga="play" ${n && rk ? '' : 'disabled'}>${n ? `${n}× ${rk ? LG_RN[rk] : '…'} legen` : S.rank ? `Karten wählen (als ${LG_RN[S.rank]})` : 'Wert wählen und Karten antippen'}</button></div>` : `<p class="lg-wait">${playing && seats[S.turn] ? `${esc(seats[S.turn].name)} ist dran …` : ''}</p>`;
@@ -4608,7 +4614,7 @@ async function openPack(pid) {
 
 // ---------- Spielanleitungen fürs Casino ----------
 const GUIDES = {
-  luegen: ['🃏 Lügen', [['Ziel', 'Werde als Erster alle Karten los. Wer dran ist, legt 1 bis 4 Karten verdeckt und sagt an, was es ist, zum Beispiel „2× Könige“. Das darf gelogen sein! In einer Runde bleibt der Wert gleich.'], ['LÜGE!', 'Nach jedem Legen kann jeder „LÜGE!“ drücken, bis der Nächste spielt (höchstens 5 Sekunden). War es gelogen, nimmt der Lügner den ganzen Stapel. War es ehrlich, nimmt ihn der Zweifler. Wer richtig lag, startet die nächste Runde mit einem neuen Wert.'], ['Passen', 'Der Tisch legt fest, ob gepasst werden darf. Mit Passen: Passen alle anderen nach einer Ansage, fliegt der Stapel aus dem Spiel und der letzte Leger beginnt neu. Ohne Passen: Man muss immer legen, notfalls lügen.'], ['Gewinnen', 'Wer die letzte Karte legt und dabei nicht erwischt wird, gewinnt den Pot. 3–4 Spieler: Skatblatt (32 Karten), 5–6 Spieler: volles Blatt (52).']]],
+  luegen: ['🃏 Lügen', [['Ziel', 'Werde als Erster alle Karten los. Wer dran ist, legt 1 bis 4 Karten verdeckt und sagt an, was es ist, zum Beispiel „2× Könige“. Das darf gelogen sein! In einer Runde bleibt der Wert gleich.'], ['LÜGE!', 'Nach jedem Legen kann jeder „LÜGE!“ drücken, bis der Nächste spielt (höchstens 7 Sekunden). Für deinen Zug hast du 40 Sekunden. War es gelogen, nimmt der Lügner den ganzen Stapel. War es ehrlich, nimmt ihn der Zweifler. Wer richtig lag, startet die nächste Runde mit einem neuen Wert.'], ['Passen', 'Der Tisch legt fest, ob gepasst werden darf. Mit Passen: Passen alle anderen nach einer Ansage, fliegt der Stapel aus dem Spiel und der letzte Leger beginnt neu. Ohne Passen: Man muss immer legen, notfalls lügen.'], ['Gewinnen', 'Wer die letzte Karte legt und dabei nicht erwischt wird, gewinnt den Pot. 3–4 Spieler: Skatblatt (32 Karten), 5–6 Spieler: volles Blatt (52).']]],
   lukas: ['🔨 Hau den Lukas', [['Ziel', 'Die Kraftnadel rast hin und her. Tipp auf „Hau drauf!“, wenn sie ganz rechts bei der Glocke ist. Je genauer, desto kräftiger der Schlag: halbe Kraft 0,3×, Einsatz zurück 1×, bärenstark 1,5×, an der Glocke 4×.'], ['Können und Glück', 'Dein Timing zählt, ein kleiner Glücksanteil bleibt wie beim echten Hammer. Wer perfekt trifft, bekommt auf Dauer rund 94 % zurück, wildes Drücken deutlich weniger.']]],
   race: ['🏇 Pferderennen', [['Ziel', 'Alle wetten gemeinsam: In der Wettphase (20 Sekunden) wählst du ein Pferd und deinen Einsatz. Dann läuft ein Rennen für alle. Gewinnt dein Pferd, bekommst du die Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Gemeinsam', 'An jeder Bahn siehst du, wer auf welches Pferd gesetzt hat. Jeder kann einmal pro Runde wetten.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
   lukas2: ['', [['Ziel', 'Fahr den Greifer mit ◀ ▶ über einen Preis und drück Greifen. Hält er, gewinnst du den Wert auf dem Schild: kleines Säckchen 1×, Säckchen 2×, Truhe 5×, goldene Truhe 15×.'], ['Chance', 'Je wertvoller, desto schwerer zu greifen: 95 %, 48 %, 19 % und 6 %. Jeder Preis hat damit dieselbe Auszahlungsquote von 95 %. Du wählst dein Risiko selbst.']]],

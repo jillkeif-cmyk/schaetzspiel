@@ -1123,6 +1123,8 @@ app.post('/api/casino/board', async (req, res) => {
 
 
 // ================= Kirmes & Rakete (erst nach Freigabe im Admin-Menü für alle sichtbar) =================
+process.on('uncaughtException', (e) => { console.error('UNERWARTETER FEHLER (Server läuft weiter):', e && e.stack || e); });
+process.on('unhandledRejection', (e) => { console.error('UNBEHANDELTE ABLEHNUNG (Server läuft weiter):', e && e.stack || e); });
 const KM = require('./lib/kirmes');
 Object.assign(GAME_NAMES, { lukas: 'Hau den Lukas', race: 'Pferderennen', pusher: 'Münzschieber', rocket: 'Rakete' });
 let kirmesLive = true, kirmesPot = KM.JACKPOT_SEED; // Kirmes und Rakete sind für alle freigegeben
@@ -1334,7 +1336,7 @@ const LG = require('./lib/luegen');
 GAME_NAMES.luegen = 'Lügen';
 let luegenLive = false; store.setting('luegen_live').then((v) => { luegenLive = v === '1'; }).catch(() => {});
 const LGT = new Map(); let lgNext = 1;
-const LG_FAST = Number(process.env.LG_FAST) || 1, LG_TURN = 25000 / LG_FAST, LG_DOUBT = 5000 / LG_FAST; // LG_FAST nur für Tests
+const LG_FAST = Number(process.env.LG_FAST) || 1, LG_TURN = 40000 / LG_FAST, LG_DOUBT = 7000 / LG_FAST; // mehr Bedenkzeit // LG_FAST nur für Tests
 const lgSeatOf = (t, uid) => t.seats.findIndex((p) => p && p.id === uid);
 const lgPublic = (t) => ({ id: t.id, host: t.hostName, stake: t.stake, pass: t.allowPass, max: t.max, count: t.seats.filter(Boolean).length, state: t.state });
 function lgView(t, uid) {
@@ -1383,7 +1385,7 @@ function lgDoubt(t, seat) {
   t.reveal = { cards: t.last.cards, lie, by: t.last.seat, doubter: seat, loser, n: all.length, rank: t.last.rank, at: Date.now() };
   lgLog(t, `${t.seats[seat].name} zweifelt: ${lie ? 'ERWISCHT!' : 'war ehrlich!'} ${t.seats[loser].name} nimmt ${all.length} Karten`);
   t.pile = []; t.rank = null; t.claimedThisRound = 0; t.last = null; lgEmit(t);
-  if (!lie && !t.seats[starter].cards.length) return setTimeout(() => lgWin(t, starter), 2600 / LG_FAST);
+  if (!lie && !t.seats[starter].cards.length) { setTimeout(() => lgWin(t, starter), 2600 / LG_FAST); return null; } // nie einen Timer zurückgeben (Absturz am 26.09.)
   setTimeout(() => { if (t.state === 'play') lgTurn(t, starter); }, 2800 / LG_FAST);
   return null;
 }
@@ -1401,7 +1403,7 @@ async function lgWin(t, seat) {
   lgLog(t, `🏆 ${w.name} ist alle Karten los und gewinnt${prize && !w.bot ? ' ' + fmtD(prize) + ' 💎' : ''}!`);
   for (const p of t.seats) if (p && !p.bot && t.stake) { try { const won = p === w ? prize : 0; if (won) { const u = await store.userById(p.id); note(`Lügen: gewonnen · Auszahlung ${fmtD(won)}`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) + won }); } await casinoStat(p.id, t.stake, won); if (won) await bigWin(p.id, 'Lügen', won); } catch (e) { console.error(e); } }
   lgEmit(t); console.log(`Lügen Tisch ${t.id}: ${w.name} gewinnt (Pot ${t.pot})`);
-  lgClearDoubt(t); t.tTurn = setTimeout(() => { t.state = 'lobby'; t.winner = null; t.reveal = null; t.pile = []; t.pot = 0; t.seats.forEach((p, i) => { if (p) { p.cards = []; if (p.away) t.seats[i] = null; } }); while (t.seats.length < 6) t.seats.push(null); t.max = 6; lgEmit(t); }, 12000 / LG_FAST);
+  lgClearDoubt(t); t.tTurn = setTimeout(() => { t.state = 'lobby'; t.winner = null; t.reveal = null; t.pile = []; t.pot = 0; t.seats.forEach((p, i) => { if (p) { p.cards = []; if (p.away) t.seats[i] = null; } }); while (t.seats.length < 6) t.seats.push(null); t.max = 6; lgCheckEmpty(t).then((gone) => { if (!gone) lgEmit(t); }); }, 12000 / LG_FAST);
 }
 async function lgStart(t) {
   const humans = t.seats.filter((p) => p && !p.bot);
@@ -1412,7 +1414,20 @@ async function lgStart(t) {
   const first = t.seats.map((p, i) => (p ? i : -1)).filter((i) => i >= 0); lgLog(t, `Los geht's! ${t.ranks.length === 8 ? 'Skatblatt (32 Karten)' : 'Volles Blatt (52 Karten)'}, ${t.allowPass ? 'mit' : 'ohne'} Passen`);
   lgTurn(t, first[Math.floor(Math.random() * first.length)]); return null;
 }
+async function lgCheckEmpty(t) { // kein echter Spieler mehr da: Tisch auflösen, bei laufender Partie Einsätze zurück
+  if (!LGT.has(t.id) || t.seats.some((p) => p && !p.bot && !p.away)) return false;
+  lgClear(t); lgClearDoubt(t); LGT.delete(t.id);
+  if (t.state === 'play' && t.stake) for (const p of t.seats) if (p && !p.bot) { try { const u = await store.userById(p.id); note(`Lügen: Tisch aufgelöst, Einsatz ${fmtD(t.stake)} zurück`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) + t.stake }); } catch (e) { console.error(e); } }
+  console.log(`Lügen Tisch ${t.id} aufgelöst: keine Spieler mehr`); io.to('lgLobby').emit('lg:list', [...LGT.values()].map(lgPublic)); return true;
+}
+function lgLeave(t, uid) { // gemeinsamer Weg für „Verlassen“ und Verbindungsabbruch
+  const i = lgSeatOf(t, uid); if (i < 0) return;
+  if (t.state !== 'play') { t.seats[i] = null; if (t.hostId === uid) { const nh = t.seats.find((p) => p && !p.bot); if (nh) { t.hostId = nh.id; t.hostName = nh.name; } } }
+  else { t.seats[i].away = true; if (t.turn === i && !t.doubtUntil) { clearTimeout(t.tTurn); t.tTurn = setTimeout(() => lgAuto(t, i), 1500); } }
+  lgCheckEmpty(t).then((gone) => { if (!gone) lgEmit(t); });
+}
 function lgSocket(socket) {
+  socket.on('disconnect', () => { const u = socket.data.user; if (!u) return; for (const t of LGT.values()) { const i = lgSeatOf(t, u.id); if (i < 0 || t.seats[i].away) continue; const still = [...io.sockets.sockets.values()].some((so) => so !== socket && so.data.user && so.data.user.id === u.id && so.rooms.has('lg:' + t.id)); if (!still) lgLeave(t, u.id); } });
   const me = () => socket.data.user;
   const ok = async () => { const u = me() && (await store.userById(me().id)); if (!u) return null; if (!luegenLive && !isAdmin(u)) return null; if (lockedGames.has('luegen')) return null; if (casinoBan(u)) return null; return u; };
   socket.on('lg:lobby', () => { socket.join('lgLobby'); socket.emit('lg:list', [...LGT.values()].map(lgPublic)); });
@@ -1427,17 +1442,14 @@ function lgSocket(socket) {
     if (d.watch || t.state !== 'lobby') { lgEmit(t); return reply({ ok: true, watch: true }); }
     const free = t.seats.findIndex((p) => !p); if (free < 0) { lgEmit(t); return reply({ ok: true, watch: true }); }
     t.seats[free] = { id: u.id, name: u.name, cards: [] }; lgEmit(t); reply({ ok: true }); });
-  socket.on('lg:leave', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return; socket.leave('lg:' + t.id); const i = lgSeatOf(t, u.id); if (i < 0) return;
-    if (t.state === 'lobby') { t.seats[i] = null; if (t.hostId === u.id) { const nh = t.seats.find((p) => p && !p.bot); if (nh) { t.hostId = nh.id; t.hostName = nh.name; } else { lgClear(t); LGT.delete(t.id); io.to('lgLobby').emit('lg:list', [...LGT.values()].map(lgPublic)); return; } } }
-    else { t.seats[i].away = true; if (t.turn === i && !t.doubtUntil) { clearTimeout(t.tTurn); t.tTurn = setTimeout(() => lgAuto(t, i), 1500); } }
-    lgEmit(t); });
+  socket.on('lg:leave', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return; socket.leave('lg:' + t.id); lgLeave(t, u.id); });
   socket.on('lg:bot', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return; const free = t.seats.findIndex((p) => !p); if (free < 0) return; const used = t.seats.filter(Boolean).map((p) => p.name); t.seats[free] = { id: -free - 1, bot: true, name: LG.BOT_NAMES.find((n) => !used.includes(n)) || 'Bot', cards: [] }; lgEmit(t); });
   socket.on('lg:kick', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return; const i = Number(d.seat); if (t.seats[i] && t.seats[i].bot) { t.seats[i] = null; lgEmit(t); } });
   socket.on('lg:start', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return reply({ error: 'Nur der Eröffner kann starten.' });
-    if (t.seats.filter(Boolean).length < 3) return reply({ error: 'Mindestens 3 Spieler (Bots zählen mit).' }); const err = await lgStart(t); reply(err ? { error: err } : { ok: true }); });
-  socket.on('lg:play', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPlay(t, lgSeatOf(t, u.id), d.ids, d.rank); reply(err ? { error: err } : { ok: true }); });
-  socket.on('lg:pass', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPass(t, lgSeatOf(t, u.id)); reply(err ? { error: err } : { ok: true }); });
-  socket.on('lg:doubt', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const i = lgSeatOf(t, u.id); if (i < 0) return reply({ error: 'Nur Spieler am Tisch können zweifeln.' }); const err = lgDoubt(t, i); reply(err ? { error: err } : { ok: true }); });
+    if (t.seats.filter(Boolean).length < 3) return reply({ error: 'Mindestens 3 Spieler (Bots zählen mit).' }); const err = await lgStart(t); reply(typeof err === 'string' ? { error: err } : { ok: true }); });
+  socket.on('lg:play', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPlay(t, lgSeatOf(t, u.id), d.ids, d.rank); reply(typeof err === 'string' ? { error: err } : { ok: true }); });
+  socket.on('lg:pass', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPass(t, lgSeatOf(t, u.id)); reply(typeof err === 'string' ? { error: err } : { ok: true }); });
+  socket.on('lg:doubt', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const i = lgSeatOf(t, u.id); if (i < 0) return reply({ error: 'Nur Spieler am Tisch können zweifeln.' }); const err = lgDoubt(t, i); reply(typeof err === 'string' ? { error: err } : { ok: true }); });
   socket.on('lg:emote', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return; const i = lgSeatOf(t, u.id); const e = String((d && d.e) || '').slice(0, 4); if (i < 0 || !e) return; io.to('lg:' + t.id).emit('lg:emote', { seat: i, e }); });
 }
 app.post('/api/admin/luegen', async (req, res) => {
