@@ -2258,6 +2258,19 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 .rk-mult.fly{animation:rkpulse .8s ease-in-out infinite}
 @keyframes rkpulse{50%{text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 30px rgba(124,240,168,.8)}}
 .rk-mult{top:9%!important}.rk-sub{top:30%!important}
+
+.pm-hud{position:absolute;left:50%;top:2.5%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;padding:6px 16px 7px;border-radius:14px;background:linear-gradient(180deg,rgba(40,10,60,.94),rgba(10,4,20,.94));box-shadow:inset 0 0 0 2px #FFD23F,0 0 22px rgba(255,210,63,.4);white-space:nowrap}
+.pm-hud span{font:900 9.5px Archivo,sans-serif;letter-spacing:1.5px;color:#FFE27A}
+.pm-hud b{font:400 26px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFF3C4;text-shadow:0 0 10px rgba(255,210,63,.6)}
+.pm-hud small{font:700 10.5px Archivo,sans-serif;color:#DCC8FF}
+.pm-seat{position:absolute;right:8px;bottom:8px;z-index:3;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.65);font:800 11px Archivo,sans-serif;color:#EAF6F8}
+.pm-ctl{display:flex;flex-direction:column;gap:8px}
+.pm-n{display:flex;gap:6px;justify-content:space-between}.pm-n .km-chip{flex:1;min-width:0}
+.km-go small{display:block;margin-top:3px;font:800 12px Archivo,sans-serif;color:#5A3B00;letter-spacing:0}
+.pm-leave{align-self:center}
+.pm-watch,.pm-note{text-align:center;font:700 13.5px/1.4 Archivo,sans-serif;color:#DCEFF2;margin:4px 0}.pm-note{font-size:12px;color:var(--muted)}
+.pm-last{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;font:700 11.5px Archivo,sans-serif;color:var(--muted)}.pm-last::-webkit-scrollbar{display:none}
+.pm-last span{flex:none;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06)}.pm-last b.up{color:#7CF0A8}
 </style>
 </head>
 <body>
@@ -2283,7 +2296,7 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '232';
+const AVER = '233';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3235,7 +3248,7 @@ function renderKirmesHub(box) {
     { key: 'lukas', name: 'Hau den Lukas', img: kmImg('i_lukas'), sub: 'Bis 8× an der Glocke' },
     { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: '6 Pferde, bis 28×' },
     { key: 'claw', name: 'Greifautomat', img: kmImg('i_claw'), sub: 'Bis 15× oder Booster' },
-    { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? 'Jackpot ' + fmt(kmInfo.pot) : 'Mit Jackpot für alle' },
+    { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? fmt(kmInfo.pot) + ' Münzen im Automaten' : 'Gemeinsamer Automat' },
   ].map((it) => ({ ...it, lock: isLocked(it.key), badge: tb(it.key), attr: `data-cg="${it.key}"` })));
   if (!kmInfo) kmLoad().then(() => { if (cgame === 'kirmesHub') renderCards(); });
 }
@@ -3246,7 +3259,7 @@ function renderKirmesGame(box, g) {
   const act = { lukas: '🔨 Hau drauf!', race: '🏁 Rennen starten', claw: '🕹️ Greifen!', pusher: '🪙 Münze einwerfen' }[g];
   box.innerHTML = `<div class="km-game km2-${g}"><div class="km2" id="km2">${stage}<div class="km2-banner" id="kmBanner"></div><div class="km2-fx" id="kmFx"></div></div>
     <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : g === 'pusher' ? 'Wirf Münzen ein und schieb sie über die Kante.' : '&nbsp;'}</div>
-    ${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button></div>`;
+    ${g === 'pusher' ? '<div class="pm-last" id="pmLast"></div><div class="pm-ctl" id="pmCtl"></div>' : `${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button>`}</div>`;
   if (g === 'pusher') pfStart();
 }
 const kmSleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -3281,14 +3294,14 @@ function kmLukasStage() {
 async function kmLukasAnim(r) {
   const n = $('#lkNeedle'); if (n) { n.style.animation = 'none'; n.style.left = `calc(${Math.min(97, r.height)}% - 3px)`; }
   const m = $('#lkMallet'); if (m) { m.classList.remove('swing'); void m.offsetWidth; m.classList.add('swing'); }
-  await kmSleep(260); sfx('dart'); kmShake(300);
+  await kmSleep(260); kmSnd('hit'); kmShake(300);
   const img = $('#km2 .lk-img'); const R = img ? img.getBoundingClientRect() : null, S = $('#km2').getBoundingClientRect();
   if (R) kmBurst(R.left - S.left + R.width * 0.5, R.top - S.top + R.height * 0.86, 16, 'spark');
   const pk = $('#lkPuck'), tr = $('#lkTrail'), dur = 350 + r.height * 7;
-  if (pk) { pk.style.transition = `top ${dur}ms cubic-bezier(.12,.85,.3,1)`; pk.style.top = LK_Y(r.height) + '%'; }
+  if (pk) { pk.style.transition = `top ${dur}ms cubic-bezier(.12,.85,.3,1)`; pk.style.top = LK_Y(r.height) + '%'; } kmSnd('whoosh', { d: dur / 1000 });
   if (tr) { tr.style.transition = `top ${dur}ms cubic-bezier(.12,.85,.3,1), opacity .3s`; tr.style.opacity = 1; tr.style.top = LK_Y(r.height) + '%'; }
   await kmSleep(dur);
-  if (r.height >= 100) { const b = $('#lkBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } sfx('prestige'); kmShake(600); if (R) kmBurst(R.left - S.left + R.width * 0.5, R.top - S.top + R.height * 0.06, 46, 'confetti'); }
+  if (r.height >= 100) { const b = $('#lkBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } kmSnd('bell'); kmShake(600); if (R) kmBurst(R.left - S.left + R.width * 0.5, R.top - S.top + R.height * 0.06, 46, 'confetti'); }
   await kmSleep(r.height >= 100 ? 900 : 450);
   if (pk) { pk.style.transition = `top ${400 + r.height * 5}ms cubic-bezier(.55,0,.85,.6)`; pk.style.top = LK_Y(0) + '%'; }
   if (tr) { tr.style.transition = 'opacity .4s'; tr.style.opacity = 0; }
@@ -3303,7 +3316,7 @@ async function kmRaceAnim(r) {
   const ids = kmInfo.horses.map((_, i) => $('#kmH' + i)); const cnt = $('#rcCount');
   for (const t of ['3', '2', '1', 'LOS!']) { if (cnt) { cnt.textContent = t; cnt.classList.remove('pop'); void cnt.offsetWidth; cnt.classList.add('pop'); } sfx('tick'); await kmSleep(t === 'LOS!' ? 380 : 520); }
   if (cnt) cnt.textContent = '';
-  ids.forEach((el) => el && el.classList.add('run'));
+  ids.forEach((el) => el && el.classList.add('run')); kmSnd('gallop', { n: 26 });
   const legs = [0.24, 0.5, 0.76].map((f, k) => r.legs[k].map((x) => Math.min(0.9, f * x)));
   const place = (el, p, ms, ease) => { if (!el) return; el.style.transition = `left ${ms}ms ${ease}`; el.style.left = `calc(${(p * 100).toFixed(1)}% - ${Math.round(p * 64)}px)`; };
   for (const pos of legs) { ids.forEach((el, i) => place(el, pos[i], 1250, 'linear')); await kmSleep(1250); }
@@ -3318,83 +3331,142 @@ function kmClawStage() {
 async function kmClawAnim(r) {
   const rig = $('#cwRig'), cab = $('#cwCable'), cl = $('#cwClaw'), pz = $('#cwPrize'); if (!rig) return;
   const x = 22 + Math.random() * 60;
-  rig.style.transition = 'left 1s cubic-bezier(.45,0,.3,1)'; rig.style.left = x + '%'; sfx('tick'); await kmSleep(1050);
-  cab.style.transition = 'height 1.1s cubic-bezier(.5,0,.7,1)'; cab.style.height = '52%'; await kmSleep(1150);
-  cl.src = kmImg('claw_closed'); sfx('dart'); await kmSleep(380);
+  rig.style.transition = 'left 1s cubic-bezier(.45,0,.3,1)'; rig.style.left = x + '%'; kmSnd('motor', { d: 1 }); await kmSleep(1050);
+  cab.style.transition = 'height 1.1s cubic-bezier(.5,0,.7,1)'; cab.style.height = '52%'; kmSnd('motor', { d: 1.1 }); await kmSleep(1150);
+  cl.src = kmImg('claw_closed'); kmSnd('clack'); await kmSleep(380);
   const prizeImg = r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : (r.mult > 0 || r.drop) ? kmImg('p_bag') : '';
   if (prizeImg) { pz.src = prizeImg; pz.className = 'cw-prize on ' + (r.mult >= 15 ? 'gold' : r.mult >= 5 ? 'mid' : ''); }
   cab.style.transition = 'height 1.2s cubic-bezier(.3,0,.3,1)'; cab.style.height = '4%'; await kmSleep(r.drop ? 600 : 1250);
   if (r.drop) { pz.classList.add('slip'); sfx('wrong'); await kmSleep(700); pz.className = 'cw-prize'; await kmSleep(600); }
   else if (prizeImg) {
-    rig.style.transition = 'left 1.1s cubic-bezier(.45,0,.3,1)'; rig.style.left = '10%'; await kmSleep(1150);
+    rig.style.transition = 'left 1.1s cubic-bezier(.45,0,.3,1)'; rig.style.left = '10%'; kmSnd('motor', { d: 1.1 }); await kmSleep(1150);
     cl.src = kmImg('claw_open'); pz.classList.add('drop'); await kmSleep(650);
     const S = $('#km2').getBoundingClientRect(); kmBurst(S.width * 0.1, S.height * 0.8, 24, r.mult >= 5 || r.pack ? 'confetti' : 'coins'); pz.className = 'cw-prize';
   }
   cl.src = kmImg('claw_open'); rig.style.transition = 'left .8s ease'; rig.style.left = '50%';
 }
-// ---------- Münzschieber: kleine Physik-Szene in Perspektive ----------
-// Weltkoordinaten: u = 0…1 quer über den Boden, v = 0 (vor dem Schieber) … 1 (Abwurfkante). Bild vermessen: Boden von 28 % bis 71 % Höhe.
-const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], budget: 0, push: 0, img: {}, last: 0, extra: 0 };
-function kmPushStage() { return `<div class="pf"><canvas id="pfCv"></canvas><div class="km-pot2" id="kmPot">JACKPOT <b>${fmt(kmInfo.pot)}</b> 💎<small>für alle</small></div><div class="pf-slot">⬇ Münzeinwurf</div></div>`; }
+// ---------- Kirmes-Klänge (Web Audio, synthetisch) ----------
+function kmSnd(name, opt = {}) {
+  if (muted || !actx || document.hidden) return; try { if (actx.state !== 'running') actx.resume().catch(() => {}); } catch (e) {}
+  const now = actx.currentTime + (opt.t || 0), out = actx.destination;
+  const osc = (type, f, t0, dur, v, f1) => { const o = actx.createOscillator(), g = actx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t0 + dur); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g).connect(out); o.start(t0); o.stop(t0 + dur + 0.02); };
+  const noise = (t0, dur, v, fType, f0, f1, q = 1) => { const n = Math.floor(actx.sampleRate * dur), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = fType; f.Q.value = q; f.frequency.setValueAtTime(f0, t0); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t0 + dur); const g = actx.createGain(); g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); s.connect(f).connect(g).connect(out); s.start(t0); };
+  if (name === 'coin') { const b = 2600 + Math.random() * 900; osc('sine', b, now, 0.16, 0.06); osc('sine', b * 1.48, now, 0.11, 0.035); noise(now, 0.03, 0.05, 'highpass', 5000); } // helles Münz-Klimpern
+  else if (name === 'coins') { const k = Math.min(26, opt.n || 8); for (let i = 0; i < k; i++) kmSnd('coin', { t: (opt.t || 0) + i * (0.045 + Math.random() * 0.05) }); noise(now, 0.5 + k * 0.03, 0.05, 'bandpass', 3200, 1800, 0.8); }
+  else if (name === 'slide') noise(now, 0.45, 0.035, 'lowpass', 900, 300);
+  else if (name === 'hit') { osc('sine', 150, now, 0.25, 0.35, 45); noise(now, 0.12, 0.25, 'lowpass', 1600, 200); }
+  else if (name === 'bell') [880, 1318, 1760, 2637, 3520].forEach((f, i) => osc('sine', f, now, 1.8 - i * 0.25, 0.09 / (i + 1) * 2));
+  else if (name === 'whoosh') noise(now, opt.d || 0.6, 0.06, 'bandpass', 400, 2400, 1.2);
+  else if (name === 'gallop') { for (let i = 0; i < (opt.n || 16); i++) { const t = now + i * 0.19; [0, 0.05, 0.11].forEach((dt, k) => { osc('sine', 110 - k * 15, t + dt, 0.07, 0.12); noise(t + dt, 0.05, 0.06, 'lowpass', 700); }); } }
+  else if (name === 'motor') { osc('sawtooth', 70, now, opt.d || 0.9, 0.025, 75); noise(now, opt.d || 0.9, 0.02, 'lowpass', 500); }
+  else if (name === 'clack') { noise(now, 0.06, 0.2, 'bandpass', 2400, 1400, 2); osc('square', 320, now, 0.05, 0.04); }
+  else if (name === 'boom') { noise(now, 1.2, 0.5, 'lowpass', 1800, 60); osc('sine', 80, now, 0.8, 0.4, 30); }
+  else if (name === 'jingle') [523, 659, 784, 1047, 1319].forEach((f, i) => { osc('triangle', f, now + i * 0.09, 0.35, 0.08); osc('sine', f * 2, now + i * 0.09, 0.2, 0.025); });
+  else if (name === 'fanfare') { [523, 659, 784, 1047].forEach((f, i) => osc('triangle', f, now + i * 0.12, 0.5, 0.1)); [1047, 1319, 1568].forEach((f) => osc('triangle', f, now + 0.55, 1.2, 0.07)); }
+  else if (name === 'engine') { osc('sawtooth', 55 + (opt.m || 1) * 6, now, 0.25, 0.018); noise(now, 0.25, 0.03, 'lowpass', 300 + (opt.m || 1) * 80); }
+}
+// ---------- Münzschieber: ein gemeinsamer Automat, Pool bleibt liegen, einer spielt, alle schauen zu ----------
+let pmS = null, pmN = 10, pmBusy = false;
+const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], budget: 0, push: 0, img: {}, extra: 0, target: 90 };
+function kmPushStage() {
+  return `<div class="pf"><canvas id="pfCv"></canvas>
+    <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small></div>
+    <div class="pm-seat" id="pmSeat"></div></div>`;
+}
+function pmCtl() { // Steuerung unter dem Automaten: Hinsetzen, Einwerfen, Zuschauen
+  const el = $('#pmCtl'), seat = $('#pmSeat'); if (!el || !pmS) return;
+  const me = home && home.me, mine = pmS.seat && me && pmS.seat.id === me.id, other = pmS.seat && !mine;
+  if (seat) seat.innerHTML = mine ? '🟢 Du spielst' : other ? `👀 ${esc(pmS.seat.name)} spielt` : '🟡 Frei';
+  if (mine) el.innerHTML = `<div class="pm-n">${[1, 5, 10, 25, 50, 100].map((n) => `<button class="km-chip ${pmN === n ? 'on' : ''}" data-pmn="${n}">${n}</button>`).join('')}</div>
+      <button class="km-go" id="pmDrop" data-pm="drop" ${pmBusy ? 'disabled' : ''}>🪙 ${pmN} ${pmN === 1 ? 'Münze' : 'Münzen'} einwerfen <small>${fmt(pmN * 100)} 💎</small></button>
+      <button class="btn small ghost pm-leave" data-pm="leave">Aufstehen</button>`;
+  else if (other) el.innerHTML = `<p class="pm-watch">👀 <b>${esc(pmS.seat.name)}</b> spielt gerade am Automaten. Du schaust live zu und kannst übernehmen, sobald der Platz frei ist.</p>`;
+  else el.innerHTML = `<button class="km-go" data-pm="sit">🪑 Hinsetzen und spielen</button><p class="pm-note">1 Münze = 100 💎 · Was im Automaten liegt, bleibt liegen. Du spielst weiter, wo andere aufgehört haben.</p>`;
+  const lst = $('#pmLast'); if (lst) lst.innerHTML = (pmS.last || []).slice(0, 4).map((x) => `<span>${esc(x.name)}: ${x.n} rein · <b class="${x.fell >= x.n ? 'up' : ''}">${x.fell} raus</b></span>`).join('');
+}
+function pmPoolShow(pool, anim) {
+  const b = $('#pmPool'), v = $('#pmVal'); if (!b) return;
+  const from = Number(String(b.textContent).replace(/\D/g, '')) || pool;
+  if (!anim || from === pool) { b.textContent = fmt(pool); } else { const t0 = performance.now(), d = 900; const st = (t) => { const k = Math.min(1, (t - t0) / d); b.textContent = fmt(Math.round(from + (pool - from) * k)); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
+  if (v) v.textContent = 'Münzen · ≈ ' + fmt(pool * 100) + ' 💎';
+  PF.target = 70 + Math.min(90, Math.round(pool / 30)); // mehr Pool = volleres Feld
+}
+async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
+async function pmAct(a) {
+  if (a === 'sit' || a === 'leave') { try { pmS = await api('/api/casino/kirmes/pusher/' + a, {}); kmSnd(a === 'sit' ? 'jingle' : 'slide'); } catch (e) { toast(e.message); } pmCtl(); return; }
+  if (a !== 'drop' || pmBusy) return;
+  if (pmN * 100 > kmDia()) return toast('So viele Diamanten hast du nicht.');
+  pmBusy = true; pmCtl();
+  try {
+    kmSetDia(kmDia() - pmN * 100);
+    const r = await api('/api/casino/kirmes/pusher', { n: pmN }); pmS = r.state;
+    await pmAnim(r.n, r.fell, r.avalanche);
+    kmSetDia(r.diamonds); pmPoolShow(r.pool, true);
+    if (r.fell) { const big = r.fell >= r.n * 3 || r.avalanche; kmBanner(r.avalanche ? 'LAWINE!' : r.fell >= r.n ? 'Münzregen!' : `${r.fell} ${r.fell === 1 ? 'Münze' : 'Münzen'} gefallen`, r.won, big); kmSnd(big ? 'fanfare' : 'jingle'); if (big) { const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.7, 40, 'coins'); } }
+    const m = $('#kmMsg'); if (m) m.innerHTML = r.fell ? `${r.n} rein · <b class="km-win">${r.fell} raus · +${fmt(r.won)} 💎</b>` : `${r.n} rein · diesmal ist nichts gefallen`;
+  } catch (e) { toast(e.message); loadTcg(); }
+  pmBusy = false; pmCtl();
+}
+async function pmAnim(n, fell, avalanche) { // für Spieler und Zuschauer gleich
+  const k = Math.min(12, n);
+  for (let i = 0; i < k; i++) { PF.drops.push({ u: 0.2 + Math.random() * 0.6, v: 0.14 + Math.random() * 0.08, t: 0 }); kmSnd('coin', { t: 0.35 }); await kmSleep(n > 12 ? 70 : 140); }
+  await kmSleep(650);
+  const vis = fell <= 40 ? fell : Math.round(40 + (fell - 40) / 12);
+  if (vis) { kmSnd('slide'); PF.budget += vis; PF.extra = Math.min(0.24, 0.05 + vis * 0.004) + (avalanche ? 0.08 : 0); if (avalanche) { const tw = PF.coins.filter((c) => c.h > 2).sort((a, b) => b.v - a.v)[0]; if (tw) tw.v = Math.max(tw.v, 0.9); } }
+  const t0 = Date.now(); let lastB = PF.budget, snd = 0;
+  while (PF.budget > 0 && Date.now() - t0 < 3200) { await kmSleep(70); if (PF.budget < lastB && Date.now() - snd > 150) { kmSnd('coins', { n: Math.min(8, lastB - PF.budget + 1) }); snd = Date.now(); } lastB = PF.budget; }
+  if (PF.budget > 0) { const front = PF.coins.sort((a, b) => b.v - a.v).slice(0, 6); front.forEach((c) => { c.v = 0.99; }); await kmSleep(600); }
+  PF.budget = 0; await kmSleep(300);
+}
 function pfLoad() { for (const [k, n] of [['bg', 'pf'], ['coin', 'coin'], ['dia', 'dia']]) if (!PF.img[k]) { const im = new Image(); im.src = n === 'dia' ? `/tcg/diamond.webp?v=${IMGV}` : kmImg(n); PF.img[k] = im; } }
 function pfInit() {
-  if (PF.coins.length) return; const C = []; // dichter Münzteppich, vorne ein paar Stapel, einzelne Diamanten
-  for (let k = 0; k < 86; k++) { const v = 0.12 + Math.random() * 0.86, u = 0.06 + Math.random() * 0.88; C.push({ u, v, z: 0, t: Math.random() < 0.025 ? 'dia' : 'coin', rot: Math.random() * 6.28 }); }
-  for (let k = 0; k < 24; k++) { const b = C[Math.floor(Math.random() * C.length)]; C.push({ u: b.u + (Math.random() - 0.5) * 0.02, v: b.v, z: 1, t: 'coin', rot: 0 }); }
+  if (PF.coins.length) return; const C = [];
+  for (let k = 0; k < 90; k++) C.push({ u: 0.06 + Math.random() * 0.88, v: 0.12 + Math.random() * 0.86, h: Math.random() < 0.18 ? 2 : 1, t: Math.random() < 0.025 ? 'dia' : 'coin' });
+  for (let k = 0; k < 5; k++) C.push({ u: 0.15 + Math.random() * 0.7, v: 0.3 + Math.random() * 0.5, h: 4 + Math.floor(Math.random() * 6), t: 'coin' }); // Münztürme
   PF.coins = C; for (let i = 0; i < 40; i++) pfStep(1 / 30, true);
 }
 const pfP = (u, v) => { const W = PF.W, H = PF.H, y = (PF.y0 + (PF.y1 - PF.y0) * v) * H, hw = (PF.w0 + (PF.w1 - PF.w0) * v) * W, s = PF.s0 + (PF.s1 - PF.s0) * v; return { x: W / 2 + (u - 0.5) * 2 * hw, y, s }; };
 function pfStep(dt, quiet) {
   const t = performance.now() / 1000; PF.push = 0.1 + 0.09 * (0.5 - 0.5 * Math.cos(t * 2.6)) + PF.extra; PF.extra = Math.max(0, PF.extra - dt * 0.05);
-  const R = 0.046, C = PF.coins.filter((c) => c.z === 0);
-  for (const c of C) if (c.v < PF.push + R) c.v = PF.push + R; // Schieber drückt
-  if (PF.budget > 0 && !quiet) { // Gewinn: vorderste Münzen rutschen sichtbar nacheinander über die Kante
-    const front = C.filter((c) => c.v > 0.62).sort((a, b) => b.v - a.v);
-    front.forEach((c, i) => { if (i < PF.budget + 3) c.v += dt * (0.22 + Math.max(0, 0.5 - i * 0.05)); });
-  }
+  const R = 0.046, C = PF.coins;
+  for (const c of C) if (c.v < PF.push + R) c.v = PF.push + R; // der Schieber drückt
+  if (PF.budget > 0 && !quiet) { const front = C.filter((c) => c.v > 0.6).sort((a, b) => b.v - a.v); front.forEach((c, i) => { if (i < PF.budget + 3) c.v += dt * (0.22 + Math.max(0, 0.5 - i * 0.05)); }); }
   C.sort((a, b) => a.v - b.v);
-  for (let it = 0; it < 3; it++) for (let i = 0; i < C.length; i++) for (let j = i + 1; j < C.length; j++) { // Münzen schieben sich gegenseitig nach vorn
-    const a = C[i], b = C[j], dv = b.v - a.v; if (dv > R * 1.6) break; const du = (b.u - a.u) * 1.4, d = Math.hypot(du, dv);
-    if (d < R && d > 0.0001) { const o = (R - d) * 0.6; b.v += (dv / d) * o; b.u = Math.min(0.96, Math.max(0.04, b.u + (du / d) * o * 0.4)); }
+  for (let it = 0; it < 3; it++) for (let i = 0; i < C.length; i++) for (let j = i + 1; j < C.length; j++) {
+    const a = C[i], b = C[j], dv = b.v - a.v; if (dv > R * 1.6) break; const du = (b.u - a.u) * 1.4, d = Math.hypot(du, dv), rr = R * (a.h > 2 || b.h > 2 ? 1.15 : 1);
+    if (d < rr && d > 0.0001) { const o = (rr - d) * 0.6; b.v += (dv / d) * o; b.u = Math.min(0.96, Math.max(0.04, b.u + (du / d) * o * 0.4)); }
   }
-  for (const s of PF.coins.filter((c) => c.z === 1)) { const base = C.find((c) => Math.abs(c.u - s.u) < 0.05 && Math.abs(c.v - s.v) < 0.05); if (base) { s.v = base.v; s.u = base.u; } else s.z = 0; }
-  for (const c of PF.coins) { // an der Kante: nur fallen, wenn das Server-Ergebnis Münzen freigibt, sonst hängen sie über
-    if (c.v > 0.985) { if (PF.budget > 0 && !quiet) { PF.budget--; c.fall = 0; c.x0 = pfP(c.u, 1).x; PF.falling.push(c); c.gone = true; } else c.v = 0.985 + Math.random() * 0.004; }
-  }
-  PF.coins = PF.coins.filter((c) => !c.gone);
-  if (PF.coins.length < 96) PF.coins.push({ u: 0.1 + Math.random() * 0.8, v: 0.1, z: 0, t: 'coin', rot: 0 }); // Nachschub hinten
+  for (const c of C) if (c.v > 0.985) { if (PF.budget > 0 && !quiet) { PF.budget = Math.max(0, PF.budget - c.h); c.fall = 0; c.x0 = pfP(c.u, 1).x; PF.falling.push(c); c.gone = true; } else c.v = 0.985 + Math.random() * 0.004; }
+  PF.coins = C.filter((c) => !c.gone);
+  if (PF.coins.length < PF.target && Math.random() < 0.3) PF.coins.push({ u: 0.1 + Math.random() * 0.8, v: 0.1, h: Math.random() < 0.12 ? 3 + Math.floor(Math.random() * 4) : 1, t: Math.random() < 0.02 ? 'dia' : 'coin' });
 }
 function pfDraw() {
   const cv = $('#pfCv'); if (!cv) return false; const ctx = cv.getContext('2d'), W = PF.W, H = PF.H;
   if (PF.img.bg.complete) ctx.drawImage(PF.img.bg, 0, 0, W, H); else { ctx.fillStyle = '#140a24'; ctx.fillRect(0, 0, W, H); }
-  // Schieber: Chrom-Kante, die vor- und zurückfährt
-  const pl = pfP(0.02, PF.push), pr = pfP(0.98, PF.push), b0 = pfP(0.02, Math.max(0, PF.push - 0.07)), b1 = pfP(0.98, Math.max(0, PF.push - 0.07));
-  const fh = 13 * pl.s; // Oberseite (dunkler Chrom) und Vorderkante (heller Chrom) des Schiebers
-  let g = ctx.createLinearGradient(0, b0.y, 0, pl.y); g.addColorStop(0, 'rgba(60,60,80,.0)'); g.addColorStop(1, 'rgba(120,125,145,.85)');
+  const pl = pfP(0.02, PF.push), pr = pfP(0.98, PF.push), b0 = pfP(0.02, Math.max(0, PF.push - 0.07)), b1 = pfP(0.98, Math.max(0, PF.push - 0.07)), fh = 13 * pl.s;
+  let g = ctx.createLinearGradient(0, b0.y, 0, pl.y); g.addColorStop(0, 'rgba(60,60,80,0)'); g.addColorStop(1, 'rgba(120,125,145,.85)');
   ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(pr.x, pl.y); ctx.lineTo(pl.x, pl.y); ctx.closePath(); ctx.fill();
   g = ctx.createLinearGradient(0, pl.y, 0, pl.y + fh); g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.35, '#C9CED9'); g.addColorStop(0.7, '#7E8494'); g.addColorStop(1, '#4B4F5E');
-  ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh);
-  ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
+  ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh); ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(pl.x, pl.y + fh, pr.x - pl.x, 6 * pl.s);
-  const cw = W * 0.095; // Münzbreite vorn
-  const all = [...PF.coins].sort((a, b) => a.v - b.v || a.z - b.z);
-  for (const c of all) {
+  const cw = W * 0.095, now = performance.now();
+  for (const c of [...PF.coins].sort((a, b) => a.v - b.v)) {
     const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62, im = c.t === 'dia' ? PF.img.dia : PF.img.coin;
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.06, p.y + h * 0.18, w * 0.5, h * 0.42, 0, 0, 6.29); ctx.fill();
-    const lift = c.z * h * 0.32, over = c.v > 0.98 ? Math.sin(performance.now() / 90 + c.u * 20) * 1.2 : 0;
-    if (im.complete) { if (c.t === 'dia') ctx.drawImage(im, p.x - w * 0.42, p.y - w * 0.62 - lift, w * 0.84, w * 0.84); else ctx.drawImage(im, p.x - w / 2, p.y - h / 2 - lift + over, w, h * 1.08); }
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.06, p.y + h * 0.18, w * 0.52, h * 0.44, 0, 0, 6.29); ctx.fill();
+    const wob = c.v > 0.98 ? Math.sin(now / 90 + c.u * 20) * 1.2 : 0;
+    if (!im.complete) continue;
+    if (c.t === 'dia') { ctx.drawImage(im, p.x - w * 0.42, p.y - w * 0.62, w * 0.84, w * 0.84); continue; }
+    for (let k = 0; k < c.h; k++) { const lean = c.h > 3 && c.v > 0.93 ? (k * k) * 0.25 * Math.sin(now / 120) : 0; ctx.drawImage(im, p.x - w / 2 + lean, p.y - h / 2 - k * h * 0.3 + wob, w, h * 1.08); } // Türme: gestapelt, wackeln an der Kante
   }
-  // fallende Münzen: über die Kante kippen, beschleunigt nach unten, dunkler werdend
   for (const f of PF.falling) {
     f.fall += 1 / 60; const k = f.fall, y = PF.y1 * H + 30 * k + 1100 * k * k, w = cw * (1 + k * 0.5), rot = Math.min(1.45, k * 5);
-    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k * 1.4); ctx.translate(f.x0, y); ctx.scale(1, Math.max(0.15, Math.cos(rot))); if (PF.img.coin.complete) ctx.drawImage(PF.img.coin, -w / 2, -w * 0.31, w, w * 0.67); ctx.restore();
+    for (let j = 0; j < Math.min(f.h, 6); j++) { ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k * 1.4); ctx.translate(f.x0 + (j - f.h / 2) * w * 0.35 * k * 4, y - j * 6 * (1 - k)); ctx.rotate(j * 0.4 * k); ctx.scale(1, Math.max(0.15, Math.cos(rot + j * 0.2))); if (PF.img.coin.complete) ctx.drawImage(PF.img.coin, -w / 2, -w * 0.31, w, w * 0.67); ctx.restore(); }
   }
   PF.falling = PF.falling.filter((f) => f.fall < 0.75);
-  // neu eingeworfene Münze: fällt von oben in den hinteren Bereich und prallt ab
   for (const d of PF.drops) {
     d.t += 1 / 60; const k = Math.min(1, d.t / 0.55), p = pfP(d.u, d.v), yy = -40 + (p.y + 40) * (k * k) - (k >= 1 ? Math.abs(Math.sin((d.t - 0.55) * 12)) * 10 * Math.max(0, 1 - (d.t - 0.55) * 3) : 0), w = cw * p.s * 1.1;
     if (PF.img.coin.complete) ctx.drawImage(PF.img.coin, p.x - w / 2, yy - w * 0.31, w, w * 0.67);
-    if (d.t > 0.9 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, z: 0, t: 'coin', rot: 0 }); }
+    if (d.t > 0.9 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, h: 1, t: 'coin' }); }
   }
   PF.drops = PF.drops.filter((d) => !d.done);
   return true;
@@ -3405,18 +3477,9 @@ function pfStart() {
   PF.W = r.width; PF.H = r.height; cv.width = PF.W * dpr; cv.height = PF.H * dpr; cv.style.width = PF.W + 'px'; cv.style.height = PF.H + 'px'; cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
   pfInit(); cancelAnimationFrame(window.__pfRaf || 0);
   const loop = () => { pfStep(1 / 60); if (!pfDraw()) return; window.__pfRaf = requestAnimationFrame(loop); }; window.__pfRaf = requestAnimationFrame(loop);
+  pmLoad();
 }
-async function kmPushAnim(r) {
-  PF.drops.push({ u: 0.25 + Math.random() * 0.5, v: 0.18, t: 0 }); sfx('tick'); await kmSleep(600);
-  PF.budget += r.coins; PF.extra = r.coins ? Math.min(0.22, 0.06 + r.coins * 0.006) : 0.03; // Schubser: mehr Münzen = kräftiger
-  const t0 = Date.now(); let lastB = PF.budget, lastSnd = 0;
-  while (PF.budget > 0 && Date.now() - t0 < 3000) { await kmSleep(80); if (PF.budget < lastB && Date.now() - lastSnd > 110) { sfx('jccount'); lastSnd = Date.now(); } lastB = PF.budget; }
-  if (PF.budget > 0) { // Rest sicher abwerfen: vorderste Münzen
-    const front = PF.coins.filter((c) => c.z === 0).sort((a, b) => b.v - a.v).slice(0, PF.budget); for (const c of front) { c.v = 0.99; } await kmSleep(700);
-  }
-  PF.budget = 0; await kmSleep(350);
-  const pot = $('#kmPot'); if (pot) pot.innerHTML = `JACKPOT <b>${fmt(r.pot)}</b> 💎<small>für alle</small>`; if (kmInfo) kmInfo.pot = r.pot;
-}
+
 // ---------- Ein Spielzug ----------
 async function kmPlay(g) {
   if (kmBusy) return; if (kmBet > kmDia()) return toast('So viele Diamanten hast du nicht.');
@@ -3426,14 +3489,14 @@ async function kmPlay(g) {
   try {
     kmSetDia(kmDia() - kmBet);
     const r = await api('/api/casino/kirmes/' + g, { bet: kmBet, horse: kmHorse });
-    if (g === 'lukas') await kmLukasAnim(r); else if (g === 'race') await kmRaceAnim(r); else if (g === 'claw') await kmClawAnim(r); else await kmPushAnim(r);
+    if (g === 'lukas') await kmLukasAnim(r); else if (g === 'race') await kmRaceAnim(r); else await kmClawAnim(r);
     kmSetDia(r.diamonds);
     const big = r.won >= kmBet * 3 || r.pack || r.jackpot;
     const title = g === 'race' ? (r.won ? `${kmInfo.horses[r.winner].name} gewinnt!` : `${kmInfo.horses[r.winner].name} gewinnt`) : r.jackpot ? 'JACKPOT!' : r.label;
     const img = g === 'race' ? kmImg('horse' + r.winner) : g === 'claw' && (r.mult > 0 || r.pack) ? (r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : kmImg('p_bag')) : '';
     kmBanner(title, r.won, big, img);
     if (msg) msg.innerHTML = r.won ? `Gewinn: <b class="km-win">+${fmt(r.won)} 💎</b>` : r.pack ? '<b class="km-win">Premium-Booster im Inventar!</b>' : 'Diesmal nicht. Nochmal?';
-    if (big) { sfx('prestige'); const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.45, 40, 'confetti'); } else if (r.won) sfx('win'); else sfx('wrong');
+    if (big) { kmSnd('fanfare'); const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.45, 40, 'confetti'); } else if (r.won) kmSnd('jingle'); else sfx('wrong');
     if (r.pack) loadTcg();
   } catch (e) { toast(e.message); loadTcg(); }
   kmBusy = false; if (go) go.disabled = false;
@@ -3461,7 +3524,7 @@ function rkDraw() {
   else ctl.innerHTML = `<p class="rk-wait">${me ? (me.cashed ? `✅ Ausgestiegen bei ${me.cashed.toFixed(2).replace('.', ',')}×` : rk.phase === 'crash' ? '💥 Leider abgestürzt' : '🚀 Du bist dabei. Viel Glück!') : rk.phase === 'fly' ? '🚀 Die Rakete fliegt. Nächste Runde bist du dabei!' : 'Runde vorbei, gleich geht’s weiter …'}</p>`;
   const bb = $('#rkBetBtn'); if (bb) bb.onclick = () => { rkAuto = ($('#rkAuto') || {}).value || ''; const a = parseFloat(String(rkAuto).replace(',', '.')); bb.disabled = true;
     socket.emit('rk:bet', { bet: rkBet, auto: a >= 1.01 ? a : null }, (r) => { bb.disabled = false; if (r && r.error) return toast(r.error); if (r && r.diamonds !== undefined) kmSetDia(r.diamonds); sfx('sent'); }); };
-  const cb = $('#rkCashBtn'); if (cb) cb.onclick = () => { cb.disabled = true; socket.emit('rk:cash', {}, (r) => { if (r && r.error) { toast(r.error); return; } if (r && r.won) { kmSetDia(kmDia() + r.won); sfx('win'); } }); };
+  const cb = $('#rkCashBtn'); if (cb) cb.onclick = () => { cb.disabled = true; socket.emit('rk:cash', {}, (r) => { if (r && r.error) { toast(r.error); return; } if (r && r.won) { kmSetDia(kmDia() + r.won); kmSnd('jingle'); } }); };
 }
 function rkLoop() {
   cancelAnimationFrame(rkRaf);
@@ -3476,6 +3539,7 @@ function rkLoop() {
       for (let k = 0; k <= 40; k++) { const tt = t * k / 40, mm = Math.exp(0.075 * tt); pts.push(`${(tt / span * W).toFixed(1)} ${(H - (mm - 1) / (top - 1) * (H - 16)).toFixed(1)}`); }
       path.setAttribute('d', 'M' + pts.join(' L')); const last = pts[pts.length - 1].split(' ').map(Number);
       ship.style.transform = `translate(${(last[0] / W * (sky.clientWidth - 60)).toFixed(0)}px, ${(-(H - last[1]) / H * (sky.clientHeight - 60)).toFixed(0)}px) rotate(-35deg)`; ship.className = 'rk-ship go';
+      if (!rkLoop.snd || performance.now() - rkLoop.snd > 260) { rkLoop.snd = performance.now(); kmSnd('engine', { m: Math.min(6, m) }); }
       const cv = $('#rkCashVal'); const me = home && rk.bets.find((b) => b.id === home.me.id); if (cv && me) cv.textContent = '+' + fmt(Math.round(me.bet * m)) + ' 💎';
     } else if (rk.phase === 'crash') { mult.textContent = rk.crash.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult crash'; sub.textContent = 'Abgestürzt!'; if (!ship.classList.contains('boom')) { ship.className = 'rk-ship boom'; const bm = $('#rkBoom'); if (bm) { const rr = ship.getBoundingClientRect(), sr = sky.getBoundingClientRect(); bm.style.left = (rr.left - sr.left + rr.width / 2) + 'px'; bm.style.top = (rr.top - sr.top + rr.height / 2) + 'px'; bm.classList.remove('go'); void bm.offsetWidth; bm.classList.add('go'); } sky.classList.remove('shake'); void sky.offsetWidth; sky.classList.add('shake'); } }
     rkRaf = requestAnimationFrame(step);
@@ -3484,8 +3548,11 @@ function rkLoop() {
 }
 function rkSocketInit() {
   if (!socket || socket.__rk) return; socket.__rk = true;
-  socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') sfx('wrong'); } });
+  socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') kmSnd('boom'); } });
   socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') { rkDraw(); const fl = $('#rkFloats'); if (fl) { const e = document.createElement('div'); e.className = 'rk-float' + (home && c.id === home.me.id ? ' me' : ''); e.style.left = (38 + Math.random() * 24) + '%'; e.innerHTML = `<b>${esc(c.name)}</b> ${c.m.toFixed(2).replace('.', ',')}× · +${fmt(c.won)} 💎`; fl.appendChild(e); setTimeout(() => e.remove(), 2400); } } });
+  socket.on('pm:ev', (ev) => { pmS = ev.state; if (page !== 'casino' || cgame !== 'pusher') return; pmCtl();
+    if (ev.type === 'drop' && !(home && ev.byId === home.me.id)) { pmAnim(ev.n, ev.fell, ev.avalanche).then(() => { pmPoolShow(ev.state.pool, true); const m = $('#kmMsg'); if (m) m.innerHTML = `👀 ${esc(ev.by)}: ${ev.n} rein · <b class="km-win">${ev.fell} raus</b>`; if (ev.fell >= ev.n * 3 || ev.avalanche) { kmBanner(ev.avalanche ? 'LAWINE!' : 'Münzregen!', ev.fell * 100, true); kmSnd('fanfare'); } }); }
+    else if (ev.type !== 'drop') pmPoolShow(ev.state.pool); });
   socket.on('kirmes:pot', (p) => { if (kmInfo) kmInfo.pot = p.pot; const el = $('#kmPot'); if (el) el.innerHTML = `Jackpot für alle <b>${fmt(p.pot)}</b> 💎`; });
   socket.on('kirmes:jackpot', (j) => toast(`🎰 ${j.name} hat den Münzschieber-Jackpot geknackt: ${fmt(j.amount)} 💎!`));
   socket.on('kirmes:live', () => { newsPosts = null; try { loadNews(); } catch (e) {} loadHome().then(() => { viewKey = ''; render(); }).catch(() => {}); }); // Update-Beitrag erscheint mit der Freigabe
@@ -7343,6 +7410,8 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.u2) { e.preventDefault(); u2Act(t.dataset.u2); return; } // neues Design
   if (t && t.dataset.kmb) { kmBetAct(t.dataset.kmb); return; }
   if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
+  if (t && t.dataset.pmn) { pmN = Number(t.dataset.pmn); pmCtl(); return; }
+  if (t && t.dataset.pm) { pmAct(t.dataset.pm); return; }
   if (t && t.dataset.kmhorse !== undefined) { if (kmBusy) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; return; }
   if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
   const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen

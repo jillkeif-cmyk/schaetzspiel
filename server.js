@@ -1142,7 +1142,7 @@ const kPay = async (u, game, bet, won, text) => { // Einsatz ab, Gewinn drauf, C
 };
 app.get('/api/casino/kirmes', async (req, res) => {
   const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-  res.json({ live: kirmesLive, pot: kirmesPot, horses: KM.HORSES.map((h) => ({ name: h.name, color: h.color, m: h.m })), lukas: KM.LUKAS.map((t) => ({ m: t.m, from: t.from, to: t.to, label: t.label })), claw: KM.CLAW.map((t) => ({ m: t.m, label: t.label, k: t.k })), push: KM.PUSH.map((t) => ({ m: t.m, label: t.label })), max: KMAX, min: MIN_BET });
+  res.json({ live: kirmesLive, pot: PM.pool, horses: KM.HORSES.map((h) => ({ name: h.name, color: h.color, m: h.m })), lukas: KM.LUKAS.map((t) => ({ m: t.m, from: t.from, to: t.to, label: t.label })), claw: KM.CLAW.map((t) => ({ m: t.m, label: t.label, k: t.k })), push: KM.PUSH.map((t) => ({ m: t.m, label: t.label })), max: KMAX, min: MIN_BET });
 });
 app.post('/api/casino/kirmes/lukas', async (req, res) => {
   try {
@@ -1170,17 +1170,43 @@ app.post('/api/casino/kirmes/claw', async (req, res) => {
     res.json({ ...r, won, diamonds: await kPay(u, 'claw', bet, won, r.label) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
+// ---------- Gemeinsamer Münzschieber: ein Platz, alle anderen schauen zu, der Pool bleibt liegen ----------
+const PM = { pool: KM.PM_SEED, cut: 0, seat: null, at: 0, last: [] };
+store.setting('pusher_state').then((v) => { if (v) { try { const o = JSON.parse(v); PM.pool = Math.max(0, Number(o.pool) || 0); PM.cut = Number(o.cut) || 0; } catch (e) {} } }).catch(() => {});
+const PM_IDLE = 90000;
+const pmFree = () => { if (PM.seat && Date.now() - PM.at > PM_IDLE) { PM.seat = null; } return !PM.seat; };
+const pmView = () => ({ pool: PM.pool, coin: KM.PM_COIN, cap: KM.PM_CAP, seat: pmFree() ? null : { id: PM.seat.id, name: PM.seat.name }, last: PM.last.slice(0, 8) });
+const pmEmit = (ev) => io.to('pusher').emit('pm:ev', { ...ev, state: pmView() });
+const pmSave = () => store.setting('pusher_state', JSON.stringify({ pool: PM.pool, cut: PM.cut })).catch(() => {});
+app.get('/api/casino/kirmes/pusher', async (req, res) => { const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' }); res.json(pmView()); });
+app.post('/api/casino/kirmes/pusher/sit', async (req, res) => {
+  const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+  if (!kirmesOk(u, res, 'pusher')) return;
+  if (!pmFree() && PM.seat.id !== u.id) return res.status(409).json({ error: `${PM.seat.name} spielt gerade. Du kannst zuschauen.` });
+  PM.seat = { id: u.id, name: u.name }; PM.at = Date.now(); pmEmit({ type: 'seat' }); res.json(pmView());
+});
+app.post('/api/casino/kirmes/pusher/leave', async (req, res) => {
+  const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+  if (PM.seat && PM.seat.id === u.id) { PM.seat = null; pmEmit({ type: 'seat' }); } res.json(pmView());
+});
+let pmBusy = false;
 app.post('/api/casino/kirmes/pusher', async (req, res) => {
+  if (pmBusy) return res.status(429).json({ error: 'Einen Moment, die Münzen rollen noch …' });
+  pmBusy = true;
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
-    if (!kirmesOk(u, res, 'pusher')) return; const bet = kBet(req, res, u); if (!bet) return;
-    const r = KM.pusher(); let won = Math.round(bet * r.mult), jackpot = 0;
-    kirmesPot += Math.round(bet * KM.JACKPOT_SHARE);
-    if (r.jackpot) { jackpot = kirmesPot; won += jackpot; kirmesPot = KM.JACKPOT_SEED; io.emit('kirmes:jackpot', { name: u.name, amount: jackpot }); }
-    store.setting('kirmes_pot', String(kirmesPot)).catch(() => {});
-    io.to('kirmes').emit('kirmes:pot', { pot: kirmesPot });
-    res.json({ ...r, won, jackpot, pot: kirmesPot, diamonds: await kPay(u, 'pusher', bet, won, jackpot ? `JACKPOT ${fmtD(jackpot)}` : r.label) });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+    if (!kirmesOk(u, res, 'pusher')) return;
+    if (!PM.seat || PM.seat.id !== u.id) return res.status(409).json({ error: 'Setz dich zuerst an den Münzschieber.' });
+    const n = Math.round(Number(req.body.n) || 0); if (!(n >= 1 && n <= 100)) return res.status(400).json({ error: 'Zwischen 1 und 100 Münzen pro Einwurf.' });
+    const bet = n * KM.PM_COIN, have = Number(u.diamonds) || 0; if (have < bet) return res.status(400).json({ error: 'So viele Diamanten hast du nicht.' });
+    PM.at = Date.now(); PM.cut += n * (1 - KM.PM_SHARE); const cutNow = Math.floor(PM.cut); PM.cut -= cutNow; // 5 % behält die Bank
+    PM.pool += n - cutNow;
+    const r = KM.pusherFall(PM.pool, n); PM.pool -= r.fell; const won = r.fell * KM.PM_COIN;
+    const after = await kPay(u, 'pusher', bet, won, `${n} Münzen eingeworfen, ${r.fell} gefallen · Pool ${PM.pool}`);
+    PM.last.unshift({ name: u.name, n, fell: r.fell, at: Date.now() }); PM.last = PM.last.slice(0, 12); pmSave();
+    pmEmit({ type: 'drop', by: u.name, byId: u.id, n, fell: r.fell, avalanche: r.avalanche });
+    res.json({ n, fell: r.fell, avalanche: r.avalanche, won, pool: PM.pool, diamonds: after, state: pmView() });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); } finally { pmBusy = false; }
 });
 app.post('/api/admin/kirmes', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
@@ -1220,6 +1246,8 @@ async function rkCrash() {
   RK.timer = setTimeout(rkWait, 3500);
 }
 function rkSocket(socket) {
+  socket.on('pm:join', () => { socket.join('pusher'); socket.emit('pm:ev', { type: 'state', state: pmView() }); });
+  socket.on('pm:leave', () => socket.leave('pusher'));
   socket.on('rk:join', () => { socket.join('rocket'); if (RK.phase === 'idle') rkWait(); else socket.emit('rk:state', rkPublic()); });
   socket.on('rk:leave', () => socket.leave('rocket'));
   socket.on('rk:bet', async (d, cb) => {
