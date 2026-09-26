@@ -2377,7 +2377,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '241';
+const AVER = '242';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3630,17 +3630,20 @@ function pfLayout() { // Spuren wie am echten Automaten: jede Münze bleibt in i
     col.sort((x, y) => y.tv - x.tv);
     const cap = 15; // so viele Münzen passen flach hintereinander in eine Spur, danach bildet sich eine zweite Lage
     col.forEach((c, i) => {
-      const pos = i % cap, layer = Math.floor(i / cap), mid = (b + 0.5) / K;
-      c.tv = Math.max(0.12, 0.972 - pos * 0.056 - (b % 2 ? 0.024 : 0) - (pfHash(b, pos) - 0.5) * 0.012);
-      c.tu = mid + (pfHash(pos, b + 3) - 0.5) * (0.9 / K) + (c.u - mid) * 0.15; // leicht versetzt: wirkt wie ein Teppich, bleibt aber in der Spur
+      if (c.jit === undefined) { c.jit = Math.random() - 0.5; c.jv = Math.random() - 0.5; } // fester Versatz pro Münze: ändert sich nie, also kein Zucken beim Vorrücken
+      const layer = i < cap ? 0 : 1 + Math.floor((i - cap) / cap), pos = i < cap ? i : cap - 1 - ((i - cap) % cap), mid = (b + 0.5) / K; // zweite Lage wächst von hinten, wo die Münzen landen
+      c.tv = Math.max(0.12, 0.972 - pos * 0.056 - (b % 2 ? 0.024 : 0) - c.jv * 0.012);
+      c.tu = mid + c.jit * (0.85 / K);
       c.z = layer;
       const tall = layer === 0 && pos < 2 ? Math.round(PF.press * 5 * pfHash(b, pos + 7)) : layer === 0 && pos < 4 ? Math.round(PF.press * 2 * pfHash(b, pos + 3)) : 0;
       if (c.t !== 'dia') c.h = 1 + tall;
     });
   });
   for (const c of PF.coins.filter((c) => c.lockH)) c.tv = Math.min(0.97, c.tv + 0.01); // frisch umgekippte Münzen liegen erst mal, wo sie gelandet sind
+  for (const c of PF.coins) if (c.tv < c.v) c.tv = c.v; // echte Münzen bewegen sich nie rückwärts
 }
-function pfResize(N, quiet) { // Anzahl an den Pool anpassen (still, z. B. beim Öffnen)
+function pfResize(N, quiet) { // Anzahl an den Pool anpassen (still beim Öffnen, sonst fallen fehlende Münzen sichtbar ein)
+  if (!quiet && PF.coins.length < N) { const need = Math.min(12, N - PF.coins.length); for (let i = 0; i < need; i++) setTimeout(() => PF.drops.push({ u: 0.12 + Math.random() * 0.76, v: 0.14 + Math.random() * 0.08, t: 0 }), i * 70); if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; } pfLayout(); return; }
   while (PF.coins.length < N) { const u = quiet ? ((PF.coins.length * 0.618) % 1) * 0.9 + 0.05 : 0.1 + Math.random() * 0.8; PF.coins.push({ u, v: quiet ? 0.5 : 0.14, tv: 0.14, tu: u, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' }); }
   if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; }
   pfLayout(); if (quiet) PF.coins.forEach((c) => { c.v = c.tv; c.u = c.tu; });
@@ -3649,8 +3652,8 @@ function pfInit() { if (PF.inited) return; PF.inited = true; PF.press = pfPress(
 const pfP = (u, v) => { const W = PF.W, H = PF.H, y = (PF.y0 + (PF.y1 - PF.y0) * v) * H, hw = (PF.w0 + (PF.w1 - PF.w0) * v) * W, s = PF.s0 + (PF.s1 - PF.s0) * v; return { x: W / 2 + (u - 0.5) * 2 * hw, y, s }; };
 function pfStep(dt) {
   const t = performance.now() / 1000; PF.push = 0.03 + 0.07 * (0.5 - 0.5 * Math.cos(t * 2.4));
-  const k = Math.min(1, dt * 4.2);
-  for (const c of PF.coins) { c.v += (c.tv - c.v) * k; c.u += ((c.tu ?? c.u) - c.u) * k; }
+  const k = Math.min(1, dt * 4.2), vmax = dt * 0.55, umax = dt * 0.12; // weich, aber nie sprunghaft
+  for (const c of PF.coins) { const dv = (c.tv - c.v) * k, du = ((c.tu ?? c.u) - c.u) * k; c.v += Math.max(-vmax, Math.min(vmax, dv)); c.u += Math.max(-umax, Math.min(umax, du)); }
 }
 function pfTopple() { // höchsten Turm im vorderen Bereich umkippen lassen
   const tw = PF.coins.filter((c) => c.h >= 4 && c.tv > 0.55 && !c.tip).sort((a, b) => b.h - a.h)[0]; if (!tw) return false;
@@ -3707,9 +3710,10 @@ function pfDraw() {
   for (const d of PF.drops) {
     d.t += 1 / 60; const k = Math.min(1, d.t / 0.5), p = pfP(d.u, d.v), yy = PF.y0 * H * 0.35 + (p.y - PF.y0 * H * 0.35) * (k * k) - (k >= 1 ? Math.abs(Math.sin((d.t - 0.5) * 14)) * 8 * Math.max(0, 1 - (d.t - 0.5) * 3.5) : 0), w = cw * p.s * 1.05;
     if (coinOK) ctx.drawImage(PF.img.coin, p.x - w / 2, yy - w * 0.31, w, w * 0.67);
-    if (d.t > 0.8 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, tv: d.v, tu: d.u, h: 1, t: 'coin' }); }
+    if (d.t > 0.8 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, tv: d.v, tu: d.u, h: 1, t: 'coin' }); PF.dirty = true; }
   }
   PF.drops = PF.drops.filter((d) => !d.done);
+  if (PF.dirty && !PF.drops.length) { PF.dirty = false; pfLayout(); } // erst wenn alle gelandet sind, einmal sanft einsortieren
   return true;
 }
 function pfStart() {
