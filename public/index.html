@@ -2348,6 +2348,10 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 .pm-press span{position:relative;display:block;text-align:center;font:800 10px/16px Archivo,sans-serif;color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.2px}
 .pm-press.hot{animation:pmhot 1s ease-in-out infinite}
 @keyframes pmhot{50%{box-shadow:inset 0 0 0 1px #FFD23F,0 0 12px rgba(255,90,60,.8)}}
+
+.rc-bets{position:absolute;left:92px;bottom:1px;display:flex;gap:3px;z-index:3;pointer-events:none}
+.rc-bets i{font:800 8.5px/1 Archivo,sans-serif;font-style:normal;padding:2px 5px;border-radius:99px;background:rgba(0,0,0,.65);color:#FFE27A;white-space:nowrap}
+#rcBtn:disabled{filter:none;background:linear-gradient(180deg,#2C6B75,#16434B);color:#FFE27A;box-shadow:inset 0 0 0 2px rgba(255,210,63,.45)}
 </style>
 </head>
 <body>
@@ -2373,7 +2377,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '239';
+const AVER = '241';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3323,7 +3327,7 @@ function renderKirmesHub(box) {
   const tb = (k) => (home && home.tabBadges && home.tabBadges[k]) || '';
   box.innerHTML = `<div class="km-hubhead"><img src="${kmImg('carnival')}" alt=""><span><b>Kirmes</b><small>Rummel-Spaß mit Diamanten</small></span></div>` + u2Tiles([
     { key: 'lukas', name: 'Hau den Lukas', img: kmImg('i_lukas'), sub: 'Bis 8× an der Glocke' },
-    { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: '6 Pferde, bis 28×' },
+    { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: 'Gemeinsam wetten, bis 28×' },
     { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? fmt(kmInfo.pot) + ' Münzen im Automaten' : 'Gemeinsamer Automat' },
   ].map((it) => ({ ...it, lock: isLocked(it.key), badge: tb(it.key), attr: `data-cg="${it.key}"` })));
   if (!kmInfo) kmLoad().then(() => { if (cgame === 'kirmesHub') renderCards(); });
@@ -3335,8 +3339,8 @@ function renderKirmesGame(box, g) {
   const act = { lukas: '🔨 Hau drauf!', race: '🏁 Rennen starten', claw: '🕹️ Greifen!', pusher: '🪙 Münze einwerfen' }[g];
   box.innerHTML = `<div class="km-game km2-${g}"><div class="km2" id="km2">${stage}<div class="km2-banner" id="kmBanner"></div><div class="km2-fx" id="kmFx"></div></div>
     <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : g === 'pusher' ? 'Wirf Münzen ein und schieb sie über die Kante.' : '&nbsp;'}</div>
-    ${g === 'pusher' ? '<div class="pm-last" id="pmLast"></div><div class="pm-ctl" id="pmCtl"></div>' : g === 'claw' ? `${kmBetBar(kmBet, 'km')}<div class="cw-ctl"><button class="cw-mv" data-cwmv="-1" aria-label="Links">◀</button><button class="km-go" id="kmGo" data-kmgo="claw">🕹️ Greifen!</button><button class="cw-mv" data-cwmv="1" aria-label="Rechts">▶</button></div>` : `${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button>`}</div>`;
-  if (g === 'pusher') pfStart(); if (g === 'claw') cwBind(); if (g === 'lukas') lkNeedleStart();
+    ${g === 'pusher' ? '<div class="pm-last" id="pmLast"></div><div class="pm-ctl" id="pmCtl"></div>' : g === 'race' ? `${kmBetBar(kmBet, 'km')}<button class="km-go" id="rcBtn" data-rcbet="1">🎟️ Wette platzieren</button>` : g === 'claw' ? `${kmBetBar(kmBet, 'km')}<div class="cw-ctl"><button class="cw-mv" data-cwmv="-1" aria-label="Links">◀</button><button class="km-go" id="kmGo" data-kmgo="claw">🕹️ Greifen!</button><button class="cw-mv" data-cwmv="1" aria-label="Rechts">▶</button></div>` : `${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button>`}</div>`;
+  if (g === 'pusher') pfStart(); if (g === 'claw') cwBind(); if (g === 'lukas') lkNeedleStart(); if (g === 'race') { rcAnimRound = 0; socket.emit('rc:join'); if (rcS) rcOnState(rcS); }
 }
 const kmSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------- Effekte: Funken, Konfetti, Münzen, Wackeln, Gewinn-Banner ----------
@@ -3388,6 +3392,43 @@ function kmRaceStage() {
   return `<div class="rc" style="--bg:url(${kmImg('track')})"><div class="rc-com" id="rcCom">Tipp auf dein Pferd</div><div class="rc-finish"></div><div class="rc-count" id="rcCount"></div><div class="rc-flash" id="rcFlash"></div>
     ${kmInfo.horses.map((h, i) => `<button class="rc-lane ${kmHorse === i ? 'pick' : ''}" data-kmhorse="${i}" style="--hc:${h.color};--i:${i}"><span class="rc-tag"><b>${i + 1}</b><span>${esc(h.name)}<small>${String(h.m).replace('.', ',')}×</small></span></span><span class="rc-run"><img class="rc-horse" id="kmH${i}" src="${kmImg('horse' + i)}" alt=""></span></button>`).join('')}</div>`;
 }
+// ---------- Pferderennen gemeinsam ----------
+let rcS = null, rcOff = 0, rcAnimRound = 0, rcMsg = '';
+function rcMine() { return rcS && home && rcS.bets.find((b) => b.id === home.me.id); }
+function rcDraw() { // Wetten an den Bahnen, Knopf, Status
+  if (!rcS || !$('.rc')) return;
+  document.querySelectorAll('.rc-lane').forEach((l, i) => { let t = l.querySelector('.rc-bets'); if (!t) { t = document.createElement('span'); t.className = 'rc-bets'; l.appendChild(t); } const bs = rcS.bets.filter((b) => b.horse === i); t.innerHTML = bs.slice(0, 3).map((b) => `<i>${esc(b.name)} ${chipTxt(b.bet)}</i>`).join('') + (bs.length > 3 ? `<i>+${bs.length - 3}</i>` : ''); });
+  const me = rcMine(), btn = $('#rcBtn');
+  if (me) kmHorse = me.horse;
+  document.querySelectorAll('.rc-lane').forEach((l, i) => l.classList.toggle('pick', i === kmHorse));
+  if (btn) { const open = rcS.phase === 'bet' && !me; btn.disabled = !open; btn.innerHTML = me ? `🎟️ Deine Wette: ${esc(kmInfo.horses[me.horse].name)} · ${fmt(me.bet)} 💎` : rcS.phase === 'bet' ? `🎟️ Auf ${esc(kmInfo.horses[kmHorse].name)} wetten` : rcS.phase === 'run' ? '🏇 Rennen läuft …' : 'Gleich startet die nächste Wettrunde'; }
+}
+function rcTick() { // Countdown der Wettphase
+  if (!rcS || !$('#rcCom') || rcS.phase !== 'bet') return; const s = Math.max(0, Math.ceil((rcS.until - (Date.now() + rcOff)) / 1000));
+  $('#rcCom').innerHTML = `🎟️ Wetten offen · noch <b>${s} s</b> · ${rcS.bets.length} ${rcS.bets.length === 1 ? 'Wette' : 'Wetten'}`;
+}
+setInterval(rcTick, 500);
+function rcOnState(st) {
+  const prev = rcS; rcS = st; rcOff = st.now - Date.now();
+  if (page !== 'casino' || cgame !== 'race' || !kmInfo) return;
+  rcDraw(); rcTick();
+  if (st.phase === 'bet') rcMsg = ''; else if (st.phase === 'done' && rcMsg && $('#kmMsg') && !(prev && prev.phase === 'run')) $('#kmMsg').innerHTML = rcMsg;
+  if (st.phase === 'run' && rcAnimRound !== st.round) { rcAnimRound = st.round; const me = rcMine(); kmRaceAnim(st.result, Date.now() + rcOff - st.startAt, me ? me.horse : kmHorse); }
+  if (st.phase === 'done' && prev && prev.phase === 'run') {
+    const me = rcMine(), w = st.result.winner;
+    kmBanner(me ? (me.won ? `${kmInfo.horses[w].name} gewinnt!` : `${kmInfo.horses[w].name} gewinnt`) : `${kmInfo.horses[w].name} gewinnt!`, me ? me.won : 0, me && me.won >= me.bet * 3, kmImg('horse' + w));
+    const winners = st.bets.filter((b) => b.won); const m = $('#kmMsg');
+    rcMsg = me ? (me.won ? `Gewonnen: <b class="km-win">+${fmt(me.won)} 💎</b>` : 'Diesmal nicht. Nächste Runde gleich!') : winners.length ? `🏆 ${winners.map((b) => esc(b.name)).join(', ')} ${winners.length === 1 ? 'hat' : 'haben'} gewonnen` : 'Niemand hatte das richtige Pferd.';
+    if (m) m.innerHTML = rcMsg;
+    if (me && me.won) { kmSetDia(kmDia() + me.won); kmSnd(me.won >= me.bet * 3 ? 'fanfare' : 'jingle'); const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.4, 40, 'confetti'); } // Gewinn direkt anrechnen, ohne die Seite neu zu zeichnen
+  }
+}
+function rcBet() {
+  if (!rcS || rcS.phase !== 'bet') return toast('Die Wetten sind gerade geschlossen.');
+  if (kmBet > kmDia()) return toast('So viele Diamanten hast du nicht.');
+  const b = $('#rcBtn'); if (b) b.disabled = true;
+  socket.emit('rc:bet', { horse: kmHorse, bet: kmBet }, (r) => { if (r && r.error) { toast(r.error); rcDraw(); return; } if (r && r.diamonds !== undefined) kmSetDia(r.diamonds); kmSnd('coin'); });
+}
 // ---------- Hau den Lukas: echte Kraftnadel ----------
 const LK = { p: 0, dir: 1, raf: 0, frozen: false, t0: 0 };
 function lkNeedleStart() {
@@ -3401,19 +3442,19 @@ function lkNeedleStart() {
   LK.raf = requestAnimationFrame(step);
 }
 // ---------- Pferderennen: lang, mit Führungswechseln, Kommentar und Zeitlupe ----------
-async function kmRaceAnim(r) {
+async function kmRaceAnim(r, skip = 0, myHorse = kmHorse) {
   const H = kmInfo.horses, ids = H.map((_, i) => $('#kmH' + i)), cnt = $('#rcCount'), com = $('#rcCom');
   const place = (el, p) => { if (el) el.style.left = `calc(${(p * 100).toFixed(2)}% - ${(p * 54).toFixed(1)}px)`; };
   ids.forEach((el) => { if (el) { el.style.transition = 'none'; place(el, 0); el.classList.remove('run'); } }); // immer zurück an die Startlinie
   document.querySelectorAll('.rc-lane').forEach((l) => l.classList.remove('win', 'lead'));
   void document.body.offsetWidth; if (com) com.textContent = 'Die Pferde gehen in die Startboxen …';
-  for (const t of ['3', '2', '1', 'LOS!']) { if (cnt) { cnt.textContent = t; cnt.classList.remove('pop'); void cnt.offsetWidth; cnt.classList.add('pop'); } kmSnd(t === 'LOS!' ? 'clack' : 'coin'); await kmSleep(t === 'LOS!' ? 350 : 600); }
+  if (skip < 2000) for (const t of ['3', '2', '1', 'LOS!']) { if (cnt) { cnt.textContent = t; cnt.classList.remove('pop'); void cnt.offsetWidth; cnt.classList.add('pop'); } kmSnd(t === 'LOS!' ? 'clack' : 'coin'); await kmSleep(t === 'LOS!' ? 350 : 600); }
   if (cnt) cnt.textContent = '';
   ids.forEach((el) => el && el.classList.add('run'));
   const legs = [H.map(() => 0), ...r.legs], K = legs.length - 1, D = 9000, D2 = 3200; // 9 s Rennen, 3,2 s Zeitlupe auf der Zielgeraden
   const posAt = (x) => { const f = Math.max(0, Math.min(K, x * K)), k = Math.max(0, Math.min(K - 1, Math.floor(f))), u = f - k, e = u * u * (3 - 2 * u); return H.map((_, i) => legs[k][i] + (legs[k + 1][i] - legs[k][i]) * e); };
   kmSnd('gallop', { n: 64 });
-  let lead = -1, lastCom = 0; const mine = kmHorse, t0 = performance.now();
+  let lead = -1, lastCom = 0; const mine = myHorse >= 0 ? myHorse : 0, t0 = performance.now() - Math.max(0, skip - 2150);
   await new Promise((done) => {
     const step = (t) => {
       const el = Math.max(0, t - t0); let x; // erstes Bild kann minimal vor dem Start liegen
@@ -3572,21 +3613,35 @@ function pfSlots(N, press) { // Plätze von der Kante nach hinten, dicht gepackt
   const out = []; let row = 0;
   for (let v = 0.972; out.length < N && v > 0.1; v -= 0.038, row++) {
     const hw = PF.w0 + (PF.w1 - PF.w0) * v, cap = Math.max(4, Math.round((hw / PF.w1) * 12.5));
-    for (let i = 0; i < cap && out.length < N; i++) {
-      const u = 0.05 + (i + 0.5 + (pfHash(row, i) - 0.5) * 0.55 + (row % 2 ? 0.25 : -0.25)) / cap * 0.9;
-      const tall = row < 2 ? Math.round(press * 5 * pfHash(i, row + 7)) : row < 4 ? Math.round(press * 2 * pfHash(i, row + 3)) : 0;
-      out.push({ u: Math.max(0.05, Math.min(0.95, u)), v: v + (pfHash(i, row) - 0.5) * 0.012, h: 1 + tall });
+    const rowN = Math.min(cap, N - out.length); // halbe Reihe: Plätze gleichmäßig über die ganze Breite, nicht nur links
+    for (let j = 0; j < rowN; j++) {
+      const i = (j + 0.5) * cap / rowN - 0.5;
+      const u = 0.05 + (i + 0.5 + (pfHash(row, j) - 0.5) * 0.55 + (row % 2 ? 0.25 : -0.25)) / cap * 0.9;
+      const tall = row < 2 ? Math.round(press * 5 * pfHash(j, row + 7)) : row < 4 ? Math.round(press * 2 * pfHash(j, row + 3)) : 0;
+      out.push({ u: Math.max(0.05, Math.min(0.95, u)), v: v + (pfHash(j, row) - 0.5) * 0.012, h: 1 + tall, row });
     }
   }
   return out;
 }
-function pfLayout() { // Münzen den Plätzen zuordnen: die vorderste Münze auf den vordersten Platz → alles rutscht nach vorn
-  const slots = pfSlots(PF.coins.length, PF.press);
-  const cs = PF.coins.slice().sort((a, b) => b.tv - a.tv || a.u - b.u);
-  cs.forEach((c, k) => { const s = slots[k] || { u: c.u, v: 0.14, h: 1 }; c.tv = s.v; c.tu = s.u; if (c.t !== 'dia') c.h = s.h; });
+function pfLayout() { // Spuren wie am echten Automaten: jede Münze bleibt in ihrer Spur und wird nur nach vorn geschoben
+  const K = 12, cols = Array.from({ length: K }, () => []);
+  for (const c of PF.coins) { if (c.lockH) continue; cols[Math.max(0, Math.min(K - 1, Math.floor(c.u * K)))].push(c); }
+  cols.forEach((col, b) => {
+    col.sort((x, y) => y.tv - x.tv);
+    const cap = 15; // so viele Münzen passen flach hintereinander in eine Spur, danach bildet sich eine zweite Lage
+    col.forEach((c, i) => {
+      const pos = i % cap, layer = Math.floor(i / cap), mid = (b + 0.5) / K;
+      c.tv = Math.max(0.12, 0.972 - pos * 0.056 - (b % 2 ? 0.024 : 0) - (pfHash(b, pos) - 0.5) * 0.012);
+      c.tu = mid + (pfHash(pos, b + 3) - 0.5) * (0.9 / K) + (c.u - mid) * 0.15; // leicht versetzt: wirkt wie ein Teppich, bleibt aber in der Spur
+      c.z = layer;
+      const tall = layer === 0 && pos < 2 ? Math.round(PF.press * 5 * pfHash(b, pos + 7)) : layer === 0 && pos < 4 ? Math.round(PF.press * 2 * pfHash(b, pos + 3)) : 0;
+      if (c.t !== 'dia') c.h = 1 + tall;
+    });
+  });
+  for (const c of PF.coins.filter((c) => c.lockH)) c.tv = Math.min(0.97, c.tv + 0.01); // frisch umgekippte Münzen liegen erst mal, wo sie gelandet sind
 }
 function pfResize(N, quiet) { // Anzahl an den Pool anpassen (still, z. B. beim Öffnen)
-  while (PF.coins.length < N) PF.coins.push({ u: 0.1 + Math.random() * 0.8, v: quiet ? 0.5 : 0.14, tv: 0.14, tu: 0.5, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' });
+  while (PF.coins.length < N) { const u = quiet ? ((PF.coins.length * 0.618) % 1) * 0.9 + 0.05 : 0.1 + Math.random() * 0.8; PF.coins.push({ u, v: quiet ? 0.5 : 0.14, tv: 0.14, tu: u, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' }); }
   if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; }
   pfLayout(); if (quiet) PF.coins.forEach((c) => { c.v = c.tv; c.u = c.tu; });
 }
@@ -3596,6 +3651,20 @@ function pfStep(dt) {
   const t = performance.now() / 1000; PF.push = 0.03 + 0.07 * (0.5 - 0.5 * Math.cos(t * 2.4));
   const k = Math.min(1, dt * 4.2);
   for (const c of PF.coins) { c.v += (c.tv - c.v) * k; c.u += ((c.tu ?? c.u) - c.u) * k; }
+}
+function pfTopple() { // höchsten Turm im vorderen Bereich umkippen lassen
+  const tw = PF.coins.filter((c) => c.h >= 4 && c.tv > 0.55 && !c.tip).sort((a, b) => b.h - a.h)[0]; if (!tw) return false;
+  tw.tip = 0.001; tw.tipDir = Math.random() < 0.5 ? -1 : 1; return true;
+}
+function pfToppleDone(tw) { // Münzen landen verstreut vor dem Turm und bleiben dort liegen
+  const n = tw.h - 1; tw.h = 1; tw.tip = 0; tw.lockH = true; setTimeout(() => { tw.lockH = false; }, 9000);
+  for (let i = 0; i < n; i++) {
+    const a = (tw.tipDir * 0.35) + (Math.random() - 0.5) * 1.6, r = 0.05 + Math.random() * 0.12, u = Math.max(0.05, Math.min(0.95, tw.u + Math.sin(a) * r * 0.8)), v = Math.min(0.975, tw.v + Math.abs(Math.cos(a)) * r * 0.6);
+    PF.coins.push({ u: tw.u, v: tw.v, tu: u, tv: v, h: 1, t: 'coin', lockH: true, hop: 0.001 });
+    setTimeout(() => { for (const c of PF.coins) if (c.lockH && c.hop) c.hop = 0; }, 700);
+  }
+  setTimeout(() => { PF.coins.forEach((c) => { c.lockH = false; }); }, 9000);
+  kmSnd('coins', { n: Math.min(10, n + 2) });
 }
 function pfFall(n) { // die n vordersten Münzen kippen über die Kante
   const front = PF.coins.slice().sort((a, b) => b.tv - a.tv).slice(0, n);
@@ -3612,7 +3681,7 @@ function pfDraw() {
   ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh); ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(pl.x, pl.y + fh, pr.x - pl.x, 6 * pl.s);
   const cw = W * 0.086, now = performance.now(), coinOK = PF.img.coin.complete, diaOK = PF.img.dia.complete;
-  const list = PF.coins.slice().sort((a, b) => a.v - b.v);
+  const list = PF.coins.slice().sort((a, b) => a.v - b.v || (a.z || 0) - (b.z || 0));
   // weicher Schatten unter dem ganzen Haufen
   for (const c of list) { const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.05, p.y + h * 0.22, w * 0.6, h * 0.5, 0, 0, 6.29); ctx.fill(); }
   for (const c of list) {
@@ -3620,9 +3689,11 @@ function pfDraw() {
     if (c.t === 'dia') { if (diaOK) ctx.drawImage(PF.img.dia, p.x - w * 0.42, p.y - w * 0.62, w * 0.84, w * 0.84); continue; }
     if (!coinOK) continue;
     const edge = c.v > 0.95 ? Math.min(1, (c.v - 0.95) / 0.03) : 0;
+    if (c.tip) { c.tip = Math.min(1, c.tip + 1 / 36); if (c.tip >= 1) { pfToppleDone(c); } }
+    const hop = c.hop ? Math.sin(Math.min(1, (c.hop += 1 / 40)) * Math.PI) * w * 0.7 : 0;
     for (let k = 0; k < c.h; k++) {
-      const lean = k * (0.4 + edge * PF.press * 2.4) * Math.sin(now / 180 + c.u * 11); // Stapel an der Kante wackeln, je mehr Druck desto stärker
-      ctx.save(); ctx.translate(p.x + lean, p.y - k * h * 0.3 + edge * k * 0.6); if (edge && k) ctx.rotate(Math.sin(now / 140 + c.u * 20) * 0.04 * edge * k); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
+      const lean = c.tip ? c.tipDir * k * k * c.tip * c.tip * w * 0.22 : k * (0.4 + edge * PF.press * 2.4) * Math.sin(now / 180 + c.u * 11); // kippender Turm neigt sich immer stärker
+      ctx.save(); ctx.translate(p.x + lean, p.y - ((c.z || 0) + k) * h * 0.3 * (c.tip ? 1 - c.tip * 0.5 : 1) + edge * k * 0.6 - hop); if (edge && k) ctx.rotate(Math.sin(now / 140 + c.u * 20) * 0.04 * edge * k); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
     }
   }
   for (const f of PF.falling) {
@@ -3659,6 +3730,7 @@ async function pmAnim(n, fell, avalanche, fast, poolAfter) { // für Spieler und
   kmSnd('slide'); pfLayout(); await kmSleep(fast ? 250 : 450); // Schub: alles rückt zusammen
   let done = 0; while (done < vis) { const k = Math.min(vis - done, 1 + Math.floor(Math.random() * 3)); pfFall(k); done += k; kmSnd('coins', { n: k * 2 }); pfLayout(); await kmSleep(fast ? 60 : 110); }
   pfResize(Math.max(pfN(PF.pool) - 6, Math.min(PF.coins.length, pfN(PF.pool))), false); // Stand an den Pool angleichen
+  if (Math.random() < 0.25 + PF.press * 0.5 && pfTopple()) await kmSleep(fast ? 700 : 1200); // Turm kippt und verteilt sich
   await kmSleep(fast ? 250 : 500);
 }
 function pmPress(pool) { // Anzeige Kantendruck (ehrlich: je voller, desto mehr fällt)
@@ -3739,6 +3811,7 @@ function rkSocketInit() {
   if (!socket || socket.__rk) return; socket.__rk = true;
   socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') kmSnd('boom'); } });
   socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') { rkDraw(); const fl = $('#rkFloats'); if (fl) { const e = document.createElement('div'); e.className = 'rk-float' + (home && c.id === home.me.id ? ' me' : ''); e.style.left = (38 + Math.random() * 24) + '%'; e.innerHTML = `<b>${esc(c.name)}</b> ${c.m.toFixed(2).replace('.', ',')}× · +${fmt(c.won)} 💎`; fl.appendChild(e); setTimeout(() => e.remove(), 2400); } } });
+  socket.on('rc:state', rcOnState);
   socket.on('pm:ev', (ev) => { pmS = ev.state; if (page !== 'casino' || cgame !== 'pusher') return; pmCtl();
     if (ev.type === 'drop' && !(home && ev.byId === home.me.id)) { pmAnim(ev.n, ev.fell, ev.avalanche, false, ev.state.pool).then(() => { pmPoolShow(ev.state.pool, true); const m = $('#kmMsg'); if (m) m.innerHTML = `👀 ${esc(ev.by)}: ${ev.n} rein · <b class="km-win">${ev.fell} raus</b>`; if (ev.fell >= ev.n * 3 || ev.avalanche) { kmBanner(ev.avalanche ? 'LAWINE!' : 'Münzregen!', ev.fell * 100, true); kmSnd('fanfare'); } }); }
     else if (ev.type !== 'drop') pmPoolShow(ev.state.pool); });
@@ -4375,7 +4448,7 @@ async function openPack(pid) {
 // ---------- Spielanleitungen fürs Casino ----------
 const GUIDES = {
   lukas: ['🔨 Hau den Lukas', [['Ziel', 'Die Kraftnadel rast hin und her. Tipp auf „Hau drauf!“, wenn sie ganz rechts bei der Glocke ist. Je genauer, desto kräftiger der Schlag: halbe Kraft 0,3×, Einsatz zurück 1×, bärenstark 1,5×, an der Glocke 4×.'], ['Können und Glück', 'Dein Timing zählt, ein kleiner Glücksanteil bleibt wie beim echten Hammer. Wer perfekt trifft, bekommt auf Dauer rund 94 % zurück, wildes Drücken deutlich weniger.']]],
-  race: ['🏇 Pferderennen', [['Ziel', 'Tipp auf eines der 6 Pferde und starte das Rennen. Gewinnt dein Pferd, bekommst du die angezeigte Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
+  race: ['🏇 Pferderennen', [['Ziel', 'Alle wetten gemeinsam: In der Wettphase (20 Sekunden) wählst du ein Pferd und deinen Einsatz. Dann läuft ein Rennen für alle. Gewinnt dein Pferd, bekommst du die Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Gemeinsam', 'An jeder Bahn siehst du, wer auf welches Pferd gesetzt hat. Jeder kann einmal pro Runde wetten.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
   lukas2: ['', [['Ziel', 'Fahr den Greifer mit ◀ ▶ über einen Preis und drück Greifen. Hält er, gewinnst du den Wert auf dem Schild: kleines Säckchen 1×, Säckchen 2×, Truhe 5×, goldene Truhe 15×.'], ['Chance', 'Je wertvoller, desto schwerer zu greifen: 95 %, 48 %, 19 % und 6 %. Jeder Preis hat damit dieselbe Auszahlungsquote von 95 %. Du wählst dein Risiko selbst.']]],
   pusher: ['🪙 Münzschieber', [['Ziel', 'Ein gemeinsamer Automat für alle. Wirf Münzen ein (1 Münze = 100 💎), der Schieber drückt den Haufen nach vorn, und was über die Kante fällt, gehört dir.'], ['Pool', 'Was im Automaten liegt, bleibt liegen. Oben siehst du, wie viele Münzen drin sind. 95 % jeder Münze wandern in den Pool.'], ['Kantendruck', 'Je voller der Automat, desto höher stapelt es sich an der Kante und desto mehr fällt pro Einwurf. Die Anzeige unter dem Pool zeigt dir, wie nah er am Kippen ist.'], ['Zuschauen', 'Es spielt immer nur einer. Alle anderen schauen live zu und können übernehmen, sobald der Platz frei ist.']]],
   rocket: ['🚀 Rakete', [['Ziel', 'Setz vor dem Start. Die Rakete steigt, der Multiplikator wächst. Steig rechtzeitig aus und kassiere Einsatz × Multiplikator. Stürzt sie vorher ab, ist der Einsatz weg.'], ['Mehrspieler', 'Bis zu 8 Spieler fliegen in derselben Runde mit. Du siehst, wer wann aussteigt.'], ['Auto-Ausstieg', 'Trag einen Multiplikator ein, z. B. 2,00, dann steigst du dort automatisch aus.'], ['Fair', 'Der Absturzpunkt wird beim Start gewürfelt, Auszahlungsquote 96 %, egal wann du aussteigst.']]],
@@ -5978,6 +6051,7 @@ function renderStaffBoxes() {
       $('#modBox').innerHTML = `<details class="panel mod fold2"><summary><b class="grow">Mod-Menü</b><span class="sub">aufklappen</span></summary><div id="modPanel" style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
         <form id="modSearch" class="row"><input class="field grow" id="modQ" autocomplete="off" placeholder="Spieler suchen"><button class="btn small">Suchen</button></form>
         <div id="modList" class="plist"></div>
+        <button class="btn small ghost" type="button" data-u2="pushtest" style="margin-top:8px">🔔 Test-Push an mich</button>
         <form id="castForm" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"><b>Nachricht an alle</b><input class="field" id="castTitle" maxlength="60" placeholder="Titel" autocomplete="off"><input class="field" id="castBody" maxlength="160" placeholder="Text" autocomplete="off"><button class="btn small" style="width:100%">Senden</button></form></div></details>`;
       modLoad('');
     }
@@ -6678,6 +6752,7 @@ function u2Act(a) {
   }
   if (k === 'daily') return dailyDialog();
   if (k === 'chub') { const h = v === 'rocket' ? 'rocket' : v + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
+  if (k === 'pushtest') { api('/api/admin/pushtest', {}).then((r) => toast(r.total ? `Test-Push: ${r.ok} von ${r.total} deiner Geräte erreicht${r.failed ? ' · Fehler: ' + (r.errors[0] || '') : ''}` : 'Auf deinem Konto ist kein Gerät für Push angemeldet. Auf dem iPhone: App über „Zum Home-Bildschirm“ öffnen und Mitteilungen erlauben.')).catch((e) => toast(e.message)); return; }
   if (k === 'offer') return u2OfferConfirm();
   if (k === 'kmadm') { if (v === 'on' && !confirm('Kirmes und Rakete für ALLE Spieler freigeben?')) return; api('/api/admin/kirmes', { live: v === 'on' }).then((r) => { home.kirmesLive = r.live; toast(r.live ? '🎉 Kirmes & Rakete sind für alle offen' : 'Kirmes & Rakete nur noch für dich'); viewKey = ''; render(); }).catch((e) => toast(e.message)); return; }
   if (k === 'offadm') { api('/api/admin/offer', { on: v === 'on' }).then((r) => { drawOfferAdm(r); toast(r.on ? 'Angebot aktiviert' : 'Angebot deaktiviert'); }).catch((e) => toast(e.message)); return; }
@@ -7561,7 +7636,7 @@ function bind() {
 document.addEventListener('submit', (e) => {
   if (e.target.id !== 'castForm') return; e.preventDefault();
   api('/api/admin/broadcast', { title: $('#castTitle').value || 'PUNKTLANDUNG', body: $('#castBody').value })
-    .then((r) => { toast('An ' + r.sent + ' Geräte geschickt'); $('#castBody').value = ''; }).catch((er) => toast(er.message));
+    .then((r) => { toast(`An ${r.ok} von ${r.total} Geräten zugestellt${r.gone ? ` · ${r.gone} abgelaufen` : ''}${r.failed ? ` · ${r.failed} fehlgeschlagen` : ''}`); if (r.errors && r.errors.length) setTimeout(() => toast('Fehler: ' + r.errors[0]), 2600); $('#castBody').value = ''; }).catch((er) => toast(er.message));
 });
 document.addEventListener('submit', (e) => {
   if (e.target.id !== 'modSearch') return; e.preventDefault(); modLoad($('#modQ').value);
@@ -7609,9 +7684,10 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.u2) { e.preventDefault(); u2Act(t.dataset.u2); return; } // neues Design
   if (t && t.dataset.kmb) { kmBetAct(t.dataset.kmb); return; }
   if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
+  if (t && t.dataset.rcbet) { rcBet(); return; }
   if (t && t.dataset.pmn) { pmN = Number(t.dataset.pmn); pmCtl(); return; }
   if (t && t.dataset.pm) { pmAct(t.dataset.pm); return; }
-  if (t && t.dataset.kmhorse !== undefined) { if (kmBusy) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; return; }
+  if (t && t.dataset.kmhorse !== undefined) { if (kmBusy || (rcS && (rcS.phase !== 'bet' || rcMine()))) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; rcDraw(); return; }
   if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
   const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen
   const pvw = e.target.closest && e.target.closest('[data-packview]'); if (pvw) { packView(pvw.dataset.packview); return; } // Booster in 3D ansehen, auch innerhalb der Shop-Karte

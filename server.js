@@ -251,7 +251,14 @@ app.post('/api/admin/broadcast', async (req, res) => {
     const body = String(req.body.body || '').slice(0, 160);
     if (!body) return res.status(400).json({ error: 'Schreib eine Nachricht.' });
     const n = await push.toAll({ title, body, tag: 'news', url: '/' });
-    res.json({ sent: n });
+    res.json({ sent: n, ...push.lastResult() });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/pushtest', async (req, res) => { // Test-Push an das eigene Gerät
+  try {
+    const u = await modAuth(req, res); if (!u) return;
+    const n = await push.toUser(u.id, { title: 'PUNKTLANDUNG · Test', body: 'Wenn du das liest, kommen Push-Nachrichten bei dir an. 🎉', tag: 'test', url: '/' });
+    res.json({ sent: n, ...push.lastResult() });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
@@ -1152,7 +1159,7 @@ app.post('/api/casino/kirmes/lukas', async (req, res) => {
     res.json({ ...r, won, diamonds: await kPay(u, 'lukas', bet, won, `Höhe ${r.height} (${r.label})`) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
-app.post('/api/casino/kirmes/race', async (req, res) => {
+app.post('/api/casino/kirmes/race', async (req, res) => { return res.status(410).json({ error: 'Das Pferderennen läuft jetzt gemeinsam. Setz in der Wettphase!' });
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!kirmesOk(u, res, 'race')) return; const bet = kBet(req, res, u); if (!bet) return;
@@ -1245,7 +1252,56 @@ async function rkCrash() {
   console.log(`Rakete Runde ${RK.round}: Absturz bei ${RK.crash.toFixed(2)}× · ${RK.bets.size} Spieler`);
   RK.timer = setTimeout(rkWait, 3500);
 }
+
+// ---------- Pferderennen gemeinsam: Wettphase, ein Rennen für alle, Siegerehrung ----------
+const RC = { phase: 'idle', round: 0, until: 0, startAt: 0, bets: new Map(), result: null, history: [], timer: null };
+const RC_BET = 20000, RC_RUN = 16500, RC_DONE = 6500;
+const rcView = () => ({ phase: RC.phase, round: RC.round, until: RC.until, startAt: RC.startAt, now: Date.now(), history: RC.history.slice(0, 8),
+  bets: [...RC.bets.values()].map((b) => ({ id: b.id, name: b.name, horse: b.horse, bet: b.bet, won: b.won ?? null })),
+  result: RC.phase === 'bet' ? null : RC.result });
+const rcEmit = () => io.to('race').emit('rc:state', rcView());
+function rcBetPhase() { RC.phase = 'bet'; RC.round++; RC.bets = new Map(); RC.result = null; RC.until = Date.now() + RC_BET; rcEmit(); clearTimeout(RC.timer); RC.timer = setTimeout(rcRun, RC_BET); }
+function rcRun() {
+  const room = io.sockets.adapter.rooms.get('race');
+  if (!RC.bets.size) { if (!room || !room.size) { RC.phase = 'idle'; return; } RC.until = Date.now() + RC_BET; rcEmit(); RC.timer = setTimeout(rcRun, RC_BET); return; }
+  RC.phase = 'run'; RC.result = KM.race(); RC.startAt = Date.now(); RC.until = RC.startAt + RC_RUN; rcEmit();
+  RC.timer = setTimeout(rcDone, RC_RUN);
+}
+async function rcDone() {
+  RC.phase = 'done'; RC.until = Date.now() + RC_DONE; const w = RC.result.winner;
+  for (const b of RC.bets.values()) {
+    b.won = b.horse === w ? Math.round(b.bet * KM.HORSES[w].m) : 0;
+    try { const u = await store.userById(b.id); if (b.won) { note(`Pferderennen: ${KM.HORSES[b.horse].name} gewinnt · Auszahlung ${fmtD(b.won)}`); await store.save(b.id, { diamonds: (Number(u.diamonds) || 0) + b.won }); } await casinoStat(b.id, b.bet, b.won); await bigWin(b.id, 'Pferderennen', b.won); } catch (e) { console.error(e); }
+  }
+  RC.history.unshift(w); RC.history = RC.history.slice(0, 12); rcEmit();
+  console.log(`Pferderennen Runde ${RC.round}: ${KM.HORSES[w].name} gewinnt · ${RC.bets.size} Wetten`);
+  RC.timer = setTimeout(rcBetPhase, RC_DONE);
+}
+function rcSocket(socket) {
+  socket.on('rc:join', () => { socket.join('race'); if (RC.phase === 'idle') rcBetPhase(); else socket.emit('rc:state', rcView()); });
+  socket.on('rc:leave', () => socket.leave('race'));
+  socket.on('rc:bet', async (d, cb) => {
+    const reply = typeof cb === 'function' ? cb : () => {};
+    try {
+      const me = socket.data.user; if (!me) return reply({ error: 'Bitte neu anmelden.' });
+      const u = await store.userById(me.id); if (!u) return reply({ error: 'Bitte neu anmelden.' });
+      if (!kirmesLive && !isAdmin(u)) return reply({ error: 'Die Kirmes öffnet bald!' });
+      if (lockedGames.has('race')) return reply({ error: 'Das Pferderennen ist gerade gesperrt.' });
+      const ban = casinoBan(u); if (ban) return reply({ error: banMsg(ban) });
+      if (RC.phase !== 'bet') return reply({ error: 'Die Wetten sind geschlossen. In der nächsten Runde bist du dabei!' });
+      if (RC.bets.has(u.id)) return reply({ error: 'Du hast in dieser Runde schon gewettet.' });
+      const horse = Math.round(Number(d && d.horse)); if (!(horse >= 0 && horse < KM.HORSES.length)) return reply({ error: 'Wähl zuerst ein Pferd.' });
+      const bet = Math.round(Number(d && d.bet) || 0), have = Number(u.diamonds) || 0;
+      if (bet < MIN_BET || bet > KMAX) return reply({ error: `Einsatz zwischen ${fmtD(MIN_BET)} und ${fmtD(KMAX)} 💎.` });
+      if (have < bet) return reply({ error: 'So viele Diamanten hast du nicht.' });
+      note(`Pferderennen: ${fmtD(bet)} auf ${KM.HORSES[horse].name}`); await store.save(u.id, { diamonds: have - bet });
+      RC.bets.set(u.id, { id: u.id, name: u.name, horse, bet }); rcEmit(); reply({ ok: true, diamonds: have - bet });
+    } catch (e) { console.error(e); reply({ error: 'Serverfehler.' }); }
+  });
+}
+
 function rkSocket(socket) {
+  rcSocket(socket);
   socket.on('pm:join', () => { socket.join('pusher'); socket.emit('pm:ev', { type: 'state', state: pmView() }); });
   socket.on('pm:leave', () => socket.leave('pusher'));
   socket.on('rk:join', () => { socket.join('rocket'); if (RK.phase === 'idle') rkWait(); else socket.emit('rk:state', rkPublic()); });
