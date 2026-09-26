@@ -1125,8 +1125,7 @@ app.post('/api/casino/board', async (req, res) => {
 // ================= Kirmes & Rakete (erst nach Freigabe im Admin-Menü für alle sichtbar) =================
 const KM = require('./lib/kirmes');
 Object.assign(GAME_NAMES, { lukas: 'Hau den Lukas', race: 'Pferderennen', pusher: 'Münzschieber', rocket: 'Rakete' });
-let kirmesLive = false, kirmesPot = KM.JACKPOT_SEED;
-store.setting('kirmes_live').then((v) => { kirmesLive = v === '1'; }).catch(() => {});
+let kirmesLive = true, kirmesPot = KM.JACKPOT_SEED; // Kirmes und Rakete sind für alle freigegeben
 store.setting('kirmes_pot').then((v) => { if (v) kirmesPot = Math.max(KM.JACKPOT_SEED, Number(v) || KM.JACKPOT_SEED); }).catch(() => {});
 const KMAX = 1000000;
 const kirmesOk = (u, res, key) => {
@@ -1217,7 +1216,7 @@ app.post('/api/casino/kirmes/pusher', async (req, res) => {
 });
 app.post('/api/admin/kirmes', async (req, res) => {
   const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
-  kirmesLive = !!(req.body || {}).live; await store.setting('kirmes_live', kirmesLive ? '1' : '0');
+  kirmesLive = true; // dauerhaft freigegeben
   console.log(`Kirmes & Rakete ${kirmesLive ? 'FÜR ALLE freigegeben' : 'nur für den Admin'} durch ${u.name}`);
   io.emit('kirmes:live', { live: kirmesLive }); res.json({ live: kirmesLive });
 });
