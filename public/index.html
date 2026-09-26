@@ -2160,6 +2160,104 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 .cseg.five .cse{font-style:normal;font-size:17px;line-height:1}
 .cseg.five button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cseg.five .cseg-dot{position:absolute;top:4px;right:8px}
+
+/* ===== Kirmes, poliert ===== */
+.km2{position:relative;border-radius:20px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,210,63,.6),0 12px 28px rgba(0,0,0,.5);background:#07040d}
+.km2.shake{animation:km2shake .35s linear}
+@keyframes km2shake{20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,3px)}80%{transform:translate(2px,-1px)}}
+.km2-fx{position:absolute;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+.km2-p{position:absolute;width:7px;height:7px;border-radius:2px;animation:km2p 1.3s cubic-bezier(.2,.6,.4,1) forwards}
+.km2-p.spark{width:4px;height:4px;border-radius:50%;box-shadow:0 0 6px #FFD23F;animation-duration:.7s}
+.km2-p.coins{width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF3C4,#E0A21E 60%,#8A5A00)!important}
+@keyframes km2p{0%{transform:translate(0,0) rotate(0);opacity:1}70%{opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 140px)) rotate(var(--r));opacity:0}}
+.km2-banner{position:absolute;left:50%;top:44%;z-index:9;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 22px;border-radius:20px;background:rgba(8,6,20,.82);box-shadow:inset 0 0 0 2px rgba(255,210,63,.8),0 0 40px rgba(0,0,0,.6);transition:transform .35s cubic-bezier(.2,1.4,.4,1),opacity .25s;text-align:center;max-width:86%}
+.km2-banner.on{transform:translate(-50%,-50%) scale(1);opacity:1}
+.km2-banner img{width:84px;height:84px;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.6))}
+.km2-banner b{font:400 26px/1.05 Anton,Impact,sans-serif;letter-spacing:.8px;color:#FFF3C4}
+.km2-banner .amt{font:900 22px Archivo,sans-serif;color:#7CF0A8}
+.km2-banner.big{box-shadow:inset 0 0 0 3px #FFD23F,0 0 60px rgba(255,210,63,.55)}.km2-banner.big b{color:#FFE27A;font-size:32px}
+.km2-banner.lose b{color:#DCEFF2;font-size:22px}
+/* Hau den Lukas */
+.lk{position:relative;height:min(400px,calc(100dvh - 420px));min-height:300px}
+.lk-blur{position:absolute;inset:-20px;background:var(--bg) center/cover;filter:blur(14px) brightness(.55)}
+.lk-img{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);aspect-ratio:9/16}
+.lk-img > img:first-child{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lk-mark{position:absolute;left:57%;height:0;border-top:2px solid rgba(255,226,122,.85);width:16%;box-shadow:0 0 6px rgba(255,210,63,.6)}
+.lk-mark i{position:absolute;left:105%;top:-11px;padding:2px 7px;border-radius:8px;background:rgba(10,6,20,.8);box-shadow:inset 0 0 0 1px #E0A21E;font:900 11.5px Archivo,sans-serif;font-style:normal;color:#FFE27A;white-space:nowrap}
+.lk-mark.bell{border:0;box-shadow:none}.lk-mark.bell i{background:#E0A21E;color:#2A1600}
+.lk-puck{position:absolute;left:50%;width:15%;transform:translate(-50%,-50%);filter:drop-shadow(0 0 10px #FFD23F);z-index:2}
+.lk-trail{position:absolute;left:50%;top:83%;bottom:17%;width:5%;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,240,160,.95),rgba(255,160,40,.15));border-radius:6px;opacity:0;filter:blur(1px)}
+.lk-bellglow{position:absolute;left:50%;top:5%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,240,170,.95),rgba(255,200,60,.4) 40%,transparent 70%);opacity:0}
+.lk-bellglow.ring{animation:lkring 1.2s ease-out}
+@keyframes lkring{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4)}}
+.lk-mallet{position:absolute;left:40%;bottom:-2%;width:62%;transform-origin:14% 90%;transform:rotate(-8deg);filter:drop-shadow(0 6px 10px rgba(0,0,0,.7));z-index:3}
+.lk-mallet.swing{animation:lkswing .5s cubic-bezier(.5,0,.3,1)}
+@keyframes lkswing{0%{transform:rotate(-8deg)}38%{transform:rotate(-52deg)}60%{transform:rotate(36deg)}72%{transform:rotate(30deg)}100%{transform:rotate(-8deg)}}
+.lk-power{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:8px;z-index:4;padding:6px 10px;border-radius:12px;background:rgba(8,6,20,.7)}
+.lk-power span{font:800 11px Archivo,sans-serif;color:#FFE27A}
+.lk-bar{position:relative;flex:1;height:12px;border-radius:99px;background:linear-gradient(90deg,#3FB46E,#FFD23F 62%,#FF6B3C 85%,#FF2E6A);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.lk-bar i{position:absolute;top:-4px;left:0;width:6px;height:20px;border-radius:3px;background:#fff;box-shadow:0 0 8px #fff;animation:kmneedle 1.1s ease-in-out infinite alternate}
+/* Pferderennen */
+.rc{position:relative;display:flex;flex-direction:column;gap:3px;padding:48px 8px 10px;background:var(--bg) center 30%/cover}
+.rc::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,10,20,.35),rgba(6,20,10,.55))}
+.rc-finish{position:absolute;top:44px;bottom:8px;right:18px;width:8px;z-index:1;background:repeating-linear-gradient(0deg,#fff 0 7px,#111 7px 14px),#fff;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.rc-count{position:absolute;left:0;right:0;top:40%;z-index:6;text-align:center;font:400 64px/1 Anton,Impact,sans-serif;color:#FFE27A;text-shadow:0 4px 0 #4A2A00,0 0 24px rgba(0,0,0,.8);pointer-events:none}
+.rc-count.pop{animation:rcpop .5s ease-out}
+@keyframes rcpop{0%{transform:scale(1.8);opacity:0}40%{transform:scale(1);opacity:1}100%{opacity:.9}}
+.rc-lane{position:relative;z-index:2;display:flex;align-items:center;height:44px;padding:0;border:0;border-radius:10px;background:rgba(10,30,14,.45);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:inherit;text-align:left}
+.rc-lane.pick{box-shadow:inset 0 0 0 2.5px var(--hc),0 0 14px var(--hc);background:rgba(10,30,14,.65)}
+.rc-lane.win{background:rgba(124,240,168,.3)}
+.rc-tag{flex:none;width:84px;display:flex;align-items:center;gap:5px;padding-left:5px;font:800 11px/1.1 Archivo,sans-serif;color:#F3EAFF}
+.rc-tag b{width:20px;height:20px;border-radius:50%;background:var(--hc);display:grid;place-items:center;font:900 11px Archivo,sans-serif;color:#fff;flex:none;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.rc-tag small{display:block;color:#FFE27A;font:900 11px Archivo,sans-serif}
+.rc-run{position:relative;flex:1;height:100%}
+.rc-horse{position:absolute;left:0;top:-8px;width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 4px 3px rgba(0,0,0,.6))}
+.rc-horse.run{animation:rcgallop .28s ease-in-out infinite alternate}
+@keyframes rcgallop{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-4px) rotate(2deg)}}
+/* Greifautomat */
+.cw{position:relative;aspect-ratio:4/3;background:var(--bg) center/cover}
+.cw::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 40px rgba(0,0,0,.7);pointer-events:none}
+.cw-rail{position:absolute;left:4%;right:4%;top:3%;height:8px;border-radius:4px;background:linear-gradient(180deg,#F6F0DC,#9A8A5A);box-shadow:0 2px 6px rgba(0,0,0,.6);z-index:3}
+.cw-rig{position:absolute;left:50%;top:3%;bottom:0;width:22%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center}
+.cw-cable{display:block;width:3px;height:4%;background:linear-gradient(90deg,#999,#eee,#999)}
+.cw-head{position:relative;display:flex;flex-direction:column;align-items:center}
+.cw-head > img:first-child{width:100%;min-width:70px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6))}
+.cw-prize{position:absolute;top:62%;width:78%;opacity:0;transition:transform .6s cubic-bezier(.5,0,.8,.5),opacity .3s;z-index:-1}
+.cw-prize.on{opacity:1}.cw-prize.gold{filter:drop-shadow(0 0 12px #FFD23F)}
+.cw-prize.slip{transform:translateY(160px) rotate(40deg);opacity:0}
+.cw-prize.drop{transform:translateY(200px);opacity:0}
+.cw-chute{position:absolute;left:2%;bottom:3%;width:18%;height:18%;border-radius:10px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 2px rgba(255,210,63,.6);display:grid;place-items:end center;z-index:2}
+.cw-chute span{font:900 8.5px Archivo,sans-serif;letter-spacing:1px;color:#FFE27A;padding-bottom:4px}
+/* Münzschieber */
+.pf{position:relative;aspect-ratio:3/4;max-height:min(440px,calc(100dvh - 400px));margin:0 auto;width:100%}
+.pf canvas{position:absolute;inset:0;display:block}
+.km-pot2{position:absolute;left:50%;top:3%;transform:translateX(-50%);z-index:3;display:flex;align-items:baseline;gap:6px;padding:6px 14px;border-radius:14px;background:linear-gradient(180deg,rgba(40,10,60,.92),rgba(10,4,20,.92));box-shadow:inset 0 0 0 2px #FFD23F,0 0 20px rgba(255,210,63,.35);font:900 11px Archivo,sans-serif;letter-spacing:1px;color:#FFE27A;white-space:nowrap}
+.km-pot2 b{font:400 20px/1 Anton,Impact,sans-serif;letter-spacing:.5px;color:#FFF3C4}.km-pot2 small{font:700 10px Archivo,sans-serif;color:#DCC8FF;letter-spacing:0}
+.pf-slot{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);z-index:3;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.55);font:800 10.5px Archivo,sans-serif;color:#DCEFF2}
+
+/* Rakete, poliert */
+.rk-stars{position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 60%,#cfe,transparent),radial-gradient(1.5px 1.5px at 40% 80%,#fff,transparent),radial-gradient(1px 1px at 85% 20%,#fff,transparent),radial-gradient(1px 1px at 55% 45%,#dff,transparent);background-size:180px 180px;opacity:.7}
+.rk-sky.fly .rk-stars{animation:rkstars .6s linear infinite}
+@keyframes rkstars{to{background-position:-180px 180px}}
+.rk-ship{position:absolute;left:8px;bottom:6px;width:68px;height:68px;transition:transform .08s linear;z-index:3}
+.rk-ship img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(255,170,60,.55));transform:rotate(45deg)}
+.rk-flame{position:absolute;left:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 0 18%,#FFE27A 30%,#FF8A2A 55%,transparent 72%);filter:blur(1px);opacity:0}
+.rk-ship.go .rk-flame{opacity:1;animation:rkflame .09s linear infinite alternate}
+.rk-ship.idle img{animation:rkidle 1.6s ease-in-out infinite}
+@keyframes rkidle{50%{transform:rotate(45deg) translateY(-3px)}}
+@keyframes rkflame{from{transform:scale(.8)}to{transform:scale(1.25)}}
+.rk-ship.boom{opacity:0;transition:opacity .15s}
+.rk-boom{position:absolute;width:150px;height:150px;transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;z-index:4}
+.rk-boom.go{animation:rkboom .9s ease-out forwards}
+@keyframes rkboom{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}40%{transform:translate(-50%,-50%) scale(1.1);opacity:1}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
+.rk-sky.shake{animation:km2shake .45s linear}
+.rk-floats{position:absolute;inset:0;pointer-events:none;z-index:5}
+.rk-float{position:absolute;bottom:22%;transform:translateX(-50%);max-width:92%;overflow:hidden;text-overflow:ellipsis;padding:4px 10px;border-radius:99px;background:rgba(10,40,20,.85);box-shadow:inset 0 0 0 1.5px #7CF0A8;font:800 12px Archivo,sans-serif;color:#7CF0A8;white-space:nowrap;animation:rkfloat 2.4s ease-out forwards}
+.rk-float b{color:#fff}.rk-float.me{box-shadow:inset 0 0 0 2px #FFD23F;color:#FFE27A}
+@keyframes rkfloat{0%{transform:translate(-50%,20px) scale(.8);opacity:0}15%{transform:translate(-50%,0) scale(1);opacity:1}100%{transform:translate(-50%,-110px);opacity:0}}
+.rk-mult.fly{animation:rkpulse .8s ease-in-out infinite}
+@keyframes rkpulse{50%{text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 30px rgba(124,240,168,.8)}}
+.rk-mult{top:9%!important}.rk-sub{top:30%!important}
 </style>
 </head>
 <body>
@@ -2185,7 +2283,7 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '229';
+const AVER = '232';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3143,66 +3241,208 @@ function renderKirmesHub(box) {
 }
 function renderKirmesGame(box, g) {
   if (!kmInfo) { box.innerHTML = '<p class="sub">Lädt …</p>'; kmLoad().then(() => { if (cgame === g) renderCards(); }); return; }
-  const stage = {
-    lukas: () => `<div class="km-lukas"><div class="km-tower">${kmInfo.lukas.slice().reverse().filter((t) => t.m).map((t) => `<span class="km-mark ${t.m >= 8 ? 'bell' : ''}" style="bottom:${t.from}%"><i>${t.m >= 8 ? '🔔' : t.m + '×'}</i></span>`).join('')}<div class="km-puck" id="kmPuck"></div><div class="km-bell" id="kmBell">🔔</div></div>
-      <div class="km-meter"><div class="km-needle" id="kmNeedle"></div></div><div class="km-hammer" id="kmHammer">🔨</div></div>`,
-    race: () => `<div class="km-race">${kmInfo.horses.map((h, i) => `<button class="km-lane ${kmHorse === i ? 'pick' : ''}" data-kmhorse="${i}" style="--hc:${h.color}"><span class="km-no">${i + 1}</span><span class="km-track"><img class="km-horse" id="kmH${i}" src="${kmImg('horse')}" alt=""></span><span class="km-odds"><b>${esc(h.name)}</b>${String(h.m).replace('.', ',')}×</span></button>`).join('')}<div class="km-finish"></div></div>`,
-    claw: () => `<div class="km-cab claw"><img class="km-cabimg" src="${kmImg('claw_cab')}" alt=""><div class="km-glass" id="kmGlass"><div class="km-rail"></div><div class="km-clawbox" id="kmClaw"><span class="km-cable" id="kmCable"></span><img src="${kmImg('claw')}" alt=""><span class="km-prize" id="kmPrize"></span></div>
-      <div class="km-pile">${['💎', '💰', '🎁', '💎', '💰', '👑', '💎', '🎁', '💰', '💎', '📦', '💎'].map((e, i) => `<span style="--i:${i}">${e}</span>`).join('')}</div></div></div>`,
-    pusher: () => `<div class="km-cab pusher"><img class="km-cabimg" src="${kmImg('pusher_cab')}" alt=""><div class="km-pot" id="kmPot">Jackpot für alle <b>${fmt(kmInfo.pot)}</b> 💎</div><div class="km-field" id="kmField"><div class="km-shelf" id="kmShelf"></div>${Array.from({ length: 22 }, (_, i) => `<i class="km-coin" style="--x:${(i * 37) % 88 + 4}%;--y:${40 + ((i * 17) % 44)}%"></i>`).join('')}</div></div>`,
-  }[g]();
+  cancelAnimationFrame(window.__pfRaf || 0);
+  const stage = { lukas: kmLukasStage, race: kmRaceStage, claw: kmClawStage, pusher: kmPushStage }[g]();
   const act = { lukas: '🔨 Hau drauf!', race: '🏁 Rennen starten', claw: '🕹️ Greifen!', pusher: '🪙 Münze einwerfen' }[g];
-  box.innerHTML = `<div class="km-game km-${g}" style="--bg:url(${kmImg('carnival')})"><div class="km-stagewrap">${stage}</div>
-    <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : '&nbsp;'}</div>
+  box.innerHTML = `<div class="km-game km2-${g}"><div class="km2" id="km2">${stage}<div class="km2-banner" id="kmBanner"></div><div class="km2-fx" id="kmFx"></div></div>
+    <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : g === 'pusher' ? 'Wirf Münzen ein und schieb sie über die Kante.' : '&nbsp;'}</div>
     ${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button></div>`;
+  if (g === 'pusher') pfStart();
 }
 const kmSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// ---------- Effekte: Funken, Konfetti, Münzen, Wackeln, Gewinn-Banner ----------
+function kmBurst(x, y, n, kind) {
+  const fx = $('#kmFx'); if (!fx) return;
+  const cols = kind === 'confetti' ? ['#FFD23F', '#FF4FA3', '#7CF0A8', '#8FD3FF', '#B18CFF'] : kind === 'coins' ? ['#FFE27A'] : ['#FFF3C4', '#FFD23F', '#FF9A3C'];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('i'); p.className = 'km2-p ' + kind;
+    const a = (kind === 'confetti' ? -Math.PI / 2 : -Math.PI / 2) + (Math.random() - 0.5) * (kind === 'spark' ? Math.PI * 1.6 : Math.PI * 1.2), sp = (kind === 'spark' ? 60 : 90) + Math.random() * (kind === 'spark' ? 90 : 140);
+    p.style.cssText = `left:${x}px;top:${y}px;--dx:${Math.cos(a) * sp}px;--dy:${Math.sin(a) * sp}px;--r:${Math.random() * 720 - 360}deg;background:${cols[i % cols.length]};animation-delay:${Math.random() * 90}ms`;
+    fx.appendChild(p); setTimeout(() => p.remove(), 1500);
+  }
+}
+function kmShake(ms = 380) { const s = $('#km2'); if (!s) return; s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); setTimeout(() => s.classList.remove('shake'), ms); }
+function kmBanner(title, won, big, img) {
+  const b = $('#kmBanner'); if (!b) return;
+  b.className = 'km2-banner on ' + (won ? (big ? 'big' : 'win') : 'lose');
+  b.innerHTML = `${img ? `<img src="${img}" alt="">` : ''}<b>${esc(title)}</b>${won ? `<span class="amt">+<em id="kmCount">0</em> 💎</span>` : ''}`;
+  if (won) { const el = $('#kmCount'), t0 = performance.now(), d = Math.min(1400, 500 + Math.log10(won + 1) * 220); const st = (t) => { const k = Math.min(1, (t - t0) / d); if (el) el.textContent = fmt(Math.round(won * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
+  clearTimeout(kmBanner.t); kmBanner.t = setTimeout(() => { b.className = 'km2-banner'; }, big ? 3600 : 2600);
+}
+// ---------- Hau den Lukas ----------
+const LK_Y = (h) => 83 - 74 * Math.min(100, h) / 100; // Höhe (0–100) → Position auf der Schiene im Bild (%)
+function kmLukasStage() {
+  const marks = kmInfo.lukas.filter((t) => t.m).map((t) => `<span class="lk-mark ${t.m >= 8 ? 'bell' : ''}" style="top:${LK_Y(t.m >= 8 ? 100 : t.from)}%"><i>${t.m >= 8 ? '8×' : String(t.m).replace('.', ',') + '×'}</i></span>`).join('');
+  return `<div class="lk" style="--bg:url(${kmImg('lukas_scene')})"><div class="lk-blur"></div><div class="lk-img"><img src="${kmImg('lukas_scene')}" alt="">${marks}
+    <div class="lk-trail" id="lkTrail"></div><img class="lk-puck" id="lkPuck" src="${kmImg('puck')}" alt="" style="top:${LK_Y(0)}%"><div class="lk-bellglow" id="lkBell"></div>
+    <img class="lk-mallet" id="lkMallet" src="${kmImg('mallet')}" alt=""></div>
+    <div class="lk-power"><span>Kraft</span><div class="lk-bar"><i id="lkNeedle"></i></div></div></div>`;
+}
+async function kmLukasAnim(r) {
+  const n = $('#lkNeedle'); if (n) { n.style.animation = 'none'; n.style.left = `calc(${Math.min(97, r.height)}% - 3px)`; }
+  const m = $('#lkMallet'); if (m) { m.classList.remove('swing'); void m.offsetWidth; m.classList.add('swing'); }
+  await kmSleep(260); sfx('dart'); kmShake(300);
+  const img = $('#km2 .lk-img'); const R = img ? img.getBoundingClientRect() : null, S = $('#km2').getBoundingClientRect();
+  if (R) kmBurst(R.left - S.left + R.width * 0.5, R.top - S.top + R.height * 0.86, 16, 'spark');
+  const pk = $('#lkPuck'), tr = $('#lkTrail'), dur = 350 + r.height * 7;
+  if (pk) { pk.style.transition = `top ${dur}ms cubic-bezier(.12,.85,.3,1)`; pk.style.top = LK_Y(r.height) + '%'; }
+  if (tr) { tr.style.transition = `top ${dur}ms cubic-bezier(.12,.85,.3,1), opacity .3s`; tr.style.opacity = 1; tr.style.top = LK_Y(r.height) + '%'; }
+  await kmSleep(dur);
+  if (r.height >= 100) { const b = $('#lkBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } sfx('prestige'); kmShake(600); if (R) kmBurst(R.left - S.left + R.width * 0.5, R.top - S.top + R.height * 0.06, 46, 'confetti'); }
+  await kmSleep(r.height >= 100 ? 900 : 450);
+  if (pk) { pk.style.transition = `top ${400 + r.height * 5}ms cubic-bezier(.55,0,.85,.6)`; pk.style.top = LK_Y(0) + '%'; }
+  if (tr) { tr.style.transition = 'opacity .4s'; tr.style.opacity = 0; }
+  setTimeout(() => { const t = $('#lkTrail'); if (t) { t.style.transition = 'none'; t.style.top = LK_Y(0) + '%'; } const nn = $('#lkNeedle'); if (nn) nn.style.animation = ''; }, 1200);
+}
+// ---------- Pferderennen ----------
+function kmRaceStage() {
+  return `<div class="rc" style="--bg:url(${kmImg('track')})"><div class="rc-finish"></div><div class="rc-count" id="rcCount"></div>
+    ${kmInfo.horses.map((h, i) => `<button class="rc-lane ${kmHorse === i ? 'pick' : ''}" data-kmhorse="${i}" style="--hc:${h.color};--i:${i}"><span class="rc-tag"><b>${i + 1}</b><span>${esc(h.name)}<small>${String(h.m).replace('.', ',')}×</small></span></span><span class="rc-run"><img class="rc-horse" id="kmH${i}" src="${kmImg('horse' + i)}" alt=""></span></button>`).join('')}</div>`;
+}
+async function kmRaceAnim(r) {
+  const ids = kmInfo.horses.map((_, i) => $('#kmH' + i)); const cnt = $('#rcCount');
+  for (const t of ['3', '2', '1', 'LOS!']) { if (cnt) { cnt.textContent = t; cnt.classList.remove('pop'); void cnt.offsetWidth; cnt.classList.add('pop'); } sfx('tick'); await kmSleep(t === 'LOS!' ? 380 : 520); }
+  if (cnt) cnt.textContent = '';
+  ids.forEach((el) => el && el.classList.add('run'));
+  const legs = [0.24, 0.5, 0.76].map((f, k) => r.legs[k].map((x) => Math.min(0.9, f * x)));
+  const place = (el, p, ms, ease) => { if (!el) return; el.style.transition = `left ${ms}ms ${ease}`; el.style.left = `calc(${(p * 100).toFixed(1)}% - ${Math.round(p * 64)}px)`; };
+  for (const pos of legs) { ids.forEach((el, i) => place(el, pos[i], 1250, 'linear')); await kmSleep(1250); }
+  r.order.forEach((h, rank) => place(ids[h], 1 - rank * 0.045, 1100 + rank * 90, 'cubic-bezier(.3,.6,.4,1)'));
+  await kmSleep(1300); ids.forEach((el) => el && el.classList.remove('run'));
+  document.querySelectorAll('.rc-lane').forEach((l, i) => l.classList.toggle('win', i === r.winner));
+}
+// ---------- Greifautomat ----------
+function kmClawStage() {
+  return `<div class="cw" style="--bg:url(${kmImg('claw_in')})"><div class="cw-rail"></div><div class="cw-rig" id="cwRig"><span class="cw-cable" id="cwCable"></span><span class="cw-head"><img id="cwClaw" src="${kmImg('claw_open')}" alt=""><img class="cw-prize" id="cwPrize" alt=""></span></div><div class="cw-chute"><span>AUSGABE</span></div></div>`;
+}
+async function kmClawAnim(r) {
+  const rig = $('#cwRig'), cab = $('#cwCable'), cl = $('#cwClaw'), pz = $('#cwPrize'); if (!rig) return;
+  const x = 22 + Math.random() * 60;
+  rig.style.transition = 'left 1s cubic-bezier(.45,0,.3,1)'; rig.style.left = x + '%'; sfx('tick'); await kmSleep(1050);
+  cab.style.transition = 'height 1.1s cubic-bezier(.5,0,.7,1)'; cab.style.height = '52%'; await kmSleep(1150);
+  cl.src = kmImg('claw_closed'); sfx('dart'); await kmSleep(380);
+  const prizeImg = r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : (r.mult > 0 || r.drop) ? kmImg('p_bag') : '';
+  if (prizeImg) { pz.src = prizeImg; pz.className = 'cw-prize on ' + (r.mult >= 15 ? 'gold' : r.mult >= 5 ? 'mid' : ''); }
+  cab.style.transition = 'height 1.2s cubic-bezier(.3,0,.3,1)'; cab.style.height = '4%'; await kmSleep(r.drop ? 600 : 1250);
+  if (r.drop) { pz.classList.add('slip'); sfx('wrong'); await kmSleep(700); pz.className = 'cw-prize'; await kmSleep(600); }
+  else if (prizeImg) {
+    rig.style.transition = 'left 1.1s cubic-bezier(.45,0,.3,1)'; rig.style.left = '10%'; await kmSleep(1150);
+    cl.src = kmImg('claw_open'); pz.classList.add('drop'); await kmSleep(650);
+    const S = $('#km2').getBoundingClientRect(); kmBurst(S.width * 0.1, S.height * 0.8, 24, r.mult >= 5 || r.pack ? 'confetti' : 'coins'); pz.className = 'cw-prize';
+  }
+  cl.src = kmImg('claw_open'); rig.style.transition = 'left .8s ease'; rig.style.left = '50%';
+}
+// ---------- Münzschieber: kleine Physik-Szene in Perspektive ----------
+// Weltkoordinaten: u = 0…1 quer über den Boden, v = 0 (vor dem Schieber) … 1 (Abwurfkante). Bild vermessen: Boden von 28 % bis 71 % Höhe.
+const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], budget: 0, push: 0, img: {}, last: 0, extra: 0 };
+function kmPushStage() { return `<div class="pf"><canvas id="pfCv"></canvas><div class="km-pot2" id="kmPot">JACKPOT <b>${fmt(kmInfo.pot)}</b> 💎<small>für alle</small></div><div class="pf-slot">⬇ Münzeinwurf</div></div>`; }
+function pfLoad() { for (const [k, n] of [['bg', 'pf'], ['coin', 'coin'], ['dia', 'dia']]) if (!PF.img[k]) { const im = new Image(); im.src = n === 'dia' ? `/tcg/diamond.webp?v=${IMGV}` : kmImg(n); PF.img[k] = im; } }
+function pfInit() {
+  if (PF.coins.length) return; const C = []; // dichter Münzteppich, vorne ein paar Stapel, einzelne Diamanten
+  for (let k = 0; k < 86; k++) { const v = 0.12 + Math.random() * 0.86, u = 0.06 + Math.random() * 0.88; C.push({ u, v, z: 0, t: Math.random() < 0.025 ? 'dia' : 'coin', rot: Math.random() * 6.28 }); }
+  for (let k = 0; k < 24; k++) { const b = C[Math.floor(Math.random() * C.length)]; C.push({ u: b.u + (Math.random() - 0.5) * 0.02, v: b.v, z: 1, t: 'coin', rot: 0 }); }
+  PF.coins = C; for (let i = 0; i < 40; i++) pfStep(1 / 30, true);
+}
+const pfP = (u, v) => { const W = PF.W, H = PF.H, y = (PF.y0 + (PF.y1 - PF.y0) * v) * H, hw = (PF.w0 + (PF.w1 - PF.w0) * v) * W, s = PF.s0 + (PF.s1 - PF.s0) * v; return { x: W / 2 + (u - 0.5) * 2 * hw, y, s }; };
+function pfStep(dt, quiet) {
+  const t = performance.now() / 1000; PF.push = 0.1 + 0.09 * (0.5 - 0.5 * Math.cos(t * 2.6)) + PF.extra; PF.extra = Math.max(0, PF.extra - dt * 0.05);
+  const R = 0.046, C = PF.coins.filter((c) => c.z === 0);
+  for (const c of C) if (c.v < PF.push + R) c.v = PF.push + R; // Schieber drückt
+  if (PF.budget > 0 && !quiet) { // Gewinn: vorderste Münzen rutschen sichtbar nacheinander über die Kante
+    const front = C.filter((c) => c.v > 0.62).sort((a, b) => b.v - a.v);
+    front.forEach((c, i) => { if (i < PF.budget + 3) c.v += dt * (0.22 + Math.max(0, 0.5 - i * 0.05)); });
+  }
+  C.sort((a, b) => a.v - b.v);
+  for (let it = 0; it < 3; it++) for (let i = 0; i < C.length; i++) for (let j = i + 1; j < C.length; j++) { // Münzen schieben sich gegenseitig nach vorn
+    const a = C[i], b = C[j], dv = b.v - a.v; if (dv > R * 1.6) break; const du = (b.u - a.u) * 1.4, d = Math.hypot(du, dv);
+    if (d < R && d > 0.0001) { const o = (R - d) * 0.6; b.v += (dv / d) * o; b.u = Math.min(0.96, Math.max(0.04, b.u + (du / d) * o * 0.4)); }
+  }
+  for (const s of PF.coins.filter((c) => c.z === 1)) { const base = C.find((c) => Math.abs(c.u - s.u) < 0.05 && Math.abs(c.v - s.v) < 0.05); if (base) { s.v = base.v; s.u = base.u; } else s.z = 0; }
+  for (const c of PF.coins) { // an der Kante: nur fallen, wenn das Server-Ergebnis Münzen freigibt, sonst hängen sie über
+    if (c.v > 0.985) { if (PF.budget > 0 && !quiet) { PF.budget--; c.fall = 0; c.x0 = pfP(c.u, 1).x; PF.falling.push(c); c.gone = true; } else c.v = 0.985 + Math.random() * 0.004; }
+  }
+  PF.coins = PF.coins.filter((c) => !c.gone);
+  if (PF.coins.length < 96) PF.coins.push({ u: 0.1 + Math.random() * 0.8, v: 0.1, z: 0, t: 'coin', rot: 0 }); // Nachschub hinten
+}
+function pfDraw() {
+  const cv = $('#pfCv'); if (!cv) return false; const ctx = cv.getContext('2d'), W = PF.W, H = PF.H;
+  if (PF.img.bg.complete) ctx.drawImage(PF.img.bg, 0, 0, W, H); else { ctx.fillStyle = '#140a24'; ctx.fillRect(0, 0, W, H); }
+  // Schieber: Chrom-Kante, die vor- und zurückfährt
+  const pl = pfP(0.02, PF.push), pr = pfP(0.98, PF.push), b0 = pfP(0.02, Math.max(0, PF.push - 0.07)), b1 = pfP(0.98, Math.max(0, PF.push - 0.07));
+  const fh = 13 * pl.s; // Oberseite (dunkler Chrom) und Vorderkante (heller Chrom) des Schiebers
+  let g = ctx.createLinearGradient(0, b0.y, 0, pl.y); g.addColorStop(0, 'rgba(60,60,80,.0)'); g.addColorStop(1, 'rgba(120,125,145,.85)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(pr.x, pl.y); ctx.lineTo(pl.x, pl.y); ctx.closePath(); ctx.fill();
+  g = ctx.createLinearGradient(0, pl.y, 0, pl.y + fh); g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.35, '#C9CED9'); g.addColorStop(0.7, '#7E8494'); g.addColorStop(1, '#4B4F5E');
+  ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh);
+  ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(pl.x, pl.y + fh, pr.x - pl.x, 6 * pl.s);
+  const cw = W * 0.095; // Münzbreite vorn
+  const all = [...PF.coins].sort((a, b) => a.v - b.v || a.z - b.z);
+  for (const c of all) {
+    const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62, im = c.t === 'dia' ? PF.img.dia : PF.img.coin;
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.06, p.y + h * 0.18, w * 0.5, h * 0.42, 0, 0, 6.29); ctx.fill();
+    const lift = c.z * h * 0.32, over = c.v > 0.98 ? Math.sin(performance.now() / 90 + c.u * 20) * 1.2 : 0;
+    if (im.complete) { if (c.t === 'dia') ctx.drawImage(im, p.x - w * 0.42, p.y - w * 0.62 - lift, w * 0.84, w * 0.84); else ctx.drawImage(im, p.x - w / 2, p.y - h / 2 - lift + over, w, h * 1.08); }
+  }
+  // fallende Münzen: über die Kante kippen, beschleunigt nach unten, dunkler werdend
+  for (const f of PF.falling) {
+    f.fall += 1 / 60; const k = f.fall, y = PF.y1 * H + 30 * k + 1100 * k * k, w = cw * (1 + k * 0.5), rot = Math.min(1.45, k * 5);
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k * 1.4); ctx.translate(f.x0, y); ctx.scale(1, Math.max(0.15, Math.cos(rot))); if (PF.img.coin.complete) ctx.drawImage(PF.img.coin, -w / 2, -w * 0.31, w, w * 0.67); ctx.restore();
+  }
+  PF.falling = PF.falling.filter((f) => f.fall < 0.75);
+  // neu eingeworfene Münze: fällt von oben in den hinteren Bereich und prallt ab
+  for (const d of PF.drops) {
+    d.t += 1 / 60; const k = Math.min(1, d.t / 0.55), p = pfP(d.u, d.v), yy = -40 + (p.y + 40) * (k * k) - (k >= 1 ? Math.abs(Math.sin((d.t - 0.55) * 12)) * 10 * Math.max(0, 1 - (d.t - 0.55) * 3) : 0), w = cw * p.s * 1.1;
+    if (PF.img.coin.complete) ctx.drawImage(PF.img.coin, p.x - w / 2, yy - w * 0.31, w, w * 0.67);
+    if (d.t > 0.9 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, z: 0, t: 'coin', rot: 0 }); }
+  }
+  PF.drops = PF.drops.filter((d) => !d.done);
+  return true;
+}
+function pfStart() {
+  pfLoad(); const cv = $('#pfCv'); if (!cv) return;
+  const r = cv.parentElement.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  PF.W = r.width; PF.H = r.height; cv.width = PF.W * dpr; cv.height = PF.H * dpr; cv.style.width = PF.W + 'px'; cv.style.height = PF.H + 'px'; cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  pfInit(); cancelAnimationFrame(window.__pfRaf || 0);
+  const loop = () => { pfStep(1 / 60); if (!pfDraw()) return; window.__pfRaf = requestAnimationFrame(loop); }; window.__pfRaf = requestAnimationFrame(loop);
+}
+async function kmPushAnim(r) {
+  PF.drops.push({ u: 0.25 + Math.random() * 0.5, v: 0.18, t: 0 }); sfx('tick'); await kmSleep(600);
+  PF.budget += r.coins; PF.extra = r.coins ? Math.min(0.22, 0.06 + r.coins * 0.006) : 0.03; // Schubser: mehr Münzen = kräftiger
+  const t0 = Date.now(); let lastB = PF.budget, lastSnd = 0;
+  while (PF.budget > 0 && Date.now() - t0 < 3000) { await kmSleep(80); if (PF.budget < lastB && Date.now() - lastSnd > 110) { sfx('jccount'); lastSnd = Date.now(); } lastB = PF.budget; }
+  if (PF.budget > 0) { // Rest sicher abwerfen: vorderste Münzen
+    const front = PF.coins.filter((c) => c.z === 0).sort((a, b) => b.v - a.v).slice(0, PF.budget); for (const c of front) { c.v = 0.99; } await kmSleep(700);
+  }
+  PF.budget = 0; await kmSleep(350);
+  const pot = $('#kmPot'); if (pot) pot.innerHTML = `JACKPOT <b>${fmt(r.pot)}</b> 💎<small>für alle</small>`; if (kmInfo) kmInfo.pot = r.pot;
+}
+// ---------- Ein Spielzug ----------
 async function kmPlay(g) {
   if (kmBusy) return; if (kmBet > kmDia()) return toast('So viele Diamanten hast du nicht.');
   if (g === 'race' && !(kmHorse >= 0)) return toast('Wähl zuerst ein Pferd.');
-  kmBusy = true; const go = $('#kmGo'); if (go) go.disabled = true; const msg = $('#kmMsg');
+  kmBusy = true; const go = $('#kmGo'); if (go) go.disabled = true; const msg = $('#kmMsg'); if (msg) msg.innerHTML = '&nbsp;';
+  const b0 = $('#kmBanner'); if (b0) b0.className = 'km2-banner';
   try {
     kmSetDia(kmDia() - kmBet);
     const r = await api('/api/casino/kirmes/' + g, { bet: kmBet, horse: kmHorse });
-    if (g === 'lukas') {
-      const hm = $('#kmHammer'); if (hm) { hm.classList.remove('hit'); void hm.offsetWidth; hm.classList.add('hit'); } sfx('dart'); await kmSleep(380);
-      const pk = $('#kmPuck'); if (pk) { pk.style.transition = 'none'; pk.style.bottom = '2%'; void pk.offsetWidth; pk.style.transition = 'bottom .9s cubic-bezier(.15,.8,.3,1)'; pk.style.bottom = Math.min(95, r.height) + '%'; }
-      await kmSleep(950); if (r.height >= 100) { const b = $('#kmBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } sfx('prestige'); }
-      await kmSleep(250); if (pk) { pk.style.transition = 'bottom .7s ease-in'; pk.style.bottom = '2%'; }
-    } else if (g === 'race') {
-      const ids = kmInfo.horses.map((_, i) => $('#kmH' + i)); msg.textContent = '🏁 Und los geht’s!'; sfx('tick');
-      const stepPos = [0.25, 0.5, 0.75].map((f, k) => r.legs[k].map((x) => Math.min(0.92, f * x))); const finish = r.order.map((h, rank) => [h, 1 - rank * 0.05]);
-      for (const pos of stepPos) { ids.forEach((el, i) => { if (el) { el.style.transition = 'left 1.2s linear'; el.style.left = `calc(${(pos[i] * 100).toFixed(1)}% - 20px)`; } }); await kmSleep(1200); }
-      finish.forEach(([h, p]) => { const el = ids[h]; if (el) { el.style.transition = 'left 1.1s ease-out'; el.style.left = `calc(${(p * 100).toFixed(1)}% - 30px)`; } }); await kmSleep(1150);
-      document.querySelectorAll('.km-lane').forEach((l, i) => l.classList.toggle('win', i === r.winner));
-    } else if (g === 'claw') {
-      const cl = $('#kmClaw'), cab = $('#kmCable'), pz = $('#kmPrize'); const x = 12 + Math.random() * 60;
-      if (cl) { cl.style.transition = 'left .8s ease-in-out'; cl.style.left = x + '%'; } await kmSleep(850);
-      if (cab) { cab.style.transition = 'height .9s ease-in'; cab.style.height = '62%'; } sfx('tick'); await kmSleep(950);
-      if (pz) pz.textContent = r.kind === 'none' ? (r.drop ? '💰' : '') : r.pack ? '📦' : r.mult >= 15 ? '👑' : r.mult >= 5 ? '🎁' : r.mult >= 2 ? '💰' : '💎';
-      if (cab) { cab.style.transition = 'height 1s ease-out'; cab.style.height = '6%'; } await kmSleep(r.drop ? 500 : 1000);
-      if (r.drop && pz) { pz.classList.add('fall'); await kmSleep(600); }
-      if (r.kind !== 'none' && cl) { cl.style.transition = 'left .9s ease-in-out'; cl.style.left = '4%'; await kmSleep(950); if (pz) pz.classList.add('fall'); await kmSleep(450); }
-      if (pz) { pz.classList.remove('fall'); pz.textContent = ''; } if (cl) { cl.style.transition = 'left .6s'; cl.style.left = '40%'; }
-    } else if (g === 'pusher') {
-      const f = $('#kmField'); const c = document.createElement('i'); c.className = 'km-coin drop'; c.style.setProperty('--x', (20 + Math.random() * 60) + '%'); f.appendChild(c); sfx('tick'); await kmSleep(650);
-      const sh = $('#kmShelf'); if (sh) { sh.classList.remove('push'); void sh.offsetWidth; sh.classList.add('push'); } await kmSleep(700);
-      for (let k = 0; k < r.coins; k++) { const e = document.createElement('i'); e.className = 'km-coin fallout'; e.style.setProperty('--x', (6 + Math.random() * 86) + '%'); e.style.animationDelay = (k * 45) + 'ms'; f.appendChild(e); setTimeout(() => e.remove(), 1400 + k * 45); }
-      if (r.coins) sfx('jccount'); await kmSleep(Math.min(1400, 500 + r.coins * 45)); c.remove();
-      const pot = $('#kmPot'); if (pot) pot.innerHTML = `Jackpot für alle <b>${fmt(r.pot)}</b> 💎`; if (kmInfo) kmInfo.pot = r.pot;
-    }
+    if (g === 'lukas') await kmLukasAnim(r); else if (g === 'race') await kmRaceAnim(r); else if (g === 'claw') await kmClawAnim(r); else await kmPushAnim(r);
     kmSetDia(r.diamonds);
-    const label = g === 'race' ? (r.won ? `🏆 ${kmInfo.horses[r.winner].name} gewinnt!` : `${kmInfo.horses[r.winner].name} gewinnt. Diesmal nicht.`) : r.jackpot ? `🎰 JACKPOT! +${fmt(r.jackpot)} 💎` : r.label;
-    if (msg) msg.innerHTML = r.won ? `<b class="km-win">${esc(label)} +${fmt(r.won)} 💎</b>` : r.pack ? `<b class="km-win">${esc(label)}</b>` : esc(label);
-    if (r.won >= kmBet * 3 || r.pack || r.jackpot) sfx('prestige'); else if (r.won) sfx('win'); else sfx('wrong');
+    const big = r.won >= kmBet * 3 || r.pack || r.jackpot;
+    const title = g === 'race' ? (r.won ? `${kmInfo.horses[r.winner].name} gewinnt!` : `${kmInfo.horses[r.winner].name} gewinnt`) : r.jackpot ? 'JACKPOT!' : r.label;
+    const img = g === 'race' ? kmImg('horse' + r.winner) : g === 'claw' && (r.mult > 0 || r.pack) ? (r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : kmImg('p_bag')) : '';
+    kmBanner(title, r.won, big, img);
+    if (msg) msg.innerHTML = r.won ? `Gewinn: <b class="km-win">+${fmt(r.won)} 💎</b>` : r.pack ? '<b class="km-win">Premium-Booster im Inventar!</b>' : 'Diesmal nicht. Nochmal?';
+    if (big) { sfx('prestige'); const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.45, 40, 'confetti'); } else if (r.won) sfx('win'); else sfx('wrong');
     if (r.pack) loadTcg();
-  } catch (e) { toast(e.message); try { const t = await api('/api/tcg?dv=' + (typeof DEF_V !== 'undefined' ? DEF_V : '')); if (t && t.diamonds !== undefined) kmSetDia(t.diamonds); } catch (e2) {} }
+  } catch (e) { toast(e.message); loadTcg(); }
   kmBusy = false; if (go) go.disabled = false;
 }
+
 // ---------- Rakete ----------
 function renderRocket(box) {
   if (!rk) { socket.emit('rk:join'); box.innerHTML = '<p class="sub">Verbinde mit der Startrampe …</p>'; return; }
-  box.innerHTML = `<div class="rk"><div class="rk-sky" id="rkSky" style="--bg:url(${kmImg('space')})"><svg class="rk-graph" viewBox="0 0 300 180" preserveAspectRatio="none"><path id="rkPath" d="M0 180"/></svg><img class="rk-ship" id="rkShip" src="${kmImg('rocket')}" alt=""><div class="rk-mult" id="rkMult">1,00×</div><div class="rk-sub" id="rkSub"></div></div>
+  box.innerHTML = `<div class="rk"><div class="rk-sky" id="rkSky" style="--bg:url(${kmImg('space')})"><svg class="rk-graph" viewBox="0 0 300 180" preserveAspectRatio="none"><path id="rkPath" d="M0 180"/></svg><div class="rk-stars"></div><div class="rk-ship" id="rkShip"><span class="rk-flame"></span><img src="${kmImg('rocket')}" alt=""></div><img class="rk-boom" id="rkBoom" src="${kmImg('boom')}" alt=""><div class="rk-mult" id="rkMult">1,00×</div><div class="rk-sub" id="rkSub"></div><div class="rk-floats" id="rkFloats"></div></div>
     <div class="rk-hist" id="rkHist"></div>
     <div class="rk-players" id="rkPlayers"></div>
     <div id="rkCtl"></div></div>`;
@@ -3228,15 +3468,16 @@ function rkLoop() {
   const step = () => {
     const sky = $('#rkSky'); if (!sky || !rk) return;
     const mult = $('#rkMult'), sub = $('#rkSub'), ship = $('#rkShip'), path = $('#rkPath');
-    if (rk.phase === 'wait') { const s = Math.max(0, Math.ceil((rk.startAt - rkNow()) / 1000)); mult.textContent = 'Start in ' + s + ' s'; mult.className = 'rk-mult wait'; sub.textContent = 'Einsteigen und Einsatz wählen'; ship.style.transform = 'translate(0,0) rotate(0deg)'; ship.className = 'rk-ship'; path.setAttribute('d', 'M0 180'); }
+    sky.classList.toggle('fly', rk.phase === 'fly');
+    if (rk.phase === 'wait') { const s = Math.max(0, Math.ceil((rk.startAt - rkNow()) / 1000)); mult.textContent = 'Start in ' + s + ' s'; mult.className = 'rk-mult wait'; sub.textContent = 'Einsteigen und Einsatz wählen'; ship.style.transform = 'translate(0,0) rotate(-45deg)'; ship.className = 'rk-ship idle'; path.setAttribute('d', 'M0 180'); const bm = $('#rkBoom'); if (bm) bm.classList.remove('go'); }
     else if (rk.phase === 'fly') {
       const m = rkMultNow(), t = (rkNow() - rk.flyAt) / 1000; mult.textContent = m.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult fly ' + (m >= 10 ? 'big' : m >= 2 ? 'mid' : ''); sub.textContent = '';
       const W = 300, H = 180, span = Math.max(10, t * 1.15), top = Math.max(2, m * 1.2), pts = [];
       for (let k = 0; k <= 40; k++) { const tt = t * k / 40, mm = Math.exp(0.075 * tt); pts.push(`${(tt / span * W).toFixed(1)} ${(H - (mm - 1) / (top - 1) * (H - 16)).toFixed(1)}`); }
       path.setAttribute('d', 'M' + pts.join(' L')); const last = pts[pts.length - 1].split(' ').map(Number);
-      ship.style.transform = `translate(${(last[0] / W * (sky.clientWidth - 60)).toFixed(0)}px, ${(-(H - last[1]) / H * (sky.clientHeight - 60)).toFixed(0)}px) rotate(-28deg)`; ship.className = 'rk-ship go';
+      ship.style.transform = `translate(${(last[0] / W * (sky.clientWidth - 60)).toFixed(0)}px, ${(-(H - last[1]) / H * (sky.clientHeight - 60)).toFixed(0)}px) rotate(-35deg)`; ship.className = 'rk-ship go';
       const cv = $('#rkCashVal'); const me = home && rk.bets.find((b) => b.id === home.me.id); if (cv && me) cv.textContent = '+' + fmt(Math.round(me.bet * m)) + ' 💎';
-    } else if (rk.phase === 'crash') { mult.textContent = '💥 ' + rk.crash.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult crash'; sub.textContent = 'Abgestürzt!'; ship.className = 'rk-ship boom'; }
+    } else if (rk.phase === 'crash') { mult.textContent = rk.crash.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult crash'; sub.textContent = 'Abgestürzt!'; if (!ship.classList.contains('boom')) { ship.className = 'rk-ship boom'; const bm = $('#rkBoom'); if (bm) { const rr = ship.getBoundingClientRect(), sr = sky.getBoundingClientRect(); bm.style.left = (rr.left - sr.left + rr.width / 2) + 'px'; bm.style.top = (rr.top - sr.top + rr.height / 2) + 'px'; bm.classList.remove('go'); void bm.offsetWidth; bm.classList.add('go'); } sky.classList.remove('shake'); void sky.offsetWidth; sky.classList.add('shake'); } }
     rkRaf = requestAnimationFrame(step);
   };
   rkRaf = requestAnimationFrame(step);
@@ -3244,7 +3485,7 @@ function rkLoop() {
 function rkSocketInit() {
   if (!socket || socket.__rk) return; socket.__rk = true;
   socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') sfx('wrong'); } });
-  socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') rkDraw(); });
+  socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') { rkDraw(); const fl = $('#rkFloats'); if (fl) { const e = document.createElement('div'); e.className = 'rk-float' + (home && c.id === home.me.id ? ' me' : ''); e.style.left = (38 + Math.random() * 24) + '%'; e.innerHTML = `<b>${esc(c.name)}</b> ${c.m.toFixed(2).replace('.', ',')}× · +${fmt(c.won)} 💎`; fl.appendChild(e); setTimeout(() => e.remove(), 2400); } } });
   socket.on('kirmes:pot', (p) => { if (kmInfo) kmInfo.pot = p.pot; const el = $('#kmPot'); if (el) el.innerHTML = `Jackpot für alle <b>${fmt(p.pot)}</b> 💎`; });
   socket.on('kirmes:jackpot', (j) => toast(`🎰 ${j.name} hat den Münzschieber-Jackpot geknackt: ${fmt(j.amount)} 💎!`));
   socket.on('kirmes:live', () => { newsPosts = null; try { loadNews(); } catch (e) {} loadHome().then(() => { viewKey = ''; render(); }).catch(() => {}); }); // Update-Beitrag erscheint mit der Freigabe
@@ -7102,7 +7343,7 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.u2) { e.preventDefault(); u2Act(t.dataset.u2); return; } // neues Design
   if (t && t.dataset.kmb) { kmBetAct(t.dataset.kmb); return; }
   if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
-  if (t && t.dataset.kmhorse !== undefined) { if (kmBusy) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.km-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; return; }
+  if (t && t.dataset.kmhorse !== undefined) { if (kmBusy) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; return; }
   if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
   const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen
   const pvw = e.target.closest && e.target.closest('[data-packview]'); if (pvw) { packView(pvw.dataset.packview); return; } // Booster in 3D ansehen, auch innerhalb der Shop-Karte
