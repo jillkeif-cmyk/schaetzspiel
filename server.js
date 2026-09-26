@@ -1148,7 +1148,7 @@ app.post('/api/casino/kirmes/lukas', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!kirmesOk(u, res, 'lukas')) return; const bet = kBet(req, res, u); if (!bet) return;
-    const r = KM.lukas(), won = Math.round(bet * r.mult);
+    const r = KM.lukas(req.body.acc), won = Math.round(bet * r.mult);
     res.json({ ...r, won, diamonds: await kPay(u, 'lukas', bet, won, `Höhe ${r.height} (${r.label})`) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
