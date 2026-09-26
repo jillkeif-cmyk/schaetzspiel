@@ -1,8 +1,22 @@
 <!doctype html>
 <html lang="de">
 <head>
-<script>try { if (localStorage.getItem('sz_token')) { document.documentElement.classList.add('booting'); setTimeout(function () { document.documentElement.classList.remove('booting'); }, 8000); } } catch (e) {}</script>
-<style>html.booting body{background:#06161A!important}html.booting #app,html.booting #u2nav{visibility:hidden!important}html.booting body::after{content:"";position:fixed;left:50%;top:44%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;border:4px solid rgba(255,210,63,.18);border-top-color:#FFD23F;animation:bootspin .8s linear infinite;z-index:99}html.booting body::before{content:"PUNKTLANDUNG";position:fixed;left:0;right:0;top:calc(44% + 44px);text-align:center;font:900 13px/1 system-ui,sans-serif;letter-spacing:3px;color:#FFE27A;z-index:99}@keyframes bootspin{to{transform:rotate(360deg)}}</style>
+<script>try { if (localStorage.getItem('sz_token')) { document.documentElement.classList.add('booting'); setTimeout(function () { document.documentElement.classList.remove('booting'); }, 9000); } } catch (e) {}</script>
+<link rel="preload" as="image" href="/ui2/splash.webp">
+<style>
+html.booting body{background:#06161A!important}html.booting #app,html.booting #u2nav{visibility:hidden!important}
+#boot{display:none}html.booting #boot,#boot.out{display:block;position:fixed;inset:0;z-index:9999;background:#06161A url('/ui2/splash.webp') center/cover no-repeat}
+#boot.out{animation:bootout .45s ease forwards;pointer-events:none}@keyframes bootout{to{opacity:0;transform:scale(1.04)}}
+#boot::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,22,26,.55) 0%,rgba(6,22,26,0) 26%,rgba(6,22,26,0) 60%,rgba(6,22,26,.92) 88%)}
+#boot .bt-logo{position:absolute;left:0;right:0;top:calc(9% + env(safe-area-inset-top,0px));z-index:2;text-align:center;font:900 34px/1 system-ui,-apple-system,sans-serif;letter-spacing:3px;color:#FFE27A;text-shadow:0 3px 0 #6A4200,0 0 24px rgba(255,210,63,.55)}
+#boot .bt-logo small{display:block;margin-top:8px;font:700 12px/1 system-ui,sans-serif;letter-spacing:4px;color:#DFF6FF;text-shadow:0 1px 4px #000}
+#boot .bt-bar{position:absolute;left:14%;right:14%;bottom:calc(11% + env(safe-area-inset-bottom,0px));z-index:2;height:14px;border-radius:99px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),0 0 18px rgba(0,0,0,.6);overflow:hidden}
+#boot .bt-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#E0A21E,#FFE27A 60%,#FFF6C8);box-shadow:0 0 12px rgba(255,226,122,.9);animation:btfill 3.2s cubic-bezier(.2,.7,.3,1) forwards}
+#boot .bt-bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:translateX(-100%);animation:btshine 1.2s linear infinite}
+#boot.done .bt-bar i{animation:none;width:100%;transition:width .25s ease}
+@keyframes btfill{0%{width:0}35%{width:48%}100%{width:86%}}@keyframes btshine{to{transform:translateX(100%)}}
+#boot .bt-txt{position:absolute;left:0;right:0;bottom:calc(11% + 26px + env(safe-area-inset-bottom,0px));z-index:2;text-align:center;font:800 12.5px/1 system-ui,sans-serif;letter-spacing:1.5px;color:#FFF3C4;text-shadow:0 1px 4px #000}
+</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B2F35">
@@ -2408,9 +2422,14 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 .lg-btns .btn,.lg-btns .km-go{width:auto!important}
 .lg-btns .btn.ghost{flex:0 0 auto!important;padding:0 16px}
 .lg-btns .km-go{flex:1 1 auto!important;min-width:0}
+
+.lg-homebox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,rgba(90,20,40,.55),rgba(20,8,24,.6));box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.45)}
+.lg-homebox > b{font:800 13px Archivo,sans-serif;color:#FFE27A}
+body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"><div class="bt-logo">PUNKTLANDUNG<small>DAS SCHÄTZ-QUIZ</small></div><div class="bt-txt" id="btTxt">Lade dein Spiel …</div><div class="bt-bar"><i></i></div></div>
 <div id="wrap">
   <div id="tape" aria-hidden="true"><div id="tapeBand"></div><div id="tapeSec"></div></div>
   <main id="app"><div id="bootSplash" style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#FFE27A;font:800 15px system-ui,sans-serif;text-align:center">
@@ -2433,7 +2452,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '250';
+const AVER = '253';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3882,15 +3901,20 @@ function rkSocketInit() {
 }
 
 // ================= „Lügen“ =================
-let lgList = [], lgS = null, lgId = null, lgSel = new Set(), lgPick = null, lgOff = 0, lgNew = { stake: 1000, pass: true, max: 5 }, lgRevealSeen = 0, lgTick = 0;
+let lgList = [], lgS = null, lgId = null, lgSel = new Set(), lgPick = null, lgOff = 0, lgNew = { stake: 1000, pass: true, max: 6 }, lgRevealSeen = 0, lgTick = 0;
 const LG_EMO = ['😂', '🤥', '😱', '😤', '🔥', '👀'];
 const LG_RN = { 2: 'Zweien', 3: 'Dreien', 4: 'Vieren', 5: 'Fünfen', 6: 'Sechsen', 7: 'Siebenen', 8: 'Achten', 9: 'Neunen', 10: 'Zehnen', B: 'Buben', D: 'Damen', K: 'Könige', A: 'Asse' };
 const lgNow = () => Date.now() + lgOff;
 function lgSocketInit() {
   if (!socket || socket.__lg) return; socket.__lg = true;
-  socket.on('lg:list', (l) => { lgList = l || []; if (page === 'casino' && cgame === 'luegen' && !lgId) renderCards(); });
+  socket.on('lg:list', (l) => { lgList = l || []; if (page === 'casino' && cgame === 'luegen' && !lgId) renderCards(); lgHomeDraw(); });
   socket.on('lg:state', (st) => { if (!lgId || st.id !== lgId) return; const prevRev = lgS && lgS.reveal && lgS.reveal.at; lgS = st; lgOff = st.now - Date.now(); if (st.state !== 'play') lgSel.clear(); if (st.reveal && st.reveal.at !== prevRev) lgRevealFx(st.reveal); if (st.state === 'end' && st.winner) lgWinFx(st.winner); if (page === 'casino' && cgame === 'luegen') lgDraw(); });
   socket.on('lg:emote', (x) => { const seat = document.querySelector(`.lg-seat[data-seat="${x.seat}"]`); if (!seat) return; const e = document.createElement('span'); e.className = 'lg-emo'; e.textContent = x.e; seat.appendChild(e); setTimeout(() => e.remove(), 2200); });
+}
+function lgHomeDraw() { // offene Tische auf der Startseite
+  const el = $('#lgHome'); if (!el) return; if (!(home && home.luegen) || S) { el.innerHTML = ''; return; }
+  const open = lgList.filter((t) => t.state !== 'end');
+  el.innerHTML = open.length ? `<div class="lg-homebox"><b>🃏 Lügen: ${open.length === 1 ? 'ein Tisch' : open.length + ' Tische'} offen</b>${open.slice(0, 3).map((t) => `<div class="lg-row"><span class="grow"><b>${esc(t.host)}s Tisch</b><small>${t.count} ${t.count === 1 ? 'Spieler' : 'Spieler'} · ${t.stake ? fmt(t.stake) + ' 💎' : 'zum Spaß'} · ${t.pass ? 'mit' : 'ohne'} Passen${t.state === 'lobby' ? '' : ' · läuft'}</small></span><button class="btn small ${t.state === 'lobby' && t.count < 6 ? '' : 'ghost'}" data-lghome="${t.id}">${t.state === 'lobby' && t.count < 6 ? 'Setzen' : 'Zuschauen'}</button></div>`).join('')}</div>` : '';
 }
 function renderLuegen(box) {
   lgSocketInit();
@@ -3899,25 +3923,25 @@ function renderLuegen(box) {
       <div class="lg-new"><b>Tisch eröffnen</b>
         <div class="lg-opt"><span>Einsatz</span><div class="km-chips">${[0, 100, 1000, 5000, 25000, 100000].map((v) => `<button class="km-chip ${lgNew.stake === v ? 'on' : ''}" data-lgo="stake:${v}">${v ? chipTxt(v) : 'Spaß'}</button>`).join('')}</div></div>
         <div class="lg-opt"><span>Passen</span><div class="lg-seg"><button class="${lgNew.pass ? 'on' : ''}" data-lgo="pass:1">erlaubt</button><button class="${lgNew.pass ? '' : 'on'}" data-lgo="pass:0">verboten</button></div></div>
-        <div class="lg-opt"><span>Plätze</span><div class="lg-seg">${[3, 4, 5, 6].map((n) => `<button class="${lgNew.max === n ? 'on' : ''}" data-lgo="max:${n}">${n}</button>`).join('')}</div></div>
-        <small class="sub">${lgNew.max <= 4 ? 'Skatblatt, 32 Karten' : 'Volles Blatt, 52 Karten'} · ${lgNew.pass ? 'Mit Passen: Passen alle, fliegt der Stapel aus dem Spiel' : 'Ohne Passen: Wer dran ist, muss legen, notfalls lügen'}</small>
+        <small class="sub">Bis zu 6 Plätze, es spielen so viele mit, wie sich hinsetzen (ab 3, Bots zählen mit). Die Karten passen sich an: 3–4 Spieler Skatblatt, 5–6 volles Blatt. ${lgNew.pass ? 'Mit Passen: Passen alle, fliegt der Stapel aus dem Spiel.' : 'Ohne Passen: Wer dran ist, muss legen, notfalls lügen.'}</small>
         <button class="km-go" data-lga="create">🃏 Tisch eröffnen</button></div>
       <h3 class="lg-h">Offene Tische</h3>
-      <div class="lg-list">${lgList.length ? lgList.map((t) => `<div class="lg-row"><span class="grow"><b>${esc(t.host)}s Tisch</b><small>${t.stake ? fmt(t.stake) + ' 💎' : 'Zum Spaß'} · ${t.pass ? 'mit' : 'ohne'} Passen · ${t.count}/${t.max} ${t.state === 'lobby' ? '' : '· läuft'}</small></span><button class="btn small ${t.state === 'lobby' && t.count < t.max ? '' : 'ghost'}" data-lga="join:${t.id}">${t.state === 'lobby' && t.count < t.max ? 'Setzen' : 'Zuschauen'}</button></div>`).join('') : '<p class="sub">Noch kein Tisch offen. Eröffne einen und lade Freunde ein!</p>'}</div>`;
+      <div class="lg-list">${lgList.length ? lgList.map((t) => `<div class="lg-row"><span class="grow"><b>${esc(t.host)}s Tisch</b><small>${t.stake ? fmt(t.stake) + ' 💎' : 'Zum Spaß'} · ${t.pass ? 'mit' : 'ohne'} Passen · ${t.count} ${t.count === 1 ? 'Spieler' : 'Spieler'} ${t.state === 'lobby' ? '' : '· läuft'}</small></span><button class="btn small ${t.state === 'lobby' && t.count < t.max ? '' : 'ghost'}" data-lga="join:${t.id}">${t.state === 'lobby' && t.count < t.max ? 'Setzen' : 'Zuschauen'}</button></div>`).join('') : '<p class="sub">Noch kein Tisch offen. Eröffne einen und lade Freunde ein!</p>'}</div>`;
     return; }
-  box.innerHTML = '<div id="lgBox"></div>'; lgDraw();
+  box.innerHTML = '<div id="lgBox"><p class="sub" style="text-align:center;margin:40px 0">Setze mich an den Tisch …</p></div>'; lgDraw();
 }
 function lgDraw() {
   const box = $('#lgBox'); if (!box || !lgS) return; const S = lgS, me = S.you, seats = S.seats, N = seats.length, playing = S.state === 'play';
   const rot = (i) => (me >= 0 ? (i - me + N) % N : i);
   const POS = { 3: [[50, 86], [14, 26], [86, 26]], 4: [[50, 86], [11, 48], [50, 9], [89, 48]], 5: [[50, 86], [11, 62], [24, 12], [76, 12], [89, 62]], 6: [[50, 86], [11, 66], [11, 30], [50, 9], [89, 30], [89, 66]] }[N];
   const mine = me >= 0 && playing && S.turn === me, doubtOpen = playing && S.doubtUntil > lgNow() && S.last && S.last.seat !== me && me >= 0;
-  const seatHtml = seats.map((p, i) => { if (!p && S.state !== 'lobby') return ''; const [x, y] = POS[rot(i)];
+  const firstFree = seats.findIndex((p) => !p);
+  const seatHtml = seats.map((p, i) => { if (!p && (S.state !== 'lobby' || i !== firstFree)) return ''; const [x, y] = POS[rot(i)];
     if (!p) return `<div class="lg-seat empty" style="left:${x}%;top:${y}%"><span class="lg-av">+</span><small>frei</small></div>`;
     const fan = Math.min(5, p.n); const turn = playing && S.turn === i;
     return `<div class="lg-seat ${turn ? 'turn' : ''} ${i === me ? 'me' : ''} ${p.away ? 'away' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${turn ? `<svg class="lg-ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" style="animation-duration:${Math.max(0.5, (S.turnUntil - lgNow()) / 1000)}s"/></svg>` : ''}<span class="lg-av">${p.bot ? '🤖' : esc(p.name.slice(0, 2).toUpperCase())}</span><b>${esc(p.name)}</b>${S.state !== 'lobby' ? `<span class="lg-fan">${Array.from({ length: fan }, (_, k) => `<i style="--k:${k - (fan - 1) / 2}"></i>`).join('')}<em>${p.n}</em></span>` : ''}${S.state === 'lobby' && p.bot && S.host === (home && home.me.id) ? `<button class="lg-kick" data-lga="kick:${i}">✕</button>` : ''}</div>`; }).join('');
   const rv = S.reveal && lgNow() - S.reveal.at < 2600 ? S.reveal : null;
-  const center = S.state === 'lobby' ? `<div class="lg-mid"><b>${seats.filter(Boolean).length}/${N} am Tisch</b><small>${S.stake ? 'Einsatz ' + fmt(S.stake) + ' 💎' : 'Zum Spaß'} · ${S.pass ? 'mit' : 'ohne'} Passen</small></div>`
+  const center = S.state === 'lobby' ? `<div class="lg-mid"><b>${seats.filter(Boolean).length} am Tisch</b><small>${S.stake ? 'Einsatz ' + fmt(S.stake) + ' 💎' : 'Zum Spaß'} · ${S.pass ? 'mit' : 'ohne'} Passen</small></div>`
     : rv ? `<div class="lg-mid rev"><div class="lg-revcards">${rv.cards.map((c) => pkCard(c, true)).join('')}</div><span class="lg-stamp ${rv.lie ? 'lie' : 'ok'}">${rv.lie ? 'ERWISCHT!' : 'EHRLICH!'}</span></div>`
     : `<div class="lg-mid"><div class="lg-pile">${Array.from({ length: Math.min(8, Math.ceil(S.pile / 2)) }, (_, k) => `<i style="--k:${k}"></i>`).join('')}${S.pile ? `<em>${S.pile}</em>` : ''}</div>${S.rank ? `<span class="lg-claim">${S.last ? `${esc(seats[S.last.seat].name)}: <b>${S.last.n}× ${LG_RN[S.last.rank]}</b>` : `Runde: <b>${LG_RN[S.rank]}</b>`}</span>` : `<span class="lg-claim">${playing ? 'Neue Runde' : ''}</span>`}</div>`;
   const hand = me >= 0 && seats[me] && seats[me].cards ? seats[me].cards : [];
@@ -3943,8 +3967,8 @@ function lgRevealFx(rv) { if (lgRevealSeen === rv.at) return; lgRevealSeen = rv.
 function lgWinFx(w) { if (lgWinFx.last === w.name + (lgS && lgS.pot)) return; lgWinFx.last = w.name + (lgS && lgS.pot); kmSnd('fanfare'); setTimeout(() => { const f = $('#lgFx'); if (f) { const S = f.getBoundingClientRect(); for (let i = 0; i < 50; i++) { const p = document.createElement('i'); p.className = 'km2-p confetti'; p.style.cssText = `left:${S.width / 2}px;top:${S.height / 2}px;--dx:${(Math.random() - 0.5) * 300}px;--dy:${-80 - Math.random() * 200}px;--r:${Math.random() * 720}deg;background:${['#FFD23F', '#FF4FA3', '#7CF0A8', '#8FD3FF'][i % 4]}`; f.appendChild(p); setTimeout(() => p.remove(), 1500); } } }, 50); if (w.prize && lgS && lgS.you === w.seat) kmSetDia(kmDia() + w.prize); }
 function lgAct(a) {
   const [k, v] = a.split(':'); const cb = (r) => { if (r && r.error) toast(r.error); };
-  if (k === 'create') return socket.emit('lg:create', lgNew, (r) => { if (r && r.error) return toast(r.error); lgId = r.id; if (lgNew.stake) {} renderCards(); });
-  if (k === 'join') return socket.emit('lg:join', { id: v }, (r) => { if (r && r.error) return toast(r.error); lgId = v; renderCards(); });
+  if (k === 'create') return socket.emit('lg:create', lgNew, (r) => { if (r && r.error) return toast(r.error); lgId = r.id; renderCards(); socket.emit('lg:join', { id: r.id }, () => {}); }); // Zustand danach sicher abholen
+  if (k === 'join') { lgId = v; lgS = null; renderCards(); return socket.emit('lg:join', { id: v }, (r) => { if (r && r.error) { toast(r.error); lgId = null; renderCards(); } }); }
   if (k === 'leave') { socket.emit('lg:leave', { id: lgId }); lgId = null; lgS = null; lgSel.clear(); renderCards(); return; }
   if (k === 'bot') return socket.emit('lg:bot', { id: lgId });
   if (k === 'kick') return socket.emit('lg:kick', { id: lgId, seat: Number(v) });
@@ -6685,7 +6709,7 @@ const banActive = () => { const b = home && home.me && home.me.casinoBan; return
 const banLeft = (t) => { let s = Math.max(0, Math.floor((t - Date.now()) / 1000)); const d = Math.floor(s / 86400); s %= 86400; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (d ? d + ' T ' : '') + [h, m, x].map((v) => String(v).padStart(2, '0')).join(':'); };
 function loadBans() { api('/api/admin/casinoban').then((r) => { const el = $('#cbList'); if (!el) return; el.innerHTML = r.bans.length ? r.bans.map((x) => `<div class="lg-row"><span class="grow"><b>${esc(x.name)}</b></span><small>${x.ban.until ? 'bis ' + new Date(x.ban.until).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'unbefristet'}</small><button class="btn small ghost" data-unban="${esc(x.name)}">Aufheben</button></div>`).join('') : '<small class="sub">Niemand ist gesperrt.</small>'; el.querySelectorAll('[data-unban]').forEach((b) => { b.onclick = () => setBan(b.dataset.unban, 0); }); }).catch(() => {}); }
 function setBan(name, hours) { if (!name) return toast('Spielername fehlt'); api('/api/admin/casinoban', { name, hours }).then((r) => { toast(r.ban ? `🚫 ${r.name} gesperrt` : `${r.name} wieder frei`); loadBans(); }).catch((e) => toast(e.message)); }
-async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); requestAnimationFrame(() => document.documentElement.classList.remove('booting')); /* Startseite steht: Ladebildschirm weg */ } catch (e) { if (e.status === 401) logout(); } }
+async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); bootDone(); /* Startseite steht: Balken voll, Ladebildschirm blendet aus */ if (home.luegen && socket) { lgSocketInit(); socket.emit('lg:lobby'); } } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
   if (socket) socket.disconnect();
@@ -6928,6 +6952,7 @@ function u2Menu() { // Zahnrad: alles, was nicht direkt auf der Startseite liegt
 function u2IsleName(p) { const N = ['Startinsel', 'Bronzewinkel', 'Messschieber', 'Volltreffer', 'Silbereule', 'Goldkompass', 'Goldwolf', 'Smaragdkobra', 'Sturmadler', 'Rubinkrone', 'Flamme', 'Meisterprestige']; return (p ? 'Insel ' : '') + N[Math.max(0, Math.min(11, p))]; }
 function u2NewsNew() { try { return !!(newsPosts && newsPosts[0] && localStorage.getItem('news_seen') !== newsPosts[0].id); } catch (e) { return false; } }
 function fillU2Home() {
+  setTimeout(lgHomeDraw, 0); // offene Lügen-Tische nach jedem Neuzeichnen wieder einblenden
   const box = $('#ui2Home'); if (!box || !home || !home.me) return;
   const me = home.me, t = me.titleShown, pct = me.max ? 100 : Math.max(2, Math.round(100 * (me.into || 0) / Math.max(1, me.next || 1)));
   const daily = !!(window.__dailyC && window.__dailyC.v && !window.__dailyC.v.claimed);
@@ -6981,6 +7006,11 @@ function fillSocial() {
   }).catch(() => {});
 }
 
+function bootDone() {
+  const b = document.getElementById('boot'); if (!b || !document.documentElement.classList.contains('booting')) return;
+  const t = document.getElementById('btTxt'); if (t) t.textContent = 'Los geht’s!'; b.classList.add('done');
+  setTimeout(() => { b.classList.add('out'); document.documentElement.classList.remove('booting'); setTimeout(() => b.classList.remove('out'), 500); }, 260);
+}
 function render() {
   if (!token) document.documentElement.classList.remove('booting');
   if (token && home && home.maintenance) { if (S) S = null; if (!['home', 'profile', 'support'].includes(page)) page = 'home'; } // Wartung: nur Start, Profil, Support
@@ -7153,6 +7183,7 @@ ${home && home.me && home.me.admin ? '<div class="panel row troph-row" style="ga
     <div class="row" id="online" style="gap:10px;padding:0 4px"><span style="width:10px;height:10px;border-radius:50%;background:#8BE28B;box-shadow:0 0 10px #8BE28B;flex:none"></span><span class="sub grow" id="onlineText"></span>
     </div>
     <div id="openList"></div>
+    <div id="lgHome"></div>
     <button class="panel row" id="openCards" style="gap:12px;text-align:left"><img src="/tcg/diamonds.webp?v=${IMGV}" style="width:46px;height:46px" alt=""><span class="grow"><b>Karten, Booster &amp; Börse</b> <span class="newtag" style="position:static;display:inline-block;margin-left:4px">NEU</span><br><span class="sub">Gruselnacht-Booster, Displays und Handeln an der Börse</span></span><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum"><b class="diaNum">${fmt((home && home.me && home.me.diamonds) || 0)}</b></b></span></button>
     <div class="mobonly" style="display:flex;flex-direction:column;gap:12px"><h2>Freunde</h2><div class="plist frList"></div><form class="row frForm"><input class="field grow" placeholder="Spielername hinzufügen" maxlength="16" autocomplete="off"><button class="btn small">Adden</button></form></div>
     ${home && home.me && home.me.admin ? '<button class="panel row" id="openAdmin" style="gap:12px;text-align:left"><span style="font-size:34px;width:46px;text-align:center">⚙️</span><span class="grow"><b>Admin</b><br><span class="sub">Fragen-Pool, Fragenquelle und Befüllung</span></span></button>' : ''}
@@ -7824,6 +7855,7 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
   if (t && t.dataset.rcbet) { rcBet(); return; }
   if (t && t.dataset.lga) { lgAct(t.dataset.lga); return; }
+  if (t && t.dataset.lghome) { lgSocketInit(); const id = t.dataset.lghome; page = 'casino'; ctab = 'casino'; cgame = 'luegen'; lgId = id; lgS = null; render(); socket.emit('lg:join', { id }, (r) => { if (r && r.error) { toast(r.error); lgId = null; render(); } }); return; } // Tisch vorher merken, damit der erste Zustand nicht verloren geht
   if (t && t.dataset.lgo) { const [k, v] = t.dataset.lgo.split(':'); lgNew[k] = k === 'pass' ? v === '1' : Number(v); renderCards(); return; }
   if (t && t.dataset.lgc) { const id = t.dataset.lgc; if (lgSel.has(id)) lgSel.delete(id); else if (lgSel.size < 4) lgSel.add(id); else toast('Höchstens 4 Karten.'); kmSnd('coin'); lgDraw(); return; }
   if (t && t.dataset.lgr) { lgPick = t.dataset.lgr; lgDraw(); return; }

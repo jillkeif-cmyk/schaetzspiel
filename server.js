@@ -1401,12 +1401,13 @@ async function lgWin(t, seat) {
   lgLog(t, `🏆 ${w.name} ist alle Karten los und gewinnt${prize && !w.bot ? ' ' + fmtD(prize) + ' 💎' : ''}!`);
   for (const p of t.seats) if (p && !p.bot && t.stake) { try { const won = p === w ? prize : 0; if (won) { const u = await store.userById(p.id); note(`Lügen: gewonnen · Auszahlung ${fmtD(won)}`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) + won }); } await casinoStat(p.id, t.stake, won); if (won) await bigWin(p.id, 'Lügen', won); } catch (e) { console.error(e); } }
   lgEmit(t); console.log(`Lügen Tisch ${t.id}: ${w.name} gewinnt (Pot ${t.pot})`);
-  lgClearDoubt(t); t.tTurn = setTimeout(() => { t.state = 'lobby'; t.winner = null; t.reveal = null; t.pile = []; t.pot = 0; t.seats.forEach((p, i) => { if (p) { p.cards = []; if (p.away) t.seats[i] = null; } }); lgEmit(t); }, 12000 / LG_FAST);
+  lgClearDoubt(t); t.tTurn = setTimeout(() => { t.state = 'lobby'; t.winner = null; t.reveal = null; t.pile = []; t.pot = 0; t.seats.forEach((p, i) => { if (p) { p.cards = []; if (p.away) t.seats[i] = null; } }); while (t.seats.length < 6) t.seats.push(null); t.max = 6; lgEmit(t); }, 12000 / LG_FAST);
 }
 async function lgStart(t) {
   const humans = t.seats.filter((p) => p && !p.bot);
   for (const p of humans) { if (!t.stake) continue; const u = await store.userById(p.id); if ((Number(u.diamonds) || 0) < t.stake) return `${p.name} hat nicht genug Diamanten.`; }
   for (const p of humans) { if (!t.stake) continue; const u = await store.userById(p.id); note(`Lügen: ${fmtD(t.stake)} Einsatz`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) - t.stake }); }
+  t.seats = t.seats.filter(Boolean); t.max = t.seats.length; // es spielen so viele, wie sich hingesetzt haben
   t.pot = t.stake * humans.length; LG.deal(t); t.state = 'play'; t.pile = []; t.rank = null; t.last = null; t.passes = 0; t.log = []; t.reveal = null; t.winner = null;
   const first = t.seats.map((p, i) => (p ? i : -1)).filter((i) => i >= 0); lgLog(t, `Los geht's! ${t.ranks.length === 8 ? 'Skatblatt (32 Karten)' : 'Volles Blatt (52 Karten)'}, ${t.allowPass ? 'mit' : 'ohne'} Passen`);
   lgTurn(t, first[Math.floor(Math.random() * first.length)]); return null;
@@ -1417,7 +1418,7 @@ function lgSocket(socket) {
   socket.on('lg:lobby', () => { socket.join('lgLobby'); socket.emit('lg:list', [...LGT.values()].map(lgPublic)); });
   socket.on('lg:create', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = await ok(); if (!u) return reply({ error: 'Lügen ist gerade nicht verfügbar.' });
     if ([...LGT.values()].some((t) => { const i = lgSeatOf(t, u.id); return i >= 0 && !t.seats[i].away && t.state !== 'end'; })) return reply({ error: 'Du sitzt schon an einem Tisch.' });
-    const stake = [0, 100, 1000, 5000, 25000, 100000].includes(Number(d && d.stake)) ? Number(d.stake) : 1000, max = Math.max(3, Math.min(6, Number(d && d.max) || 6));
+    const stake = [0, 100, 1000, 5000, 25000, 100000].includes(Number(d && d.stake)) ? Number(d.stake) : 1000, max = 6; // bis zu 6, es spielen so viele wie kommen
     const t = { id: 'L' + (lgNext++), hostId: u.id, hostName: u.name, stake, allowPass: !!(d && d.pass), max, seats: Array(max).fill(null), state: 'lobby', pile: [], log: [], pot: 0, tBots: [] };
     t.seats[0] = { id: u.id, name: u.name, cards: [] }; LGT.set(t.id, t); socket.join('lg:' + t.id); lgEmit(t); reply({ ok: true, id: t.id }); });
   socket.on('lg:join', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = await ok(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Diesen Tisch gibt es nicht mehr.' });
