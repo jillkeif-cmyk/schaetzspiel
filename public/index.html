@@ -2367,7 +2367,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '237';
+const AVER = '238';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3506,7 +3506,7 @@ function kmSnd(name, opt = {}) {
   else if (name === 'engine') { osc('sawtooth', 55 + (opt.m || 1) * 6, now, 0.25, 0.018); noise(now, 0.25, 0.03, 'lowpass', 300 + (opt.m || 1) * 80); }
 }
 // ---------- Münzschieber: ein gemeinsamer Automat, Pool bleibt liegen, einer spielt, alle schauen zu ----------
-let pmS = null, pmN = 10, pmBusy = false;
+let pmS = null, pmN = 10, pmBusy = false, pmQ = [];
 function kmPushStage() {
   return `<div class="pf"><canvas id="pfCv"></canvas>
     <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small></div>
@@ -3517,8 +3517,8 @@ function pmCtl() { // Steuerung unter dem Automaten: Hinsetzen, Einwerfen, Zusch
   const me = home && home.me, mine = pmS.seat && me && pmS.seat.id === me.id, other = pmS.seat && !mine;
   if (seat) seat.innerHTML = mine ? '🟢 Du spielst' : other ? `👀 ${esc(pmS.seat.name)} spielt` : '🟡 Frei';
   if (mine) el.innerHTML = `<div class="pm-n">${[1, 5, 10, 25, 50, 100].map((n) => `<button class="km-chip ${pmN === n ? 'on' : ''}" data-pmn="${n}">${n}</button>`).join('')}</div>
-      <button class="km-go" id="pmDrop" data-pm="drop" ${pmBusy ? 'disabled' : ''}>🪙 ${pmN} ${pmN === 1 ? 'Münze' : 'Münzen'} einwerfen <small>${fmt(pmN * 100)} 💎</small></button>
-      <button class="btn small ghost pm-leave" data-pm="leave">Aufstehen</button>`;
+      <button class="km-go" id="pmDrop" data-pm="drop">🪙 ${pmN} ${pmN === 1 ? 'Münze' : 'Münzen'} einwerfen <small>${fmt(pmN * 100)} 💎${pmQ.length ? ` · +${pmQ.length} in der Schlange` : ''}</small></button>
+      <button class="btn small ghost pm-leave" data-pm="leave" ${pmBusy ? 'disabled' : ''}>Aufstehen</button>`;
   else if (other) el.innerHTML = `<p class="pm-watch">👀 <b>${esc(pmS.seat.name)}</b> spielt gerade am Automaten. Du schaust live zu und kannst übernehmen, sobald der Platz frei ist.</p>`;
   else el.innerHTML = `<button class="km-go" data-pm="sit">🪑 Hinsetzen und spielen</button><p class="pm-note">1 Münze = 100 💎 · Was im Automaten liegt, bleibt liegen. Du spielst weiter, wo andere aufgehört haben.</p>`;
   const lst = $('#pmLast'); if (lst) lst.innerHTML = (pmS.last || []).slice(0, 4).map((x) => `<span>${esc(x.name)}: ${x.n} rein · <b class="${x.fell >= x.n ? 'up' : ''}">${x.fell} raus</b></span>`).join('');
@@ -3531,18 +3531,29 @@ function pmPoolShow(pool, anim) {
 }
 async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
 async function pmAct(a) {
+  if (a === 'leave' && pmBusy) return toast('Warte kurz, bis alle Münzen durch sind.');
   if (a === 'sit' || a === 'leave') { try { pmS = await api('/api/casino/kirmes/pusher/' + a, {}); kmSnd(a === 'sit' ? 'jingle' : 'slide'); } catch (e) { toast(e.message); } pmCtl(); return; }
-  if (a !== 'drop' || pmBusy) return;
-  if (pmN * 100 > kmDia()) return toast('So viele Diamanten hast du nicht.');
-  pmBusy = true; pmCtl();
-  try {
-    kmSetDia(kmDia() - pmN * 100);
-    const r = await api('/api/casino/kirmes/pusher', { n: pmN }); pmS = r.state;
-    await pmAnim(r.n, r.fell, r.avalanche);
-    kmSetDia(r.diamonds); pmPoolShow(r.pool, true);
-    if (r.fell) { const big = r.fell >= r.n * 3 || r.avalanche; kmBanner(r.avalanche ? 'LAWINE!' : r.fell >= r.n ? 'Münzregen!' : `${r.fell} ${r.fell === 1 ? 'Münze' : 'Münzen'} gefallen`, r.won, big); kmSnd(big ? 'fanfare' : 'jingle'); if (big) { const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.7, 40, 'coins'); } }
-    const m = $('#kmMsg'); if (m) m.innerHTML = r.fell ? `${r.n} rein · <b class="km-win">${r.fell} raus · +${fmt(r.won)} 💎</b>` : `${r.n} rein · diesmal ist nichts gefallen`;
-  } catch (e) { toast(e.message); loadTcg(); }
+  if (a !== 'drop') return;
+  const cost = pmN * 100, queued = pmQ.reduce((x, n) => x + n * 100, 0);
+  if (pmQ.length >= 10) return toast('Moment, 10 Einwürfe sind schon unterwegs.');
+  if (cost > kmDia()) return toast('So viele Diamanten hast du nicht.');
+  pmQ.push(pmN); kmSetDia(kmDia() - cost); kmSnd('coin'); pmCtl(); void queued;
+  if (!pmBusy) pmRun();
+}
+async function pmRun() { // arbeitet die Einwürfe nacheinander ab, schneller solange noch welche warten
+  pmBusy = true; pmCtl(); let last = null;
+  while (pmQ.length) {
+    const n = pmQ.shift(); pmCtl();
+    try {
+      const r = await api('/api/casino/kirmes/pusher', { n }); pmS = r.state; last = r;
+      await pmAnim(r.n, r.fell, r.avalanche, pmQ.length > 0);
+      pmPoolShow(r.pool, true); kmSetDia(r.diamonds - pmQ.reduce((x, k) => x + k * 100, 0));
+      const big = r.fell >= r.n * 3 || r.avalanche;
+      if (r.fell && (big || !pmQ.length)) { kmBanner(r.avalanche ? 'LAWINE!' : r.fell >= r.n ? 'Münzregen!' : `${r.fell} ${r.fell === 1 ? 'Münze' : 'Münzen'} gefallen`, r.won, big); kmSnd(big ? 'fanfare' : 'jingle'); if (big) { const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.7, 40, 'coins'); } }
+      const m = $('#kmMsg'); if (m) m.innerHTML = r.fell ? `${r.n} rein · <b class="km-win">${r.fell} raus · +${fmt(r.won)} 💎</b>` : `${r.n} rein · diesmal ist nichts gefallen`;
+    } catch (e) { toast(e.message); pmQ = []; loadTcg(); break; }
+  }
+  if (last) kmSetDia(last.diamonds);
   pmBusy = false; pmCtl();
 }
 // ---------- Münzschieber-Szene: dichter Münzteppich bis zur Kante, rückt als Ganzes vor ----------
@@ -3633,15 +3644,15 @@ function pfStart() {
   const loop = (t) => { const dt = Math.min(0.05, (t - last) / 1000); last = t; pfStep(dt); if (!pfDraw()) return; window.__pfRaf = requestAnimationFrame(loop); }; window.__pfRaf = requestAnimationFrame(loop);
   pmLoad();
 }
-async function pmAnim(n, fell, avalanche) { // für Spieler und Zuschauer gleich
-  const k = Math.min(12, n);
-  for (let i = 0; i < k; i++) { PF.drops.push({ u: 0.18 + Math.random() * 0.64, v: 0.13 + Math.random() * 0.1, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(n > 12 ? 70 : 130); }
-  await kmSleep(850);
+async function pmAnim(n, fell, avalanche, fast) { // für Spieler und Zuschauer gleich; fast = weitere Einwürfe warten
+  const k = Math.min(fast ? 6 : 12, n);
+  for (let i = 0; i < k; i++) { PF.drops.push({ u: 0.18 + Math.random() * 0.64, v: 0.13 + Math.random() * 0.1, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(fast ? 45 : n > 12 ? 70 : 130); }
+  await kmSleep(fast ? 500 : 850);
   const vis = fell <= 25 ? fell : Math.round(25 + (fell - 25) / 8);
   kmSnd('slide'); pfShift(vis + (avalanche ? 6 : 0));
   const before = PF.falling.length; let heard = 0; const t0 = Date.now();
-  while (Date.now() - t0 < 1800) { await kmSleep(90); const fallen = PF.falling.length; if (fallen > heard) { kmSnd('coins', { n: Math.min(8, fallen - heard) }); heard = fallen; } }
-  void before; pfRefill(); await kmSleep(400);
+  while (Date.now() - t0 < (fast ? 900 : 1800)) { await kmSleep(90); const fallen = PF.falling.length; if (fallen > heard) { kmSnd('coins', { n: Math.min(8, fallen - heard) }); heard = fallen; } }
+  void before; pfRefill(); await kmSleep(fast ? 100 : 400);
 }
 
 // ---------- Ein Spielzug ----------
