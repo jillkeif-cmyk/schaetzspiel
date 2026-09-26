@@ -202,7 +202,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await sharedGet('market', 30000, () => store.marketList()).catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ kirmes: kirmesLive || isAdmin(u), kirmesLive, ui2Live: !!homeCfg.ui2Live, maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await sharedGet('leader', 30000, () => store.leaderboard())).map(withOnline), ai: ai.enabled(),
+    res.json({ luegen: luegenLive || isAdmin(u), luegenLive, kirmes: kirmesLive || isAdmin(u), kirmesLive, ui2Live: !!homeCfg.ui2Live, maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await sharedGet('leader', 30000, () => store.leaderboard())).map(withOnline), ai: ai.enabled(),
       world: (await sharedGet('world', 30000, () => store.worldRanking())).map(withOnline),
       points: (await sharedGet('points', 30000, () => store.pointsRanking())).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1301,7 +1301,7 @@ function rcSocket(socket) {
 }
 
 function rkSocket(socket) {
-  rcSocket(socket);
+  rcSocket(socket); lgSocket(socket);
   socket.on('pm:join', () => { socket.join('pusher'); socket.emit('pm:ev', { type: 'state', state: pmView() }); });
   socket.on('pm:leave', () => socket.leave('pusher'));
   socket.on('rk:join', () => { socket.join('rocket'); if (RK.phase === 'idle') rkWait(); else socket.emit('rk:state', rkPublic()); });
@@ -1328,6 +1328,122 @@ function rkSocket(socket) {
   socket.on('rk:cash', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const me = socket.data.user; if (!me) return reply({ error: 'Bitte neu anmelden.' }); const r = await rkCash(me.id); reply(r || { error: 'Zu spät, die Rakete ist schon weg!' }); });
 }
 // Die erste Runde startet, sobald jemand die Rakete öffnet (rk:join)
+
+
+// ================= „Lügen“: Kartenspiel für 3–6 Spieler (bis zur Freigabe nur für den Admin) =================
+const LG = require('./lib/luegen');
+GAME_NAMES.luegen = 'Lügen';
+let luegenLive = false; store.setting('luegen_live').then((v) => { luegenLive = v === '1'; }).catch(() => {});
+const LGT = new Map(); let lgNext = 1;
+const LG_FAST = Number(process.env.LG_FAST) || 1, LG_TURN = 25000 / LG_FAST, LG_DOUBT = 5000 / LG_FAST; // LG_FAST nur für Tests
+const lgSeatOf = (t, uid) => t.seats.findIndex((p) => p && p.id === uid);
+const lgPublic = (t) => ({ id: t.id, host: t.hostName, stake: t.stake, pass: t.allowPass, max: t.max, count: t.seats.filter(Boolean).length, state: t.state });
+function lgView(t, uid) {
+  const me = lgSeatOf(t, uid);
+  return { id: t.id, state: t.state, host: t.hostId, stake: t.stake, pass: t.allowPass, max: t.max, pot: t.pot, turn: t.turn, rank: t.rank, rankName: t.rank ? LG.RANK_NAME[t.rank] : null, ranks: t.ranks || null, pile: t.pile.reduce((a, p) => a + p.n, 0), plays: t.pile.slice(-6).map((p) => ({ seat: p.seat, n: p.n, rank: p.rank })),
+    last: t.last ? { seat: t.last.seat, n: t.last.n, rank: t.last.rank } : null, doubtUntil: t.doubtUntil, turnUntil: t.turnUntil, now: Date.now(), reveal: t.reveal, winner: t.winner, you: me,
+    seats: t.seats.map((p, i) => p ? { name: p.name, bot: !!p.bot, away: !!p.away, n: (p.cards || []).length, cards: i === me ? p.cards : undefined } : null), log: t.log.slice(-6) };
+}
+function lgEmit(t) {
+  const room = io.sockets.adapter.rooms.get('lg:' + t.id); if (!room) return;
+  for (const sid of room) { const so = io.sockets.sockets.get(sid); if (so) so.emit('lg:state', lgView(t, so.data.user && so.data.user.id)); }
+  io.to('lgLobby').emit('lg:list', [...LGT.values()].map(lgPublic));
+}
+const lgLog = (t, txt) => { t.log.push(txt); t.log = t.log.slice(-20); };
+function lgClear(t) { clearTimeout(t.tTurn); (t.tBots || []).forEach(clearTimeout); t.tBots = []; }
+function lgClearDoubt(t) { clearTimeout(t.tDoubt); (t.tDoubts || []).forEach(clearTimeout); t.tDoubts = []; t.doubtUntil = 0; }
+function lgNextSeat(t, from) { for (let k = 1; k <= t.seats.length; k++) { const i = (from + k) % t.seats.length; if (t.seats[i]) return i; } return from; }
+function lgTurn(t, seat) {
+  lgClear(t); t.turn = seat; t.turnUntil = Date.now() + LG_TURN; lgEmit(t);
+  const p = t.seats[seat];
+  if (p.bot || p.away) t.tBots.push(setTimeout(() => lgAuto(t, seat), (1800 + Math.random() * 1300) / LG_FAST));
+  t.tTurn = setTimeout(() => lgAuto(t, seat), LG_TURN);
+}
+function lgAuto(t, seat) { if (t.state !== 'play' || t.turn !== seat) return; const m = LG.botMove(t, seat); if (m.pass) lgPass(t, seat); else lgPlay(t, seat, m.ids, m.rank); }
+function lgPlay(t, seat, ids, rank) {
+  const p = t.seats[seat]; if (t.state !== 'play' || t.turn !== seat) return 'Du bist gerade nicht dran.';
+  if (t.last && t.last.seat !== seat) lgClearDoubt(t); // wer weiterspielt, glaubt der Ansage davor
+  if (!Array.isArray(ids) || ids.length < 1 || ids.length > 4) return 'Leg 1 bis 4 Karten.';
+  const rk = t.rank || rank; if (!(t.ranks || LG.RANKS).includes(rk)) return 'Wähl zuerst einen Wert.';
+  const cards = ids.map((id) => p.cards.find((c) => c.id === id)); if (cards.some((c) => !c) || new Set(ids).size !== ids.length) return 'Diese Karten hast du nicht.';
+  p.cards = p.cards.filter((c) => !ids.includes(c.id));
+  const play = { seat, cards, rank: rk, n: cards.length }; t.pile.push(play); t.last = play; t.rank = rk; t.passes = 0; t.claimedThisRound = (t.claimedThisRound || 0) + cards.length; t.reveal = null;
+  lgLog(t, `${p.name}: ${cards.length}× ${LG.RANK_NAME[rk]}`);
+  lgClear(t); lgClearDoubt(t); t.doubtUntil = Date.now() + LG_DOUBT;
+  t.seats.forEach((b, i) => { if (b && (b.bot || b.away) && i !== seat && LG.botDoubt(t, i)) t.tDoubts.push(setTimeout(() => lgDoubt(t, i), (600 + Math.random() * 1200) / LG_FAST)); });
+  if (!p.cards.length) { t.turn = -1; lgEmit(t); t.tDoubt = setTimeout(() => lgNoDoubt(t), LG_DOUBT); return null; } // letzte Karte: alle haben die volle Zeit zum Zweifeln
+  t.tDoubt = setTimeout(() => { t.doubtUntil = 0; lgEmit(t); }, LG_DOUBT);
+  lgTurn(t, lgNextSeat(t, seat)); return null;
+}
+function lgNoDoubt(t) { if (t.state !== 'play' || !t.doubtUntil || !t.last) return; t.doubtUntil = 0; const ls = t.last.seat; if (!t.seats[ls].cards.length) return lgWin(t, ls); lgTurn(t, lgNextSeat(t, ls)); }
+function lgDoubt(t, seat) {
+  if (t.state !== 'play' || !t.doubtUntil || Date.now() > t.doubtUntil || !t.last || t.last.seat === seat || !t.seats[seat]) return 'Zu spät, die Ansage wurde schon geglaubt.';
+  lgClear(t); lgClearDoubt(t);
+  const lie = LG.isLie(t.last), loser = lie ? t.last.seat : seat, starter = lie ? seat : t.last.seat, all = t.pile.flatMap((x) => x.cards);
+  t.seats[loser].cards.push(...all); t.seats[loser].cards.sort((a, b) => LG.RANKS.indexOf(a.r) - LG.RANKS.indexOf(b.r));
+  t.reveal = { cards: t.last.cards, lie, by: t.last.seat, doubter: seat, loser, n: all.length, rank: t.last.rank, at: Date.now() };
+  lgLog(t, `${t.seats[seat].name} zweifelt: ${lie ? 'ERWISCHT!' : 'war ehrlich!'} ${t.seats[loser].name} nimmt ${all.length} Karten`);
+  t.pile = []; t.rank = null; t.claimedThisRound = 0; t.last = null; lgEmit(t);
+  if (!lie && !t.seats[starter].cards.length) return setTimeout(() => lgWin(t, starter), 2600 / LG_FAST);
+  setTimeout(() => { if (t.state === 'play') lgTurn(t, starter); }, 2800 / LG_FAST);
+  return null;
+}
+function lgPass(t, seat) {
+  if (t.state !== 'play' || t.turn !== seat) return 'Du bist gerade nicht dran.';
+  lgClearDoubt(t);
+  if (!t.allowPass) return 'An diesem Tisch wird nicht gepasst.'; if (!t.rank) return 'Zu Rundenbeginn musst du legen.';
+  t.passes++; lgLog(t, `${t.seats[seat].name} passt`);
+  const active = t.seats.filter(Boolean).length;
+  if (t.passes >= active - 1) { const starter = t.last ? t.last.seat : seat; lgLog(t, `Alle haben gepasst: ${t.pile.reduce((a, p) => a + p.n, 0)} Karten aus dem Spiel`); t.pile = []; t.rank = null; t.last = null; t.claimedThisRound = 0; t.passes = 0; return lgTurn(t, starter), null; }
+  lgTurn(t, lgNextSeat(t, seat)); return null;
+}
+async function lgWin(t, seat) {
+  lgClear(t); lgClearDoubt(t); t.state = 'end'; const w = t.seats[seat]; const prize = Math.floor(t.pot * 0.95); t.winner = { seat, name: w.name, prize: w.bot ? 0 : prize };
+  lgLog(t, `🏆 ${w.name} ist alle Karten los und gewinnt${prize && !w.bot ? ' ' + fmtD(prize) + ' 💎' : ''}!`);
+  for (const p of t.seats) if (p && !p.bot && t.stake) { try { const won = p === w ? prize : 0; if (won) { const u = await store.userById(p.id); note(`Lügen: gewonnen · Auszahlung ${fmtD(won)}`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) + won }); } await casinoStat(p.id, t.stake, won); if (won) await bigWin(p.id, 'Lügen', won); } catch (e) { console.error(e); } }
+  lgEmit(t); console.log(`Lügen Tisch ${t.id}: ${w.name} gewinnt (Pot ${t.pot})`);
+  lgClearDoubt(t); t.tTurn = setTimeout(() => { t.state = 'lobby'; t.winner = null; t.reveal = null; t.pile = []; t.pot = 0; t.seats.forEach((p, i) => { if (p) { p.cards = []; if (p.away) t.seats[i] = null; } }); lgEmit(t); }, 12000 / LG_FAST);
+}
+async function lgStart(t) {
+  const humans = t.seats.filter((p) => p && !p.bot);
+  for (const p of humans) { if (!t.stake) continue; const u = await store.userById(p.id); if ((Number(u.diamonds) || 0) < t.stake) return `${p.name} hat nicht genug Diamanten.`; }
+  for (const p of humans) { if (!t.stake) continue; const u = await store.userById(p.id); note(`Lügen: ${fmtD(t.stake)} Einsatz`); await store.save(p.id, { diamonds: (Number(u.diamonds) || 0) - t.stake }); }
+  t.pot = t.stake * humans.length; LG.deal(t); t.state = 'play'; t.pile = []; t.rank = null; t.last = null; t.passes = 0; t.log = []; t.reveal = null; t.winner = null;
+  const first = t.seats.map((p, i) => (p ? i : -1)).filter((i) => i >= 0); lgLog(t, `Los geht's! ${t.ranks.length === 8 ? 'Skatblatt (32 Karten)' : 'Volles Blatt (52 Karten)'}, ${t.allowPass ? 'mit' : 'ohne'} Passen`);
+  lgTurn(t, first[Math.floor(Math.random() * first.length)]); return null;
+}
+function lgSocket(socket) {
+  const me = () => socket.data.user;
+  const ok = async () => { const u = me() && (await store.userById(me().id)); if (!u) return null; if (!luegenLive && !isAdmin(u)) return null; if (lockedGames.has('luegen')) return null; if (casinoBan(u)) return null; return u; };
+  socket.on('lg:lobby', () => { socket.join('lgLobby'); socket.emit('lg:list', [...LGT.values()].map(lgPublic)); });
+  socket.on('lg:create', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = await ok(); if (!u) return reply({ error: 'Lügen ist gerade nicht verfügbar.' });
+    if ([...LGT.values()].some((t) => { const i = lgSeatOf(t, u.id); return i >= 0 && !t.seats[i].away && t.state !== 'end'; })) return reply({ error: 'Du sitzt schon an einem Tisch.' });
+    const stake = [0, 100, 1000, 5000, 25000, 100000].includes(Number(d && d.stake)) ? Number(d.stake) : 1000, max = Math.max(3, Math.min(6, Number(d && d.max) || 6));
+    const t = { id: 'L' + (lgNext++), hostId: u.id, hostName: u.name, stake, allowPass: !!(d && d.pass), max, seats: Array(max).fill(null), state: 'lobby', pile: [], log: [], pot: 0, tBots: [] };
+    t.seats[0] = { id: u.id, name: u.name, cards: [] }; LGT.set(t.id, t); socket.join('lg:' + t.id); lgEmit(t); reply({ ok: true, id: t.id }); });
+  socket.on('lg:join', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = await ok(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Diesen Tisch gibt es nicht mehr.' });
+    socket.join('lg:' + t.id); const mine = lgSeatOf(t, u.id);
+    if (mine >= 0) { t.seats[mine].away = false; lgEmit(t); return reply({ ok: true }); }
+    if (d.watch || t.state !== 'lobby') { lgEmit(t); return reply({ ok: true, watch: true }); }
+    const free = t.seats.findIndex((p) => !p); if (free < 0) { lgEmit(t); return reply({ ok: true, watch: true }); }
+    t.seats[free] = { id: u.id, name: u.name, cards: [] }; lgEmit(t); reply({ ok: true }); });
+  socket.on('lg:leave', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return; socket.leave('lg:' + t.id); const i = lgSeatOf(t, u.id); if (i < 0) return;
+    if (t.state === 'lobby') { t.seats[i] = null; if (t.hostId === u.id) { const nh = t.seats.find((p) => p && !p.bot); if (nh) { t.hostId = nh.id; t.hostName = nh.name; } else { lgClear(t); LGT.delete(t.id); io.to('lgLobby').emit('lg:list', [...LGT.values()].map(lgPublic)); return; } } }
+    else { t.seats[i].away = true; if (t.turn === i && !t.doubtUntil) { clearTimeout(t.tTurn); t.tTurn = setTimeout(() => lgAuto(t, i), 1500); } }
+    lgEmit(t); });
+  socket.on('lg:bot', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return; const free = t.seats.findIndex((p) => !p); if (free < 0) return; const used = t.seats.filter(Boolean).map((p) => p.name); t.seats[free] = { id: -free - 1, bot: true, name: LG.BOT_NAMES.find((n) => !used.includes(n)) || 'Bot', cards: [] }; lgEmit(t); });
+  socket.on('lg:kick', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return; const i = Number(d.seat); if (t.seats[i] && t.seats[i].bot) { t.seats[i] = null; lgEmit(t); } });
+  socket.on('lg:start', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t || t.hostId !== u.id || t.state !== 'lobby') return reply({ error: 'Nur der Eröffner kann starten.' });
+    if (t.seats.filter(Boolean).length < 3) return reply({ error: 'Mindestens 3 Spieler (Bots zählen mit).' }); const err = await lgStart(t); reply(err ? { error: err } : { ok: true }); });
+  socket.on('lg:play', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPlay(t, lgSeatOf(t, u.id), d.ids, d.rank); reply(err ? { error: err } : { ok: true }); });
+  socket.on('lg:pass', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const err = lgPass(t, lgSeatOf(t, u.id)); reply(err ? { error: err } : { ok: true }); });
+  socket.on('lg:doubt', (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return reply({ error: 'Tisch nicht gefunden.' }); const i = lgSeatOf(t, u.id); if (i < 0) return reply({ error: 'Nur Spieler am Tisch können zweifeln.' }); const err = lgDoubt(t, i); reply(err ? { error: err } : { ok: true }); });
+  socket.on('lg:emote', (d) => { const u = me(); const t = LGT.get(d && d.id); if (!u || !t) return; const i = lgSeatOf(t, u.id); const e = String((d && d.e) || '').slice(0, 4); if (i < 0 || !e) return; io.to('lg:' + t.id).emit('lg:emote', { seat: i, e }); });
+}
+app.post('/api/admin/luegen', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  luegenLive = !!(req.body || {}).live; await store.setting('luegen_live', luegenLive ? '1' : '0'); io.emit('kirmes:live', {}); res.json({ live: luegenLive });
+});
 
 // Blackjack mit vollen Regeln: Teilen, Verdoppeln, Versicherung, Aufgeben
 const BJ = casino.bj;

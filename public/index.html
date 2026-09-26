@@ -2352,6 +2352,60 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 .rc-bets{position:absolute;left:92px;bottom:1px;display:flex;gap:3px;z-index:3;pointer-events:none}
 .rc-bets i{font:800 8.5px/1 Archivo,sans-serif;font-style:normal;padding:2px 5px;border-radius:99px;background:rgba(0,0,0,.65);color:#FFE27A;white-space:nowrap}
 #rcBtn:disabled{filter:none;background:linear-gradient(180deg,#2C6B75,#16434B);color:#FFE27A;box-shadow:inset 0 0 0 2px rgba(255,210,63,.45)}
+
+/* ===== Lügen ===== */
+.lg-hero{position:relative;display:flex;align-items:center;gap:12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,#3A0E1A,#140818);box-shadow:inset 0 0 0 2px rgba(255,210,63,.55);margin-bottom:10px}
+.lg-hero img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.lg-hero b{display:block;font:400 30px/1 Anton,Impact,sans-serif;letter-spacing:1px;color:#FFE27A}.lg-hero small{font:700 12px Archivo,sans-serif;color:#F3EAFF}
+.lg-new{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08)}
+.lg-opt{display:flex;align-items:center;gap:8px}.lg-opt > span{width:62px;flex:none;font:800 12px Archivo,sans-serif;color:var(--muted)}.lg-opt .km-chips{flex:1}
+.lg-seg{display:flex;gap:4px;flex:1}.lg-seg button{flex:1;padding:8px 4px;border:0;border-radius:10px;background:rgba(255,255,255,.07);color:#DCEFF2;font:800 12.5px Archivo,sans-serif}.lg-seg button.on{background:#FFD23F;color:#2A1600}
+.lg-h{margin:14px 0 6px}
+.lg-list{display:flex;flex-direction:column;gap:6px}.lg-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05)}.lg-row small{display:block;color:var(--muted);font-size:11.5px}
+.lg-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font:700 12.5px Archivo,sans-serif;color:#DCEFF2}
+.lg-table{position:relative;height:min(360px,calc(100dvh - 470px));min-height:290px;border-radius:24px;background-size:cover;background-position:center;box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.lg-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;z-index:2;width:74px}
+.lg-seat .lg-av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#2C6B75,#16434B);box-shadow:inset 0 0 0 2px rgba(255,210,63,.6),0 4px 8px rgba(0,0,0,.5);font:900 13px Archivo,sans-serif;color:#FFE27A}
+.lg-seat b{font:800 10.5px Archivo,sans-serif;color:#fff;text-shadow:0 1px 3px #000;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-seat.me .lg-av{box-shadow:inset 0 0 0 2.5px #7CF0A8,0 4px 8px rgba(0,0,0,.5)}.lg-seat.away{opacity:.55}.lg-seat.empty .lg-av{background:rgba(0,0,0,.35);color:var(--muted)}.lg-seat.empty small{font-size:10px;color:var(--muted)}
+.lg-seat.turn .lg-av{box-shadow:inset 0 0 0 2.5px #FFD23F,0 0 16px rgba(255,210,63,.8)}
+.lg-ring{position:absolute;top:-2px;width:44px;height:44px;transform:rotate(-90deg);pointer-events:none}.lg-ring circle{fill:none;stroke:#FFD23F;stroke-width:3;stroke-dasharray:126;stroke-dashoffset:0;animation:lgring linear forwards}
+@keyframes lgring{to{stroke-dashoffset:126}}
+.lg-fan{position:relative;height:22px;width:50px;margin-top:1px}.lg-fan i{position:absolute;left:50%;bottom:0;width:14px;height:20px;margin-left:-7px;border-radius:3px;background:repeating-linear-gradient(45deg,#8E1B2A 0 3px,#B3263A 3px 6px);box-shadow:inset 0 0 0 1.5px #F6E7C1,0 1px 2px rgba(0,0,0,.5);transform:rotate(calc(var(--k) * 12deg)) translateX(calc(var(--k) * 4px));transform-origin:50% 100%}
+.lg-fan em{position:absolute;right:-6px;top:-4px;min-width:18px;height:18px;border-radius:9px;background:#FF4FA3;font:900 10px/18px Archivo,sans-serif;font-style:normal;color:#fff;text-align:center}
+.lg-kick{position:absolute;top:-4px;right:8px;width:18px;height:18px;border:0;border-radius:50%;background:#FF4FA3;color:#fff;font:900 10px Archivo,sans-serif}
+.lg-mid{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;text-align:center}
+.lg-mid b{font:800 14px Archivo,sans-serif;color:#fff}.lg-mid small{font:700 11px Archivo,sans-serif;color:#DCEFF2}
+.lg-pile{position:relative;width:52px;height:70px}.lg-pile i{position:absolute;inset:0;border-radius:6px;background:repeating-linear-gradient(45deg,#8E1B2A 0 4px,#B3263A 4px 8px);box-shadow:inset 0 0 0 2px #F6E7C1,0 2px 4px rgba(0,0,0,.5);transform:rotate(calc(var(--k) * 9deg - 20deg)) translate(calc(var(--k) * 1px),calc(var(--k) * -1px))}
+.lg-pile em{position:absolute;right:-12px;top:-10px;z-index:3;min-width:22px;height:22px;border-radius:11px;background:#FFD23F;font:900 11px/22px Archivo,sans-serif;font-style:normal;color:#2A1600;text-align:center}
+.lg-claim{padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.6);font:700 12px Archivo,sans-serif;color:#F3EAFF;white-space:nowrap}.lg-claim b{color:#FFE27A}
+.lg-mid.rev .lg-revcards{display:flex;gap:4px}.lg-mid.rev .pkc{animation:lgflip .5s ease-out both}
+@keyframes lgflip{from{transform:rotateY(90deg)}to{transform:rotateY(0)}}
+.lg-stamp{font:400 30px/1 Anton,Impact,sans-serif;letter-spacing:2px;padding:4px 14px;border:4px solid;border-radius:10px;transform:rotate(-8deg);animation:lgstamp .45s cubic-bezier(.2,1.6,.4,1) .35s both}
+.lg-stamp.lie{color:#FF4A4A;border-color:#FF4A4A;background:rgba(40,0,0,.6)}.lg-stamp.ok{color:#7CF0A8;border-color:#7CF0A8;background:rgba(0,40,20,.6)}
+@keyframes lgstamp{from{transform:rotate(-8deg) scale(2.4);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+.lg-doubt{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);z-index:5;overflow:hidden;padding:12px 30px;border:0;border-radius:18px;background:linear-gradient(180deg,#FF6B6B,#C81E2E);box-shadow:inset 0 -4px 0 #7A0E18,0 0 24px rgba(255,60,60,.7);font:400 26px/1 Anton,Impact,sans-serif;letter-spacing:2px;color:#fff;animation:lgpulse .6s ease-in-out infinite alternate}
+.lg-doubt i{position:absolute;left:0;bottom:0;height:4px;width:100%;background:#FFE27A;animation:lgbar linear forwards;transform-origin:left}
+@keyframes lgbar{to{transform:scaleX(0)}}@keyframes lgpulse{to{transform:translateX(-50%) scale(1.06)}}
+.lg-fx{position:absolute;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+.lg-log{min-height:16px;margin:6px 0;text-align:center;font:700 11.5px Archivo,sans-serif;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg-ctl{display:flex;flex-direction:column;gap:8px}
+.lg-hand{display:flex;justify-content:center;height:88px;margin-top:4px}
+.lg-card{position:relative;flex:none;padding:0;border:0;background:none;transform:translateY(calc(abs(var(--k)) * 1.6px)) rotate(calc(var(--k) * 2.5deg));transition:transform .15s}
+.lg-card.sel{transform:translateY(-16px) rotate(calc(var(--k) * 2.5deg))}.lg-card.sel .pkc{box-shadow:0 0 0 3px #7CF0A8,0 6px 12px rgba(0,0,0,.5)}
+.lg-ranks{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.lg-ranks button{min-width:34px;padding:7px 6px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:900 13px Archivo,sans-serif}.lg-ranks button.on{background:#FFD23F;color:#2A1600}
+.lg-btns{display:flex;gap:8px}.lg-btns .km-go{flex:1}.lg-btns .btn.ghost{flex:none}
+.lg-wait{text-align:center;font:700 13.5px Archivo,sans-serif;color:#DCEFF2;margin:6px 0}
+.lg-emos{display:flex;justify-content:center;gap:6px;margin-top:6px}.lg-emos button{width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.07);font-size:19px}
+.lg-emo{position:absolute;top:-30px;left:50%;font-size:28px;transform:translateX(-50%);animation:lgemo 2.2s ease-out forwards;z-index:9}
+@keyframes lgemo{0%{transform:translate(-50%,10px) scale(.4);opacity:0}15%{transform:translate(-50%,0) scale(1.2);opacity:1}100%{transform:translate(-50%,-40px) scale(1);opacity:0}}
+
+.lg-hand .lg-card{margin-top:0!important}
+.lg-card{transform:translateY(calc(var(--k) * var(--k) * 0.9px)) rotate(calc(var(--k) * 2deg))!important}
+.lg-card.sel{transform:translateY(-16px) rotate(calc(var(--k) * 2deg))!important}
+.lg-btns .btn,.lg-btns .km-go{width:auto!important}
+.lg-btns .btn.ghost{flex:0 0 auto!important;padding:0 16px}
+.lg-btns .km-go{flex:1 1 auto!important;min-width:0}
 </style>
 </head>
 <body>
@@ -2377,7 +2431,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '248';
+const AVER = '249';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3248,6 +3302,7 @@ function renderCasHub(box, hub) {
     { key: 'bj', name: 'Blackjack', img: U2('i_blackjack'), sub: 'Allein gegen die Bank' },
     { key: 'tables', name: 'Blackjack-Tische', img: U2('i_bjtables'), sub: 'Mit Freunden am Tisch' },
     ...(home && home.me && home.me.pokerOk ? [{ key: 'poker', name: 'Poker', img: U2('i_poker'), sub: "Texas Hold'em, 5 Tische" }] : []),
+    ...(home && home.luegen ? [{ key: 'luegen', name: 'Lügen', img: '/kirmes/i_luegen.webp?v=' + IMGV, sub: 'Bluffen mit Freunden, 3–6', badge: home.luegenLive ? '' : 'NEU' }] : []),
   ] : [
     { key: 'vip', lockKey: 'wheel', name: 'Glücksrad', img: '/news/u17_hero.webp?v=' + IMGV, sub: 'Täglich drehen', badge: (vipD ? vipD.spinsLeft : home && home.me.wheelLeft) || '' },
     { key: 'rewards', name: 'Belohnungen', img: U2('i_trophy'), sub: 'VIP-Stufen und Cashback' },
@@ -3824,6 +3879,79 @@ function rkSocketInit() {
   socket.on('kirmes:live', () => { newsPosts = null; try { loadNews(); } catch (e) {} loadHome().then(() => { viewKey = ''; render(); }).catch(() => {}); }); // Update-Beitrag erscheint mit der Freigabe
 }
 
+// ================= „Lügen“ =================
+let lgList = [], lgS = null, lgId = null, lgSel = new Set(), lgPick = null, lgOff = 0, lgNew = { stake: 1000, pass: true, max: 5 }, lgRevealSeen = 0, lgTick = 0;
+const LG_EMO = ['😂', '🤥', '😱', '😤', '🔥', '👀'];
+const LG_RN = { 2: 'Zweien', 3: 'Dreien', 4: 'Vieren', 5: 'Fünfen', 6: 'Sechsen', 7: 'Siebenen', 8: 'Achten', 9: 'Neunen', 10: 'Zehnen', B: 'Buben', D: 'Damen', K: 'Könige', A: 'Asse' };
+const lgNow = () => Date.now() + lgOff;
+function lgSocketInit() {
+  if (!socket || socket.__lg) return; socket.__lg = true;
+  socket.on('lg:list', (l) => { lgList = l || []; if (page === 'casino' && cgame === 'luegen' && !lgId) renderCards(); });
+  socket.on('lg:state', (st) => { if (!lgId || st.id !== lgId) return; const prevRev = lgS && lgS.reveal && lgS.reveal.at; lgS = st; lgOff = st.now - Date.now(); if (st.state !== 'play') lgSel.clear(); if (st.reveal && st.reveal.at !== prevRev) lgRevealFx(st.reveal); if (st.state === 'end' && st.winner) lgWinFx(st.winner); if (page === 'casino' && cgame === 'luegen') lgDraw(); });
+  socket.on('lg:emote', (x) => { const seat = document.querySelector(`.lg-seat[data-seat="${x.seat}"]`); if (!seat) return; const e = document.createElement('span'); e.className = 'lg-emo'; e.textContent = x.e; seat.appendChild(e); setTimeout(() => e.remove(), 2200); });
+}
+function renderLuegen(box) {
+  lgSocketInit();
+  if (!lgId) { socket.emit('lg:lobby');
+    box.innerHTML = `<div class="lg-hero"><img src="/kirmes/i_luegen.webp?v=${IMGV}" alt=""><span><b>Lügen</b><small>Leg deine Karten los, bluffe und entlarve die anderen</small></span></div>
+      <div class="lg-new"><b>Tisch eröffnen</b>
+        <div class="lg-opt"><span>Einsatz</span><div class="km-chips">${[0, 100, 1000, 5000, 25000, 100000].map((v) => `<button class="km-chip ${lgNew.stake === v ? 'on' : ''}" data-lgo="stake:${v}">${v ? chipTxt(v) : 'Spaß'}</button>`).join('')}</div></div>
+        <div class="lg-opt"><span>Passen</span><div class="lg-seg"><button class="${lgNew.pass ? 'on' : ''}" data-lgo="pass:1">erlaubt</button><button class="${lgNew.pass ? '' : 'on'}" data-lgo="pass:0">verboten</button></div></div>
+        <div class="lg-opt"><span>Plätze</span><div class="lg-seg">${[3, 4, 5, 6].map((n) => `<button class="${lgNew.max === n ? 'on' : ''}" data-lgo="max:${n}">${n}</button>`).join('')}</div></div>
+        <small class="sub">${lgNew.max <= 4 ? 'Skatblatt, 32 Karten' : 'Volles Blatt, 52 Karten'} · ${lgNew.pass ? 'Mit Passen: Passen alle, fliegt der Stapel aus dem Spiel' : 'Ohne Passen: Wer dran ist, muss legen, notfalls lügen'}</small>
+        <button class="km-go" data-lga="create">🃏 Tisch eröffnen</button></div>
+      <h3 class="lg-h">Offene Tische</h3>
+      <div class="lg-list">${lgList.length ? lgList.map((t) => `<div class="lg-row"><span class="grow"><b>${esc(t.host)}s Tisch</b><small>${t.stake ? fmt(t.stake) + ' 💎' : 'Zum Spaß'} · ${t.pass ? 'mit' : 'ohne'} Passen · ${t.count}/${t.max} ${t.state === 'lobby' ? '' : '· läuft'}</small></span><button class="btn small ${t.state === 'lobby' && t.count < t.max ? '' : 'ghost'}" data-lga="join:${t.id}">${t.state === 'lobby' && t.count < t.max ? 'Setzen' : 'Zuschauen'}</button></div>`).join('') : '<p class="sub">Noch kein Tisch offen. Eröffne einen und lade Freunde ein!</p>'}</div>`;
+    return; }
+  box.innerHTML = '<div id="lgBox"></div>'; lgDraw();
+}
+function lgDraw() {
+  const box = $('#lgBox'); if (!box || !lgS) return; const S = lgS, me = S.you, seats = S.seats, N = seats.length, playing = S.state === 'play';
+  const rot = (i) => (me >= 0 ? (i - me + N) % N : i);
+  const POS = { 3: [[50, 86], [14, 26], [86, 26]], 4: [[50, 86], [11, 48], [50, 9], [89, 48]], 5: [[50, 86], [11, 62], [24, 12], [76, 12], [89, 62]], 6: [[50, 86], [11, 66], [11, 30], [50, 9], [89, 30], [89, 66]] }[N];
+  const mine = me >= 0 && playing && S.turn === me, doubtOpen = playing && S.doubtUntil > lgNow() && S.last && S.last.seat !== me && me >= 0;
+  const seatHtml = seats.map((p, i) => { if (!p && S.state !== 'lobby') return ''; const [x, y] = POS[rot(i)];
+    if (!p) return `<div class="lg-seat empty" style="left:${x}%;top:${y}%"><span class="lg-av">+</span><small>frei</small></div>`;
+    const fan = Math.min(5, p.n); const turn = playing && S.turn === i;
+    return `<div class="lg-seat ${turn ? 'turn' : ''} ${i === me ? 'me' : ''} ${p.away ? 'away' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${turn ? `<svg class="lg-ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" style="animation-duration:${Math.max(0.5, (S.turnUntil - lgNow()) / 1000)}s"/></svg>` : ''}<span class="lg-av">${p.bot ? '🤖' : esc(p.name.slice(0, 2).toUpperCase())}</span><b>${esc(p.name)}</b>${S.state !== 'lobby' ? `<span class="lg-fan">${Array.from({ length: fan }, (_, k) => `<i style="--k:${k - (fan - 1) / 2}"></i>`).join('')}<em>${p.n}</em></span>` : ''}${S.state === 'lobby' && p.bot && S.host === (home && home.me.id) ? `<button class="lg-kick" data-lga="kick:${i}">✕</button>` : ''}</div>`; }).join('');
+  const rv = S.reveal && lgNow() - S.reveal.at < 2600 ? S.reveal : null;
+  const center = S.state === 'lobby' ? `<div class="lg-mid"><b>${seats.filter(Boolean).length}/${N} am Tisch</b><small>${S.stake ? 'Einsatz ' + fmt(S.stake) + ' 💎' : 'Zum Spaß'} · ${S.pass ? 'mit' : 'ohne'} Passen</small></div>`
+    : rv ? `<div class="lg-mid rev"><div class="lg-revcards">${rv.cards.map((c) => pkCard(c, true)).join('')}</div><span class="lg-stamp ${rv.lie ? 'lie' : 'ok'}">${rv.lie ? 'ERWISCHT!' : 'EHRLICH!'}</span></div>`
+    : `<div class="lg-mid"><div class="lg-pile">${Array.from({ length: Math.min(8, Math.ceil(S.pile / 2)) }, (_, k) => `<i style="--k:${k}"></i>`).join('')}${S.pile ? `<em>${S.pile}</em>` : ''}</div>${S.rank ? `<span class="lg-claim">${S.last ? `${esc(seats[S.last.seat].name)}: <b>${S.last.n}× ${LG_RN[S.last.rank]}</b>` : `Runde: <b>${LG_RN[S.rank]}</b>`}</span>` : `<span class="lg-claim">${playing ? 'Neue Runde' : ''}</span>`}</div>`;
+  const hand = me >= 0 && seats[me] && seats[me].cards ? seats[me].cards : [];
+  let ctl = '';
+  if (S.state === 'lobby') ctl = me >= 0 ? (S.host === (home && home.me.id) ? `<div class="lg-btns"><button class="btn ghost" data-lga="bot">🤖 Bot dazu</button><button class="km-go" data-lga="start" ${seats.filter(Boolean).length < 3 ? 'disabled' : ''}>▶ Starten</button></div><small class="sub" style="text-align:center">Mindestens 3 Spieler, Bots zählen mit. Freunde finden den Tisch unter Tische → Lügen.</small>` : '<p class="lg-wait">Warte, bis der Eröffner startet …</p>') : '<p class="lg-wait">Du schaust zu.</p>';
+  else if (S.state === 'end') ctl = `<p class="lg-wait">🏆 ${esc(S.winner.name)} gewinnt${S.winner.prize ? ' ' + fmt(S.winner.prize) + ' 💎' : ''}! Gleich geht's zurück an den Tisch.</p>`;
+  else if (me >= 0) {
+    const avail = Math.min(innerWidth, 480) - 40, cwid = 58, ov = hand.length > 1 ? Math.max(-cwid + 14, Math.min(4, (avail - cwid * hand.length) / (hand.length - 1))) : 0; // Karten überlappen so, dass immer alle ins Bild passen
+    const cards = `<div class="lg-hand">${hand.map((c, k) => `<button class="lg-card ${lgSel.has(c.id) ? 'sel' : ''}" data-lgc="${c.id}" style="--k:${(k - (hand.length - 1) / 2).toFixed(2)};margin-left:${k ? ov.toFixed(1) : 0}px">${pkCard(c, true)}</button>`).join('')}</div>`;
+    const pickRank = mine && !S.rank ? `<div class="lg-ranks">${(S.ranks || []).map((r) => `<button class="${lgPick === r ? 'on' : ''}" data-lgr="${r}">${r}</button>`).join('')}</div>` : '';
+    const n = lgSel.size, rk = S.rank || lgPick;
+    const btns = mine ? `<div class="lg-btns">${S.pass && S.rank ? '<button class="btn ghost" data-lga="pass">Passen</button>' : ''}<button class="km-go" data-lga="play" ${n && rk ? '' : 'disabled'}>${n ? `${n}× ${rk ? LG_RN[rk] : '…'} legen` : S.rank ? `Karten wählen (als ${LG_RN[S.rank]})` : 'Wert wählen und Karten antippen'}</button></div>` : `<p class="lg-wait">${playing && seats[S.turn] ? `${esc(seats[S.turn].name)} ist dran …` : ''}</p>`;
+    ctl = cards + pickRank + btns;
+  } else ctl = '<p class="lg-wait">Du schaust zu.</p>';
+  box.innerHTML = `<div class="lg-top"><button class="btn small ghost" data-lga="leave">← Verlassen</button><span>${S.stake ? `Pot <b>${fmt(S.pot || 0)}</b> 💎` : 'Zum Spaß'} · ${S.pass ? 'mit' : 'ohne'} Passen</span></div>
+    <div class="lg-table" style="background-image:url('/tcg/poker_classic.webp?v=${IMGV}')">${seatHtml}${center}${doubtOpen ? `<button class="lg-doubt" data-lga="doubt">LÜGE!<i style="animation-duration:${Math.max(0.3, (S.doubtUntil - lgNow()) / 1000)}s"></i></button>` : ''}<div class="lg-fx" id="lgFx"></div></div>
+    <div class="lg-log">${(S.log || []).slice(-2).map(esc).join(' · ')}</div>
+    <div class="lg-ctl">${ctl}</div>
+    ${me >= 0 ? `<div class="lg-emos">${LG_EMO.map((e) => `<button data-lge="${e}">${e}</button>`).join('')}</div>` : ''}`;
+  clearTimeout(lgTick); if (playing && (doubtOpen || rv)) lgTick = setTimeout(lgDraw, doubtOpen ? Math.max(100, S.doubtUntil - lgNow() + 50) : 2700);
+}
+function lgRevealFx(rv) { if (lgRevealSeen === rv.at) return; lgRevealSeen = rv.at; kmSnd(rv.lie ? 'boom' : 'bell'); try { navigator.vibrate && navigator.vibrate(rv.lie ? [60, 40, 120] : 50); } catch (e) {} }
+function lgWinFx(w) { if (lgWinFx.last === w.name + (lgS && lgS.pot)) return; lgWinFx.last = w.name + (lgS && lgS.pot); kmSnd('fanfare'); setTimeout(() => { const f = $('#lgFx'); if (f) { const S = f.getBoundingClientRect(); for (let i = 0; i < 50; i++) { const p = document.createElement('i'); p.className = 'km2-p confetti'; p.style.cssText = `left:${S.width / 2}px;top:${S.height / 2}px;--dx:${(Math.random() - 0.5) * 300}px;--dy:${-80 - Math.random() * 200}px;--r:${Math.random() * 720}deg;background:${['#FFD23F', '#FF4FA3', '#7CF0A8', '#8FD3FF'][i % 4]}`; f.appendChild(p); setTimeout(() => p.remove(), 1500); } } }, 50); if (w.prize && lgS && lgS.you === w.seat) kmSetDia(kmDia() + w.prize); }
+function lgAct(a) {
+  const [k, v] = a.split(':'); const cb = (r) => { if (r && r.error) toast(r.error); };
+  if (k === 'create') return socket.emit('lg:create', lgNew, (r) => { if (r && r.error) return toast(r.error); lgId = r.id; if (lgNew.stake) {} renderCards(); });
+  if (k === 'join') return socket.emit('lg:join', { id: v }, (r) => { if (r && r.error) return toast(r.error); lgId = v; renderCards(); });
+  if (k === 'leave') { socket.emit('lg:leave', { id: lgId }); lgId = null; lgS = null; lgSel.clear(); renderCards(); return; }
+  if (k === 'bot') return socket.emit('lg:bot', { id: lgId });
+  if (k === 'kick') return socket.emit('lg:kick', { id: lgId, seat: Number(v) });
+  if (k === 'start') return socket.emit('lg:start', { id: lgId }, (r) => { if (r && r.error) toast(r.error); else if (lgS && lgS.stake) kmSetDia(kmDia() - lgS.stake); });
+  if (k === 'play') { const ids = [...lgSel]; const rk = lgS.rank || lgPick; socket.emit('lg:play', { id: lgId, ids, rank: rk }, (r) => { if (r && r.error) return toast(r.error); lgSel.clear(); lgPick = null; kmSnd('clack'); }); return; }
+  if (k === 'pass') return socket.emit('lg:pass', { id: lgId }, cb);
+  if (k === 'doubt') { kmSnd('hit'); return socket.emit('lg:doubt', { id: lgId }, cb); }
+}
+
 function renderCasino() { try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   { const b = $('#cgame'), k = cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : ''); if (b && b.__key !== k) { b.__key = k; b.style.minHeight = ''; if (window.__cgH) window.__cgH[k] = 0; } } // anderes Spiel: Höhe neu messen
   setTimeout(lockCasinoHeight, 0);
@@ -3839,6 +3967,7 @@ function renderCasino() { try { if (document.body.classList.contains('ui2')) set
   if (cgame === 'tablesHub' || cgame === 'moreHub') return renderCasHub(box, cgame);
   if ((cgame === 'kirmesHub' || cgame === 'rocket' || KIRMES.includes(cgame)) && !(home && home.kirmes)) cgame = 'slotsHub'; // vor der Freigabe nur für den Admin
   if (cgame === 'slotsHub') return renderSlotsHub(box);
+  if (cgame === 'luegen') { if (!(home && home.luegen)) { cgame = 'tablesHub'; return renderCasHub(box, 'tablesHub'); } return renderLuegen(box); }
   if (cgame === 'kirmesHub') return renderKirmesHub(box);
   if (KIRMES.includes(cgame)) return renderKirmesGame(box, cgame);
   if (cgame === 'rocket') return renderRocket(box);
@@ -4207,9 +4336,9 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
-    const games = [['lukas', '🔨 Hau den Lukas'], ['race', '🏇 Pferderennen'], ['claw', '🕹️ Greifautomat'], ['pusher', '🪙 Münzschieber'], ['rocket', '🚀 Rakete'], ['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
+    const games = [['luegen', '🃏 Lügen'], ['lukas', '🔨 Hau den Lukas'], ['race', '🏇 Pferderennen'], ['claw', '🕹️ Greifautomat'], ['pusher', '🪙 Münzschieber'], ['rocket', '🚀 Rakete'], ['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
-    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], ...(home && home.kirmes ? { kirmes: ['lukas', 'race', 'pusher'], rocket: ['rocket'] } : {}), more: ['wheel', 'rewards', 'crank', 'setup'] };
+    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker', ...(home && home.luegen ? ['luegen'] : [])], ...(home && home.kirmes ? { kirmes: ['lukas', 'race', 'pusher'], rocket: ['rocket'] } : {}), more: ['wheel', 'rewards', 'crank', 'setup'] };
     const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
     const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : cgame === 'tablesHub' ? 'tables' : cgame === 'moreHub' ? 'more' : cgame === 'kirmesHub' ? 'kirmes' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
     const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
@@ -4221,10 +4350,10 @@ function renderCards() {
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `${ui2On() ? '<div class="u2-crow"><button class="u2-home" data-u2="tab:quiz" aria-label="Zur Startseite"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>' : ''}<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>${ui2On() ? '</div>' : ''}
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket', 'luegen'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket', 'luegen'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
         ${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
-      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center">${['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat && !tc.watch ? '<button class="btn small ghost u2-back" data-u2="chub:slots">← Automaten</button>' : ['lukas', 'race', 'claw', 'pusher'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:kirmes">← Kirmes</button>' : ['roulette', 'bj', 'tables', 'poker'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:tables">← Tische</button>' : ['vip', 'rewards', 'crank', 'setup'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:more">← Mehr</button>' : ''}<button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
+      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center">${['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat && !tc.watch ? '<button class="btn small ghost u2-back" data-u2="chub:slots">← Automaten</button>' : ['lukas', 'race', 'claw', 'pusher'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:kirmes">← Kirmes</button>' : ['roulette', 'bj', 'tables', 'poker', 'luegen'].includes(cgame) && !(cgame === 'luegen' && lgId) ? '<button class="btn small ghost u2-back" data-u2="chub:tables">← Tische</button>' : ['vip', 'rewards', 'crank', 'setup'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:more">← Mehr</button>' : ''}<button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -4451,6 +4580,7 @@ async function openPack(pid) {
 
 // ---------- Spielanleitungen fürs Casino ----------
 const GUIDES = {
+  luegen: ['🃏 Lügen', [['Ziel', 'Werde als Erster alle Karten los. Wer dran ist, legt 1 bis 4 Karten verdeckt und sagt an, was es ist, zum Beispiel „2× Könige“. Das darf gelogen sein! In einer Runde bleibt der Wert gleich.'], ['LÜGE!', 'Nach jedem Legen kann jeder „LÜGE!“ drücken, bis der Nächste spielt (höchstens 5 Sekunden). War es gelogen, nimmt der Lügner den ganzen Stapel. War es ehrlich, nimmt ihn der Zweifler. Wer richtig lag, startet die nächste Runde mit einem neuen Wert.'], ['Passen', 'Der Tisch legt fest, ob gepasst werden darf. Mit Passen: Passen alle anderen nach einer Ansage, fliegt der Stapel aus dem Spiel und der letzte Leger beginnt neu. Ohne Passen: Man muss immer legen, notfalls lügen.'], ['Gewinnen', 'Wer die letzte Karte legt und dabei nicht erwischt wird, gewinnt den Pot. 3–4 Spieler: Skatblatt (32 Karten), 5–6 Spieler: volles Blatt (52).']]],
   lukas: ['🔨 Hau den Lukas', [['Ziel', 'Die Kraftnadel rast hin und her. Tipp auf „Hau drauf!“, wenn sie ganz rechts bei der Glocke ist. Je genauer, desto kräftiger der Schlag: halbe Kraft 0,3×, Einsatz zurück 1×, bärenstark 1,5×, an der Glocke 4×.'], ['Können und Glück', 'Dein Timing zählt, ein kleiner Glücksanteil bleibt wie beim echten Hammer. Wer perfekt trifft, bekommt auf Dauer rund 94 % zurück, wildes Drücken deutlich weniger.']]],
   race: ['🏇 Pferderennen', [['Ziel', 'Alle wetten gemeinsam: In der Wettphase (20 Sekunden) wählst du ein Pferd und deinen Einsatz. Dann läuft ein Rennen für alle. Gewinnt dein Pferd, bekommst du die Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Gemeinsam', 'An jeder Bahn siehst du, wer auf welches Pferd gesetzt hat. Jeder kann einmal pro Runde wetten.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
   lukas2: ['', [['Ziel', 'Fahr den Greifer mit ◀ ▶ über einen Preis und drück Greifen. Hält er, gewinnst du den Wert auf dem Schild: kleines Säckchen 1×, Säckchen 2×, Truhe 5×, goldene Truhe 15×.'], ['Chance', 'Je wertvoller, desto schwerer zu greifen: 95 %, 48 %, 19 % und 6 %. Jeder Preis hat damit dieselbe Auszahlungsquote von 95 %. Du wählst dein Risiko selbst.']]],
@@ -6713,7 +6843,7 @@ function u2Playing() { try { return !!((cgame === 'poker' && pkState && pkState.
 function u2Seated() { try { return !!(tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)); } catch (e) { return false; } }
 function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match, ohne Wartung
   const on = ui2On(), playing = on && page === 'casino' && u2Playing(), bar = on && !S && !(home && home.maintenance) && !playing;
-  document.body.classList.toggle('u2-inplay', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame)));
+  document.body.classList.toggle('u2-inplay', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'lukas', 'race', 'claw', 'pusher', 'rocket', 'luegen'].includes(cgame)));
   document.body.classList.toggle('ui2', on); document.body.dataset.pg = S ? 'match' : page; document.body.dataset.ct = page === 'cards' ? ctab : ''; document.body.dataset.cg = page === 'casino' ? cgame : '';
   if (page === 'cards' && ctab !== 'shop') window.__u2ctab = ctab; // Karten-Reiter merkt sich den letzten Unterbereich
   let nav = document.getElementById('u2nav');
@@ -6758,6 +6888,7 @@ function u2Act(a) {
   if (k === 'chub') { const h = v === 'rocket' ? 'rocket' : v + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'pushtest') { api('/api/admin/pushtest', {}).then((r) => toast(r.total ? `Test-Push: ${r.ok} von ${r.total} deiner Geräte erreicht${r.failed ? ' · Fehler: ' + (r.errors[0] || '') : ''}` : 'Auf deinem Konto ist kein Gerät für Push angemeldet. Auf dem iPhone: App über „Zum Home-Bildschirm“ öffnen und Mitteilungen erlauben.')).catch((e) => toast(e.message)); return; }
   if (k === 'offer') return u2OfferConfirm();
+  if (k === 'lgadm') { if (v === 'on' && !confirm('Lügen für ALLE Spieler freigeben?')) return; api('/api/admin/luegen', { live: v === 'on' }).then((r) => { home.luegenLive = r.live; toast(r.live ? '🎉 Lügen ist für alle offen' : 'Lügen nur noch für dich'); viewKey = ''; render(); }).catch((e) => toast(e.message)); return; }
   if (k === 'kmadm') { if (v === 'on' && !confirm('Kirmes und Rakete für ALLE Spieler freigeben?')) return; api('/api/admin/kirmes', { live: v === 'on' }).then((r) => { home.kirmesLive = r.live; toast(r.live ? '🎉 Kirmes & Rakete sind für alle offen' : 'Kirmes & Rakete nur noch für dich'); viewKey = ''; render(); }).catch((e) => toast(e.message)); return; }
   if (k === 'offadm') { api('/api/admin/offer', { on: v === 'on' }).then((r) => { drawOfferAdm(r); toast(r.on ? 'Angebot aktiviert' : 'Angebot deaktiviert'); }).catch((e) => toast(e.message)); return; }
   if (k === 'hub') { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
@@ -6896,6 +7027,9 @@ function build() {
     <div id="adminBox"></div>
     <div id="modBox"></div>
     <details class="panel lg-box" id="banBox2"><summary><b>📢 Ankündigungsbanner</b><small> · Text auf der Startseite, optional mit Belohnung</small></summary><div id="banAdm" style="margin-top:10px"></div></details>
+    <div class="panel lg-box" id="lgAdmBox"><div class="row" style="gap:8px"><b class="grow">🃏 Lügen: <span style="color:${home && home.luegenLive ? '#7CF0A8' : '#FFD23F'}">${home && home.luegenLive ? 'für ALLE freigegeben' : 'nur für dich sichtbar'}</span></b></div>
+      <small class="sub">Kartenspiel für 3–6 Spieler unter Casino → Tische.</small>
+      <div class="row" style="gap:6px;margin-top:6px"><button class="btn small ${home && home.luegenLive ? 'ghost' : ''}" data-u2="lgadm:on">🎉 Für alle freigeben</button><button class="btn small ${home && home.luegenLive ? '' : 'ghost'}" data-u2="lgadm:off">Nur für mich</button></div></div>
     <div class="panel lg-box" id="kmAdmBox"><div class="row" style="gap:8px"><b class="grow">🎪 Kirmes & 🚀 Rakete: <span style="color:${home && home.kirmesLive ? '#7CF0A8' : '#FFD23F'}">${home && home.kirmesLive ? 'für ALLE freigegeben' : 'nur für dich sichtbar'}</span></b></div>
       <small class="sub">Neue Casino-Bereiche: Hau den Lukas, Pferderennen, der gemeinsame Münzschieber und die Mehrspieler-Rakete. Mit der Freigabe erscheint auch der Update-Beitrag.</small>
       <div class="row" style="gap:6px;margin-top:6px"><button class="btn small ${home && home.kirmesLive ? 'ghost' : ''}" data-u2="kmadm:on">🎉 Für alle freigeben</button><button class="btn small ${home && home.kirmesLive ? '' : 'ghost'}" data-u2="kmadm:off">Nur für mich</button></div></div>
@@ -7689,6 +7823,11 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.kmb) { kmBetAct(t.dataset.kmb); return; }
   if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
   if (t && t.dataset.rcbet) { rcBet(); return; }
+  if (t && t.dataset.lga) { lgAct(t.dataset.lga); return; }
+  if (t && t.dataset.lgo) { const [k, v] = t.dataset.lgo.split(':'); lgNew[k] = k === 'pass' ? v === '1' : Number(v); renderCards(); return; }
+  if (t && t.dataset.lgc) { const id = t.dataset.lgc; if (lgSel.has(id)) lgSel.delete(id); else if (lgSel.size < 4) lgSel.add(id); else toast('Höchstens 4 Karten.'); kmSnd('coin'); lgDraw(); return; }
+  if (t && t.dataset.lgr) { lgPick = t.dataset.lgr; lgDraw(); return; }
+  if (t && t.dataset.lge) { socket.emit('lg:emote', { id: lgId, e: t.dataset.lge }); return; }
   if (t && t.dataset.pmn) { pmN = Number(t.dataset.pmn); pmCtl(); return; }
   if (t && t.dataset.pm) { pmAct(t.dataset.pm); return; }
   if (t && t.dataset.kmhorse !== undefined) { if (kmBusy || (rcS && (rcS.phase !== 'bet' || rcMine()))) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; rcDraw(); return; }
