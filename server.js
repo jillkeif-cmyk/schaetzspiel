@@ -1117,7 +1117,7 @@ app.post('/api/casino/board', async (req, res) => {
 
 // ================= Kirmes & Rakete (erst nach Freigabe im Admin-Menü für alle sichtbar) =================
 const KM = require('./lib/kirmes');
-Object.assign(GAME_NAMES, { lukas: 'Hau den Lukas', race: 'Pferderennen', claw: 'Greifautomat', pusher: 'Münzschieber', rocket: 'Rakete' });
+Object.assign(GAME_NAMES, { lukas: 'Hau den Lukas', race: 'Pferderennen', pusher: 'Münzschieber', rocket: 'Rakete' });
 let kirmesLive = false, kirmesPot = KM.JACKPOT_SEED;
 store.setting('kirmes_live').then((v) => { kirmesLive = v === '1'; }).catch(() => {});
 store.setting('kirmes_pot').then((v) => { if (v) kirmesPot = Math.max(KM.JACKPOT_SEED, Number(v) || KM.JACKPOT_SEED); }).catch(() => {});
@@ -1161,7 +1161,7 @@ app.post('/api/casino/kirmes/race', async (req, res) => {
     res.json({ ...r, horse, won, diamonds: await kPay(u, 'race', bet, won, `auf ${KM.HORSES[horse].name}, Sieger ${KM.HORSES[r.winner].name}`) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
-app.post('/api/casino/kirmes/claw', async (req, res) => {
+app.post('/api/casino/kirmes/claw', async (req, res) => { return res.status(410).json({ error: 'Den Greifautomaten gibt es nicht mehr.' }); // entfernt
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!kirmesOk(u, res, 'claw')) return; const bet = kBet(req, res, u); if (!bet) return;

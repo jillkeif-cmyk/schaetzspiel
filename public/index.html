@@ -3259,7 +3259,7 @@ function renderSlotsHub(box) { // neues Design: alle Automaten auf einen Blick, 
     <p class="sub center" style="margin:12px 0 0">Tipp auf einen Automaten und such dir eine Maschine aus.</p>`;
 }
 // ================= Kirmes & Rakete =================
-const KIRMES = ['lukas', 'race', 'claw', 'pusher'];
+const KIRMES = ['lukas', 'race', 'pusher']; // Greifautomat entfernt
 let kmInfo = null, kmBet = 1000, kmHorse = 0, kmBusy = false, rk = null, rkOff = 0, rkMine = null, rkRaf = 0, rkBet = 1000, rkAuto = '';
 const KM_CHIPS = [100, 500, 1000, 5000, 25000, 100000, 500000, 1000000];
 const kmImg = (n) => `/kirmes/${n}.webp?v=${IMGV}`;
@@ -3283,7 +3283,6 @@ function renderKirmesHub(box) {
   box.innerHTML = `<div class="km-hubhead"><img src="${kmImg('carnival')}" alt=""><span><b>Kirmes</b><small>Rummel-Spaß mit Diamanten</small></span></div>` + u2Tiles([
     { key: 'lukas', name: 'Hau den Lukas', img: kmImg('i_lukas'), sub: 'Bis 8× an der Glocke' },
     { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: '6 Pferde, bis 28×' },
-    { key: 'claw', name: 'Greifautomat', img: kmImg('i_claw'), sub: 'Selbst zielen, bis 15×' },
     { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? fmt(kmInfo.pot) + ' Münzen im Automaten' : 'Gemeinsamer Automat' },
   ].map((it) => ({ ...it, lock: isLocked(it.key), badge: tb(it.key), attr: `data-cg="${it.key}"` })));
   if (!kmInfo) kmLoad().then(() => { if (cgame === 'kirmesHub') renderCards(); });
@@ -4017,7 +4016,7 @@ function renderCards() {
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
     const games = [['lukas', '🔨 Hau den Lukas'], ['race', '🏇 Pferderennen'], ['claw', '🕹️ Greifautomat'], ['pusher', '🪙 Münzschieber'], ['rocket', '🚀 Rakete'], ['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
-    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], ...(home && home.kirmes ? { kirmes: ['lukas', 'race', 'claw', 'pusher'], rocket: ['rocket'] } : {}), more: ['wheel', 'rewards', 'crank', 'setup'] };
+    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], ...(home && home.kirmes ? { kirmes: ['lukas', 'race', 'pusher'], rocket: ['rocket'] } : {}), more: ['wheel', 'rewards', 'crank', 'setup'] };
     const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
     const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : cgame === 'tablesHub' ? 'tables' : cgame === 'moreHub' ? 'more' : cgame === 'kirmesHub' ? 'kirmes' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
     const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
