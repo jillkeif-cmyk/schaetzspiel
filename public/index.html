@@ -2342,6 +2342,12 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 .rc-flash.go{animation:rcflash .6s ease-out}
 @keyframes rcflash{0%{opacity:.9}100%{opacity:0}}
 .rc-horse{transition:none!important}
+
+.pm-press{position:relative;width:170px;height:16px;margin-top:5px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.pm-press i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#3FB46E,#FFD23F 60%,#FF5A3C);transition:width .8s ease}
+.pm-press span{position:relative;display:block;text-align:center;font:800 10px/16px Archivo,sans-serif;color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.2px}
+.pm-press.hot{animation:pmhot 1s ease-in-out infinite}
+@keyframes pmhot{50%{box-shadow:inset 0 0 0 1px #FFD23F,0 0 12px rgba(255,90,60,.8)}}
 </style>
 </head>
 <body>
@@ -2367,7 +2373,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '238';
+const AVER = '239';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3509,7 +3515,7 @@ function kmSnd(name, opt = {}) {
 let pmS = null, pmN = 10, pmBusy = false, pmQ = [];
 function kmPushStage() {
   return `<div class="pf"><canvas id="pfCv"></canvas>
-    <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small></div>
+    <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small><div class="pm-press" id="pmPress"></div></div>
     <div class="pm-seat" id="pmSeat"></div></div>`;
 }
 function pmCtl() { // Steuerung unter dem Automaten: Hinsetzen, Einwerfen, Zuschauen
@@ -3527,9 +3533,9 @@ function pmPoolShow(pool, anim) {
   const b = $('#pmPool'), v = $('#pmVal'); if (!b) return;
   const from = Number(String(b.textContent).replace(/\D/g, '')) || pool;
   if (!anim || from === pool) { b.textContent = fmt(pool); } else { const t0 = performance.now(), d = 900; const st = (t) => { const k = Math.min(1, (t - t0) / d); b.textContent = fmt(Math.round(from + (pool - from) * k)); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
-  if (v) v.textContent = 'Münzen · ≈ ' + fmt(pool * 100) + ' 💎';
+  if (v) v.textContent = 'Münzen · ≈ ' + fmt(pool * 100) + ' 💎'; pmPress(pool);
 }
-async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
+async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (pmS && !pmBusy) { PF.pool = pmS.pool; PF.press = pfPress(PF.pool); pfResize(pfN(PF.pool), true); } if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
 async function pmAct(a) {
   if (a === 'leave' && pmBusy) return toast('Warte kurz, bis alle Münzen durch sind.');
   if (a === 'sit' || a === 'leave') { try { pmS = await api('/api/casino/kirmes/pusher/' + a, {}); kmSnd(a === 'sit' ? 'jingle' : 'slide'); } catch (e) { toast(e.message); } pmCtl(); return; }
@@ -3546,7 +3552,7 @@ async function pmRun() { // arbeitet die Einwürfe nacheinander ab, schneller so
     const n = pmQ.shift(); pmCtl();
     try {
       const r = await api('/api/casino/kirmes/pusher', { n }); pmS = r.state; last = r;
-      await pmAnim(r.n, r.fell, r.avalanche, pmQ.length > 0);
+      await pmAnim(r.n, r.fell, r.avalanche, pmQ.length > 0, r.pool);
       pmPoolShow(r.pool, true); kmSetDia(r.diamonds - pmQ.reduce((x, k) => x + k * 100, 0));
       const big = r.fell >= r.n * 3 || r.avalanche;
       if (r.fell && (big || !pmQ.length)) { kmBanner(r.avalanche ? 'LAWINE!' : r.fell >= r.n ? 'Münzregen!' : `${r.fell} ${r.fell === 1 ? 'Münze' : 'Münzen'} gefallen`, r.won, big); kmSnd(big ? 'fanfare' : 'jingle'); if (big) { const S = $('#km2'); if (S) kmBurst(S.clientWidth / 2, S.clientHeight * 0.7, 40, 'coins'); } }
@@ -3556,45 +3562,45 @@ async function pmRun() { // arbeitet die Einwürfe nacheinander ab, schneller so
   if (last) kmSetDia(last.diamonds);
   pmBusy = false; pmCtl();
 }
-// ---------- Münzschieber-Szene: dichter Münzteppich bis zur Kante, rückt als Ganzes vor ----------
-const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], push: 0, img: {}, target: 150, inited: false };
+// ---------- Münzschieber-Szene v3: Bild folgt dem echten Pool, Haufen drängt zur Kante, Überhang zeigt den Druck ----------
+const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], push: 0, img: {}, inited: false, pool: 0, press: 0 };
+const pfN = (pool) => Math.max(45, Math.min(240, Math.round(pool / 9))); // sichtbare Münzen passend zum Pool
+const pfPress = (pool) => Math.max(0, Math.min(1, pool / 4000)); // Kantendruck 0…1
 function pfLoad() { for (const [k, n] of [['bg', 'pf'], ['coin', 'coin'], ['dia', 'dia']]) if (!PF.img[k]) { const im = new Image(); im.src = n === 'dia' ? `/tcg/diamond.webp?v=${IMGV}` : kmImg(n); PF.img[k] = im; } }
-function pfBed(v0, v1, density) { // Münzen reihenweise, hinten schmaler, leicht versetzt
-  const out = [];
-  for (let v = v0; v <= v1; v += 0.042) {
-    const hw = PF.w0 + (PF.w1 - PF.w0) * v, n = Math.round((hw / PF.w1) * 11 * density);
-    for (let i = 0; i < n; i++) { const u = 0.05 + (i + 0.5 + (Math.random() - 0.5) * 0.7) / n * 0.9; out.push({ u, v: v + (Math.random() - 0.5) * 0.03, tv: 0, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' }); }
+const pfHash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+function pfSlots(N, press) { // Plätze von der Kante nach hinten, dicht gepackt; vorne je nach Druck gestapelt
+  const out = []; let row = 0;
+  for (let v = 0.972; out.length < N && v > 0.1; v -= 0.038, row++) {
+    const hw = PF.w0 + (PF.w1 - PF.w0) * v, cap = Math.max(4, Math.round((hw / PF.w1) * 12.5));
+    for (let i = 0; i < cap && out.length < N; i++) {
+      const u = 0.05 + (i + 0.5 + (pfHash(row, i) - 0.5) * 0.55 + (row % 2 ? 0.25 : -0.25)) / cap * 0.9;
+      const tall = row < 2 ? Math.round(press * 5 * pfHash(i, row + 7)) : row < 4 ? Math.round(press * 2 * pfHash(i, row + 3)) : 0;
+      out.push({ u: Math.max(0.05, Math.min(0.95, u)), v: v + (pfHash(i, row) - 0.5) * 0.012, h: 1 + tall });
+    }
   }
-  out.forEach((c) => { c.tv = c.v; });
   return out;
 }
-function pfInit() {
-  if (PF.inited) return; PF.inited = true;
-  PF.coins = pfBed(0.13, 0.975, 1);
-  const towers = 3 + Math.floor(Math.random() * 3);
-  for (let k = 0; k < towers; k++) { const c = PF.coins[Math.floor(Math.random() * PF.coins.length)]; c.h = 3 + Math.floor(Math.random() * 6); }
+function pfLayout() { // Münzen den Plätzen zuordnen: die vorderste Münze auf den vordersten Platz → alles rutscht nach vorn
+  const slots = pfSlots(PF.coins.length, PF.press);
+  const cs = PF.coins.slice().sort((a, b) => b.tv - a.tv || a.u - b.u);
+  cs.forEach((c, k) => { const s = slots[k] || { u: c.u, v: 0.14, h: 1 }; c.tv = s.v; c.tu = s.u; if (c.t !== 'dia') c.h = s.h; });
 }
+function pfResize(N, quiet) { // Anzahl an den Pool anpassen (still, z. B. beim Öffnen)
+  while (PF.coins.length < N) PF.coins.push({ u: 0.1 + Math.random() * 0.8, v: quiet ? 0.5 : 0.14, tv: 0.14, tu: 0.5, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' });
+  if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; }
+  pfLayout(); if (quiet) PF.coins.forEach((c) => { c.v = c.tv; c.u = c.tu; });
+}
+function pfInit() { if (PF.inited) return; PF.inited = true; PF.press = pfPress(PF.pool || 1200); pfResize(pfN(PF.pool || 1200), true); }
 const pfP = (u, v) => { const W = PF.W, H = PF.H, y = (PF.y0 + (PF.y1 - PF.y0) * v) * H, hw = (PF.w0 + (PF.w1 - PF.w0) * v) * W, s = PF.s0 + (PF.s1 - PF.s0) * v; return { x: W / 2 + (u - 0.5) * 2 * hw, y, s }; };
 function pfStep(dt) {
-  const t = performance.now() / 1000; PF.push = 0.03 + 0.07 * (0.5 - 0.5 * Math.cos(t * 2.4)); // Schieber fährt gleichmäßig vor und zurück
-  for (const c of PF.coins) {
-    if (c.tv < PF.push + 0.1 && c.v < PF.push + 0.1) c.tv = Math.max(c.tv, PF.push + 0.1); // direkt vor dem Schieber leicht mitgenommen
-    c.v += (c.tv - c.v) * Math.min(1, dt * 5.5); // weich gleiten statt springen
-    if (c.v > 0.992 && !c.gone) { c.gone = true; c.fall = 0; const p = pfP(c.u, 1); c.x0 = p.x; c.s0 = p.s; PF.falling.push(c); }
-  }
+  const t = performance.now() / 1000; PF.push = 0.03 + 0.07 * (0.5 - 0.5 * Math.cos(t * 2.4));
+  const k = Math.min(1, dt * 4.2);
+  for (const c of PF.coins) { c.v += (c.tv - c.v) * k; c.u += ((c.tu ?? c.u) - c.u) * k; }
+}
+function pfFall(n) { // die n vordersten Münzen kippen über die Kante
+  const front = PF.coins.slice().sort((a, b) => b.tv - a.tv).slice(0, n);
+  for (const c of front) { c.gone = true; c.fall = -Math.random() * 0.25; const p = pfP(c.u, 1); c.x0 = p.x; c.s0 = p.s; PF.falling.push(c); }
   PF.coins = PF.coins.filter((c) => !c.gone);
-}
-function pfShift(fall) { // der ganze Teppich rückt vor, genau so weit, dass „fall“ Münzen über die Kante gehen
-  const byV = [...PF.coins].sort((a, b) => b.tv - a.tv);
-  let d = 0.012;
-  if (fall > 0) { let cnt = 0, k = 0; while (k < byV.length && cnt < fall) { cnt += byV[k].h; k++; } const edgeCoin = byV[Math.max(0, k - 1)]; d = Math.max(0.012, 1.0 - edgeCoin.tv + 0.006); }
-  for (const c of PF.coins) { const f = 0.55 + 0.45 * Math.max(0, Math.min(1, (c.tv - 0.15) / 0.8)); c.tv = c.tv + d * f; } // vorne mehr als hinten: Münzen stauchen sich
-  const keep = byV.slice(0, 0); void keep;
-}
-function pfRefill() { // Lücken hinten mit sichtbar einfallenden Münzen schließen
-  const back = PF.coins.filter((c) => c.tv < 0.3).length, want = 26;
-  const n = Math.max(0, Math.min(10, want - back));
-  for (let i = 0; i < n; i++) setTimeout(() => PF.drops.push({ u: 0.12 + Math.random() * 0.76, v: 0.13 + Math.random() * 0.12, t: 0 }), i * 90);
 }
 function pfDraw() {
   const cv = $('#pfCv'); if (!cv) return false; const ctx = cv.getContext('2d'), W = PF.W, H = PF.H;
@@ -3605,33 +3611,32 @@ function pfDraw() {
   g = ctx.createLinearGradient(0, pl.y, 0, pl.y + fh); g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.35, '#C9CED9'); g.addColorStop(0.7, '#7E8494'); g.addColorStop(1, '#4B4F5E');
   ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh); ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(pl.x, pl.y + fh, pr.x - pl.x, 6 * pl.s);
-  const cw = W * 0.088, now = performance.now(), coinOK = PF.img.coin.complete, diaOK = PF.img.dia.complete;
+  const cw = W * 0.086, now = performance.now(), coinOK = PF.img.coin.complete, diaOK = PF.img.dia.complete;
   const list = PF.coins.slice().sort((a, b) => a.v - b.v);
-  for (const c of list) { // Schatten zuerst, dann Münzen: wirkt wie ein zusammenhängender Teppich
-    const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62; ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.05, p.y + h * 0.2, w * 0.54, h * 0.46, 0, 0, 6.29); ctx.fill();
-  }
+  // weicher Schatten unter dem ganzen Haufen
+  for (const c of list) { const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.05, p.y + h * 0.22, w * 0.6, h * 0.5, 0, 0, 6.29); ctx.fill(); }
   for (const c of list) {
     const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62;
     if (c.t === 'dia') { if (diaOK) ctx.drawImage(PF.img.dia, p.x - w * 0.42, p.y - w * 0.62, w * 0.84, w * 0.84); continue; }
     if (!coinOK) continue;
-    const edge = c.v > 0.955 ? (c.v - 0.955) / 0.037 : 0; // an der Kante: kippeln und leicht neigen
+    const edge = c.v > 0.95 ? Math.min(1, (c.v - 0.95) / 0.03) : 0;
     for (let k = 0; k < c.h; k++) {
-      const lean = c.h > 2 ? Math.sin(now / 160 + c.u * 9) * (edge * 3 + 0.4) * k * 0.35 : 0;
-      ctx.save(); ctx.translate(p.x + lean, p.y - k * h * 0.3); if (edge) ctx.rotate(Math.sin(now / 70 + c.u * 30) * 0.05 * edge); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
+      const lean = k * (0.4 + edge * PF.press * 2.4) * Math.sin(now / 180 + c.u * 11); // Stapel an der Kante wackeln, je mehr Druck desto stärker
+      ctx.save(); ctx.translate(p.x + lean, p.y - k * h * 0.3 + edge * k * 0.6); if (edge && k) ctx.rotate(Math.sin(now / 140 + c.u * 20) * 0.04 * edge * k); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
     }
   }
-  for (const f of PF.falling) { // über die Kante kippen, dann in den Schacht fallen, gut sichtbar
-    f.fall += 1 / 60; const k = f.fall, w = cw * f.s0, n = Math.min(f.h, 6);
+  for (const f of PF.falling) {
+    f.fall += 1 / 60; if (f.fall < 0) continue; const k = f.fall, w = cw * f.s0, n = Math.min(f.h, 6);
     for (let j = 0; j < n; j++) {
       const kk = Math.max(0, k - j * 0.05), tip = Math.min(1, kk * 5), y = PF.y1 * H + (kk < 0.18 ? kk * 40 : 7 + (kk - 0.18) * 60 + (kk - 0.18) * (kk - 0.18) * 1400) - j * 5 * (1 - tip);
       ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, 1.6 - kk * 2.2)); ctx.translate(f.x0 + (j - n / 2) * w * 0.3 * tip, y); ctx.scale(1, Math.max(0.12, Math.cos(tip * 1.35))); if (coinOK) ctx.drawImage(PF.img.coin, -w / 2, -w * 0.31, w, w * 0.67); ctx.restore();
     }
   }
   PF.falling = PF.falling.filter((f) => f.fall < 0.85);
-  for (const d of PF.drops) { // neue Münzen fallen von oben aus dem Einwurf hinten aufs Feld und prallen ab
+  for (const d of PF.drops) {
     d.t += 1 / 60; const k = Math.min(1, d.t / 0.5), p = pfP(d.u, d.v), yy = PF.y0 * H * 0.35 + (p.y - PF.y0 * H * 0.35) * (k * k) - (k >= 1 ? Math.abs(Math.sin((d.t - 0.5) * 14)) * 8 * Math.max(0, 1 - (d.t - 0.5) * 3.5) : 0), w = cw * p.s * 1.05;
     if (coinOK) ctx.drawImage(PF.img.coin, p.x - w / 2, yy - w * 0.31, w, w * 0.67);
-    if (d.t > 0.8 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, tv: d.v, h: 1, t: 'coin' }); }
+    if (d.t > 0.8 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, tv: d.v, tu: d.u, h: 1, t: 'coin' }); }
   }
   PF.drops = PF.drops.filter((d) => !d.done);
   return true;
@@ -3644,15 +3649,21 @@ function pfStart() {
   const loop = (t) => { const dt = Math.min(0.05, (t - last) / 1000); last = t; pfStep(dt); if (!pfDraw()) return; window.__pfRaf = requestAnimationFrame(loop); }; window.__pfRaf = requestAnimationFrame(loop);
   pmLoad();
 }
-async function pmAnim(n, fell, avalanche, fast) { // für Spieler und Zuschauer gleich; fast = weitere Einwürfe warten
-  const k = Math.min(fast ? 6 : 12, n);
-  for (let i = 0; i < k; i++) { PF.drops.push({ u: 0.18 + Math.random() * 0.64, v: 0.13 + Math.random() * 0.1, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(fast ? 45 : n > 12 ? 70 : 130); }
-  await kmSleep(fast ? 500 : 850);
-  const vis = fell <= 25 ? fell : Math.round(25 + (fell - 25) / 8);
-  kmSnd('slide'); pfShift(vis + (avalanche ? 6 : 0));
-  const before = PF.falling.length; let heard = 0; const t0 = Date.now();
-  while (Date.now() - t0 < (fast ? 900 : 1800)) { await kmSleep(90); const fallen = PF.falling.length; if (fallen > heard) { kmSnd('coins', { n: Math.min(8, fallen - heard) }); heard = fallen; } }
-  void before; pfRefill(); await kmSleep(fast ? 100 : 400);
+async function pmAnim(n, fell, avalanche, fast, poolAfter) { // für Spieler und Zuschauer gleich: danach passt das Bild zum neuen Pool
+  const ins = Math.min(fast ? 6 : 12, n);
+  for (let i = 0; i < ins; i++) { PF.drops.push({ u: 0.18 + Math.random() * 0.64, v: 0.14 + Math.random() * 0.08, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(fast ? 45 : n > 12 ? 70 : 130); }
+  await kmSleep(fast ? 550 : 900);
+  const before = PF.coins.length, want = pfN(poolAfter ?? PF.pool);
+  let vis = Math.max(fell ? Math.max(1, Math.round(fell / 9)) : 0, before - want); vis = Math.min(45, vis + (avalanche ? 8 : 0));
+  PF.pool = poolAfter ?? PF.pool; PF.press = pfPress(PF.pool);
+  kmSnd('slide'); pfLayout(); await kmSleep(fast ? 250 : 450); // Schub: alles rückt zusammen
+  let done = 0; while (done < vis) { const k = Math.min(vis - done, 1 + Math.floor(Math.random() * 3)); pfFall(k); done += k; kmSnd('coins', { n: k * 2 }); pfLayout(); await kmSleep(fast ? 60 : 110); }
+  pfResize(Math.max(pfN(PF.pool) - 6, Math.min(PF.coins.length, pfN(PF.pool))), false); // Stand an den Pool angleichen
+  await kmSleep(fast ? 250 : 500);
+}
+function pmPress(pool) { // Anzeige Kantendruck (ehrlich: je voller, desto mehr fällt)
+  const p = pfPress(pool), el = $('#pmPress'); if (!el) return;
+  el.innerHTML = `<i style="width:${Math.round(p * 100)}%"></i><span>${p > 0.7 ? '🔥 Kurz vorm Kippen!' : p > 0.35 ? 'Druck baut sich auf …' : 'Kante ruhig'}</span>`; el.className = 'pm-press ' + (p > 0.7 ? 'hot' : p > 0.35 ? 'mid' : '');
 }
 
 // ---------- Ein Spielzug ----------
@@ -3729,7 +3740,7 @@ function rkSocketInit() {
   socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') kmSnd('boom'); } });
   socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') { rkDraw(); const fl = $('#rkFloats'); if (fl) { const e = document.createElement('div'); e.className = 'rk-float' + (home && c.id === home.me.id ? ' me' : ''); e.style.left = (38 + Math.random() * 24) + '%'; e.innerHTML = `<b>${esc(c.name)}</b> ${c.m.toFixed(2).replace('.', ',')}× · +${fmt(c.won)} 💎`; fl.appendChild(e); setTimeout(() => e.remove(), 2400); } } });
   socket.on('pm:ev', (ev) => { pmS = ev.state; if (page !== 'casino' || cgame !== 'pusher') return; pmCtl();
-    if (ev.type === 'drop' && !(home && ev.byId === home.me.id)) { pmAnim(ev.n, ev.fell, ev.avalanche).then(() => { pmPoolShow(ev.state.pool, true); const m = $('#kmMsg'); if (m) m.innerHTML = `👀 ${esc(ev.by)}: ${ev.n} rein · <b class="km-win">${ev.fell} raus</b>`; if (ev.fell >= ev.n * 3 || ev.avalanche) { kmBanner(ev.avalanche ? 'LAWINE!' : 'Münzregen!', ev.fell * 100, true); kmSnd('fanfare'); } }); }
+    if (ev.type === 'drop' && !(home && ev.byId === home.me.id)) { pmAnim(ev.n, ev.fell, ev.avalanche, false, ev.state.pool).then(() => { pmPoolShow(ev.state.pool, true); const m = $('#kmMsg'); if (m) m.innerHTML = `👀 ${esc(ev.by)}: ${ev.n} rein · <b class="km-win">${ev.fell} raus</b>`; if (ev.fell >= ev.n * 3 || ev.avalanche) { kmBanner(ev.avalanche ? 'LAWINE!' : 'Münzregen!', ev.fell * 100, true); kmSnd('fanfare'); } }); }
     else if (ev.type !== 'drop') pmPoolShow(ev.state.pool); });
   socket.on('kirmes:pot', (p) => { if (kmInfo) kmInfo.pot = p.pot; const el = $('#kmPot'); if (el) el.innerHTML = `Jackpot für alle <b>${fmt(p.pot)}</b> 💎`; });
   socket.on('kirmes:jackpot', (j) => toast(`🎰 ${j.name} hat den Münzschieber-Jackpot geknackt: ${fmt(j.amount)} 💎!`));
@@ -4366,7 +4377,7 @@ const GUIDES = {
   lukas: ['🔨 Hau den Lukas', [['Ziel', 'Die Kraftnadel rast hin und her. Tipp auf „Hau drauf!“, wenn sie ganz rechts bei der Glocke ist. Je genauer, desto kräftiger der Schlag: halbe Kraft 0,3×, Einsatz zurück 1×, bärenstark 1,5×, an der Glocke 4×.'], ['Können und Glück', 'Dein Timing zählt, ein kleiner Glücksanteil bleibt wie beim echten Hammer. Wer perfekt trifft, bekommt auf Dauer rund 94 % zurück, wildes Drücken deutlich weniger.']]],
   race: ['🏇 Pferderennen', [['Ziel', 'Tipp auf eines der 6 Pferde und starte das Rennen. Gewinnt dein Pferd, bekommst du die angezeigte Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
   lukas2: ['', [['Ziel', 'Fahr den Greifer mit ◀ ▶ über einen Preis und drück Greifen. Hält er, gewinnst du den Wert auf dem Schild: kleines Säckchen 1×, Säckchen 2×, Truhe 5×, goldene Truhe 15×.'], ['Chance', 'Je wertvoller, desto schwerer zu greifen: 95 %, 48 %, 19 % und 6 %. Jeder Preis hat damit dieselbe Auszahlungsquote von 95 %. Du wählst dein Risiko selbst.']]],
-  pusher: ['🪙 Münzschieber', [['Ziel', 'Wirf eine Münze ein, der Schieber drückt Münzen über die Kante. Mal fällt nichts, mal ein Münzregen bis 10×.'], ['Jackpot', '3 % jedes Einsatzes wandern in einen gemeinsamen Jackpot für alle Spieler. Bei jedem Einwurf kann er fallen, dann bekommt ihn der Glückliche ganz.']]],
+  pusher: ['🪙 Münzschieber', [['Ziel', 'Ein gemeinsamer Automat für alle. Wirf Münzen ein (1 Münze = 100 💎), der Schieber drückt den Haufen nach vorn, und was über die Kante fällt, gehört dir.'], ['Pool', 'Was im Automaten liegt, bleibt liegen. Oben siehst du, wie viele Münzen drin sind. 95 % jeder Münze wandern in den Pool.'], ['Kantendruck', 'Je voller der Automat, desto höher stapelt es sich an der Kante und desto mehr fällt pro Einwurf. Die Anzeige unter dem Pool zeigt dir, wie nah er am Kippen ist.'], ['Zuschauen', 'Es spielt immer nur einer. Alle anderen schauen live zu und können übernehmen, sobald der Platz frei ist.']]],
   rocket: ['🚀 Rakete', [['Ziel', 'Setz vor dem Start. Die Rakete steigt, der Multiplikator wächst. Steig rechtzeitig aus und kassiere Einsatz × Multiplikator. Stürzt sie vorher ab, ist der Einsatz weg.'], ['Mehrspieler', 'Bis zu 8 Spieler fliegen in derselben Runde mit. Du siehst, wer wann aussteigt.'], ['Auto-Ausstieg', 'Trag einen Multiplikator ein, z. B. 2,00, dann steigst du dort automatisch aus.'], ['Fair', 'Der Absturzpunkt wird beim Start gewürfelt, Auszahlungsquote 96 %, egal wann du aussteigst.']]],
   triple: ['👑 Triple Crown', [
     ['Ziel', 'Drei gleiche Symbole auf einer der 5 Linien: oben, Mitte, unten und die beiden Diagonalen. Gewinne auf mehreren Linien werden zusammengezählt.'],
