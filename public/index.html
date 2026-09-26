@@ -2377,7 +2377,7 @@ body.ui2 #app:not(.maint) #promoCard{order:-2!important}
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '242';
+const AVER = '245';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3576,7 +3576,7 @@ function pmPoolShow(pool, anim) {
   if (!anim || from === pool) { b.textContent = fmt(pool); } else { const t0 = performance.now(), d = 900; const st = (t) => { const k = Math.min(1, (t - t0) / d); b.textContent = fmt(Math.round(from + (pool - from) * k)); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
   if (v) v.textContent = 'Münzen · ≈ ' + fmt(pool * 100) + ' 💎'; pmPress(pool);
 }
-async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (pmS && !pmBusy) { PF.pool = pmS.pool; PF.press = pfPress(PF.pool); pfResize(pfN(PF.pool), true); } if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
+async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (pmS && !pmBusy && !PF.synced) { PF.synced = true; PF.pool = pmS.pool; PF.press = pfPress(PF.pool); pfFill(pfN(PF.pool)); } if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
 async function pmAct(a) {
   if (a === 'leave' && pmBusy) return toast('Warte kurz, bis alle Münzen durch sind.');
   if (a === 'sit' || a === 'leave') { try { pmS = await api('/api/casino/kirmes/pusher/' + a, {}); kmSnd(a === 'sit' ? 'jingle' : 'slide'); } catch (e) { toast(e.message); } pmCtl(); return; }
@@ -3603,76 +3603,54 @@ async function pmRun() { // arbeitet die Einwürfe nacheinander ab, schneller so
   if (last) kmSetDia(last.diamonds);
   pmBusy = false; pmCtl();
 }
-// ---------- Münzschieber-Szene v3: Bild folgt dem echten Pool, Haufen drängt zur Kante, Überhang zeigt den Druck ----------
-const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], push: 0, img: {}, inited: false, pool: 0, press: 0 };
-const pfN = (pool) => Math.max(45, Math.min(240, Math.round(pool / 9))); // sichtbare Münzen passend zum Pool
-const pfPress = (pool) => Math.max(0, Math.min(1, pool / 4000)); // Kantendruck 0…1
+// ---------- Münzschieber v4: echte Schiebe-Physik je Spur. Münzen bewegen sich nur, wenn sie geschoben werden ----------
+const PF = { y0: 0.28, y1: 0.71, w0: 0.29, w1: 0.47, s0: 0.62, s1: 1, coins: [], falling: [], drops: [], push: 0, boost: 0, boostT: 0, budget: 0, img: {}, inited: false, pool: 0, press: 0 };
+const PF_K = 12, PF_D = 0.052, PF_LIP = 0.985; // Spuren, Abstand zweier Münzen, Kante
+const pfN = (pool) => Math.max(40, Math.min(200, Math.round(pool / 10)));
+const pfCount = () => PF.coins.reduce((a, c) => a + c.h, 0); // echte Münzzahl, Türme mitgezählt
+const pfPress = (pool) => Math.max(0, Math.min(1, pool / 4000));
+const pfLane = (u) => Math.max(0, Math.min(PF_K - 1, Math.floor(u * PF_K)));
 function pfLoad() { for (const [k, n] of [['bg', 'pf'], ['coin', 'coin'], ['dia', 'dia']]) if (!PF.img[k]) { const im = new Image(); im.src = n === 'dia' ? `/tcg/diamond.webp?v=${IMGV}` : kmImg(n); PF.img[k] = im; } }
-const pfHash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-function pfSlots(N, press) { // Plätze von der Kante nach hinten, dicht gepackt; vorne je nach Druck gestapelt
-  const out = []; let row = 0;
-  for (let v = 0.972; out.length < N && v > 0.1; v -= 0.038, row++) {
-    const hw = PF.w0 + (PF.w1 - PF.w0) * v, cap = Math.max(4, Math.round((hw / PF.w1) * 12.5));
-    const rowN = Math.min(cap, N - out.length); // halbe Reihe: Plätze gleichmäßig über die ganze Breite, nicht nur links
-    for (let j = 0; j < rowN; j++) {
-      const i = (j + 0.5) * cap / rowN - 0.5;
-      const u = 0.05 + (i + 0.5 + (pfHash(row, j) - 0.5) * 0.55 + (row % 2 ? 0.25 : -0.25)) / cap * 0.9;
-      const tall = row < 2 ? Math.round(press * 5 * pfHash(j, row + 7)) : row < 4 ? Math.round(press * 2 * pfHash(j, row + 3)) : 0;
-      out.push({ u: Math.max(0.05, Math.min(0.95, u)), v: v + (pfHash(j, row) - 0.5) * 0.012, h: 1 + tall, row });
-    }
-  }
-  return out;
-}
-function pfLayout() { // Spuren wie am echten Automaten: jede Münze bleibt in ihrer Spur und wird nur nach vorn geschoben
-  const K = 12, cols = Array.from({ length: K }, () => []);
-  for (const c of PF.coins) { if (c.lockH) continue; cols[Math.max(0, Math.min(K - 1, Math.floor(c.u * K)))].push(c); }
-  cols.forEach((col, b) => {
-    col.sort((x, y) => y.tv - x.tv);
-    const cap = 15; // so viele Münzen passen flach hintereinander in eine Spur, danach bildet sich eine zweite Lage
-    col.forEach((c, i) => {
-      if (c.jit === undefined) { c.jit = Math.random() - 0.5; c.jv = Math.random() - 0.5; } // fester Versatz pro Münze: ändert sich nie, also kein Zucken beim Vorrücken
-      const layer = i < cap ? 0 : 1 + Math.floor((i - cap) / cap), pos = i < cap ? i : cap - 1 - ((i - cap) % cap), mid = (b + 0.5) / K; // zweite Lage wächst von hinten, wo die Münzen landen
-      c.tv = Math.max(0.12, 0.972 - pos * 0.056 - (b % 2 ? 0.024 : 0) - c.jv * 0.012);
-      c.tu = mid + c.jit * (0.85 / K);
-      c.z = layer;
-      const tall = layer === 0 && pos < 2 ? Math.round(PF.press * 5 * pfHash(b, pos + 7)) : layer === 0 && pos < 4 ? Math.round(PF.press * 2 * pfHash(b, pos + 3)) : 0;
-      if (c.t !== 'dia') c.h = 1 + tall;
-    });
+function pfCoin(u, v, h = 1) { const lane = pfLane(u); return { u: (lane + 0.5) / PF_K + (Math.random() - 0.5) * (0.8 / PF_K), v, h, t: Math.random() < 0.02 ? 'dia' : 'coin' }; }
+function pfFill(N) { // stiller Startzustand: je Spur von der Kante nach hinten, mit natürlichen Lücken; bei Druck Stapel an der Kante
+  PF.coins = []; const per = Array.from({ length: PF_K }, () => 0);
+  for (let i = 0; i < N; i++) per[Math.floor(Math.random() * PF_K)]++;
+  const cap = Math.floor((PF_LIP - 0.16) / PF_D); // so viele Münzen passen flach in eine Spur
+  per.forEach((n, lane) => {
+    const flat = Math.min(n, cap), gap = flat > 1 ? Math.max(PF_D, Math.min(PF_D * 1.8, (PF_LIP - 0.16) / (flat - 1))) : PF_D; let v = PF_LIP - Math.random() * 0.02; const row = [];
+    for (let i = 0; i < flat; i++) { const c = pfCoin((lane + 0.5) / PF_K, v); row.push(c); PF.coins.push(c); v -= gap * (0.92 + Math.random() * 0.16); if (v < 0.15) v = 0.15; }
+    for (let i = flat; i < n; i++) { const c = row[Math.floor(Math.random() * row.length)]; if (c && c.t !== 'dia') c.h++; } // was nicht flach passt, liegt oben drauf
   });
-  for (const c of PF.coins.filter((c) => c.lockH)) c.tv = Math.min(0.97, c.tv + 0.01); // frisch umgekippte Münzen liegen erst mal, wo sie gelandet sind
-  for (const c of PF.coins) if (c.tv < c.v) c.tv = c.v; // echte Münzen bewegen sich nie rückwärts
 }
-function pfResize(N, quiet) { // Anzahl an den Pool anpassen (still beim Öffnen, sonst fallen fehlende Münzen sichtbar ein)
-  if (!quiet && PF.coins.length < N) { const need = Math.min(12, N - PF.coins.length); for (let i = 0; i < need; i++) setTimeout(() => PF.drops.push({ u: 0.12 + Math.random() * 0.76, v: 0.14 + Math.random() * 0.08, t: 0 }), i * 70); if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; } pfLayout(); return; }
-  while (PF.coins.length < N) { const u = quiet ? ((PF.coins.length * 0.618) % 1) * 0.9 + 0.05 : 0.1 + Math.random() * 0.8; PF.coins.push({ u, v: quiet ? 0.5 : 0.14, tv: 0.14, tu: u, h: 1, t: Math.random() < 0.02 ? 'dia' : 'coin' }); }
-  if (PF.coins.length > N) { PF.coins.sort((a, b) => b.tv - a.tv); PF.coins.length = N; }
-  pfLayout(); if (quiet) PF.coins.forEach((c) => { c.v = c.tv; c.u = c.tu; });
-}
-function pfInit() { if (PF.inited) return; PF.inited = true; PF.press = pfPress(PF.pool || 1200); pfResize(pfN(PF.pool || 1200), true); }
+function pfInit() { if (PF.inited) return; PF.inited = true; PF.press = pfPress(PF.pool || 1200); pfFill(pfN(PF.pool || 1200)); }
 const pfP = (u, v) => { const W = PF.W, H = PF.H, y = (PF.y0 + (PF.y1 - PF.y0) * v) * H, hw = (PF.w0 + (PF.w1 - PF.w0) * v) * W, s = PF.s0 + (PF.s1 - PF.s0) * v; return { x: W / 2 + (u - 0.5) * 2 * hw, y, s }; };
 function pfStep(dt) {
-  const t = performance.now() / 1000; PF.push = 0.03 + 0.07 * (0.5 - 0.5 * Math.cos(t * 2.4));
-  const k = Math.min(1, dt * 4.2), vmax = dt * 0.55, umax = dt * 0.12; // weich, aber nie sprunghaft
-  for (const c of PF.coins) { const dv = (c.tv - c.v) * k, du = ((c.tu ?? c.u) - c.u) * k; c.v += Math.max(-vmax, Math.min(vmax, dv)); c.u += Math.max(-umax, Math.min(umax, du)); }
-}
-function pfTopple() { // höchsten Turm im vorderen Bereich umkippen lassen
-  const tw = PF.coins.filter((c) => c.h >= 4 && c.tv > 0.55 && !c.tip).sort((a, b) => b.h - a.h)[0]; if (!tw) return false;
-  tw.tip = 0.001; tw.tipDir = Math.random() < 0.5 ? -1 : 1; return true;
-}
-function pfToppleDone(tw) { // Münzen landen verstreut vor dem Turm und bleiben dort liegen
-  const n = tw.h - 1; tw.h = 1; tw.tip = 0; tw.lockH = true; setTimeout(() => { tw.lockH = false; }, 9000);
-  for (let i = 0; i < n; i++) {
-    const a = (tw.tipDir * 0.35) + (Math.random() - 0.5) * 1.6, r = 0.05 + Math.random() * 0.12, u = Math.max(0.05, Math.min(0.95, tw.u + Math.sin(a) * r * 0.8)), v = Math.min(0.975, tw.v + Math.abs(Math.cos(a)) * r * 0.6);
-    PF.coins.push({ u: tw.u, v: tw.v, tu: u, tv: v, h: 1, t: 'coin', lockH: true, hop: 0.001 });
-    setTimeout(() => { for (const c of PF.coins) if (c.lockH && c.hop) c.hop = 0; }, 700);
+  const t = performance.now() / 1000; PF.boost += ((PF.boostT) - PF.boost) * Math.min(1, dt * 3);
+  PF.push = 0.02 + (0.08 + PF.boost) * (0.5 - 0.5 * Math.cos(t * 2.4)); // Schieber: gleichmäßiger Takt, bei Gewinn weiter
+  const front = PF.push + 0.05, lanes = Array.from({ length: PF_K }, () => []);
+  for (const c of PF.coins) if (!c.anim && !c.gone) lanes[pfLane(c.u)].push(c);
+  for (const L of lanes) {
+    L.sort((a, b) => a.v - b.v); for (const c of L) c.pv = c.v;
+    // 1) Schieben: nur wer angeschoben wird, bewegt sich
+    let prev = null; for (const c of L) { const need = prev ? prev.v + PF_D : front; if (c.v < need) c.v = need; prev = c; }
+    // 2) Fallen: von vorn, nur so viele wie ausgezahlt werden (vom Turm nur ein Teil)
+    for (let i = L.length - 1; i >= 0 && PF.budget > 0; i--) {
+      const c = L[i]; if (c.v <= PF_LIP) break; const p = pfP(c.u, 1);
+      if (c.h > PF.budget) { PF.falling.push({ ...c, h: PF.budget, fall: -Math.random() * 0.12, x0: p.x, s0: p.s }); c.h -= PF.budget; PF.budget = 0; break; }
+      PF.budget -= c.h; c.gone = true; c.fall = -Math.random() * 0.12; c.x0 = p.x; c.s0 = p.s; PF.falling.push(c);
+    }
+    // 3) Stau: die vorderste Münze hält an der Kante, jede dahinter bleibt mit Abstand hinter ihrer Vorderfrau, nie rückwärts
+    let next = null;
+    for (let i = L.length - 1; i >= 0; i--) { const c = L[i]; if (c.gone) continue; const lim = next ? next.v - PF_D : PF_LIP; if (c.v > lim) c.v = Math.max(c.pv, lim); next = c; }
   }
-  setTimeout(() => { PF.coins.forEach((c) => { c.lockH = false; }); }, 9000);
-  kmSnd('coins', { n: Math.min(10, n + 2) });
-}
-function pfFall(n) { // die n vordersten Münzen kippen über die Kante
-  const front = PF.coins.slice().sort((a, b) => b.tv - a.tv).slice(0, n);
-  for (const c of front) { c.gone = true; c.fall = -Math.random() * 0.25; const p = pfP(c.u, 1); c.x0 = p.x; c.s0 = p.s; PF.falling.push(c); }
   PF.coins = PF.coins.filter((c) => !c.gone);
+  for (const c of PF.coins) if (c.anim) { const a = c.anim; a.t = Math.min(1, a.t + dt / a.d); const e = a.t * (2 - a.t); c.u = a.u0 + (a.u1 - a.u0) * e; c.v = a.v0 + (a.v1 - a.v0) * e; c.hopY = Math.sin(a.t * Math.PI) * a.hy; if (a.t >= 1) { c.anim = null; c.hopY = 0; } }
+}
+function pfTopple() { // ein Turm an der Kante kippt nach hinten/seitlich und verteilt seine Münzen auf die Fläche davor
+  const tw = PF.coins.filter((c) => c.h >= 4 && !c.anim).sort((a, b) => b.h - a.h)[0]; if (!tw) return false;
+  const n = tw.h - 1; tw.h = 1; const dir = Math.random() < 0.5 ? -1 : 1;
+  for (let i = 0; i < n; i++) { const u1 = Math.max(0.04, Math.min(0.96, tw.u + dir * (0.03 + Math.random() * 0.1) + (Math.random() - 0.5) * 0.06)), v1 = Math.max(0.3, tw.v - 0.02 - Math.random() * 0.16); const c = pfCoin(u1, tw.v); c.u = tw.u; c.t = 'coin'; c.anim = { u0: tw.u, v0: tw.v, u1, v1, t: 0, d: 0.45 + Math.random() * 0.25, hy: 0.6 + Math.random() }; PF.coins.push(c); }
+  kmSnd('coins', { n: Math.min(10, n + 2) }); return true;
 }
 function pfDraw() {
   const cv = $('#pfCv'); if (!cv) return false; const ctx = cv.getContext('2d'), W = PF.W, H = PF.H;
@@ -3684,19 +3662,16 @@ function pfDraw() {
   ctx.fillStyle = g; ctx.fillRect(pl.x, pl.y, pr.x - pl.x, fh); ctx.fillStyle = 'rgba(255,210,63,.9)'; ctx.fillRect(pl.x, pl.y + fh * 0.42, pr.x - pl.x, 1.5);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(pl.x, pl.y + fh, pr.x - pl.x, 6 * pl.s);
   const cw = W * 0.086, now = performance.now(), coinOK = PF.img.coin.complete, diaOK = PF.img.dia.complete;
-  const list = PF.coins.slice().sort((a, b) => a.v - b.v || (a.z || 0) - (b.z || 0));
-  // weicher Schatten unter dem ganzen Haufen
-  for (const c of list) { const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.05, p.y + h * 0.22, w * 0.6, h * 0.5, 0, 0, 6.29); ctx.fill(); }
+  const list = PF.coins.slice().sort((a, b) => a.v - b.v);
+  for (const c of list) { const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62; ctx.fillStyle = 'rgba(0,0,0,.24)'; ctx.beginPath(); ctx.ellipse(p.x + w * 0.05, p.y + h * 0.22, w * 0.58, h * 0.48, 0, 0, 6.29); ctx.fill(); }
   for (const c of list) {
-    const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62;
-    if (c.t === 'dia') { if (diaOK) ctx.drawImage(PF.img.dia, p.x - w * 0.42, p.y - w * 0.62, w * 0.84, w * 0.84); continue; }
+    const p = pfP(c.u, c.v), w = cw * p.s, h = w * 0.62, hop = (c.hopY || 0) * w;
+    if (c.t === 'dia') { if (diaOK) ctx.drawImage(PF.img.dia, p.x - w * 0.42, p.y - w * 0.62 - hop, w * 0.84, w * 0.84); continue; }
     if (!coinOK) continue;
-    const edge = c.v > 0.95 ? Math.min(1, (c.v - 0.95) / 0.03) : 0;
-    if (c.tip) { c.tip = Math.min(1, c.tip + 1 / 36); if (c.tip >= 1) { pfToppleDone(c); } }
-    const hop = c.hop ? Math.sin(Math.min(1, (c.hop += 1 / 40)) * Math.PI) * w * 0.7 : 0;
+    const edge = c.v > PF_LIP - 0.02 ? 1 : 0;
     for (let k = 0; k < c.h; k++) {
-      const lean = c.tip ? c.tipDir * k * k * c.tip * c.tip * w * 0.22 : k * (0.4 + edge * PF.press * 2.4) * Math.sin(now / 180 + c.u * 11); // kippender Turm neigt sich immer stärker
-      ctx.save(); ctx.translate(p.x + lean, p.y - ((c.z || 0) + k) * h * 0.3 * (c.tip ? 1 - c.tip * 0.5 : 1) + edge * k * 0.6 - hop); if (edge && k) ctx.rotate(Math.sin(now / 140 + c.u * 20) * 0.04 * edge * k); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
+      const lean = k * (0.3 + edge * (0.6 + PF.press * 1.8)) * Math.sin(now / 170 + c.u * 13); // Türme an der Kante wackeln
+      ctx.save(); ctx.translate(p.x + lean, p.y - k * h * 0.3 - hop); ctx.drawImage(PF.img.coin, -w / 2, -h / 2, w, h * 1.08); ctx.restore();
     }
   }
   for (const f of PF.falling) {
@@ -3707,13 +3682,12 @@ function pfDraw() {
     }
   }
   PF.falling = PF.falling.filter((f) => f.fall < 0.85);
-  for (const d of PF.drops) {
+  for (const d of PF.drops) { // eingeworfene Münze fällt von oben hinten aufs Feld und bleibt dort liegen, bis der Schieber sie erwischt
     d.t += 1 / 60; const k = Math.min(1, d.t / 0.5), p = pfP(d.u, d.v), yy = PF.y0 * H * 0.35 + (p.y - PF.y0 * H * 0.35) * (k * k) - (k >= 1 ? Math.abs(Math.sin((d.t - 0.5) * 14)) * 8 * Math.max(0, 1 - (d.t - 0.5) * 3.5) : 0), w = cw * p.s * 1.05;
     if (coinOK) ctx.drawImage(PF.img.coin, p.x - w / 2, yy - w * 0.31, w, w * 0.67);
-    if (d.t > 0.8 && !d.done) { d.done = true; PF.coins.push({ u: d.u, v: d.v, tv: d.v, tu: d.u, h: 1, t: 'coin' }); PF.dirty = true; }
+    if (d.t > 0.8 && !d.done) { d.done = true; const c = pfCoin(d.u, d.v); c.t = 'coin'; const lane = pfLane(c.u), under = PF.coins.find((o) => pfLane(o.u) === lane && Math.abs(o.v - c.v) < PF_D && o.t !== 'dia' && o.h < 4); if (under) under.h++; else PF.coins.push(c); } // landet sie auf einer Münze, bleibt sie oben drauf liegen
   }
   PF.drops = PF.drops.filter((d) => !d.done);
-  if (PF.dirty && !PF.drops.length) { PF.dirty = false; pfLayout(); } // erst wenn alle gelandet sind, einmal sanft einsortieren
   return true;
 }
 function pfStart() {
@@ -3724,19 +3698,27 @@ function pfStart() {
   const loop = (t) => { const dt = Math.min(0.05, (t - last) / 1000); last = t; pfStep(dt); if (!pfDraw()) return; window.__pfRaf = requestAnimationFrame(loop); }; window.__pfRaf = requestAnimationFrame(loop);
   pmLoad();
 }
-async function pmAnim(n, fell, avalanche, fast, poolAfter) { // für Spieler und Zuschauer gleich: danach passt das Bild zum neuen Pool
-  const ins = Math.min(fast ? 6 : 12, n);
-  for (let i = 0; i < ins; i++) { PF.drops.push({ u: 0.18 + Math.random() * 0.64, v: 0.14 + Math.random() * 0.08, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(fast ? 45 : n > 12 ? 70 : 130); }
-  await kmSleep(fast ? 550 : 900);
-  const before = PF.coins.length, want = pfN(poolAfter ?? PF.pool);
-  let vis = Math.max(fell ? Math.max(1, Math.round(fell / 9)) : 0, before - want); vis = Math.min(45, vis + (avalanche ? 8 : 0));
+const pfResize = (N, quiet) => { if (quiet) { pfFill(N); return; } const need = Math.min(14, N - pfCount()); for (let i = 0; i < need; i++) setTimeout(() => PF.drops.push({ u: 0.08 + Math.random() * 0.84, v: 0.14 + Math.random() * 0.1, t: 0 }), i * 80); };
+async function pmAnim(n, fell, avalanche, fast, poolAfter) { // gleich für Spieler und Zuschauer
+  const tgtAfter = pfN(poolAfter ?? PF.pool), visFall = fell ? Math.max(1, Math.round(fell / 10)) : 0;
+  const ins = Math.max(1, Math.min(10, tgtAfter - pfCount() - PF.drops.length + visFall)); // so viele, dass das Bild danach genau zum Pool passt (1 Münze im Bild = 10 im Automaten)
+  for (let i = 0; i < ins; i++) { PF.drops.push({ u: 0.08 + Math.random() * 0.84, v: 0.14 + Math.random() * 0.1, t: 0 }); kmSnd('coin', { t: 0.3 }); await kmSleep(fast ? 60 : 140); }
+  await kmSleep(fast ? 500 : 800);
   PF.pool = poolAfter ?? PF.pool; PF.press = pfPress(PF.pool);
-  kmSnd('slide'); pfLayout(); await kmSleep(fast ? 250 : 450); // Schub: alles rückt zusammen
-  let done = 0; while (done < vis) { const k = Math.min(vis - done, 1 + Math.floor(Math.random() * 3)); pfFall(k); done += k; kmSnd('coins', { n: k * 2 }); pfLayout(); await kmSleep(fast ? 60 : 110); }
-  pfResize(Math.max(pfN(PF.pool) - 6, Math.min(PF.coins.length, pfN(PF.pool))), false); // Stand an den Pool angleichen
-  if (Math.random() < 0.25 + PF.press * 0.5 && pfTopple()) await kmSleep(fast ? 700 : 1200); // Turm kippt und verteilt sich
-  await kmSleep(fast ? 250 : 500);
+  const target = pfN(PF.pool); let vis = fell ? Math.max(visFall, pfCount() - target) : 0; vis = Math.min(40, vis + (avalanche ? 8 : 0)); // nichts ausgezahlt → nichts fällt
+  if (vis) { // Gewinn: der Schieber stößt kräftiger, bis genau so viele Münzen über die Kante gekippt sind
+    kmSnd('slide'); PF.budget = vis; PF.boostT = 0.1 + Math.min(0.14, vis * 0.004);
+    const t0 = Date.now(); let heard = PF.falling.length;
+    while (PF.budget > 0 && Date.now() - t0 < 5200) { await kmSleep(90); if (Date.now() - t0 > 3000) PF.boostT = 0.28; const f = PF.falling.length; if (f > heard) { kmSnd('coins', { n: Math.min(8, f - heard) }); heard = f; } }
+    if (PF.budget > 0) { const fr = PF.coins.slice().sort((a, b) => b.v - a.v); let left = PF.budget; for (const c of fr) { if (left <= 0) break; c.v = PF_LIP + 0.01; left -= c.h; } await kmSleep(400); } // Notfall: nur so viele an die Kante, wie noch fallen müssen
+    PF.budget = 0;
+  }
+  PF.boostT = 0;
+  if (pfCount() < target) pfResize(target, false); // Automat wird voller: weitere Münzen fallen sichtbar ein
+  if (PF.press > 0.35 && Math.random() < 0.2 + PF.press * 0.4 && pfTopple()) await kmSleep(fast ? 500 : 900);
+  await kmSleep(fast ? 200 : 400);
 }
+
 function pmPress(pool) { // Anzeige Kantendruck (ehrlich: je voller, desto mehr fällt)
   const p = pfPress(pool), el = $('#pmPress'); if (!el) return;
   el.innerHTML = `<i style="width:${Math.round(p * 100)}%"></i><span>${p > 0.7 ? '🔥 Kurz vorm Kippen!' : p > 0.35 ? 'Druck baut sich auf …' : 'Kante ruhig'}</span>`; el.className = 'pm-press ' + (p > 0.7 ? 'hot' : p > 0.35 ? 'mid' : '');
