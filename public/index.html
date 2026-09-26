@@ -2435,6 +2435,9 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 .lg-card2 .pkc{width:42px!important;height:60px!important;font-size:13px}
 .lg-card2 .pkc b{font-size:17px}.lg-card2 .pkc i{font-size:15px}
 .lg-card2.sel{transform:translateY(-8px)}.lg-card2.sel .pkc{box-shadow:0 0 0 3px #7CF0A8,0 6px 12px rgba(0,0,0,.5)}
+
+.pf-mode{position:absolute;left:8px;bottom:8px;z-index:4;padding:4px 10px;border:0;border-radius:99px;background:rgba(0,0,0,.65);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6);font:900 11px Archivo,sans-serif;color:#FFE27A}
+.pf-mode small{font:700 9px Archivo,sans-serif;color:#DCC8FF;margin-left:3px}
 </style>
 </head>
 <body>
@@ -2461,7 +2464,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '258';
+const AVER = '260';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3640,7 +3643,7 @@ function kmSnd(name, opt = {}) {
 // ---------- Münzschieber: ein gemeinsamer Automat, Pool bleibt liegen, einer spielt, alle schauen zu ----------
 let pmS = null, pmN = 10, pmBusy = false, pmQ = [];
 function kmPushStage() {
-  return `<div class="pf"><canvas id="pfCv"></canvas>
+  return `<div class="pf"><canvas id="pfCv"></canvas>${home && home.me && home.me.admin ? `<button class="pf-mode" data-pf3="1">${pf3On() ? '3D' : '2D'} <small>umschalten</small></button>` : ''}
     <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small><div class="pm-press" id="pmPress"></div></div>
     <div class="pm-seat" id="pmSeat"></div></div>`;
 }
@@ -3661,7 +3664,8 @@ function pmPoolShow(pool, anim) {
   if (!anim || from === pool) { b.textContent = fmt(pool); } else { const t0 = performance.now(), d = 900; const st = (t) => { const k = Math.min(1, (t - t0) / d); b.textContent = fmt(Math.round(from + (pool - from) * k)); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
   if (v) v.textContent = 'Münzen · ≈ ' + fmt(pool * 100) + ' 💎'; pmPress(pool);
 }
-async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (pmS && !pmBusy && !PF.synced) { PF.synced = true; PF.pool = pmS.pool; PF.press = pfPress(PF.pool); pfFill(pfN(PF.pool)); pfTowerNew(pfTowerV()); } if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
+async function pmLoad() { try { pmS = await api('/api/casino/kirmes/pusher'); } catch (e) {} if (socket) socket.emit('pm:join'); if (pmS && !pmBusy && !PF.synced) { PF.synced = true; PF.pool = pmS.pool; PF.press = pfPress(PF.pool); pfFill(pfN(PF.pool)); pfTowerNew(pfTowerV()); }
+  if (pmS && PF3 && PF3.active() && !pmBusy && !PF3.__synced) { PF3.__synced = true; PF3.setCount(pf3N(pmS.pool)); } if (cgame === 'pusher') { pmPoolShow(pmS ? pmS.pool : 0); pmCtl(); } }
 async function pmAct(a) {
   if (a === 'leave' && pmBusy) return toast('Warte kurz, bis alle Münzen durch sind.');
   if (a === 'sit' || a === 'leave') { try { pmS = await api('/api/casino/kirmes/pusher/' + a, {}); kmSnd(a === 'sit' ? 'jingle' : 'slide'); } catch (e) { toast(e.message); } pmCtl(); return; }
@@ -3792,7 +3796,15 @@ function pfDraw() {
   PF.drops = PF.drops.filter((d) => !d.done);
   return true;
 }
+let PF3 = null; // 3D-Modul, sobald geladen
+const pf3On = () => { try { if (!(home && home.me && home.me.admin)) return false; /* Prototyp: vorerst nur für den Admin */ if (localStorage.getItem('pf3d') === '0') return false; const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
+const pf3N = (pool) => Math.max(70, Math.min(220, Math.round(pool / 8))); // 3D: 1 Münze im Bild = 8 im Automaten
 function pfStart() {
+  if (pf3On()) { const host = document.querySelector('.pf'), cv0 = $('#pfCv'); if (cv0) cv0.style.display = 'none'; cancelAnimationFrame(window.__pfRaf || 0);
+    import('/pusher3d.js?v=' + AVER).then((m) => { PF3 = m; if (!document.querySelector('.pf') || !host.isConnected) return; m.init(host, { count: pf3N(PF.pool || (pmS && pmS.pool) || 800) }); pmLoad(); })
+      .catch((e) => { console.error(e); localStorage.setItem('pf3d', '0'); if (cv0) cv0.style.display = ''; pfStart(); }); // ohne 3D zurück auf 2D
+    return; }
+  if (PF3) { try { PF3.destroy(); } catch (e) {} }
   pfLoad(); const cv = $('#pfCv'); if (!cv) return;
   const r = cv.parentElement.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
   PF.W = r.width; PF.H = r.height; cv.width = PF.W * dpr; cv.height = PF.H * dpr; cv.style.width = PF.W + 'px'; cv.style.height = PF.H + 'px'; cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -3802,6 +3814,7 @@ function pfStart() {
 }
 const pfResize = (N, quiet) => { if (quiet) { pfFill(N); return; } const need = Math.min(14, N - pfCount()); for (let i = 0; i < need; i++) setTimeout(() => PF.drops.push({ u: 0.08 + Math.random() * 0.84, v: 0.14 + Math.random() * 0.1, t: 0 }), i * 80); };
 async function pmAnim(n, fell, avalanche, fast, poolAfter) { // gleich für Spieler und Zuschauer
+  if (PF3 && PF3.active()) { const tgt = pf3N(poolAfter ?? PF.pool), vf = fell ? Math.max(1, Math.round(fell / 8)) : 0, ins = Math.max(1, Math.min(12, tgt - PF3.count() + vf)), fall = fell ? Math.min(30, Math.max(vf, PF3.count() + ins - tgt)) : 0; PF.pool = poolAfter ?? PF.pool; return PF3.anim(ins, fall, avalanche, fast, (k, n2) => kmSnd(k, { n: n2 || 4 })); }
   if (avalanche && PF.tower && !PF.tower.tip) { PF.tower.tip = 0.001; kmShake(900); kmSnd('slide'); await kmSleep(1600); } // Lawine: der große Turm kippt zuerst
   const tgtAfter = pfN(poolAfter ?? PF.pool), visFall = fell ? Math.max(1, Math.round(fell / PF_SC)) : 0;
   const ins = Math.max(1, Math.min(14, tgtAfter - pfCount() - PF.drops.length + visFall)); // so viele, dass das Bild danach genau zum Pool passt (1 Münze im Bild = 10 im Automaten)
@@ -7896,6 +7909,7 @@ document.addEventListener('click', (e) => {
   if (t && t.dataset.lgc) { const id = t.dataset.lgc; if (lgSel.has(id)) lgSel.delete(id); else if (lgSel.size < 4) lgSel.add(id); else toast('Höchstens 4 Karten.'); kmSnd('coin'); lgDraw(); return; }
   if (t && t.dataset.lgr) { lgPick = t.dataset.lgr; lgDraw(); return; }
   if (t && t.dataset.lge) { socket.emit('lg:emote', { id: lgId, e: t.dataset.lge }); return; }
+  if (t && t.dataset.pf3) { localStorage.setItem('pf3d', pf3On() ? '0' : '1'); if (PF3) { PF3.destroy(); PF3.__synced = false; } renderCards(); return; }
   if (t && t.dataset.pmn) { pmN = Number(t.dataset.pmn); pmCtl(); return; }
   if (t && t.dataset.pm) { pmAct(t.dataset.pm); return; }
   if (t && t.dataset.kmhorse !== undefined) { if (kmBusy || (rcS && (rcS.phase !== 'bet' || rcMine()))) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.rc-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; rcDraw(); return; }
