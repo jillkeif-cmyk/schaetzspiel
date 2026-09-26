@@ -2027,7 +2027,7 @@ app.post('/api/admin/home', async (req, res) => { // Startseite: Update-Karte an
   if (b.promo && typeof b.promo === 'object') {
     const p = b.promo;
     if ('on' in p) homeCfg.promo.on = !!p.on;
-    if (['triple', 'jester', 'anubis', 'crypt'].includes(p.game)) homeCfg.promo.game = p.game;
+    if (['kirmes', 'triple', 'jester', 'anubis', 'crypt'].includes(p.game)) homeCfg.promo.game = p.game;
     if ('text' in p) homeCfg.promo.text = String(p.text || '').slice(0, 120);
   }
   await store.setting('home_cfg', JSON.stringify(homeCfg)); io.emit('home:cfg', { ui2Live: !!homeCfg.ui2Live, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null }); res.json({ homeCfg });
