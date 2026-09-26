@@ -2271,6 +2271,42 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 .pm-watch,.pm-note{text-align:center;font:700 13.5px/1.4 Archivo,sans-serif;color:#DCEFF2;margin:4px 0}.pm-note{font-size:12px;color:var(--muted)}
 .pm-last{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;font:700 11.5px Archivo,sans-serif;color:var(--muted)}.pm-last::-webkit-scrollbar{display:none}
 .pm-last span{flex:none;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.06)}.pm-last b.up{color:#7CF0A8}
+
+/* Greifautomat, selbst zielen */
+.cw-items{position:absolute;inset:0;z-index:2;pointer-events:none}
+.cw-it{position:absolute;width:calc(17% * var(--s));transform:translate(-50%,0);transition:filter .15s,transform .15s}
+.cw-it img{width:100%;display:block;filter:drop-shadow(0 6px 8px rgba(0,0,0,.65))}
+.cw-it i{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);padding:1px 7px;border-radius:99px;background:rgba(10,6,20,.85);box-shadow:inset 0 0 0 1.5px #E0A21E;font:900 11px Archivo,sans-serif;font-style:normal;color:#FFE27A;white-space:nowrap}
+.cw-it.t-c15 img{filter:drop-shadow(0 0 10px #FFD23F) drop-shadow(0 6px 8px rgba(0,0,0,.6)) saturate(1.3)}
+.cw-it.t-c15 i{background:#E0A21E;color:#2A1600}
+.cw-it.tgt{transform:translate(-50%,-4px) scale(1.08);filter:brightness(1.25)}
+.cw-it.tgt img{filter:drop-shadow(0 0 12px #7CF0A8) drop-shadow(0 6px 8px rgba(0,0,0,.6))}
+.cw-it.wobble{animation:cwwob .5s ease-in-out 2}
+@keyframes cwwob{25%{transform:translate(-50%,0) rotate(-8deg)}75%{transform:translate(-50%,0) rotate(8deg)}}
+.cw-it.bump{animation:cwbump .5s ease-out}
+@keyframes cwbump{0%{transform:translate(-50%,-30px)}60%{transform:translate(-50%,4px)}100%{transform:translate(-50%,0)}}
+.cw-it.fallin{animation:cwfall .6s cubic-bezier(.5,0,.8,.6)}
+@keyframes cwfall{from{transform:translate(-50%,-220px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.cw-beam{position:absolute;top:8%;bottom:14%;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(124,240,168,.0),rgba(124,240,168,.55));z-index:1;pointer-events:none}
+.cw-rig{width:20%!important;transition:left .2s}
+.cw-prize{width:calc(78% * var(--s,1))!important}
+.cw-info{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:6;padding:4px 12px;border-radius:99px;background:rgba(8,6,20,.82);box-shadow:inset 0 0 0 1.5px rgba(124,240,168,.6);font:700 12px Archivo,sans-serif;color:#EAF6F8;white-space:nowrap}
+.cw-info b{color:#7CF0A8}
+.cw-ctl{display:flex;gap:8px;align-items:stretch}
+.cw-ctl .km-go{flex:1}
+.cw-mv{width:58px;flex:none;border:0;border-radius:16px;background:linear-gradient(180deg,#2C6B75,#16434B);box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),inset 0 -3px 0 rgba(0,0,0,.35);color:#FFE27A;font:900 22px Archivo,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+.cw-mv:active{transform:translateY(2px)}
+
+/* Greifautomat: größer, Preise heben sich deutlich ab */
+.cw{aspect-ratio:auto!important;height:min(430px,calc(100dvh - 400px));min-height:320px;background:none!important}
+.cw::before{content:"";position:absolute;inset:0;background:var(--bg) center 70%/cover;filter:brightness(.42) saturate(.8) blur(1.5px);z-index:0}
+.cw-it{width:calc(21% * var(--s))!important}
+.cw-it::before{content:"";position:absolute;left:50%;bottom:-2px;width:120%;height:22%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(255,230,160,.45),transparent 70%);z-index:-1}
+.cw-it img{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 8px 10px rgba(0,0,0,.75)) brightness(1.1)!important}
+.cw-it.t-c15 img{filter:drop-shadow(0 0 12px #FFD23F) drop-shadow(0 8px 10px rgba(0,0,0,.7)) saturate(1.35) brightness(1.15)!important}
+.cw-it.tgt img{filter:drop-shadow(0 0 14px #7CF0A8) drop-shadow(0 8px 10px rgba(0,0,0,.7)) brightness(1.25)!important}
+.cw-it i{font-size:12.5px;padding:2px 9px;bottom:-9px}
+.cw-it{width:calc(17% * var(--s))!important}.cw-chute{width:15%!important;height:16%!important}
 </style>
 </head>
 <body>
@@ -2296,7 +2332,7 @@ body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '233';
+const AVER = '235';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3247,7 +3283,7 @@ function renderKirmesHub(box) {
   box.innerHTML = `<div class="km-hubhead"><img src="${kmImg('carnival')}" alt=""><span><b>Kirmes</b><small>Rummel-Spaß mit Diamanten</small></span></div>` + u2Tiles([
     { key: 'lukas', name: 'Hau den Lukas', img: kmImg('i_lukas'), sub: 'Bis 8× an der Glocke' },
     { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: '6 Pferde, bis 28×' },
-    { key: 'claw', name: 'Greifautomat', img: kmImg('i_claw'), sub: 'Bis 15× oder Booster' },
+    { key: 'claw', name: 'Greifautomat', img: kmImg('i_claw'), sub: 'Selbst zielen, bis 15×' },
     { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? fmt(kmInfo.pot) + ' Münzen im Automaten' : 'Gemeinsamer Automat' },
   ].map((it) => ({ ...it, lock: isLocked(it.key), badge: tb(it.key), attr: `data-cg="${it.key}"` })));
   if (!kmInfo) kmLoad().then(() => { if (cgame === 'kirmesHub') renderCards(); });
@@ -3259,8 +3295,8 @@ function renderKirmesGame(box, g) {
   const act = { lukas: '🔨 Hau drauf!', race: '🏁 Rennen starten', claw: '🕹️ Greifen!', pusher: '🪙 Münze einwerfen' }[g];
   box.innerHTML = `<div class="km-game km2-${g}"><div class="km2" id="km2">${stage}<div class="km2-banner" id="kmBanner"></div><div class="km2-fx" id="kmFx"></div></div>
     <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : g === 'pusher' ? 'Wirf Münzen ein und schieb sie über die Kante.' : '&nbsp;'}</div>
-    ${g === 'pusher' ? '<div class="pm-last" id="pmLast"></div><div class="pm-ctl" id="pmCtl"></div>' : `${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button>`}</div>`;
-  if (g === 'pusher') pfStart();
+    ${g === 'pusher' ? '<div class="pm-last" id="pmLast"></div><div class="pm-ctl" id="pmCtl"></div>' : g === 'claw' ? `${kmBetBar(kmBet, 'km')}<div class="cw-ctl"><button class="cw-mv" data-cwmv="-1" aria-label="Links">◀</button><button class="km-go" id="kmGo" data-kmgo="claw">🕹️ Greifen!</button><button class="cw-mv" data-cwmv="1" aria-label="Rechts">▶</button></div>` : `${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button>`}</div>`;
+  if (g === 'pusher') pfStart(); if (g === 'claw') cwBind();
 }
 const kmSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------- Effekte: Funken, Konfetti, Münzen, Wackeln, Gewinn-Banner ----------
@@ -3324,27 +3360,63 @@ async function kmRaceAnim(r) {
   await kmSleep(1300); ids.forEach((el) => el && el.classList.remove('run'));
   document.querySelectorAll('.rc-lane').forEach((l, i) => l.classList.toggle('win', i === r.winner));
 }
-// ---------- Greifautomat ----------
+// ---------- Greifautomat: sichtbare Preise, selbst zielen, Greifchance nach Wert ----------
+const CW_T = { s1: { m: 1, name: 'Kleines Säckchen', img: 'p_bag', s: 0.78 }, s2: { m: 2, name: 'Säckchen', img: 'p_bag', s: 1.02 }, c5: { m: 5, name: 'Truhe', img: 'p_chest', s: 1 }, c15: { m: 15, name: 'Goldene Truhe', img: 'p_chest', s: 1.14 } };
+const CW = { items: [], x: 50, target: null, hold: 0, nid: 1 };
+function cwNew(x) { const r = Math.random(), type = r < 0.34 ? 's1' : r < 0.64 ? 's2' : r < 0.88 ? 'c5' : 'c15'; return { id: CW.nid++, type, x, y: 60 + Math.random() * 12 }; }
+function cwFill() { // 7 Preise, gleichmäßig über den Haufen verteilt
+  if (CW.items.length >= 5) return; const xs = [29, 44, 59, 74, 88]; // rechts neben der Ausgabe, mit Abstand
+  for (const x of xs) if (!CW.items.some((it) => Math.abs(it.x - x) < 7)) CW.items.push(cwNew(x + (Math.random() - 0.5) * 2));
+  CW.items.sort((a, b) => a.y - b.y);
+}
+function cwItemHtml(it) { const t = CW_T[it.type]; return `<div class="cw-it t-${it.type}" id="cwI${it.id}" style="left:${it.x}%;top:${it.y}%;--s:${t.s}"><img src="${kmImg(t.img)}" alt=""><i>${t.m}×</i></div>`; }
 function kmClawStage() {
-  return `<div class="cw" style="--bg:url(${kmImg('claw_in')})"><div class="cw-rail"></div><div class="cw-rig" id="cwRig"><span class="cw-cable" id="cwCable"></span><span class="cw-head"><img id="cwClaw" src="${kmImg('claw_open')}" alt=""><img class="cw-prize" id="cwPrize" alt=""></span></div><div class="cw-chute"><span>AUSGABE</span></div></div>`;
+  cwFill();
+  return `<div class="cw" style="--bg:url(${kmImg('claw_in')})"><div class="cw-rail"></div><div class="cw-items" id="cwItems">${CW.items.map(cwItemHtml).join('')}</div>
+    <div class="cw-beam" id="cwBeam" style="left:${CW.x}%"></div>
+    <div class="cw-rig" id="cwRig" style="left:${CW.x}%"><span class="cw-cable" id="cwCable"></span><span class="cw-head"><img id="cwClaw" src="${kmImg('claw_open')}" alt=""><img class="cw-prize" id="cwPrize" alt=""></span></div>
+    <div class="cw-chute"><span>AUSGABE</span></div><div class="cw-info" id="cwInfo"></div></div>`;
+}
+function cwAim() { // Preis unter dem Greifer bestimmen und hervorheben
+  let best = null, bd = 7; for (const it of CW.items) { const d = Math.abs(it.x - CW.x); if (d < bd) { bd = d; best = it; } }
+  CW.target = best; document.querySelectorAll('.cw-it').forEach((e) => e.classList.toggle('tgt', !!best && e.id === 'cwI' + best.id));
+  const inf = $('#cwInfo'), go = $('#kmGo');
+  if (inf) inf.innerHTML = best ? `🎯 <b>${CW_T[best.type].name}</b> · ${CW_T[best.type].m}× · Chance ${Math.round(95 / CW_T[best.type].m)} %` : 'Fahr über einen Preis';
+  if (go && !kmBusy) go.disabled = !best;
+}
+function cwMove(dir) { CW.x = Math.max(8, Math.min(92, CW.x + dir * 0.8)); const r = $('#cwRig'), b = $('#cwBeam'); if (r) { r.style.transition = 'none'; r.style.left = CW.x + '%'; } if (b) b.style.left = CW.x + '%'; cwAim(); }
+function cwBind() { // ◀ ▶ antippen oder gedrückt halten
+  document.querySelectorAll('[data-cwmv]').forEach((b) => {
+    const dir = Number(b.dataset.cwmv), stop = () => { clearInterval(CW.hold); CW.hold = 0; };
+    b.onpointerdown = (e) => { e.preventDefault(); if (kmBusy) return; stop(); cwMove(dir * 3); kmSnd('motor', { d: 0.25 }); CW.hold = setInterval(() => { cwMove(dir); }, 16); };
+    b.onpointerup = stop; b.onpointerleave = stop; b.onpointercancel = stop;
+  });
+  cwAim();
 }
 async function kmClawAnim(r) {
-  const rig = $('#cwRig'), cab = $('#cwCable'), cl = $('#cwClaw'), pz = $('#cwPrize'); if (!rig) return;
-  const x = 22 + Math.random() * 60;
-  rig.style.transition = 'left 1s cubic-bezier(.45,0,.3,1)'; rig.style.left = x + '%'; kmSnd('motor', { d: 1 }); await kmSleep(1050);
-  cab.style.transition = 'height 1.1s cubic-bezier(.5,0,.7,1)'; cab.style.height = '52%'; kmSnd('motor', { d: 1.1 }); await kmSleep(1150);
-  cl.src = kmImg('claw_closed'); kmSnd('clack'); await kmSleep(380);
-  const prizeImg = r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : (r.mult > 0 || r.drop) ? kmImg('p_bag') : '';
-  if (prizeImg) { pz.src = prizeImg; pz.className = 'cw-prize on ' + (r.mult >= 15 ? 'gold' : r.mult >= 5 ? 'mid' : ''); }
-  cab.style.transition = 'height 1.2s cubic-bezier(.3,0,.3,1)'; cab.style.height = '4%'; await kmSleep(r.drop ? 600 : 1250);
-  if (r.drop) { pz.classList.add('slip'); sfx('wrong'); await kmSleep(700); pz.className = 'cw-prize'; await kmSleep(600); }
-  else if (prizeImg) {
+  const it = CW.items.find((x) => CW.target && x.id === CW.target.id), el = it && $('#cwI' + it.id);
+  const rig = $('#cwRig'), cab = $('#cwCable'), cl = $('#cwClaw'), pz = $('#cwPrize'), st = $('#km2'); if (!rig || !el) return;
+  CW.x = it.x; rig.style.transition = 'left .35s ease'; rig.style.left = it.x + '%'; await kmSleep(360);
+  const S = st.getBoundingClientRect(), E = el.getBoundingClientRect(), H = rig.querySelector('.cw-head').getBoundingClientRect(), C = cab.getBoundingClientRect();
+  const drop = Math.max(20, E.top + E.height * 0.25 - C.top - H.height * 0.8);
+  cab.style.transition = 'height 1.1s cubic-bezier(.5,0,.7,1)'; cab.style.height = drop + 'px'; kmSnd('motor', { d: 1.1 }); await kmSleep(1150);
+  cl.src = kmImg('claw_closed'); kmSnd('clack'); await kmSleep(420);
+  const t = CW_T[it.type];
+  if (r.ok || r.slip) { pz.src = kmImg(t.img); pz.style.setProperty('--s', t.s); pz.className = 'cw-prize on ' + (it.type === 'c15' ? 'gold' : ''); el.style.opacity = '0'; }
+  else { el.classList.add('wobble'); }
+  cab.style.transition = 'height 1.2s cubic-bezier(.3,0,.3,1)'; cab.style.height = '4%'; kmSnd('motor', { d: 1.2 }); await kmSleep(r.slip ? 650 : 1250);
+  if (r.slip) { pz.classList.add('slip'); sfx('wrong'); await kmSleep(650); pz.className = 'cw-prize'; el.style.opacity = '1'; el.classList.add('bump'); await kmSleep(500); el.classList.remove('bump'); }
+  else if (r.ok) {
     rig.style.transition = 'left 1.1s cubic-bezier(.45,0,.3,1)'; rig.style.left = '10%'; kmSnd('motor', { d: 1.1 }); await kmSleep(1150);
-    cl.src = kmImg('claw_open'); pz.classList.add('drop'); await kmSleep(650);
-    const S = $('#km2').getBoundingClientRect(); kmBurst(S.width * 0.1, S.height * 0.8, 24, r.mult >= 5 || r.pack ? 'confetti' : 'coins'); pz.className = 'cw-prize';
+    cl.src = kmImg('claw_open'); kmSnd('clack'); pz.classList.add('drop'); await kmSleep(600); kmSnd('coins', { n: 6 });
+    kmBurst(S.width * 0.1, S.height * 0.82, 26, it.type === 'c15' || it.type === 'c5' ? 'confetti' : 'coins'); pz.className = 'cw-prize';
+    CW.items = CW.items.filter((x) => x.id !== it.id); el.remove();
+    setTimeout(() => { cwFill(); const box = $('#cwItems'); if (!box) return; for (const n of CW.items) if (!$('#cwI' + n.id)) { box.insertAdjacentHTML('beforeend', cwItemHtml(n)); const ne = $('#cwI' + n.id); if (ne) ne.classList.add('fallin'); } cwAim(); }, 500);
   }
-  cl.src = kmImg('claw_open'); rig.style.transition = 'left .8s ease'; rig.style.left = '50%';
+  el.classList.remove('wobble');
+  cl.src = kmImg('claw_open'); rig.style.transition = 'left .8s ease'; rig.style.left = CW.x + '%'; await kmSleep(300);
 }
+
 // ---------- Kirmes-Klänge (Web Audio, synthetisch) ----------
 function kmSnd(name, opt = {}) {
   if (muted || !actx || document.hidden) return; try { if (actx.state !== 'running') actx.resume().catch(() => {}); } catch (e) {}
@@ -3488,10 +3560,12 @@ async function kmPlay(g) {
   const b0 = $('#kmBanner'); if (b0) b0.className = 'km2-banner';
   try {
     kmSetDia(kmDia() - kmBet);
-    const r = await api('/api/casino/kirmes/' + g, { bet: kmBet, horse: kmHorse });
+    if (g === 'claw' && !CW.target) { kmBusy = false; if (go) go.disabled = false; kmSetDia(kmDia()); return toast('Fahr den Greifer zuerst über einen Preis.'); }
+    const r = await api('/api/casino/kirmes/' + g, { bet: kmBet, horse: kmHorse, target: CW.target ? CW.target.type : '' });
     if (g === 'lukas') await kmLukasAnim(r); else if (g === 'race') await kmRaceAnim(r); else await kmClawAnim(r);
     kmSetDia(r.diamonds);
     const big = r.won >= kmBet * 3 || r.pack || r.jackpot;
+    if (g === 'claw') { kmSetDia(r.diamonds); kmBanner(r.ok ? r.name + '!' : r.slip ? 'Abgerutscht!' : 'Knapp daneben', r.won, r.ok && r.m >= 5, r.ok ? kmImg(CW_T[r.type].img) : ''); if (msg) msg.innerHTML = r.ok ? `Gewinn: <b class="km-win">+${fmt(r.won)} 💎</b>` : 'Nicht gehalten. Nochmal?'; if (r.ok && r.m >= 5) kmSnd('fanfare'); else if (r.ok) kmSnd('jingle'); else sfx('wrong'); kmBusy = false; if (go) go.disabled = false; cwAim(); return; }
     const title = g === 'race' ? (r.won ? `${kmInfo.horses[r.winner].name} gewinnt!` : `${kmInfo.horses[r.winner].name} gewinnt`) : r.jackpot ? 'JACKPOT!' : r.label;
     const img = g === 'race' ? kmImg('horse' + r.winner) : g === 'claw' && (r.mult > 0 || r.pack) ? (r.pack ? `/tcg/pack_premium.webp?v=${IMGV}` : r.mult >= 5 ? kmImg('p_chest') : kmImg('p_bag')) : '';
     kmBanner(title, r.won, big, img);
@@ -4187,7 +4261,7 @@ async function openPack(pid) {
 const GUIDES = {
   lukas: ['🔨 Hau den Lukas', [['Ziel', 'Hau mit dem Hammer auf den Amboss. Je höher die Scheibe fliegt, desto mehr gewinnst du: halbe Kraft 0,5×, Einsatz zurück 1×, stark 1,5×, bärenstark 3×, und an der Glocke 8×.'], ['Fair', 'Wie hoch die Scheibe fliegt, würfelt der Server. Die Auszahlungsquote liegt bei 96 %.']]],
   race: ['🏇 Pferderennen', [['Ziel', 'Tipp auf eines der 6 Pferde und starte das Rennen. Gewinnt dein Pferd, bekommst du die angezeigte Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
-  claw: ['🕹️ Greifautomat', [['Ziel', 'Tipp auf Greifen, der Greifer fährt über die Preise und greift zu. Im Kasten: kleine und große Säckchen (0,5× bis 2×), Truhen (5×), die goldene Truhe (15×) und seltene Premium-Booster.'], ['Fair', 'Manchmal rutscht der Preis wieder heraus. Was du greifst, würfelt der Server, Auszahlungsquote rund 95 % plus Booster-Chance.']]],
+  claw: ['🕹️ Greifautomat', [['Ziel', 'Fahr den Greifer mit ◀ ▶ über einen Preis und drück Greifen. Hält er, gewinnst du den Wert auf dem Schild: kleines Säckchen 1×, Säckchen 2×, Truhe 5×, goldene Truhe 15×.'], ['Chance', 'Je wertvoller, desto schwerer zu greifen: 95 %, 48 %, 19 % und 6 %. Jeder Preis hat damit dieselbe Auszahlungsquote von 95 %. Du wählst dein Risiko selbst.']]],
   pusher: ['🪙 Münzschieber', [['Ziel', 'Wirf eine Münze ein, der Schieber drückt Münzen über die Kante. Mal fällt nichts, mal ein Münzregen bis 10×.'], ['Jackpot', '3 % jedes Einsatzes wandern in einen gemeinsamen Jackpot für alle Spieler. Bei jedem Einwurf kann er fallen, dann bekommt ihn der Glückliche ganz.']]],
   rocket: ['🚀 Rakete', [['Ziel', 'Setz vor dem Start. Die Rakete steigt, der Multiplikator wächst. Steig rechtzeitig aus und kassiere Einsatz × Multiplikator. Stürzt sie vorher ab, ist der Einsatz weg.'], ['Mehrspieler', 'Bis zu 8 Spieler fliegen in derselben Runde mit. Du siehst, wer wann aussteigt.'], ['Auto-Ausstieg', 'Trag einen Multiplikator ein, z. B. 2,00, dann steigst du dort automatisch aus.'], ['Fair', 'Der Absturzpunkt wird beim Start gewürfelt, Auszahlungsquote 96 %, egal wann du aussteigst.']]],
   triple: ['👑 Triple Crown', [

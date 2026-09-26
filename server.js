@@ -1165,9 +1165,9 @@ app.post('/api/casino/kirmes/claw', async (req, res) => {
   try {
     const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
     if (!kirmesOk(u, res, 'claw')) return; const bet = kBet(req, res, u); if (!bet) return;
-    const r = KM.claw(), won = Math.round(bet * r.mult);
-    if (r.pack) await store.packAdd(u.id, r.pack, 1);
-    res.json({ ...r, won, diamonds: await kPay(u, 'claw', bet, won, r.label) });
+    const r = KM.clawGrab(String(req.body.target || '')); if (!r) return res.status(400).json({ error: 'Fahr den Greifer zuerst über einen Preis.' });
+    const won = r.ok ? Math.round(bet * r.m) : 0;
+    res.json({ ...r, won, diamonds: await kPay(u, 'claw', bet, won, `${r.name} (${r.m}×) ${r.ok ? 'gegriffen' : 'verfehlt'}`) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 // ---------- Gemeinsamer Münzschieber: ein Platz, alle anderen schauen zu, der Pool bleibt liegen ----------
