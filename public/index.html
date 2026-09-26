@@ -2061,6 +2061,105 @@ body.ui2[data-cg="roulette"] #cgame > .rhist{max-height:min(68vw,270px,calc(100d
 body.ui2 .pk-stackchips,body.ui2 .pk-own{display:none!important} /* Chip-Stand steht im Namensfeld; nur Einsätze und Pot auf dem Tisch */
 .pk-pot .pk-pile.big{transform:scale(1.15);transform-origin:bottom center;margin-right:6px}
 body.u2-seat .u2-crow,body.u2-inplay .u2-crow,body.ui2 #app.pk-on .u2-crow{display:none!important} /* beim Sitzen gibt es „Aufstehen“ */
+
+/* ===== Kirmes ===== */
+.cseg.five button{font-size:11.5px;padding:8px 2px;line-height:1.15}
+body.ui2 .cseg.five button{display:flex;flex-direction:column;align-items:center;gap:1px}
+.km-hubhead{position:relative;height:84px;border-radius:18px;overflow:hidden;margin:0 0 10px;box-shadow:inset 0 0 0 2px rgba(255,210,63,.6)}
+.km-hubhead img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.km-hubhead span{position:absolute;left:14px;bottom:10px;display:flex;flex-direction:column}
+.km-hubhead b{font:400 28px/1 Anton,Impact,sans-serif;letter-spacing:1px;color:#FFE27A;text-shadow:0 2px 0 #4A2A00,0 0 12px rgba(0,0,0,.6)}
+.km-hubhead small{font:700 12px Archivo,sans-serif;color:#FFF3C4;text-shadow:0 1px 3px #000}
+.km-game{display:flex;flex-direction:column;gap:8px}
+.km-stagewrap{position:relative;border-radius:20px;overflow:hidden;background:var(--bg) center/cover;box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),0 10px 24px rgba(0,0,0,.45);min-height:300px}
+.km-msg{text-align:center;font:700 14px Archivo,sans-serif;color:#EAF6F8;min-height:20px}
+.km-win{color:#7CF0A8;font-size:16px}
+.km-bet{display:flex;flex-direction:column;gap:6px}
+.km-betrow{display:flex;align-items:center;gap:8px}
+.km-pm{width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.15);color:#FFE27A;font:900 22px Archivo,sans-serif}
+.km-betval{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px;border-radius:12px;background:rgba(0,0,0,.3)}
+.km-betval small{font:700 10.5px Archivo,sans-serif;color:var(--muted)}.km-betval b{font:900 18px Archivo,sans-serif;color:#EAF6FF}
+.km-chips{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.km-chips::-webkit-scrollbar{display:none}
+.km-chip{flex:none;min-width:44px;height:34px;padding:0 8px;border:0;border-radius:99px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14);color:#DCEFF2;font:800 12.5px Archivo,sans-serif}
+.km-chip.on{background:#FFD23F;color:#2A1600}.km-chip.max{color:#FFD23F}
+.km-go{width:100%;padding:14px;border:0;border-radius:16px;background:linear-gradient(180deg,#FFEE9A,#FFD23F 50%,#E6A51C);box-shadow:inset 0 -4px 0 #A06E00,0 8px 16px rgba(255,210,63,.25);color:#2A1600;font:400 22px/1 Anton,Impact,sans-serif;letter-spacing:1px}
+.km-go:disabled{filter:grayscale(.6) brightness(.8)}
+/* Hau den Lukas */
+.km-lukas{position:relative;height:330px}
+.km-tower{position:absolute;left:50%;top:40px;bottom:46px;width:46px;transform:translateX(-50%);border-radius:10px;background:linear-gradient(90deg,#5B0E1B,#C0342F 45%,#5B0E1B);box-shadow:inset 0 0 0 3px #E0A21E,0 0 18px rgba(0,0,0,.6)}
+.km-mark{position:absolute;left:-58px;right:-58px;height:0;border-top:2px dashed rgba(255,226,122,.5)}
+.km-mark i{position:absolute;right:0;top:-10px;font:900 12px Archivo,sans-serif;font-style:normal;color:#FFE27A;text-shadow:0 1px 2px #000}
+.km-mark.bell{border:0}
+.km-puck{position:absolute;left:4px;right:4px;bottom:2%;height:18px;border-radius:6px;background:linear-gradient(180deg,#FFF3C4,#E0A21E);box-shadow:0 0 12px #FFE27A}
+.km-bell{position:absolute;left:50%;top:-36px;transform:translateX(-50%);font-size:34px;filter:drop-shadow(0 0 10px rgba(255,210,63,.7))}
+.km-bell.ring{animation:kmring .9s ease-in-out 2}
+@keyframes kmring{25%{transform:translateX(-50%) rotate(-22deg) scale(1.2)}75%{transform:translateX(-50%) rotate(22deg) scale(1.2)}}
+.km-meter{position:absolute;left:14px;right:14px;bottom:12px;height:12px;border-radius:99px;background:linear-gradient(90deg,#3FB46E,#FFD23F 60%,#FF4D4D);opacity:.9}
+.km-needle{position:absolute;top:-4px;width:4px;height:20px;border-radius:2px;background:#fff;box-shadow:0 0 6px #fff;animation:kmneedle 1.4s ease-in-out infinite alternate}
+@keyframes kmneedle{from{left:0}to{left:calc(100% - 4px)}}
+.km-hammer{position:absolute;right:22%;bottom:30px;font-size:46px;transform-origin:90% 90%;transform:rotate(30deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.km-hammer.hit{animation:kmhit .38s ease-in}
+@keyframes kmhit{0%{transform:rotate(30deg)}40%{transform:rotate(-40deg)}100%{transform:rotate(55deg)}}
+/* Pferderennen */
+.km-race{position:relative;display:flex;flex-direction:column;gap:5px;padding:10px 10px 10px 10px;background:linear-gradient(180deg,rgba(8,40,18,.82),rgba(12,50,24,.9))}
+.km-lane{position:relative;display:flex;align-items:center;gap:6px;height:44px;padding:0 6px;border:0;border-radius:12px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);color:inherit;text-align:left}
+.km-lane.pick{box-shadow:inset 0 0 0 2.5px var(--hc),0 0 12px var(--hc)}
+.km-lane.win{background:rgba(124,240,168,.22)}
+.km-no{flex:none;width:22px;height:22px;border-radius:50%;background:var(--hc);display:grid;place-items:center;font:900 12px Archivo,sans-serif;color:#fff}
+.km-track{position:relative;flex:1;height:40px;border-bottom:1px dashed rgba(255,255,255,.2)}
+.km-horse{position:absolute;left:0;top:0;width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)) drop-shadow(0 0 0 var(--hc))}
+.km-odds{flex:none;width:64px;display:flex;flex-direction:column;align-items:flex-end;font:900 13px Archivo,sans-serif;color:#FFE27A}
+.km-odds b{font:700 10.5px Archivo,sans-serif;color:#DCEFF2}
+.km-finish{position:absolute;top:8px;bottom:8px;right:78px;width:6px;background:repeating-linear-gradient(0deg,#fff 0 6px,#111 6px 12px);opacity:.8}
+/* Greifautomat und Münzschieber */
+.km-cab{position:relative;aspect-ratio:3/4;max-height:380px;margin:0 auto;width:100%;background:#050308}
+.km-cabimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.km-glass{position:absolute;left:18%;right:18%;top:12%;bottom:40%;overflow:hidden;border-radius:8px}
+.km-rail{position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,#8A6A1E,#FFE27A,#8A6A1E)}
+.km-clawbox{position:absolute;left:40%;top:0;width:56px;height:100%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.km-cable{display:block;width:3px;height:6%;background:#C9C9C9}
+.km-clawbox img{width:52px;height:52px;object-fit:contain;margin-top:-4px}
+.km-prize{font-size:26px;margin-top:-14px;transition:transform .45s ease-in,opacity .45s}
+.km-prize.fall{transform:translateY(160px);opacity:0}
+.km-pile{position:absolute;left:0;right:0;bottom:0;height:36%;display:flex;flex-wrap:wrap;align-content:flex-end;justify-content:center;gap:0 2px;font-size:22px}
+.km-pile span{transform:rotate(calc(var(--i) * 23deg - 60deg))}
+.km-pot{position:absolute;left:50%;top:1.5%;transform:translateX(-50%);z-index:2;padding:4px 12px;border-radius:99px;background:rgba(0,0,0,.65);box-shadow:inset 0 0 0 1.5px #FFD23F;font:800 12px Archivo,sans-serif;color:#FFF3C4;white-space:nowrap}
+.km-pot b{color:#FFE27A}
+.km-field{position:absolute;left:23%;right:23%;top:19%;bottom:30%;overflow:hidden;border-radius:6px;background:linear-gradient(180deg,rgba(40,20,60,.6),rgba(10,5,20,.8))}
+.km-shelf{position:absolute;left:0;right:0;top:0;height:30%;background:linear-gradient(180deg,#8A6A1E,#E0A21E);box-shadow:0 4px 8px rgba(0,0,0,.6)}
+.km-shelf.push{animation:kmpush .7s ease-in-out}
+@keyframes kmpush{50%{height:44%}}
+.km-coin{position:absolute;left:var(--x);top:var(--y,50%);width:22px;height:9px;border-radius:50%;background:radial-gradient(ellipse at 50% 35%,#FFF3C4,#E0A21E 60%,#8A5A00);box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.km-coin.drop{top:-10%;animation:kmdrop .6s ease-in forwards}
+@keyframes kmdrop{to{top:34%}}
+.km-coin.fallout{top:78%;animation:kmfall .9s ease-in forwards}
+@keyframes kmfall{to{top:115%;transform:rotate(40deg)}}
+/* ===== Rakete ===== */
+.rk{display:flex;flex-direction:column;gap:8px}
+.rk-sky{position:relative;height:240px;border-radius:20px;overflow:hidden;background:var(--bg) center/cover;box-shadow:inset 0 0 0 2px rgba(143,211,255,.45),0 10px 24px rgba(0,0,0,.45)}
+.rk-graph{position:absolute;left:12px;right:12px;top:12px;bottom:12px;width:calc(100% - 24px);height:calc(100% - 24px)}
+.rk-graph path{fill:none;stroke:#7CF0A8;stroke-width:3;filter:drop-shadow(0 0 6px #7CF0A8)}
+.rk-ship{position:absolute;left:8px;bottom:8px;width:60px;height:60px;object-fit:contain;transition:transform .08s linear;filter:drop-shadow(0 0 10px rgba(255,160,60,.6))}
+.rk-ship.boom{opacity:.2;filter:grayscale(1)}
+.rk-mult{position:absolute;left:0;right:0;top:36%;text-align:center;font:400 48px/1 Anton,Impact,sans-serif;letter-spacing:1px;color:#EAF6FF;text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 18px rgba(143,211,255,.6)}
+.rk-mult.wait{font-size:30px;color:#FFE27A}.rk-mult.mid{color:#7CF0A8}.rk-mult.big{color:#FFD23F}.rk-mult.crash{color:#FF6B6B}
+.rk-sub{position:absolute;left:0;right:0;top:58%;text-align:center;font:700 13px Archivo,sans-serif;color:#DCEFF2}
+.rk-hist{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.rk-hist::-webkit-scrollbar{display:none}
+.rk-hist span{flex:none;padding:3px 8px;border-radius:99px;font:900 11.5px Archivo,sans-serif;background:rgba(255,255,255,.07)}
+.rk-hist .low{color:#FF8A8A}.rk-hist .mid{color:#7CF0A8}.rk-hist .big{color:#FFD23F}
+.rk-players{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:14px;background:rgba(0,0,0,.25)}
+.rk-ph{display:flex;justify-content:space-between;align-items:center;font:800 12.5px Archivo,sans-serif}.rk-ph small{color:var(--muted)}
+.rk-p{display:flex;gap:8px;align-items:center;font:700 13px Archivo,sans-serif;padding:4px 0;border-top:1px solid rgba(255,255,255,.06)}
+.rk-p b{min-width:92px;text-align:right}.rk-p.out b{color:#7CF0A8}.rk-p.lost{opacity:.55}
+.rk-auto{display:flex;align-items:center;gap:8px;font:700 13px Archivo,sans-serif}.rk-auto .field{width:90px;padding:8px}
+.rk-cash{background:linear-gradient(180deg,#9DF5BE,#3FB46E);box-shadow:inset 0 -4px 0 #1F7A45;color:#08331F}
+.rk-wait{text-align:center;font:700 14px Archivo,sans-serif;color:#DCEFF2;margin:8px 0}
+
+.cseg.five{display:flex!important;flex-wrap:nowrap!important;gap:2px}
+.cseg.five button{flex:1 1 0!important;min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center;gap:1px;padding:6px 1px!important;font-size:10.5px!important;line-height:1.1;position:relative}
+.cseg.five .cse{font-style:normal;font-size:17px;line-height:1}
+.cseg.five button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cseg.five .cseg-dot{position:absolute;top:4px;right:8px}
 </style>
 </head>
 <body>
@@ -2086,7 +2185,7 @@ body.u2-seat .u2-crow,body.u2-inplay .u2-crow,body.ui2 #app.pk-on .u2-crow{displ
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '228';
+const AVER = '229';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3012,6 +3111,145 @@ function renderSlotsHub(box) { // neues Design: alle Automaten auf einen Blick, 
     return `<button class="u2-slot ${lock ? 'locked' : ''}" ${lock ? `data-cglock="${g}"` : `data-cg="${g}"`} aria-label="${n}"><img src="/promo/${g}.webp?v=${IMGV}" alt=""><b>${n}</b><small class="${lock ? 'lk' : test(g) ? 'lk' : f ? 'ok' : 'full'}">${lock ? '🔒 gesperrt' : test(g) ? '🧪 bald verfügbar' : f ? `${f} von ${tot(g)} frei` : 'belegt · zuschauen'}</small>${nb && !lock ? `<i>${esc(nb)}</i>` : ''}</button>`; }).join('')}</div>
     <p class="sub center" style="margin:12px 0 0">Tipp auf einen Automaten und such dir eine Maschine aus.</p>`;
 }
+// ================= Kirmes & Rakete =================
+const KIRMES = ['lukas', 'race', 'claw', 'pusher'];
+let kmInfo = null, kmBet = 1000, kmHorse = 0, kmBusy = false, rk = null, rkOff = 0, rkMine = null, rkRaf = 0, rkBet = 1000, rkAuto = '';
+const KM_CHIPS = [100, 500, 1000, 5000, 25000, 100000, 500000, 1000000];
+const kmImg = (n) => `/kirmes/${n}.webp?v=${IMGV}`;
+async function kmLoad() { try { kmInfo = await api('/api/casino/kirmes'); } catch (e) { kmInfo = null; } return kmInfo; }
+function kmDia() { return (tcg && tcg.diamonds) || (home && home.me.diamonds) || 0; }
+function kmSetDia(d) { if (tcg) tcg.diamonds = d; if (home) home.me.diamonds = d; showDia(d); }
+function kmBetBar(val, id) { // Einsatz wählen: Chips von 100 bis 1 Mio., dazu −/+ und „Max“
+  return `<div class="km-bet"><div class="km-betrow"><button class="km-pm" data-kmb="${id}:-">−</button><div class="km-betval"><small>Einsatz</small><b id="${id}Val">${fmt(val)}</b></div><button class="km-pm" data-kmb="${id}:+">+</button></div>
+    <div class="km-chips">${KM_CHIPS.map((c) => `<button class="km-chip ${val === c ? 'on' : ''}" data-kmb="${id}:${c}">${chipTxt(c)}</button>`).join('')}<button class="km-chip max" data-kmb="${id}:max">Max</button></div></div>`;
+}
+function kmBetAct(spec) {
+  const [id, v] = spec.split(':'); const cur = id === 'rk' ? rkBet : kmBet, max = Math.min(1000000, kmDia());
+  let n = cur;
+  if (v === '+') n = KM_CHIPS.find((c) => c > cur) || 1000000; else if (v === '-') n = [...KM_CHIPS].reverse().find((c) => c < cur) || 100; else if (v === 'max') n = Math.max(100, max); else n = Number(v);
+  n = Math.max(50, Math.min(1000000, n)); if (id === 'rk') rkBet = n; else kmBet = n;
+  const el = document.getElementById(id + 'Val'); if (el) el.textContent = fmt(n);
+  document.querySelectorAll(`[data-kmb^="${id}:"]`).forEach((b) => b.classList.toggle('on', b.dataset.kmb === `${id}:${n}`));
+}
+function renderKirmesHub(box) {
+  const tb = (k) => (home && home.tabBadges && home.tabBadges[k]) || '';
+  box.innerHTML = `<div class="km-hubhead"><img src="${kmImg('carnival')}" alt=""><span><b>Kirmes</b><small>Rummel-Spaß mit Diamanten</small></span></div>` + u2Tiles([
+    { key: 'lukas', name: 'Hau den Lukas', img: kmImg('i_lukas'), sub: 'Bis 8× an der Glocke' },
+    { key: 'race', name: 'Pferderennen', img: kmImg('i_race'), sub: '6 Pferde, bis 28×' },
+    { key: 'claw', name: 'Greifautomat', img: kmImg('i_claw'), sub: 'Bis 15× oder Booster' },
+    { key: 'pusher', name: 'Münzschieber', img: kmImg('i_pusher'), sub: kmInfo ? 'Jackpot ' + fmt(kmInfo.pot) : 'Mit Jackpot für alle' },
+  ].map((it) => ({ ...it, lock: isLocked(it.key), badge: tb(it.key), attr: `data-cg="${it.key}"` })));
+  if (!kmInfo) kmLoad().then(() => { if (cgame === 'kirmesHub') renderCards(); });
+}
+function renderKirmesGame(box, g) {
+  if (!kmInfo) { box.innerHTML = '<p class="sub">Lädt …</p>'; kmLoad().then(() => { if (cgame === g) renderCards(); }); return; }
+  const stage = {
+    lukas: () => `<div class="km-lukas"><div class="km-tower">${kmInfo.lukas.slice().reverse().filter((t) => t.m).map((t) => `<span class="km-mark ${t.m >= 8 ? 'bell' : ''}" style="bottom:${t.from}%"><i>${t.m >= 8 ? '🔔' : t.m + '×'}</i></span>`).join('')}<div class="km-puck" id="kmPuck"></div><div class="km-bell" id="kmBell">🔔</div></div>
+      <div class="km-meter"><div class="km-needle" id="kmNeedle"></div></div><div class="km-hammer" id="kmHammer">🔨</div></div>`,
+    race: () => `<div class="km-race">${kmInfo.horses.map((h, i) => `<button class="km-lane ${kmHorse === i ? 'pick' : ''}" data-kmhorse="${i}" style="--hc:${h.color}"><span class="km-no">${i + 1}</span><span class="km-track"><img class="km-horse" id="kmH${i}" src="${kmImg('horse')}" alt=""></span><span class="km-odds"><b>${esc(h.name)}</b>${String(h.m).replace('.', ',')}×</span></button>`).join('')}<div class="km-finish"></div></div>`,
+    claw: () => `<div class="km-cab claw"><img class="km-cabimg" src="${kmImg('claw_cab')}" alt=""><div class="km-glass" id="kmGlass"><div class="km-rail"></div><div class="km-clawbox" id="kmClaw"><span class="km-cable" id="kmCable"></span><img src="${kmImg('claw')}" alt=""><span class="km-prize" id="kmPrize"></span></div>
+      <div class="km-pile">${['💎', '💰', '🎁', '💎', '💰', '👑', '💎', '🎁', '💰', '💎', '📦', '💎'].map((e, i) => `<span style="--i:${i}">${e}</span>`).join('')}</div></div></div>`,
+    pusher: () => `<div class="km-cab pusher"><img class="km-cabimg" src="${kmImg('pusher_cab')}" alt=""><div class="km-pot" id="kmPot">Jackpot für alle <b>${fmt(kmInfo.pot)}</b> 💎</div><div class="km-field" id="kmField"><div class="km-shelf" id="kmShelf"></div>${Array.from({ length: 22 }, (_, i) => `<i class="km-coin" style="--x:${(i * 37) % 88 + 4}%;--y:${40 + ((i * 17) % 44)}%"></i>`).join('')}</div></div>`,
+  }[g]();
+  const act = { lukas: '🔨 Hau drauf!', race: '🏁 Rennen starten', claw: '🕹️ Greifen!', pusher: '🪙 Münze einwerfen' }[g];
+  box.innerHTML = `<div class="km-game km-${g}" style="--bg:url(${kmImg('carnival')})"><div class="km-stagewrap">${stage}</div>
+    <div class="km-msg" id="kmMsg">${g === 'race' ? 'Tipp auf ein Pferd, dann Rennen starten.' : '&nbsp;'}</div>
+    ${kmBetBar(kmBet, 'km')}<button class="km-go" id="kmGo" data-kmgo="${g}">${act}</button></div>`;
+}
+const kmSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function kmPlay(g) {
+  if (kmBusy) return; if (kmBet > kmDia()) return toast('So viele Diamanten hast du nicht.');
+  if (g === 'race' && !(kmHorse >= 0)) return toast('Wähl zuerst ein Pferd.');
+  kmBusy = true; const go = $('#kmGo'); if (go) go.disabled = true; const msg = $('#kmMsg');
+  try {
+    kmSetDia(kmDia() - kmBet);
+    const r = await api('/api/casino/kirmes/' + g, { bet: kmBet, horse: kmHorse });
+    if (g === 'lukas') {
+      const hm = $('#kmHammer'); if (hm) { hm.classList.remove('hit'); void hm.offsetWidth; hm.classList.add('hit'); } sfx('dart'); await kmSleep(380);
+      const pk = $('#kmPuck'); if (pk) { pk.style.transition = 'none'; pk.style.bottom = '2%'; void pk.offsetWidth; pk.style.transition = 'bottom .9s cubic-bezier(.15,.8,.3,1)'; pk.style.bottom = Math.min(95, r.height) + '%'; }
+      await kmSleep(950); if (r.height >= 100) { const b = $('#kmBell'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); } sfx('prestige'); }
+      await kmSleep(250); if (pk) { pk.style.transition = 'bottom .7s ease-in'; pk.style.bottom = '2%'; }
+    } else if (g === 'race') {
+      const ids = kmInfo.horses.map((_, i) => $('#kmH' + i)); msg.textContent = '🏁 Und los geht’s!'; sfx('tick');
+      const stepPos = [0.25, 0.5, 0.75].map((f, k) => r.legs[k].map((x) => Math.min(0.92, f * x))); const finish = r.order.map((h, rank) => [h, 1 - rank * 0.05]);
+      for (const pos of stepPos) { ids.forEach((el, i) => { if (el) { el.style.transition = 'left 1.2s linear'; el.style.left = `calc(${(pos[i] * 100).toFixed(1)}% - 20px)`; } }); await kmSleep(1200); }
+      finish.forEach(([h, p]) => { const el = ids[h]; if (el) { el.style.transition = 'left 1.1s ease-out'; el.style.left = `calc(${(p * 100).toFixed(1)}% - 30px)`; } }); await kmSleep(1150);
+      document.querySelectorAll('.km-lane').forEach((l, i) => l.classList.toggle('win', i === r.winner));
+    } else if (g === 'claw') {
+      const cl = $('#kmClaw'), cab = $('#kmCable'), pz = $('#kmPrize'); const x = 12 + Math.random() * 60;
+      if (cl) { cl.style.transition = 'left .8s ease-in-out'; cl.style.left = x + '%'; } await kmSleep(850);
+      if (cab) { cab.style.transition = 'height .9s ease-in'; cab.style.height = '62%'; } sfx('tick'); await kmSleep(950);
+      if (pz) pz.textContent = r.kind === 'none' ? (r.drop ? '💰' : '') : r.pack ? '📦' : r.mult >= 15 ? '👑' : r.mult >= 5 ? '🎁' : r.mult >= 2 ? '💰' : '💎';
+      if (cab) { cab.style.transition = 'height 1s ease-out'; cab.style.height = '6%'; } await kmSleep(r.drop ? 500 : 1000);
+      if (r.drop && pz) { pz.classList.add('fall'); await kmSleep(600); }
+      if (r.kind !== 'none' && cl) { cl.style.transition = 'left .9s ease-in-out'; cl.style.left = '4%'; await kmSleep(950); if (pz) pz.classList.add('fall'); await kmSleep(450); }
+      if (pz) { pz.classList.remove('fall'); pz.textContent = ''; } if (cl) { cl.style.transition = 'left .6s'; cl.style.left = '40%'; }
+    } else if (g === 'pusher') {
+      const f = $('#kmField'); const c = document.createElement('i'); c.className = 'km-coin drop'; c.style.setProperty('--x', (20 + Math.random() * 60) + '%'); f.appendChild(c); sfx('tick'); await kmSleep(650);
+      const sh = $('#kmShelf'); if (sh) { sh.classList.remove('push'); void sh.offsetWidth; sh.classList.add('push'); } await kmSleep(700);
+      for (let k = 0; k < r.coins; k++) { const e = document.createElement('i'); e.className = 'km-coin fallout'; e.style.setProperty('--x', (6 + Math.random() * 86) + '%'); e.style.animationDelay = (k * 45) + 'ms'; f.appendChild(e); setTimeout(() => e.remove(), 1400 + k * 45); }
+      if (r.coins) sfx('jccount'); await kmSleep(Math.min(1400, 500 + r.coins * 45)); c.remove();
+      const pot = $('#kmPot'); if (pot) pot.innerHTML = `Jackpot für alle <b>${fmt(r.pot)}</b> 💎`; if (kmInfo) kmInfo.pot = r.pot;
+    }
+    kmSetDia(r.diamonds);
+    const label = g === 'race' ? (r.won ? `🏆 ${kmInfo.horses[r.winner].name} gewinnt!` : `${kmInfo.horses[r.winner].name} gewinnt. Diesmal nicht.`) : r.jackpot ? `🎰 JACKPOT! +${fmt(r.jackpot)} 💎` : r.label;
+    if (msg) msg.innerHTML = r.won ? `<b class="km-win">${esc(label)} +${fmt(r.won)} 💎</b>` : r.pack ? `<b class="km-win">${esc(label)}</b>` : esc(label);
+    if (r.won >= kmBet * 3 || r.pack || r.jackpot) sfx('prestige'); else if (r.won) sfx('win'); else sfx('wrong');
+    if (r.pack) loadTcg();
+  } catch (e) { toast(e.message); try { const t = await api('/api/tcg?dv=' + (typeof DEF_V !== 'undefined' ? DEF_V : '')); if (t && t.diamonds !== undefined) kmSetDia(t.diamonds); } catch (e2) {} }
+  kmBusy = false; if (go) go.disabled = false;
+}
+// ---------- Rakete ----------
+function renderRocket(box) {
+  if (!rk) { socket.emit('rk:join'); box.innerHTML = '<p class="sub">Verbinde mit der Startrampe …</p>'; return; }
+  box.innerHTML = `<div class="rk"><div class="rk-sky" id="rkSky" style="--bg:url(${kmImg('space')})"><svg class="rk-graph" viewBox="0 0 300 180" preserveAspectRatio="none"><path id="rkPath" d="M0 180"/></svg><img class="rk-ship" id="rkShip" src="${kmImg('rocket')}" alt=""><div class="rk-mult" id="rkMult">1,00×</div><div class="rk-sub" id="rkSub"></div></div>
+    <div class="rk-hist" id="rkHist"></div>
+    <div class="rk-players" id="rkPlayers"></div>
+    <div id="rkCtl"></div></div>`;
+  rkDraw(); rkLoop();
+}
+function rkNow() { return Date.now() + rkOff; }
+function rkMultNow() { return rk && rk.phase === 'fly' ? Math.floor(Math.exp(0.075 * (rkNow() - rk.flyAt) / 1000) * 100) / 100 : 1; }
+function rkDraw() {
+  if (!rk || !$('#rkSky')) return;
+  const me = home && home.me && rk.bets.find((b) => b.id === home.me.id);
+  $('#rkHist').innerHTML = rk.history.map((h) => `<span class="${h >= 10 ? 'big' : h >= 2 ? 'mid' : 'low'}">${h.toFixed(2).replace('.', ',')}×</span>`).join('');
+  $('#rkPlayers').innerHTML = `<div class="rk-ph"><b>Spieler dieser Runde</b><small>${rk.bets.length} / ${rk.max}</small></div>` + (rk.bets.length ? rk.bets.map((b) => `<div class="rk-p ${b.cashed ? 'out' : rk.phase === 'crash' ? 'lost' : ''}"><span class="grow">${esc(b.name)}</span><span>${fmt(b.bet)} 💎</span><b>${b.cashed ? '✅ ' + b.cashed.toFixed(2).replace('.', ',') + '× · +' + fmt(Math.round(b.bet * b.cashed)) : rk.phase === 'crash' ? '💥' : b.auto ? 'Auto ' + b.auto.toFixed(2).replace('.', ',') + '×' : '🚀'}</b></div>`).join('') : '<p class="sub" style="margin:4px 0">Noch niemand dabei. Setz als Erster!</p>');
+  const ctl = $('#rkCtl');
+  if (rk.phase === 'wait' && !me) ctl.innerHTML = `${kmBetBar(rkBet, 'rk')}<div class="rk-auto"><label>Auto-Ausstieg bei</label><input class="field" id="rkAuto" inputmode="decimal" placeholder="z. B. 2,00" value="${esc(rkAuto)}"><span>×</span></div><button class="km-go" id="rkBetBtn">🚀 Einsteigen</button>`;
+  else if (rk.phase === 'fly' && me && !me.cashed) ctl.innerHTML = `<button class="km-go rk-cash" id="rkCashBtn">💰 Aussteigen <span id="rkCashVal"></span></button>`;
+  else ctl.innerHTML = `<p class="rk-wait">${me ? (me.cashed ? `✅ Ausgestiegen bei ${me.cashed.toFixed(2).replace('.', ',')}×` : rk.phase === 'crash' ? '💥 Leider abgestürzt' : '🚀 Du bist dabei. Viel Glück!') : rk.phase === 'fly' ? '🚀 Die Rakete fliegt. Nächste Runde bist du dabei!' : 'Runde vorbei, gleich geht’s weiter …'}</p>`;
+  const bb = $('#rkBetBtn'); if (bb) bb.onclick = () => { rkAuto = ($('#rkAuto') || {}).value || ''; const a = parseFloat(String(rkAuto).replace(',', '.')); bb.disabled = true;
+    socket.emit('rk:bet', { bet: rkBet, auto: a >= 1.01 ? a : null }, (r) => { bb.disabled = false; if (r && r.error) return toast(r.error); if (r && r.diamonds !== undefined) kmSetDia(r.diamonds); sfx('sent'); }); };
+  const cb = $('#rkCashBtn'); if (cb) cb.onclick = () => { cb.disabled = true; socket.emit('rk:cash', {}, (r) => { if (r && r.error) { toast(r.error); return; } if (r && r.won) { kmSetDia(kmDia() + r.won); sfx('win'); } }); };
+}
+function rkLoop() {
+  cancelAnimationFrame(rkRaf);
+  const step = () => {
+    const sky = $('#rkSky'); if (!sky || !rk) return;
+    const mult = $('#rkMult'), sub = $('#rkSub'), ship = $('#rkShip'), path = $('#rkPath');
+    if (rk.phase === 'wait') { const s = Math.max(0, Math.ceil((rk.startAt - rkNow()) / 1000)); mult.textContent = 'Start in ' + s + ' s'; mult.className = 'rk-mult wait'; sub.textContent = 'Einsteigen und Einsatz wählen'; ship.style.transform = 'translate(0,0) rotate(0deg)'; ship.className = 'rk-ship'; path.setAttribute('d', 'M0 180'); }
+    else if (rk.phase === 'fly') {
+      const m = rkMultNow(), t = (rkNow() - rk.flyAt) / 1000; mult.textContent = m.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult fly ' + (m >= 10 ? 'big' : m >= 2 ? 'mid' : ''); sub.textContent = '';
+      const W = 300, H = 180, span = Math.max(10, t * 1.15), top = Math.max(2, m * 1.2), pts = [];
+      for (let k = 0; k <= 40; k++) { const tt = t * k / 40, mm = Math.exp(0.075 * tt); pts.push(`${(tt / span * W).toFixed(1)} ${(H - (mm - 1) / (top - 1) * (H - 16)).toFixed(1)}`); }
+      path.setAttribute('d', 'M' + pts.join(' L')); const last = pts[pts.length - 1].split(' ').map(Number);
+      ship.style.transform = `translate(${(last[0] / W * (sky.clientWidth - 60)).toFixed(0)}px, ${(-(H - last[1]) / H * (sky.clientHeight - 60)).toFixed(0)}px) rotate(-28deg)`; ship.className = 'rk-ship go';
+      const cv = $('#rkCashVal'); const me = home && rk.bets.find((b) => b.id === home.me.id); if (cv && me) cv.textContent = '+' + fmt(Math.round(me.bet * m)) + ' 💎';
+    } else if (rk.phase === 'crash') { mult.textContent = '💥 ' + rk.crash.toFixed(2).replace('.', ',') + '×'; mult.className = 'rk-mult crash'; sub.textContent = 'Abgestürzt!'; ship.className = 'rk-ship boom'; }
+    rkRaf = requestAnimationFrame(step);
+  };
+  rkRaf = requestAnimationFrame(step);
+}
+function rkSocketInit() {
+  if (!socket || socket.__rk) return; socket.__rk = true;
+  socket.on('rk:state', (s) => { const prev = rk && rk.phase; rk = s; rkOff = s.now - Date.now(); if (page === 'casino' && cgame === 'rocket') { if (!$('#rkSky')) renderCards(); else rkDraw(); if (prev !== 'crash' && s.phase === 'crash') sfx('wrong'); } });
+  socket.on('rk:cash', (c) => { if (!rk) return; const b = rk.bets.find((x) => x.id === c.id); if (b) b.cashed = c.m; if (page === 'casino' && cgame === 'rocket') rkDraw(); });
+  socket.on('kirmes:pot', (p) => { if (kmInfo) kmInfo.pot = p.pot; const el = $('#kmPot'); if (el) el.innerHTML = `Jackpot für alle <b>${fmt(p.pot)}</b> 💎`; });
+  socket.on('kirmes:jackpot', (j) => toast(`🎰 ${j.name} hat den Münzschieber-Jackpot geknackt: ${fmt(j.amount)} 💎!`));
+  socket.on('kirmes:live', () => { newsPosts = null; try { loadNews(); } catch (e) {} loadHome().then(() => { viewKey = ''; render(); }).catch(() => {}); }); // Update-Beitrag erscheint mit der Freigabe
+}
+
 function renderCasino() { try { if (document.body.classList.contains('ui2')) setTimeout(ui2Chrome, 0); } catch (e) {}
   { const b = $('#cgame'), k = cgame + '|' + (tc.seat || tc.watch || '') + '|' + (typeof bjT !== 'undefined' && bjT ? 't' : ''); if (b && b.__key !== k) { b.__key = k; b.style.minHeight = ''; if (window.__cgH) window.__cgH[k] = 0; } } // anderes Spiel: Höhe neu messen
   setTimeout(lockCasinoHeight, 0);
@@ -3025,6 +3263,11 @@ function renderCasino() { try { if (document.body.classList.contains('ui2')) set
   if (!vipD) loadVip();
   if (cgame === 'slotsHub') return renderSlotsHub(box);
   if (cgame === 'tablesHub' || cgame === 'moreHub') return renderCasHub(box, cgame);
+  if ((cgame === 'kirmesHub' || cgame === 'rocket' || KIRMES.includes(cgame)) && !(home && home.kirmes)) cgame = 'slotsHub'; // vor der Freigabe nur für den Admin
+  if (cgame === 'slotsHub') return renderSlotsHub(box);
+  if (cgame === 'kirmesHub') return renderKirmesHub(box);
+  if (KIRMES.includes(cgame)) return renderKirmesGame(box, cgame);
+  if (cgame === 'rocket') return renderRocket(box);
   if (cgame === 'tables') return renderTables(box);
   if (cgame === 'rewards') return renderRewards(box);
   if (cgame === 'vip') return renderVip(box);
@@ -3390,24 +3633,24 @@ function renderCards() {
     const dia = (tcg && tcg.diamonds) || 0;
     const tabBtn = (k, label, extra = '') => `<button data-cg="${k}" class="${cgame === k ? 'on' : ''}${extra}">${label}</button>`;
     const wheelBadge = (vipD ? vipD.spinsLeft : (home && home.me.wheelLeft)) ? `<span class="tab-badge">${vipD ? vipD.spinsLeft : home.me.wheelLeft}</span>` : '';
-    const games = [['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
+    const games = [['lukas', '🔨 Hau den Lukas'], ['race', '🏇 Pferderennen'], ['claw', '🕹️ Greifautomat'], ['pusher', '🪙 Münzschieber'], ['rocket', '🚀 Rakete'], ['setup', '⚙️ Casino-Einstellungen'], ['rewards', 'Belohnungen 🏆'], ['wheel', 'Glücksrad 🎡' + wheelBadge], ['triple', '👑 Triple Crown', ' tc-tab'], ['jester', '🃏 Narrenkappe', ' tc-tab'], ['anubis', '👁 Auge des Anubis', ' tc-tab'], ['crypt', '📖 Buch der Gruft', ' tc-tab'], ['roulette', 'Roulette'], ['bj', 'Blackjack'], ['tables', 'Blackjack-Tische 👥'], ['poker', 'Poker ♠️'], ['crank', 'Rangliste 📊']];
     // Übersichtliche Navigation: oben drei Bereiche, darunter eine Zeile mit den Spielen des Bereichs
-    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], more: ['wheel', 'rewards', 'crank', 'setup'] };
+    const CAT = { slots: ['triple', 'jester', 'anubis', 'crypt'], tables: ['roulette', 'bj', 'tables', 'poker'], ...(home && home.kirmes ? { kirmes: ['lukas', 'race', 'claw', 'pusher'], rocket: ['rocket'] } : {}), more: ['wheel', 'rewards', 'crank', 'setup'] };
     const ok = (k) => !isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk));
-    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : cgame === 'tablesHub' ? 'tables' : cgame === 'moreHub' ? 'more' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
+    const keyOf = (k) => (k === 'vip' ? 'wheel' : k), curCat = cgame === 'slotsHub' ? 'slots' : cgame === 'tablesHub' ? 'tables' : cgame === 'moreHub' ? 'more' : cgame === 'kirmesHub' ? 'kirmes' : Object.keys(CAT).find((c) => CAT[c].includes(keyOf(cgame))) || 'slots';
     const lab = Object.fromEntries(games.map(([k, l, e]) => [k, [l, e]]));
     const badge = (k) => (home && home.tabBadges && home.tabBadges[k] ? `<span class="tab-new">${esc(home.tabBadges[k])}</span>` : '');
     const catDot = (c) => CAT[c].some((k) => ok(k) && ((home && home.tabBadges && home.tabBadges[k]) || (k === 'wheel' && wheelBadge))) ? '<i class="cseg-dot"></i>' : '';
-    const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${l}${catDot(c)}</button>`).join('');
-    const tabs = `<div class="cseg">${seg}</div><div class="cnavrow ${curCat === 'slots' ? 'slots-row' : ''}">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
+    const seg = [['slots', '🎰 Automaten'], ['tables', '🃏 Tische'], ...(CAT.kirmes ? [['kirmes', '🎪 Kirmes'], ['rocket', '🚀 Rakete']] : []), ['more', '⭐ Mehr']].map(([c, l]) => `<button data-ccat="${c}" class="${c === curCat ? 'on' : ''}">${CAT.kirmes ? l.replace('Automaten', 'Automat').replace(/^(\S+)\s(.+)$/, '<i class="cse">$1</i><span>$2</span>') : l}${catDot(c)}</button>`).join('');
+    const tabs = `<div class="cseg ${CAT.kirmes ? 'five' : ''}">${seg}</div><div class="cnavrow ${curCat === 'slots' ? 'slots-row' : ''}">${CAT[curCat].filter((k) => ok(k) || (isLocked(k) && (k !== 'poker' || (home && home.me && home.me.pokerOk)))).map((k) => { const [l, e] = lab[k] || [k, '']; if (isLocked(k)) return `<button data-cglock="${k}" class="locked${e || ''}">${l}<span class="tab-lock">🔒 gesperrt</span></button>`; return tabBtn(k === 'wheel' ? 'vip' : k, l.replace('⚙️ Casino-Einstellungen', '⚙️ Einstellungen') + badge(k), e || ''); }).join('')}</div>`;
     window.__ccat = CAT; window.__cok = ok;
     setTimeout(() => { const o = document.querySelector('.cnavrow .on'); if (o) { const pr = o.parentElement; pr.scrollLeft = Math.max(0, o.offsetLeft - pr.clientWidth / 2 + o.clientWidth / 2); } }, 0); // gewähltes Spiel sichtbar
     box.innerHTML = `${ui2On() ? '<div class="u2-crow"><button class="u2-home" data-u2="tab:quiz" aria-label="Zur Startseite"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>' : ''}<div class="tabs2 cnav" style="margin-bottom:10px">${tabs}</div>${ui2On() ? '</div>' : ''}
       <div id="vipHead"></div>
-      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
-      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
+      <div class="row" style="margin-bottom:10px;${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'watch', 'triple', 'jester', 'anubis', 'crypt', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame) ? 'display:none' : ''}"><b class="grow">Einsatz</b><span class="dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt(dia)}</b></span></div>
+      <div class="betrow" style="${['tables', 'roulette', 'rewards', 'vip', 'crank', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'watch', 'setup', 'slotsHub', 'tablesHub', 'moreHub', 'kirmesHub', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame) ? 'display:none' : ''}"><div class="betin"><button class="chipbtn step" data-cbstep="-1" aria-label="weniger">−${chipTxt(cbStep(cbet))}</button><input class="field grow" id="cbAmount" inputmode="numeric" value="${cbet}" aria-label="Einsatz"><button class="chipbtn step" data-cbstep="1" aria-label="mehr">+${chipTxt(cbStep(cbet))}</button></div><div class="betchips">
         ${[100, 1000, 10000, 50000, 100000, 500000, 1000000].map((v) => `<button class="chipbtn ${(cbetPick || String(cbet)) === String(v) ? 'picked' : ''}" data-cbet="${v}">${chipTxt(v)}</button>`).join('')}<button class="chipbtn allin ${cbetPick === 'all' ? 'picked' : ''}" data-cbet="all">All in</button></div></div>
-      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center">${['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat && !tc.watch ? '<button class="btn small ghost u2-back" data-u2="chub:slots">← Automaten</button>' : ['roulette', 'bj', 'tables', 'poker'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:tables">← Tische</button>' : ['vip', 'rewards', 'crank', 'setup'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:more">← Mehr</button>' : ''}<button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
+      ${ui2On() ? `<div class="row u2-grow" style="gap:8px;align-items:center">${['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat && !tc.watch ? '<button class="btn small ghost u2-back" data-u2="chub:slots">← Automaten</button>' : ['lukas', 'race', 'claw', 'pusher'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:kirmes">← Kirmes</button>' : ['roulette', 'bj', 'tables', 'poker'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:tables">← Tische</button>' : ['vip', 'rewards', 'crank', 'setup'].includes(cgame) ? '<button class="btn small ghost u2-back" data-u2="chub:more">← Mehr</button>' : ''}<button class="chipbtn guide-btn" id="guideBtn" hidden></button><span class="grow"></span><span class="dia u2-cdia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b class="diaNum">${fmt((home && home.me.diamonds) || 0)}</b></span></div>` : '<button class="chipbtn guide-btn" id="guideBtn" hidden></button>'}
       <div id="cgame"></div>
       `;
     renderCasino();
@@ -3634,6 +3877,11 @@ async function openPack(pid) {
 
 // ---------- Spielanleitungen fürs Casino ----------
 const GUIDES = {
+  lukas: ['🔨 Hau den Lukas', [['Ziel', 'Hau mit dem Hammer auf den Amboss. Je höher die Scheibe fliegt, desto mehr gewinnst du: halbe Kraft 0,5×, Einsatz zurück 1×, stark 1,5×, bärenstark 3×, und an der Glocke 8×.'], ['Fair', 'Wie hoch die Scheibe fliegt, würfelt der Server. Die Auszahlungsquote liegt bei 96 %.']]],
+  race: ['🏇 Pferderennen', [['Ziel', 'Tipp auf eines der 6 Pferde und starte das Rennen. Gewinnt dein Pferd, bekommst du die angezeigte Quote: vom Favoriten Blitz mit 2,2× bis zum Außenseiter Glückspilz mit 28×.'], ['Fair', 'Je höher die Quote, desto seltener gewinnt das Pferd. Jede Wahl hat dieselbe Auszahlungsquote von rund 95 %.']]],
+  claw: ['🕹️ Greifautomat', [['Ziel', 'Tipp auf Greifen, der Greifer fährt über die Preise und greift zu. Im Kasten: kleine und große Säckchen (0,5× bis 2×), Truhen (5×), die goldene Truhe (15×) und seltene Premium-Booster.'], ['Fair', 'Manchmal rutscht der Preis wieder heraus. Was du greifst, würfelt der Server, Auszahlungsquote rund 95 % plus Booster-Chance.']]],
+  pusher: ['🪙 Münzschieber', [['Ziel', 'Wirf eine Münze ein, der Schieber drückt Münzen über die Kante. Mal fällt nichts, mal ein Münzregen bis 10×.'], ['Jackpot', '3 % jedes Einsatzes wandern in einen gemeinsamen Jackpot für alle Spieler. Bei jedem Einwurf kann er fallen, dann bekommt ihn der Glückliche ganz.']]],
+  rocket: ['🚀 Rakete', [['Ziel', 'Setz vor dem Start. Die Rakete steigt, der Multiplikator wächst. Steig rechtzeitig aus und kassiere Einsatz × Multiplikator. Stürzt sie vorher ab, ist der Einsatz weg.'], ['Mehrspieler', 'Bis zu 8 Spieler fliegen in derselben Runde mit. Du siehst, wer wann aussteigt.'], ['Auto-Ausstieg', 'Trag einen Multiplikator ein, z. B. 2,00, dann steigst du dort automatisch aus.'], ['Fair', 'Der Absturzpunkt wird beim Start gewürfelt, Auszahlungsquote 96 %, egal wann du aussteigst.']]],
   triple: ['👑 Triple Crown', [
     ['Ziel', 'Drei gleiche Symbole auf einer der 5 Linien: oben, Mitte, unten und die beiden Diagonalen. Gewinne auf mehreren Linien werden zusammengezählt.'],
     ['Bedienung', 'Einsatz wählt den Betrag, START dreht die Walzen. Auto dreht von selbst weiter und nimmt Gewinne sofort mit, nochmal Auto stoppt. Turbo macht alles schneller.'],
@@ -5725,6 +5973,7 @@ async function loadHome() { try { home = await api('/api/home'); applyTheme(home
 function connect() {
   if (socket) socket.disconnect();
   socket = io({ auth: { token } });
+  rkSocketInit(); // Rakete, Münzschieber-Jackpot, Kirmes-Freigabe
   socket.on('state', (s) => {
     const was = S; S = s;
     if (s) offset = s.now - Date.now();
@@ -5879,7 +6128,7 @@ function u2Playing() { try { return !!((cgame === 'poker' && pkState && pkState.
 function u2Seated() { try { return !!(tc && tc.seat && ['triple', 'jester', 'anubis', 'crypt'].includes(cgame)); } catch (e) { return false; } }
 function ui2Chrome() { // Leiste unten und Seiten-Kennung am <body>; ohne Match, ohne Wartung
   const on = ui2On(), playing = on && page === 'casino' && u2Playing(), bar = on && !S && !(home && home.maintenance) && !playing;
-  document.body.classList.toggle('u2-inplay', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt'].includes(cgame)));
+  document.body.classList.toggle('u2-inplay', !!playing); document.body.classList.toggle('u2-seat', !!(on && page === 'casino' && u2Seated())); document.body.classList.toggle('u2-game', !!(on && page === 'casino' && ['roulette', 'bj', 'tables', 'poker', 'triple', 'jester', 'anubis', 'crypt', 'lukas', 'race', 'claw', 'pusher', 'rocket'].includes(cgame)));
   document.body.classList.toggle('ui2', on); document.body.dataset.pg = S ? 'match' : page; document.body.dataset.ct = page === 'cards' ? ctab : ''; document.body.dataset.cg = page === 'casino' ? cgame : '';
   if (page === 'cards' && ctab !== 'shop') window.__u2ctab = ctab; // Karten-Reiter merkt sich den letzten Unterbereich
   let nav = document.getElementById('u2nav');
@@ -5901,7 +6150,7 @@ function u2Act(a) {
     if (v === 'quiz') return go(() => { page = 'home'; render(); });
     if (v === 'shop') return go(() => { page = 'cards'; ctab = 'shop'; shopCat = 'hub'; render(); loadTcg(); });
     if (v === 'cards') return go(() => { page = 'cards'; ctab = 'khub'; colSet = null; render(); loadTcg(); });
-    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; else if (['roulette', 'bj'].includes(cgame) || (cgame === 'tables' && !bjT) || (cgame === 'poker' && !(pkState && pkState.me >= 0))) cgame = 'tablesHub'; else if (['vip', 'rewards', 'crank', 'setup'].includes(cgame)) cgame = 'moreHub'; render(); loadTcg(); loadVip(); }); return; }
+    if (v === 'casino') { if (page !== 'casino') go(() => { page = 'casino'; ctab = 'casino'; vipD = null; if (['triple', 'jester', 'anubis', 'crypt'].includes(cgame) && !tc.seat) cgame = 'slotsHub'; else if (['roulette', 'bj'].includes(cgame) || (cgame === 'tables' && !bjT) || (cgame === 'poker' && !(pkState && pkState.me >= 0))) cgame = 'tablesHub'; else if (['vip', 'rewards', 'crank', 'setup'].includes(cgame)) cgame = 'moreHub'; else if (KIRMES.includes(cgame) && !kmBusy) cgame = 'kirmesHub'; render(); loadTcg(); loadVip(); }); return; }
     if (v === 'social') return go(() => { page = 'social'; render(); loadFriends(); });
   }
   if (k === 'go') {
@@ -5921,8 +6170,9 @@ function u2Act(a) {
     return;
   }
   if (k === 'daily') return dailyDialog();
-  if (k === 'chub') { const h = v + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
+  if (k === 'chub') { const h = v === 'rocket' ? 'rocket' : v + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'offer') return u2OfferConfirm();
+  if (k === 'kmadm') { if (v === 'on' && !confirm('Kirmes und Rakete für ALLE Spieler freigeben?')) return; api('/api/admin/kirmes', { live: v === 'on' }).then((r) => { home.kirmesLive = r.live; toast(r.live ? '🎉 Kirmes & Rakete sind für alle offen' : 'Kirmes & Rakete nur noch für dich'); viewKey = ''; render(); }).catch((e) => toast(e.message)); return; }
   if (k === 'offadm') { api('/api/admin/offer', { on: v === 'on' }).then((r) => { drawOfferAdm(r); toast(r.on ? 'Angebot aktiviert' : 'Angebot deaktiviert'); }).catch((e) => toast(e.message)); return; }
   if (k === 'hub') { tcStandQuiet('slotsHub'); cgame = 'slotsHub'; renderCards(); reportPresence(); window.scrollTo(0, 0); return; }
   if (k === 'isle') return toast('🏝️ Deine Insel wächst mit deinem Prestige. Die Welten sind noch in Arbeit, bald gibt es hier mehr zu entdecken!');
@@ -6060,6 +6310,9 @@ function build() {
     <div id="adminBox"></div>
     <div id="modBox"></div>
     <details class="panel lg-box" id="banBox2"><summary><b>📢 Ankündigungsbanner</b><small> · Text auf der Startseite, optional mit Belohnung</small></summary><div id="banAdm" style="margin-top:10px"></div></details>
+    <div class="panel lg-box" id="kmAdmBox"><div class="row" style="gap:8px"><b class="grow">🎪 Kirmes & 🚀 Rakete: <span style="color:${home && home.kirmesLive ? '#7CF0A8' : '#FFD23F'}">${home && home.kirmesLive ? 'für ALLE freigegeben' : 'nur für dich sichtbar'}</span></b></div>
+      <small class="sub">Neue Casino-Bereiche: Hau den Lukas, Pferderennen, Greifautomat, Münzschieber und die Mehrspieler-Rakete. Mit der Freigabe erscheint auch der Update-Beitrag.</small>
+      <div class="row" style="gap:6px;margin-top:6px"><button class="btn small ${home && home.kirmesLive ? 'ghost' : ''}" data-u2="kmadm:on">🎉 Für alle freigeben</button><button class="btn small ${home && home.kirmesLive ? '' : 'ghost'}" data-u2="kmadm:off">Nur für mich</button></div></div>
     <details class="panel lg-box" id="offerBox"><summary><b>🎁 Angebot im Shop</b><small> · Sammler-Truhe: Käufer, deaktivieren</small></summary><div id="offerAdm"><p class="sub">Lädt …</p></div></details>
     <details class="panel lg-box" id="codeBox"><summary><b>🎟 Gutscheincodes</b><small> · Diamanten, Booster, Displays, Tränke</small></summary><div id="codeAdm" style="margin-top:10px"></div></details>
     <details class="panel lg-box" id="shopBox"><summary><b>🛒 Shop-Steuerung</b><small> · Preis, Bestand und Ausverkauft je Booster</small></summary><div id="shopRows" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div></details>
@@ -6847,6 +7100,9 @@ document.addEventListener('toggle', (e) => { if (e.target && e.target.id === 'of
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (t && t.dataset.u2) { e.preventDefault(); u2Act(t.dataset.u2); return; } // neues Design
+  if (t && t.dataset.kmb) { kmBetAct(t.dataset.kmb); return; }
+  if (t && t.dataset.kmgo) { kmPlay(t.dataset.kmgo); return; }
+  if (t && t.dataset.kmhorse !== undefined) { if (kmBusy) return; kmHorse = Number(t.dataset.kmhorse); document.querySelectorAll('.km-lane').forEach((l, i) => { l.classList.toggle('pick', i === kmHorse); l.classList.remove('win'); }); const m = $('#kmMsg'); if (m && kmInfo) m.textContent = `Du setzt auf ${kmInfo.horses[kmHorse].name} · Quote ${String(kmInfo.horses[kmHorse].m).replace('.', ',')}×`; return; }
   if (e.target.closest && e.target.closest('[data-hrlock]')) { toast('🎰 Das Highroller-Logo schaltest du auf Stufe 20 im Casino-Strang des Kronen-Passes frei. Danach kannst du es statt deines Prestige-Logos tragen, egal welchen Prestige-Rang du hast.'); return; }
   const zm = e.target.closest && e.target.closest('[data-zoom]'); if (zm) { zoomImg(zm.dataset.zoom, zm.dataset.zoomt || '', zm.dataset.zooms || ''); return; } // Abzeichen groß ansehen
   const pvw = e.target.closest && e.target.closest('[data-packview]'); if (pvw) { packView(pvw.dataset.packview); return; } // Booster in 3D ansehen, auch innerhalb der Shop-Karte
@@ -7001,7 +7257,7 @@ document.addEventListener('click', (e) => {
   else if (t.dataset.qsrc) {
     api('/api/admin/qsource', { source: t.dataset.qsrc }).then((r) => { home.me.qsource = r.source; if (adminD) { adminD.source = r.source; renderAdmin(); } document.querySelectorAll('[data-qsrc]').forEach((b) => b.classList.toggle('on', b.dataset.qsrc === r.source)); toast(r.source === 'pool' ? 'Fragenquelle: Pool' : 'Fragenquelle: Live'); }).catch((er) => toast(er.message));
   }
-  else if (t.dataset.ccat && document.body.classList.contains('ui2')) { const h = t.dataset.ccat + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); }
+  else if (t.dataset.ccat && document.body.classList.contains('ui2')) { const h = t.dataset.ccat === 'rocket' ? 'rocket' : t.dataset.ccat + 'Hub'; tcStandQuiet(h); cgame = h; bj = null; renderCards(); reportPresence(); }
   else if (t.dataset.ccat) { const C = window.__ccat || {}, ok = window.__cok || (() => true), last = (window.__clast || {})[t.dataset.ccat]; const list = (C[t.dataset.ccat] || []).filter(ok); const k = last && list.includes(last) ? last : list[0]; if (k) { tcStandQuiet(k); cgame = k === 'wheel' ? 'vip' : k; bj = null; renderCards(); reportPresence(); if (cgame === 'vip') loadVip(); } }
   else if (t.dataset.cglock) { toast('🔒 Dieses Spiel ist gerade gesperrt. Schau später wieder vorbei!'); }
   else if (t.dataset.promo) { promoGo(t.dataset.promo); }

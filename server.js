@@ -202,7 +202,7 @@ app.get('/api/home', async (req, res) => {
     const mkTimes = { cards: [], packs: [], displays: [], graded: [] };
     for (const r of await sharedGet('market', 30000, () => store.marketList()).catch(() => [])) if (r.seller !== u.id) mkTimes[mkKind(r)].push(new Date(r.created).getTime() || 0);
     for (const k of Object.keys(mkTimes)) mkTimes[k] = mkTimes[k].sort((x, y) => y - x).slice(0, 200);
-    res.json({ ui2Live: !!homeCfg.ui2Live, maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await sharedGet('leader', 30000, () => store.leaderboard())).map(withOnline), ai: ai.enabled(),
+    res.json({ kirmes: kirmesLive || isAdmin(u), kirmesLive, ui2Live: !!homeCfg.ui2Live, maintenance: maint.on && !isAdmin(u) ? { text: maint.text } : null, maintAdmin: isAdmin(u) ? maint : undefined, newsCardOff: !homeCfg.newsCard, promo: homeCfg.promo.on ? { game: homeCfg.promo.game, text: homeCfg.promo.text } : null, homeCfg: isAdmin(u) ? homeCfg : undefined, cryptTest, tabBadges, slotsLive: isAdmin(u) ? slotsLive : undefined, jesterTest, anubisTest, bigWinMin: isAdmin(u) ? BIGWIN_MIN : undefined, quizPay: quizpay.get(), soloWin: solowin.get(), mkTimes, banner: bannerFor(u), potions: potions.get(u.id), openStyle: openStyleV, boost: boost.get(), openTickets: isMod(u) ? await openTicketCount() : 0, gnOpen, theme: siteTheme, themeAnim: siteAnim, locked: [...lockedGames], tagColors: TAG_COLORS, me: { ...publicStats(u), casinoBan: casinoBan(u), frame: u.frame || '', emblem: u.emblem || '', title: u.title || '', titleShown: publicStats(u).title, admin: isAdmin(u), mod: isMod(u), gifts: await store.giftsOpen(u.id).catch(() => []), openTickets: (await store.tickets().catch(() => [])).filter((x) => x.status === 'eingereicht' || x.status === 'in Bearbeitung').map((x) => x.id), grading: GRADING_ON, showcase: String(u.showcase || '').split(',').filter(Boolean), showcaseG: String(u.showcase_g || '').split(',').filter(Boolean).map(Number), pokerOk: true, wheelLeft: vipView(u).spinsLeft, goals: { ...ITEM_GOALS, EK2: ['collect_unique', COLLECT.total], TK2: ['collect_unique', COLLECT.total], FK1: ['collect_unique', COLLECT.total] }, stats: Object.fromEntries(GOAL_KEYS.map((k) => [k, Number(u2[k]) || 0])), hot: hot.view(), qsource: isMod(u) ? ((await store.setting('question_source')) || 'live') : undefined, firstBonus: u.first_game_day !== new Date(Date.now() + 2 * 3600 * 1000).toISOString().slice(0, 10) }, leaderboard: (await sharedGet('leader', 30000, () => store.leaderboard())).map(withOnline), ai: ai.enabled(),
       world: (await sharedGet('world', 30000, () => store.worldRanking())).map(withOnline),
       points: (await sharedGet('points', 30000, () => store.pointsRanking())).map(withOnline),
       seen: String(u.seen_items || '').split(',').filter(Boolean),
@@ -1114,6 +1114,137 @@ app.post('/api/casino/board', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 
+
+// ================= Kirmes & Rakete (erst nach Freigabe im Admin-Menü für alle sichtbar) =================
+const KM = require('./lib/kirmes');
+Object.assign(GAME_NAMES, { lukas: 'Hau den Lukas', race: 'Pferderennen', claw: 'Greifautomat', pusher: 'Münzschieber', rocket: 'Rakete' });
+let kirmesLive = false, kirmesPot = KM.JACKPOT_SEED;
+store.setting('kirmes_live').then((v) => { kirmesLive = v === '1'; }).catch(() => {});
+store.setting('kirmes_pot').then((v) => { if (v) kirmesPot = Math.max(KM.JACKPOT_SEED, Number(v) || KM.JACKPOT_SEED); }).catch(() => {});
+const KMAX = 1000000;
+const kirmesOk = (u, res, key) => {
+  if (!kirmesLive && !isAdmin(u)) { res.status(403).json({ error: 'Die Kirmes öffnet bald!' }); return false; }
+  return !gameLocked(key, res);
+};
+const kBet = (req, res, u) => {
+  const bet = Math.round(Number(req.body.bet) || 0), have = Number(u.diamonds) || 0;
+  if (bet < MIN_BET) { res.status(400).json({ error: `Mindesteinsatz ${fmtD(MIN_BET)} 💎.` }); return 0; }
+  if (bet > KMAX) { res.status(400).json({ error: `Höchsteinsatz ${fmtD(KMAX)} 💎.` }); return 0; }
+  if (have < bet) { res.status(400).json({ error: 'So viele Diamanten hast du nicht.' }); return 0; }
+  return bet;
+};
+const kPay = async (u, game, bet, won, text) => { // Einsatz ab, Gewinn drauf, Casino-XP, Großgewinn-Meldung
+  const after = (Number(u.diamonds) || 0) - bet + won;
+  note(`${GAME_NAMES[game]}: ${fmtD(bet)} Einsatz → ${text}${won ? ' · Auszahlung ' + fmtD(won) : ''}`);
+  await store.save(u.id, { diamonds: after });
+  await casinoStat(u.id, bet, won); await bigWin(u.id, GAME_NAMES[game], won);
+  return after;
+};
+app.get('/api/casino/kirmes', async (req, res) => {
+  const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+  res.json({ live: kirmesLive, pot: kirmesPot, horses: KM.HORSES.map((h) => ({ name: h.name, color: h.color, m: h.m })), lukas: KM.LUKAS.map((t) => ({ m: t.m, from: t.from, to: t.to, label: t.label })), claw: KM.CLAW.map((t) => ({ m: t.m, label: t.label, k: t.k })), push: KM.PUSH.map((t) => ({ m: t.m, label: t.label })), max: KMAX, min: MIN_BET });
+});
+app.post('/api/casino/kirmes/lukas', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!kirmesOk(u, res, 'lukas')) return; const bet = kBet(req, res, u); if (!bet) return;
+    const r = KM.lukas(), won = Math.round(bet * r.mult);
+    res.json({ ...r, won, diamonds: await kPay(u, 'lukas', bet, won, `Höhe ${r.height} (${r.label})`) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/kirmes/race', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!kirmesOk(u, res, 'race')) return; const bet = kBet(req, res, u); if (!bet) return;
+    const horse = Math.round(Number(req.body.horse)); if (!(horse >= 0 && horse < KM.HORSES.length)) return res.status(400).json({ error: 'Wähl zuerst ein Pferd.' });
+    const r = KM.race(), won = r.winner === horse ? Math.round(bet * KM.HORSES[horse].m) : 0;
+    res.json({ ...r, horse, won, diamonds: await kPay(u, 'race', bet, won, `auf ${KM.HORSES[horse].name}, Sieger ${KM.HORSES[r.winner].name}`) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/kirmes/claw', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!kirmesOk(u, res, 'claw')) return; const bet = kBet(req, res, u); if (!bet) return;
+    const r = KM.claw(), won = Math.round(bet * r.mult);
+    if (r.pack) await store.packAdd(u.id, r.pack, 1);
+    res.json({ ...r, won, diamonds: await kPay(u, 'claw', bet, won, r.label) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/casino/kirmes/pusher', async (req, res) => {
+  try {
+    const u = await auth(req); if (!u) return res.status(401).json({ error: 'Bitte neu anmelden.' });
+    if (!kirmesOk(u, res, 'pusher')) return; const bet = kBet(req, res, u); if (!bet) return;
+    const r = KM.pusher(); let won = Math.round(bet * r.mult), jackpot = 0;
+    kirmesPot += Math.round(bet * KM.JACKPOT_SHARE);
+    if (r.jackpot) { jackpot = kirmesPot; won += jackpot; kirmesPot = KM.JACKPOT_SEED; io.emit('kirmes:jackpot', { name: u.name, amount: jackpot }); }
+    store.setting('kirmes_pot', String(kirmesPot)).catch(() => {});
+    io.to('kirmes').emit('kirmes:pot', { pot: kirmesPot });
+    res.json({ ...r, won, jackpot, pot: kirmesPot, diamonds: await kPay(u, 'pusher', bet, won, jackpot ? `JACKPOT ${fmtD(jackpot)}` : r.label) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
+});
+app.post('/api/admin/kirmes', async (req, res) => {
+  const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
+  kirmesLive = !!(req.body || {}).live; await store.setting('kirmes_live', kirmesLive ? '1' : '0');
+  console.log(`Kirmes & Rakete ${kirmesLive ? 'FÜR ALLE freigegeben' : 'nur für den Admin'} durch ${u.name}`);
+  io.emit('kirmes:live', { live: kirmesLive }); res.json({ live: kirmesLive });
+});
+
+// ---------- Rakete: eine gemeinsame Runde für alle, bis zu 8 Spieler setzen pro Runde ----------
+const RK = { phase: 'idle', round: 0, startAt: Date.now() + 10000, flyAt: 0, crash: 0, bets: new Map(), history: [], timer: null, viewers: 0 };
+const RK_WAIT = 10000, RK_MAX = 8;
+const rkPublic = () => ({ phase: RK.phase, round: RK.round, startAt: RK.startAt, flyAt: RK.flyAt, now: Date.now(), crash: RK.phase === 'crash' ? RK.crash : null, history: RK.history.slice(0, 12), max: RK_MAX,
+  bets: [...RK.bets.values()].map((b) => ({ id: b.id, name: b.name, bet: b.bet, cashed: b.cashed, auto: b.auto })) });
+const rkEmit = () => io.to('rocket').emit('rk:state', rkPublic());
+function rkWait() { RK.phase = 'wait'; RK.round++; RK.bets = new Map(); RK.startAt = Date.now() + RK_WAIT; rkEmit(); clearTimeout(RK.timer); RK.timer = setTimeout(rkFly, RK_WAIT); }
+function rkFly() {
+  if (!RK.bets.size) { // niemand hat gesetzt: neue Wartezeit, nur solange jemand zuschaut
+    const room = io.sockets.adapter.rooms.get('rocket'); if (!room || !room.size) { RK.phase = 'idle'; return; }
+    RK.startAt = Date.now() + RK_WAIT; rkEmit(); RK.timer = setTimeout(rkFly, RK_WAIT); return;
+  }
+  RK.phase = 'fly'; RK.crash = KM.crashPoint(); RK.flyAt = Date.now(); rkEmit();
+  const crashMs = KM.msFor(RK.crash);
+  for (const b of RK.bets.values()) if (b.auto && b.auto <= RK.crash) setTimeout(() => rkCash(b.id, b.auto), Math.max(0, KM.msFor(b.auto)));
+  RK.timer = setTimeout(rkCrash, crashMs);
+}
+async function rkCash(uid, forced) {
+  if (RK.phase !== 'fly') return null; const b = RK.bets.get(uid); if (!b || b.cashed) return null;
+  const m = forced || KM.multAt(Date.now() - RK.flyAt); if (m >= RK.crash) return null;
+  b.cashed = m; const won = Math.round(b.bet * m);
+  try { const u = await store.userById(uid); note(`Rakete: ${fmtD(b.bet)} Einsatz → ausgestiegen bei ${m.toFixed(2)}× · Auszahlung ${fmtD(won)}`); await store.save(uid, { diamonds: (Number(u.diamonds) || 0) + won }); await casinoStat(uid, b.bet, won); await bigWin(uid, 'Rakete', won); } catch (e) { console.error(e); }
+  io.to('rocket').emit('rk:cash', { id: uid, name: b.name, m, won }); return { m, won };
+}
+async function rkCrash() {
+  RK.phase = 'crash'; RK.history.unshift(RK.crash); RK.history = RK.history.slice(0, 20); rkEmit();
+  for (const b of RK.bets.values()) if (!b.cashed) { try { await casinoStat(b.id, b.bet, 0); } catch (e) {} }
+  console.log(`Rakete Runde ${RK.round}: Absturz bei ${RK.crash.toFixed(2)}× · ${RK.bets.size} Spieler`);
+  RK.timer = setTimeout(rkWait, 3500);
+}
+function rkSocket(socket) {
+  socket.on('rk:join', () => { socket.join('rocket'); if (RK.phase === 'idle') rkWait(); else socket.emit('rk:state', rkPublic()); });
+  socket.on('rk:leave', () => socket.leave('rocket'));
+  socket.on('rk:bet', async (d, cb) => {
+    const reply = typeof cb === 'function' ? cb : () => {};
+    try {
+      const me = socket.data.user; if (!me) return reply({ error: 'Bitte neu anmelden.' });
+      const u = await store.userById(me.id); if (!u) return reply({ error: 'Bitte neu anmelden.' });
+      if (!kirmesLive && !isAdmin(u)) return reply({ error: 'Die Rakete startet bald!' });
+      if (lockedGames.has('rocket')) return reply({ error: 'Die Rakete ist gerade gesperrt.' });
+      const ban = casinoBan(u); if (ban) return reply({ error: banMsg(ban) });
+      if (RK.phase !== 'wait') return reply({ error: 'Die Rakete fliegt schon. Setz in der nächsten Runde!' });
+      if (RK.bets.has(u.id)) return reply({ error: 'Du hast in dieser Runde schon gesetzt.' });
+      if (RK.bets.size >= RK_MAX) return reply({ error: `Diese Runde ist voll (${RK_MAX} Spieler).` });
+      const bet = Math.round(Number(d && d.bet) || 0), have = Number(u.diamonds) || 0;
+      if (bet < MIN_BET || bet > KMAX) return reply({ error: `Einsatz zwischen ${fmtD(MIN_BET)} und ${fmtD(KMAX)} 💎.` });
+      if (have < bet) return reply({ error: 'So viele Diamanten hast du nicht.' });
+      const auto = d && Number(d.auto) >= 1.01 ? Math.min(KM.ROCKET_MAX, Math.floor(Number(d.auto) * 100) / 100) : null;
+      note(`Rakete: ${fmtD(bet)} gesetzt`); await store.save(u.id, { diamonds: have - bet });
+      RK.bets.set(u.id, { id: u.id, name: u.name, bet, auto, cashed: null }); rkEmit(); reply({ ok: true, diamonds: have - bet });
+    } catch (e) { console.error(e); reply({ error: 'Serverfehler.' }); }
+  });
+  socket.on('rk:cash', async (d, cb) => { const reply = typeof cb === 'function' ? cb : () => {}; const me = socket.data.user; if (!me) return reply({ error: 'Bitte neu anmelden.' }); const r = await rkCash(me.id); reply(r || { error: 'Zu spät, die Rakete ist schon weg!' }); });
+}
+// Die erste Runde startet, sobald jemand die Rakete öffnet (rk:join)
+
 // Blackjack mit vollen Regeln: Teilen, Verdoppeln, Versicherung, Aufgeben
 const BJ = casino.bj;
 const bjSend = async (res, uid, g, left) => {
@@ -1811,7 +1942,7 @@ store.setting('tab_badges').then((v) => { if (v) tabBadges = JSON.parse(v); if (
 if (!('crypt' in tabBadges)) tabBadges.crypt = 'NEU';
 let slotsLive = false; // neue Automaten (Narrenkappe, Auge des Anubis) mit Update 14 für alle freigegeben
 store.setting('slots_live').then((v) => { slotsLive = v === '1'; }).catch(() => {});
-const newsVisible = (p) => !p.requires || (p.requires === 'gn' && gnOpen) || (p.requires === 'slots' && slotsLive); // Beiträge erst nach ihrer Freigabe
+const newsVisible = (p) => !p.requires || (p.requires === 'gn' && gnOpen) || (p.requires === 'slots' && slotsLive) || (p.requires === 'kirmes' && kirmesLive); // Beiträge erst nach ihrer Freigabe
 let adminCodes = {}; // CODE -> { reward, max, until, note, used: [{ id, name, at }] }
 store.setting('admin_codes').then(async (v) => { if (v) adminCodes = JSON.parse(v);
   if (!adminCodes.SOUNDTRACK) { adminCodes.SOUNDTRACK = { reward: { dia: 15000, items: [] }, max: 0, until: Date.now() + 30 * 86400000, note: 'Update 15: Sound & Effekte', used: [], created: Date.now() }; await saveCodes(); } // Code aus Update 15
@@ -2337,7 +2468,7 @@ const pokerStat = async (uid, stake, won, info = {}) => {
   setTimeout(() => checkProgress(uid), 500);
 };
 const poker = require('./lib/poker')(io, store, pokerStat, async () => !lockedGames.has('poker'), push); // gesperrt, wenn der Admin es abschaltet
-io.on('connection', (socket) => { socket.emit('ver', APP_VER);
+io.on('connection', (socket) => { socket.emit('ver', APP_VER); rkSocket(socket);
   socket.use((packet, next) => { // Wartung: Live-Aktionen (Quiz, Poker, Tische, Zuschauen) nur für den Admin
     if (!maint.on || ['idle', 'presence'].includes(packet[0]) || (socket.data.user && isAdmin(socket.data.user))) return next();
     socket.emit('maint', { on: true, text: maint.text }); next(new Error('Wartung'));
