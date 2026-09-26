@@ -2454,7 +2454,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '255';
+const AVER = '256';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3909,7 +3909,7 @@ const LG_RN = { 2: 'Zweien', 3: 'Dreien', 4: 'Vieren', 5: 'Fünfen', 6: 'Sechsen
 const lgNow = () => Date.now() + lgOff;
 function lgSocketInit() {
   if (!socket || socket.__lg) return; socket.__lg = true;
-  socket.on('lg:list', (l) => { lgList = l || []; if (page === 'casino' && cgame === 'luegen' && !lgId) renderCards(); lgHomeDraw(); });
+  socket.on('lg:list', (l) => { const nl = l || [], changed = JSON.stringify(nl) !== JSON.stringify(lgList); lgList = nl; if (!changed) return; if (page === 'casino' && cgame === 'luegen' && !lgId) renderCards(); lgHomeDraw(); }); // nur bei echter Änderung neu zeichnen
   socket.on('lg:state', (st) => { if (!lgId || st.id !== lgId) return; const prevRev = lgS && lgS.reveal && lgS.reveal.at; lgS = st; lgOff = st.now - Date.now(); if (st.state !== 'play') lgSel.clear(); if (st.reveal && st.reveal.at !== prevRev) lgRevealFx(st.reveal); if (st.state === 'end' && st.winner) lgWinFx(st.winner); if (page === 'casino' && cgame === 'luegen') lgDraw(); });
   socket.on('lg:emote', (x) => { const seat = document.querySelector(`.lg-seat[data-seat="${x.seat}"]`); if (!seat) return; const e = document.createElement('span'); e.className = 'lg-emo'; e.textContent = x.e; seat.appendChild(e); setTimeout(() => e.remove(), 2200); });
 }
@@ -3920,7 +3920,7 @@ function lgHomeDraw() { // offene Tische auf der Startseite
 }
 function renderLuegen(box) {
   lgSocketInit();
-  if (!lgId) { socket.emit('lg:lobby');
+  if (!lgId) { if (!socket.__lgLobby) { socket.__lgLobby = true; socket.emit('lg:lobby'); } // Liste nur einmal anfordern, danach kommen Änderungen von selbst
     box.innerHTML = `<div class="lg-hero"><img src="/kirmes/i_luegen.webp?v=${IMGV}" alt=""><span><b>Lügen</b><small>Leg deine Karten los, bluffe und entlarve die anderen</small></span></div>
       <div class="lg-new"><b>Tisch eröffnen</b>
         <div class="lg-opt"><span>Einsatz</span><div class="km-chips">${[0, 100, 1000, 5000, 25000, 100000].map((v) => `<button class="km-chip ${lgNew.stake === v ? 'on' : ''}" data-lgo="stake:${v}">${v ? chipTxt(v) : 'Spaß'}</button>`).join('')}</div></div>
@@ -6711,7 +6711,7 @@ const banActive = () => { const b = home && home.me && home.me.casinoBan; return
 const banLeft = (t) => { let s = Math.max(0, Math.floor((t - Date.now()) / 1000)); const d = Math.floor(s / 86400); s %= 86400; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (d ? d + ' T ' : '') + [h, m, x].map((v) => String(v).padStart(2, '0')).join(':'); };
 function loadBans() { api('/api/admin/casinoban').then((r) => { const el = $('#cbList'); if (!el) return; el.innerHTML = r.bans.length ? r.bans.map((x) => `<div class="lg-row"><span class="grow"><b>${esc(x.name)}</b></span><small>${x.ban.until ? 'bis ' + new Date(x.ban.until).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'unbefristet'}</small><button class="btn small ghost" data-unban="${esc(x.name)}">Aufheben</button></div>`).join('') : '<small class="sub">Niemand ist gesperrt.</small>'; el.querySelectorAll('[data-unban]').forEach((b) => { b.onclick = () => setBan(b.dataset.unban, 0); }); }).catch(() => {}); }
 function setBan(name, hours) { if (!name) return toast('Spielername fehlt'); api('/api/admin/casinoban', { name, hours }).then((r) => { toast(r.ban ? `🚫 ${r.name} gesperrt` : `${r.name} wieder frei`); loadBans(); }).catch((e) => toast(e.message)); }
-async function loadHome() { if (document.documentElement.classList.contains('booting')) bootPreload(); try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); bootDone(); /* Startseite steht: Balken voll, Ladebildschirm blendet aus */ if (home.luegen && socket) { lgSocketInit(); socket.emit('lg:lobby'); } } catch (e) { if (e.status === 401) logout(); } }
+async function loadHome() { if (document.documentElement.classList.contains('booting')) bootPreload(); try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); bootDone(); /* Startseite steht: Balken voll, Ladebildschirm blendet aus */ if (home.luegen && socket) { lgSocketInit(); if (!socket.__lgLobby) { socket.__lgLobby = true; socket.emit('lg:lobby'); } } } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
   if (socket) socket.disconnect();
