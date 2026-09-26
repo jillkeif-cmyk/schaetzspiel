@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de">
 <head>
-<script>try { if (localStorage.getItem('sz_token')) { document.documentElement.classList.add('booting'); setTimeout(function () { document.documentElement.classList.remove('booting'); }, 9000); } } catch (e) {}</script>
+<script>window.__bootT = Date.now(); try { if (localStorage.getItem('sz_token')) { document.documentElement.classList.add('booting'); setTimeout(function () { document.documentElement.classList.remove('booting'); }, 8000); } } catch (e) {}</script>
 <link rel="preload" as="image" href="/ui2/splash.webp">
 <style>
 html.booting body{background:#06161A!important}html.booting #app,html.booting #u2nav{visibility:hidden!important}
@@ -13,7 +13,7 @@ html.booting body{background:#06161A!important}html.booting #app,html.booting #u
 #boot .bt-bar{position:absolute;left:14%;right:14%;bottom:calc(11% + env(safe-area-inset-bottom,0px));z-index:2;height:14px;border-radius:99px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),0 0 18px rgba(0,0,0,.6);overflow:hidden}
 #boot .bt-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:linear-gradient(90deg,#E0A21E,#FFE27A 60%,#FFF6C8);box-shadow:0 0 12px rgba(255,226,122,.9);animation:btfill 3.2s cubic-bezier(.2,.7,.3,1) forwards}
 #boot .bt-bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:translateX(-100%);animation:btshine 1.2s linear infinite}
-#boot.done .bt-bar i{animation:none;width:100%;transition:width .25s ease}
+#boot.js .bt-bar i{animation:none;transition:width .3s ease}#boot.done .bt-bar i{animation:none;width:100%!important;transition:width .25s ease}
 @keyframes btfill{0%{width:0}35%{width:48%}100%{width:86%}}@keyframes btshine{to{transform:translateX(100%)}}
 #boot .bt-txt{position:absolute;left:0;right:0;bottom:calc(11% + 26px + env(safe-area-inset-bottom,0px));z-index:2;text-align:center;font:800 12.5px/1 system-ui,sans-serif;letter-spacing:1.5px;color:#FFF3C4;text-shadow:0 1px 4px #000}
 </style>
@@ -2452,7 +2452,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '253';
+const AVER = '254';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -6709,7 +6709,7 @@ const banActive = () => { const b = home && home.me && home.me.casinoBan; return
 const banLeft = (t) => { let s = Math.max(0, Math.floor((t - Date.now()) / 1000)); const d = Math.floor(s / 86400); s %= 86400; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (d ? d + ' T ' : '') + [h, m, x].map((v) => String(v).padStart(2, '0')).join(':'); };
 function loadBans() { api('/api/admin/casinoban').then((r) => { const el = $('#cbList'); if (!el) return; el.innerHTML = r.bans.length ? r.bans.map((x) => `<div class="lg-row"><span class="grow"><b>${esc(x.name)}</b></span><small>${x.ban.until ? 'bis ' + new Date(x.ban.until).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'unbefristet'}</small><button class="btn small ghost" data-unban="${esc(x.name)}">Aufheben</button></div>`).join('') : '<small class="sub">Niemand ist gesperrt.</small>'; el.querySelectorAll('[data-unban]').forEach((b) => { b.onclick = () => setBan(b.dataset.unban, 0); }); }).catch(() => {}); }
 function setBan(name, hours) { if (!name) return toast('Spielername fehlt'); api('/api/admin/casinoban', { name, hours }).then((r) => { toast(r.ban ? `🚫 ${r.name} gesperrt` : `${r.name} wieder frei`); loadBans(); }).catch((e) => toast(e.message)); }
-async function loadHome() { try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); bootDone(); /* Startseite steht: Balken voll, Ladebildschirm blendet aus */ if (home.luegen && socket) { lgSocketInit(); socket.emit('lg:lobby'); } } catch (e) { if (e.status === 401) logout(); } }
+async function loadHome() { if (document.documentElement.classList.contains('booting')) bootPreload(); try { home = await api('/api/home'); applyTheme(home.theme, home.themeAnim); tagColor = home.me.tagColor || 'cyan'; loadFriends(); if (!S) update(); bootDone(); /* Startseite steht: Balken voll, Ladebildschirm blendet aus */ if (home.luegen && socket) { lgSocketInit(); socket.emit('lg:lobby'); } } catch (e) { if (e.status === 401) logout(); } }
 
 function connect() {
   if (socket) socket.disconnect();
@@ -7006,7 +7006,28 @@ function fillSocial() {
   }).catch(() => {});
 }
 
-function bootDone() {
+const BOOT_MIN = 1900, BOOT_MAX = 5000; // Ladebildschirm mindestens ~2 s, höchstens 5 s
+function bootPreload() { // wichtige Bilder im Hintergrund vorladen, solange der Ladebildschirm steht
+  if (window.__bootPre) return; const P = window.__bootPre = { n: 0, done: 0, home: false };
+  const v = '?v=' + IMGV, u2 = ['i_quiz', 'i_cards', 'i_shop', 'i_casino', 'i_friends', 'i_gift', 'i_trophy', 'i_flame', 'i_news', 'i_gear', 'i_roulette', 'i_blackjack', 'i_bjtables', 'i_album', 'i_graded', 'i_market', 'i_trade', 'i_history', 'i_melt', 'i_poker', 'i_support', 'isle_0'];
+  const km = ['i_lukas', 'i_race', 'i_pusher', 'i_rocket', 'i_luegen', 'carnival', 'pf', 'coin', 'chip0', 'chip1', 'chip2', 'chip3', 'lukas_scene', 'puck', 'mallet', 'track', 'horse0', 'horse1', 'horse2', 'horse3', 'horse4', 'horse5', 'space', 'rocket', 'boom'];
+  const tcgs = ['diamond', 'chest', 'pack_standard', 'pack_premium', 'pack_toon', 'pack_gn', 'pack_ghost', 'poker_classic', 'wheel'];
+  const vip = Math.max(0, Math.min(10, (home && home.me && home.me.vipTier) || 0)); // eigenes VIP-Abzeichen
+  const list = [...u2.map((n) => U2(n)), ...km.map((n) => `/kirmes/${n}.webp${v}`), ...tcgs.map((n) => `/tcg/${n}.webp${v}`), `/news/u17_hero.webp${v}`, `/news/u19_hero.webp${v}`, `/emblems/vip0.webp${v}`, `/emblems/vip${vip}.webp${v}`];
+  P.n = list.length; window.__bootImgs = list.map((u) => { const im = new Image(); im.onload = im.onerror = () => { P.done++; }; im.decoding = 'async'; im.src = u; return im; });
+  const b = document.getElementById('boot'); if (b) b.classList.add('js');
+  const tick = () => { // echter Fortschritt: Daten der Startseite + vorgeladene Bilder, nie schneller als die Mindestdauer
+    const bar = document.querySelector('#boot .bt-bar i'); if (!bar || !document.documentElement.classList.contains('booting')) return;
+    const el = Date.now() - (window.__bootT || Date.now()), real = 12 + (P.home ? 38 : 0) + 50 * (P.n ? P.done / P.n : 1);
+    bar.style.width = Math.min(real, 12 + 88 * Math.min(1, el / BOOT_MIN)) + '%';
+    const t = document.getElementById('btTxt'); if (t && !P.fin) t.textContent = P.home ? (P.done < P.n ? 'Lade Grafiken …' : 'Fast fertig …') : 'Lade dein Spiel …';
+    if (P.home && ((el >= BOOT_MIN && P.done >= P.n) || el >= BOOT_MAX)) { P.fin = true; bootFinish(); return; }
+    setTimeout(tick, 100);
+  };
+  tick();
+}
+function bootDone() { if (window.__bootPre) window.__bootPre.home = true; else bootFinish(); } // Startseite steht; Ende steuert bootPreload
+function bootFinish() {
   const b = document.getElementById('boot'); if (!b || !document.documentElement.classList.contains('booting')) return;
   const t = document.getElementById('btTxt'); if (t) t.textContent = 'Los geht’s!'; b.classList.add('done');
   setTimeout(() => { b.classList.add('out'); document.documentElement.classList.remove('booting'); setTimeout(() => b.classList.remove('out'), 500); }, 260);
