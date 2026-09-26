@@ -15,6 +15,8 @@ html.booting body{background:#06161A!important}html.booting #app,html.booting #u
 #boot .bt-bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:translateX(-100%);animation:btshine 1.2s linear infinite}
 #boot.js .bt-bar i{animation:none;transition:width .3s ease}#boot.done .bt-bar i{animation:none;width:100%!important;transition:width .25s ease}
 @keyframes btfill{0%{width:0}35%{width:48%}100%{width:86%}}@keyframes btshine{to{transform:translateX(100%)}}
+#boot .bt-txt.in{animation:btin .25s ease-out}@keyframes btin{from{opacity:0;transform:translateY(4px)}}
+#boot .bt-pct{position:absolute;left:0;right:0;bottom:calc(11% - 22px + env(safe-area-inset-bottom,0px));z-index:2;text-align:center;font:800 11px/1 system-ui,sans-serif;letter-spacing:1px;color:rgba(255,243,196,.75)}
 #boot .bt-txt{position:absolute;left:0;right:0;bottom:calc(11% + 26px + env(safe-area-inset-bottom,0px));z-index:2;text-align:center;font:800 12.5px/1 system-ui,sans-serif;letter-spacing:1.5px;color:#FFF3C4;text-shadow:0 1px 4px #000}
 </style>
 <meta charset="utf-8">
@@ -2429,7 +2431,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 </style>
 </head>
 <body>
-<div id="boot" aria-hidden="true"><div class="bt-logo">PUNKTLANDUNG<small>DAS SCHÄTZ-QUIZ</small></div><div class="bt-txt" id="btTxt">Lade dein Spiel …</div><div class="bt-bar"><i></i></div></div>
+<div id="boot" aria-hidden="true"><div class="bt-logo">PUNKTLANDUNG<small>DAS SCHÄTZ-QUIZ</small></div><div class="bt-txt" id="btTxt">Verbinde mit dem Server …</div><div class="bt-bar"><i></i></div><div class="bt-pct" id="btPct">0 %</div></div>
 <div id="wrap">
   <div id="tape" aria-hidden="true"><div id="tapeBand"></div><div id="tapeSec"></div></div>
   <main id="app"><div id="bootSplash" style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#FFE27A;font:800 15px system-ui,sans-serif;text-align:center">
@@ -2452,7 +2454,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '254';
+const AVER = '255';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -7020,7 +7022,14 @@ function bootPreload() { // wichtige Bilder im Hintergrund vorladen, solange der
     const bar = document.querySelector('#boot .bt-bar i'); if (!bar || !document.documentElement.classList.contains('booting')) return;
     const el = Date.now() - (window.__bootT || Date.now()), real = 12 + (P.home ? 38 : 0) + 50 * (P.n ? P.done / P.n : 1);
     bar.style.width = Math.min(real, 12 + 88 * Math.min(1, el / BOOT_MIN)) + '%';
-    const t = document.getElementById('btTxt'); if (t && !P.fin) t.textContent = P.home ? (P.done < P.n ? 'Lade Grafiken …' : 'Fast fertig …') : 'Lade dein Spiel …';
+    const t = document.getElementById('btTxt'), pc = document.getElementById('btPct'), shown = Math.round(parseFloat(bar.style.width) || 0);
+    if (pc) pc.textContent = shown + ' %';
+    if (t && !P.fin) { // Statusmeldungen passend zum echten Stand, wechseln alle ~0,45 s
+      const A = ['Verbinde mit dem Server …', 'Lade deinen Spielstand …', 'Synchronisiere Diamanten …', 'Prüfe deine Belohnungen …'];
+      const B = ['Mische die Karten …', 'Poliere die Münzen …', 'Stelle die Quizfragen bereit …', 'Sattle die Pferde …', 'Wärme die Automaten auf …', 'Betanke die Rakete …', 'Richte die Casino-Tische aus …', 'Schmücke die Kirmes …', 'Zähle die Chips …', 'Öle den Münzschieber …'];
+      const k = Math.floor(el / 450), msg = !P.home ? A[k % A.length] : P.done < P.n || shown < 92 ? B[k % B.length] : 'Fast fertig …';
+      if (t.textContent !== msg) { t.textContent = msg; t.classList.remove('in'); void t.offsetWidth; t.classList.add('in'); }
+    }
     if (P.home && ((el >= BOOT_MIN && P.done >= P.n) || el >= BOOT_MAX)) { P.fin = true; bootFinish(); return; }
     setTimeout(tick, 100);
   };
