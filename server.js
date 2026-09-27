@@ -2343,7 +2343,7 @@ app.post('/api/redeem', async (req, res) => {
       if (ac.max && ac.used.length >= ac.max) return res.status(400).json({ error: 'Dieser Code wurde schon zu oft eingelöst.' });
       ac.used.push({ id: u.id, name: u.name, at: Date.now() }); await saveCodes();
       await grantReward(u.id, ac.reward);
-      return res.json({ reward: rewardText(ac.reward), diamonds: ac.reward.dia || 0, code, items: { emblems: [], titles: [], frames: [] } });
+      return res.json({ reward: rewardText(ac.reward), diamonds: ac.reward.dia || 0, code, items: { emblems: [], titles: [], frames: [] }, packs: (ac.reward.items || []).map((x) => ({ id: x.id, n: x.n, name: (tcg.PACKS[x.id] || {}).name || x.id })) }); // Booster mitschicken, damit man sieht, was man bekommt
     }
     const r = cards.redeem(u, req.body.code);
     if (!r.ok) return res.status(400).json({ error: r.error });

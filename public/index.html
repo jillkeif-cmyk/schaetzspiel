@@ -2465,7 +2465,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '262';
+const AVER = '264';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2791,9 +2791,11 @@ function showCodeReveal(r) {
     ...it.titles.map((t) => `<div class="cr-item cr-wide" style="--d:${0}"><img class="titleimg a-${esc(t.anim || '')}" src="/emblems/title_${esc(t.id)}.webp?v=${IMGV}" alt=""><b>${esc(t.text)}</b><small>Titel</small></div>`),
     ...it.emblems.map((e) => `<div class="cr-item"><img class="pcemb a-${esc(e.anim || '')}" style="--s:74px" src="/emblems/pc_${esc(e.id)}.webp?v=${IMGV}" alt=""><b>${esc(e.name)}</b><small>Emblem</small></div>`),
     ...it.frames.map((f) => `<div class="cr-item">${avatar({ ...me, frame: f.id, frameAnim: f.anim }, 74, false)}<b>${esc(f.name)}</b><small>Rahmen</small></div>`),
+    ...(r.packs || []).map((p) => `<div class="cr-item"><img style="width:74px;height:92px;object-fit:contain" src="/tcg/pack_${esc(p.id)}.webp?v=${IMGV}" alt=""><b>${p.n}× ${esc(p.name)}</b><small>Booster</small></div>`), // Booster aus Codes sichtbar
   ];
   u.innerHTML = `<div class="rays"></div><div class="in cr">
     <p class="sub">Code eingelöst</p><h1 class="cr-code">${esc(r.code || '')}</h1>
+    ${!r.diamonds && !tiles.length && r.reward ? `<p class="sub" style="font-size:16px;color:#FFE27A">${esc(r.reward)}</p>` : ''}
     ${r.diamonds ? `<div class="cr-dia"><img src="/tcg/diamond.webp?v=${IMGV}" alt=""><b>+${fmt(r.diamonds)}</b><span>Diamanten</span></div>` : ''}
     <div class="cr-grid">${tiles.map((h, i) => h.replace('class="cr-item', `style="--d:${i}" class="cr-item`)).join('')}</div>
     <button class="btn" id="unlockOk" style="min-width:220px">Stark!</button></div>`;
@@ -3644,7 +3646,7 @@ function kmSnd(name, opt = {}) {
 // ---------- Münzschieber: ein gemeinsamer Automat, Pool bleibt liegen, einer spielt, alle schauen zu ----------
 let pmS = null, pmN = 10, pmBusy = false, pmQ = [];
 function kmPushStage() {
-  return `<div class="pf"><canvas id="pfCv"></canvas>${home && home.me && home.me.admin ? `<button class="pf-mode" data-pf3="1">${pf3On() ? '3D' : '2D'} <small>umschalten</small></button>` : ''}
+  return `<div class="pf"><canvas id="pfCv"></canvas><button class="pf-mode" data-pf3="1">${pf3On() ? '🎮 3D' : '🖼️ 2D'} <small>${pf3On() ? 'zu 2D wechseln' : 'zu 3D wechseln'}</small></button>
     <div class="pm-hud"><span>IM AUTOMATEN</span><b id="pmPool">${pmS ? fmt(pmS.pool) : '…'}</b><small id="pmVal">${pmS ? 'Münzen · ≈ ' + fmt(pmS.pool * 100) + ' 💎' : ''}</small><div class="pm-press" id="pmPress"></div></div>
     <div class="pm-seat" id="pmSeat"></div></div>`;
 }
@@ -3798,7 +3800,7 @@ function pfDraw() {
   return true;
 }
 let PF3 = null; // 3D-Modul, sobald geladen
-const pf3On = () => { try { if (!(home && home.me && home.me.admin)) return false; /* Prototyp: vorerst nur für den Admin */ if (localStorage.getItem('pf3d') === '0') return false; const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
+const pf3On = () => { try { if (localStorage.getItem('pf3d') === '0') return false; /* 3D für alle, abschaltbar */ const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } };
 const pf3N = (pool) => Math.max(70, Math.min(220, Math.round(pool / 8))); // 3D: 1 Münze im Bild = 8 im Automaten
 function pfStart() {
   if (pf3On()) { const host = document.querySelector('.pf'), cv0 = $('#pfCv'); if (cv0) cv0.style.display = 'none'; cancelAnimationFrame(window.__pfRaf || 0);
@@ -4148,6 +4150,34 @@ async function doSpin() {
     }, 4700);
   } catch (e) { spinning = false; document.body.classList.remove('r-spin'); toast(e.message); }
 }
+// Sanftes Neuzeichnen für Blackjack: unsichtbar daneben aufbauen, nur geänderte Teile austauschen (kein Flackern)
+function softSwap(oldEl, newEl, depth) { // Zuordnung nach Art: passendes altes Element behalten, nur Geändertes übernehmen
+  const olds = [...oldEl.childNodes], used = new Set(), out = [];
+  for (const y of [...newEl.childNodes]) {
+    if (y.nodeType === 3) { const x = olds.find((o) => o.nodeType === 3 && !used.has(o)); if (x) { used.add(x); if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; out.push(x); } else out.push(y); continue; }
+    if (y.nodeType !== 1 || depth <= 0) { out.push(y); continue; }
+    const base = (e) => (e.classList && e.classList[0]) || '', x = olds.find((o) => o.nodeType === 1 && !used.has(o) && o.nodeName === y.nodeName && o.className === y.className) || olds.find((o) => o.nodeType === 1 && !used.has(o) && o.nodeName === y.nodeName && base(o) === base(y) && (!o.id || o.id === y.id)); // erst genau, dann nach Grundklasse
+    if (!x) { out.push(y); continue; }
+    used.add(x);
+    if (x.outerHTML !== y.outerHTML) {
+      for (const a of [...x.attributes]) if (!y.hasAttribute(a.name) && a.name !== 'data-sid') x.removeAttribute(a.name);
+      for (const a of [...y.attributes]) if (x.getAttribute(a.name) !== a.value) x.setAttribute(a.name, a.value);
+      if ('value' in y && x.value !== y.value && document.activeElement !== x) x.value = y.value;
+      softSwap(x, y, depth - 1);
+    }
+    if (y.onclick) x.onclick = y.onclick; if (y.oninput) x.oninput = y.oninput; if (y.onchange) x.onchange = y.onchange;
+    out.push(x);
+  }
+  const cur = [...oldEl.childNodes]; if (cur.length !== out.length || cur.some((n, k) => n !== out[k])) oldEl.replaceChildren(...out);
+}
+function casSoft() {
+  const live = $('#cgame'); if (!live || !live.firstChild) return renderCasino();
+  const ids = [...live.querySelectorAll('[id]')]; ids.forEach((e) => { e.dataset.sid = e.id; e.removeAttribute('id'); }); live.id = 'cgameLive';
+  const off = document.createElement('div'); off.id = 'cgame'; off.style.cssText = `position:absolute;left:-9999px;top:0;width:${live.clientWidth}px;visibility:hidden;pointer-events:none`; document.body.appendChild(off);
+  try { renderCasino(); } finally { off.removeAttribute('id'); live.id = 'cgame'; }
+  softSwap(live, off, 6); off.remove();
+  live.querySelectorAll('[data-sid]').forEach((e) => { if (!e.id) e.id = e.dataset.sid; delete e.dataset.sid; }); // behaltene Elemente bekommen ihre ID zurück
+}
 let bjBusy = false;
 async function bjAction(path) {
   if (bjBusy) return;
@@ -4157,7 +4187,7 @@ async function bjAction(path) {
     if (path === 'deal') for (const k of Object.keys(bjDrawn)) delete bjDrawn[k];
     bj = path === 'deal' ? await api('/api/casino/bj/deal', { amount }) : await api('/api/casino/bj/act', { action: path });
     sfx('dart');
-    renderCasino();
+    casSoft(); // statt die ganze Seite neu zu zeichnen
     bjMark('d', bj.dealer.filter((c) => !c.hidden).length); bjMark('dh', 2); // verdeckte Karte nicht erneut animieren
     bj.hands.forEach((h, i) => bjMark('h' + i, h.cards.length));
     if (bj.over) casinoDone(bj);
@@ -6830,7 +6860,7 @@ function connect() {
   socket.on('bj:state', (t) => {
     const prev = bjT; bjT = t;
     if (t && prev && prev.phase !== 'done' && t.phase === 'done') { const me = t.seats.find((x) => x.id === home.me.id); if (me && me.payout) { sfx('exact'); toast(`+${fmt(me.payout)} Diamanten`); } }
-    if (page === 'casino' && cgame === 'tables') renderCasino();
+    if (page === 'casino' && cgame === 'tables') casSoft(); // Tische: nur Geändertes austauschen
   });
   socket.on('note', (m) => { toast(m); sfx('sent'); });
   socket.on('diamonds', (n) => { syncDia(n); });
