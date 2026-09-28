@@ -2444,6 +2444,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 .rp-guess{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:10px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
 .rp-in{min-width:60px;font:800 15px Archivo,sans-serif;color:rgba(255,255,255,.45)}.rp-unit{font:800 14px Archivo,sans-serif;color:#FFE27A}
 .rp-warn{font:800 11.5px Archivo,sans-serif;color:#FF9B6B}
+.rp-ans{display:flex;flex-direction:column;gap:3px;margin-top:4px}.rp-ans small{font:700 11.5px Archivo,sans-serif;color:var(--muted)}.rp-ans span{font:600 13px Archivo,sans-serif;color:#EAF6F8}.rp-ans i{opacity:.7}
 </style>
 </head>
 <body>
@@ -2470,7 +2471,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '265';
+const AVER = '266';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -6419,7 +6420,7 @@ function loadAdmin() {
         <p class="rp-q">${esc(r.q)}</p>${r.opts ? `<div class="rp-opts">${r.opts.map((o, i) => `<span class="${i === 0 ? 'ok' : ''}">${i === 0 ? '✓ ' : ''}${esc(o)}</span>`).join('')}</div>` : `<p class="sub" style="margin:0">Lösung: <b>${esc(String(r.a))}${r.unit ? ' ' + esc(r.unit) : ''}</b></p>`}
         ${r.t !== 'mc' && r.q !== '(Frage nicht mehr im Pool)' ? (() => { const u = String(r.unit || ''), odd = !u.trim() ? 'ohne Einheit' : /[…]|\.{2,}|^[\s.·]/.test(u) ? 'Einheit enthält Auslassungspunkte' : ''; return `<div class="rp-field"><small>Antwortfeld beim Spieler:</small><div class="rp-guess"><span class="rp-in">0</span>${u ? `<span class="rp-unit">${esc(u)}</span>` : ''}</div>${odd ? `<span class="rp-warn">⚠️ ${odd}</span>` : ''}</div>`; })() : ''}
         <p class="sub" style="margin:2px 0 0;font-size:11.5px">${r.cat ? 'Kategorie: ' + esc(r.cat) : ''}${r.ai ? ' · 🤖 von der KI erstellt' : ''}</p>
-        ${r.names.length ? `<p class="sub" style="margin:2px 0 0">Gemeldet von: ${r.names.map((n) => esc(n)).join(', ')}</p>` : ''}
+        ${(r.answers && r.answers.length) ? `<div class="rp-ans"><small>Antworten der Meldenden:</small>${r.answers.map((x) => `<span><b>${esc(x.n)}</b>: ${x.a === null || x.a === undefined ? '<i>keine Antwort</i>' : r.t === 'mc' ? esc(String(x.a)) : esc(fmt(Number(x.a))) + (r.unit ? ' ' + esc(r.unit) : '')}</span>`).join('')}</div>` : (r.names.length ? `<p class="sub" style="margin:2px 0 0">Gemeldet von: ${r.names.map((n) => esc(n)).join(', ')} <i style="opacity:.7">(Antwort vor dem Update nicht gespeichert)</i></p>` : '')}
         ${r.status === 'open' ? `<div class="row" style="gap:6px;margin-top:6px"><button class="btn small" data-rpact="block" data-rpq="${esc(r.qid)}">🚫 Gesperrt lassen</button><button class="btn small ghost" data-rpact="keep" data-rpq="${esc(r.qid)}">✅ Entsperren</button></div>` : r.status === 'blocked' ? `<button class="btn small ghost" data-rpact="keep" data-rpq="${esc(r.qid)}" style="margin-top:6px">✅ Entsperren</button>` : `<button class="btn small ghost" data-rpact="block" data-rpq="${esc(r.qid)}" style="margin-top:6px">🚫 Doch sperren</button>`}</div>`).join('') : '<p class="sub">Noch keine Meldungen. 👍</p>';
       window.__rpHtml = box.innerHTML;
       box.querySelectorAll('[data-rpact]').forEach((b) => { b.onclick = () => api('/api/admin/reports', { qid: b.dataset.rpq, action: b.dataset.rpact }).then(() => { toast(b.dataset.rpact === 'block' ? '🚫 Bleibt gesperrt' : '✅ Entsperrt, die Frage kommt wieder'); draw(); }).catch((e) => toast(e.message)); }); }).catch((e) => { const box = $('#rpAdm'); if (box) box.innerHTML = `<p class="sub">${esc(e.message)}</p>`; });
