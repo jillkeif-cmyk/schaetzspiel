@@ -2388,6 +2388,29 @@ app.get('/api/invitable', async (req, res) => { // alle Spieler zum Einladen, on
   } catch (e) { console.error(e); res.status(500).json({ error: 'Serverfehler.' }); }
 });
 const qLookup = (() => { const { pool: builtin } = require('./lib/questions'); const bi = new Map(builtin.map((q) => [q.id, q])); return (id) => (game.qpool && game.qpool.get && game.qpool.get(id)) || bi.get(id) || null; })();
+// ---------- Fragen-Korrekturen: dauerhaft als Liste gespeichert, beim Start auf den Pool angewendet ----------
+let qPatches = {};
+const qPatchApply = () => { let n = 0; for (const [id, p] of Object.entries(qPatches)) { const q = qLookup(id); if (q) { Object.assign(q, p); n++; } } return n; };
+store.setting('q_patches').then((v) => { try { qPatches = JSON.parse(v || '{}'); } catch (e) { qPatches = {}; } let tries = 0; const t = setInterval(() => { const n = qPatchApply(); if (n >= Object.keys(qPatches).length || ++tries > 24) { clearInterval(t); if (n) console.log(`Fragen-Korrekturen angewendet: ${n}`); } }, 5000); }).catch(() => {});
+// ---------- Vorübergehender Prüfzugang (nur aktiv, solange AUDIT_KEY bei Render gesetzt ist) ----------
+const AUDIT_KEY = process.env.AUDIT_KEY || '';
+const auditOk = (req) => AUDIT_KEY.length >= 24 && (req.query.key === AUDIT_KEY || (req.body && req.body.key === AUDIT_KEY));
+const qOut = (q) => q && ({ id: q.id, t: q.t, q: q.q, a: q.a, unit: q.unit || q.u || '', o: q.o, cat: q.cat, ai: !!q.ai, range: q.range });
+app.get('/api/audit/reports', async (req, res) => { if (!auditOk(req)) return res.status(404).end(); const list = await store.reportList(); res.json(list.filter((r) => r.n > 0 || r.status === 'blocked').map((r) => ({ ...r, question: qOut(qLookup(r.qid)) }))); });
+app.get('/api/audit/pool', async (req, res) => { if (!auditOk(req)) return res.status(404).end(); const { pool: builtin } = require('./lib/questions'); const ai = await store.poolAll(); const seen = new Set(), out = []; for (const q of [...builtin, ...ai]) { const x = qLookup(q.id) || q; if (seen.has(x.id)) continue; seen.add(x.id); out.push(qOut(x)); } res.json(out); });
+app.post('/api/audit/fix', async (req, res) => {
+  if (!auditOk(req)) return res.status(404).end();
+  const done = [];
+  for (const f of (req.body.fixes || []).slice(0, 500)) {
+    const q = qLookup(String(f.qid || '')); if (!q) { done.push({ qid: f.qid, error: 'nicht gefunden' }); continue; }
+    const patch = {}; for (const k of ['q', 'a', 'unit', 'o', 'range']) if (f[k] !== undefined) patch[k] = f[k];
+    if (Object.keys(patch).length) { Object.assign(q, patch); qPatches[q.id] = { ...(qPatches[q.id] || {}), ...patch }; }
+    if (f.status === 'kept' || f.status === 'blocked') await store.reportSet(q.id, f.status);
+    done.push({ qid: q.id, patch: Object.keys(patch), status: f.status || '' });
+  }
+  await store.setting('q_patches', JSON.stringify(qPatches)); console.log(`Prüfzugang: ${done.length} Fragen bearbeitet`);
+  res.json({ done });
+});
 app.get('/api/admin/reports', async (req, res) => { // gemeldete Fragen: offen zuerst, mit Frage, Lösung, Meldern und Zeitpunkt
   try {
     const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
