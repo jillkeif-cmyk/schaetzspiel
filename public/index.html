@@ -2439,6 +2439,11 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 
 .pf-mode{position:absolute;left:8px;bottom:8px;z-index:4;padding:4px 10px;border:0;border-radius:99px;background:rgba(0,0,0,.65);box-shadow:inset 0 0 0 1.5px rgba(255,210,63,.6);font:900 11px Archivo,sans-serif;color:#FFE27A}
 .pf-mode small{font:700 9px Archivo,sans-serif;color:#DCC8FF;margin-left:3px}
+
+.rp-field{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 2px}.rp-field small{font:700 11.5px Archivo,sans-serif;color:var(--muted)}
+.rp-guess{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:10px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
+.rp-in{min-width:60px;font:800 15px Archivo,sans-serif;color:rgba(255,255,255,.45)}.rp-unit{font:800 14px Archivo,sans-serif;color:#FFE27A}
+.rp-warn{font:800 11.5px Archivo,sans-serif;color:#FF9B6B}
 </style>
 </head>
 <body>
@@ -2465,7 +2470,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '264';
+const AVER = '265';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -6412,6 +6417,8 @@ function loadAdmin() {
       const box = $('#rpAdm'); if (!box) return;
       box.innerHTML = d.reports.length ? d.reports.map((r) => `<div class="rp-item ${r.status}"><div class="row" style="gap:6px"><b class="grow">${r.status === 'open' ? `🚩 ${r.n}× gemeldet · gesperrt, wartet auf Prüfung` : r.status === 'blocked' ? '🚫 gesperrt (geprüft)' : '✅ entsperrt'}</b><small class="sub">${esc(when(r.at))}</small></div>
         <p class="rp-q">${esc(r.q)}</p>${r.opts ? `<div class="rp-opts">${r.opts.map((o, i) => `<span class="${i === 0 ? 'ok' : ''}">${i === 0 ? '✓ ' : ''}${esc(o)}</span>`).join('')}</div>` : `<p class="sub" style="margin:0">Lösung: <b>${esc(String(r.a))}${r.unit ? ' ' + esc(r.unit) : ''}</b></p>`}
+        ${r.t !== 'mc' && r.q !== '(Frage nicht mehr im Pool)' ? (() => { const u = String(r.unit || ''), odd = !u.trim() ? 'ohne Einheit' : /[…]|\.{2,}|^[\s.·]/.test(u) ? 'Einheit enthält Auslassungspunkte' : ''; return `<div class="rp-field"><small>Antwortfeld beim Spieler:</small><div class="rp-guess"><span class="rp-in">0</span>${u ? `<span class="rp-unit">${esc(u)}</span>` : ''}</div>${odd ? `<span class="rp-warn">⚠️ ${odd}</span>` : ''}</div>`; })() : ''}
+        <p class="sub" style="margin:2px 0 0;font-size:11.5px">${r.cat ? 'Kategorie: ' + esc(r.cat) : ''}${r.ai ? ' · 🤖 von der KI erstellt' : ''}</p>
         ${r.names.length ? `<p class="sub" style="margin:2px 0 0">Gemeldet von: ${r.names.map((n) => esc(n)).join(', ')}</p>` : ''}
         ${r.status === 'open' ? `<div class="row" style="gap:6px;margin-top:6px"><button class="btn small" data-rpact="block" data-rpq="${esc(r.qid)}">🚫 Gesperrt lassen</button><button class="btn small ghost" data-rpact="keep" data-rpq="${esc(r.qid)}">✅ Entsperren</button></div>` : r.status === 'blocked' ? `<button class="btn small ghost" data-rpact="keep" data-rpq="${esc(r.qid)}" style="margin-top:6px">✅ Entsperren</button>` : `<button class="btn small ghost" data-rpact="block" data-rpq="${esc(r.qid)}" style="margin-top:6px">🚫 Doch sperren</button>`}</div>`).join('') : '<p class="sub">Noch keine Meldungen. 👍</p>';
       window.__rpHtml = box.innerHTML;

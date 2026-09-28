@@ -2391,7 +2391,7 @@ const qLookup = (() => { const { pool: builtin } = require('./lib/questions'); c
 app.get('/api/admin/reports', async (req, res) => { // gemeldete Fragen: offen zuerst, mit Frage, Lösung, Meldern und Zeitpunkt
   try {
     const u = await auth(req); if (!u || !isAdmin(u)) return res.status(403).json({ error: 'Nur für den Admin.' });
-    const list = (await store.reportList()).filter((r) => r.n > 0 || r.status === 'blocked').map((r) => { const q = qLookup(r.qid); return { ...r, q: q ? q.q : '(Frage nicht mehr im Pool)', t: q ? q.t : '', a: q ? (q.t === 'mc' ? (q.o || [])[0] : q.a) : '', unit: q ? q.u || q.unit || '' : '', opts: q && q.t === 'mc' ? q.o : null }; });
+    const list = (await store.reportList()).filter((r) => r.n > 0 || r.status === 'blocked').map((r) => { const q = qLookup(r.qid); return { ...r, q: q ? q.q : '(Frage nicht mehr im Pool)', t: q ? q.t : '', a: q ? (q.t === 'mc' ? (q.o || [])[0] : q.a) : '', unit: q ? q.u || q.unit || '' : '', cat: q ? q.cat || '' : '', ai: !!(q && q.ai), opts: q && q.t === 'mc' ? q.o : null }; });
     const rank = (r) => (r.status === 'open' ? 0 : r.status === 'blocked' ? 1 : 2);
     list.sort((a, b) => rank(a) - rank(b) || b.n - a.n || b.at - a.at);
     res.json({ reports: list, open: list.filter((r) => r.status === 'open').length });
