@@ -2405,6 +2405,7 @@ app.post('/api/audit/fix', async (req, res) => {
     const q = qLookup(String(f.qid || '')); if (!q) { done.push({ qid: f.qid, error: 'nicht gefunden' }); continue; }
     const patch = {}; for (const k of ['q', 'a', 'unit', 'o', 'range']) if (f[k] !== undefined) patch[k] = f[k];
     if (Object.keys(patch).length) { Object.assign(q, patch); qPatches[q.id] = { ...(qPatches[q.id] || {}), ...patch }; }
+    if (f.status === 'blocked' && !(await store.reportList()).some((r) => r.qid === q.id)) await store.report(q.id, 'Admin-Prüfung'); // nie gemeldet: erst Eintrag anlegen, sonst greift die Sperre nicht
     if (f.status === 'kept' || f.status === 'blocked') await store.reportSet(q.id, f.status);
     done.push({ qid: q.id, patch: Object.keys(patch), status: f.status || '' });
   }
