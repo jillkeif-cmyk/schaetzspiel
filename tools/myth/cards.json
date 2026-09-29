@@ -1,0 +1,6 @@
+[
+ ["m01", "Ignaros, der Glutdrache", "legend", "Feuer", 9, 3100, 2600, "Wenn diese Karte beschworen wird: Füge jedem Monster deines Gegners 300 Schaden zu. Einmal pro Zug: Diese Karte erhält 200 ATK für jedes zerstörte Monster.", "fire dragon"],
+ ["m02", "Greif der Sturmklippen", "selten", "Luft", 6, 2000, 1500, "Kann direkt angreifen, wenn dein Gegner ein Monster mit weniger als 1500 ATK kontrolliert.", "griffin"],
+ ["m03", "Kraken der Tiefsee", "selten", "Wasser", 7, 2300, 2100, "Einmal pro Zug: Wähle ein Monster deines Gegners. Es kann in diesem Zug nicht angreifen.", "kraken"],
+ ["m04", "Moosiger Steinwächter", "haeufig", "Erde", 3, 900, 1800, "Solange diese Karte in Verteidigung ist, erhalten alle deine Erde-Monster 200 DEF.", "stone golem"]
+]

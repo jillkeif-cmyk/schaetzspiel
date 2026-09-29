@@ -2471,7 +2471,7 @@ body.ui2 #app:not(.maint) #lgHome{order:-3} /* direkt unter SPIELEN */
 <div id="toast" role="status"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const AVER = '266';
+const AVER = '267';
 const IMGV = '1'; // Bilder-Version: NUR erhöhen, wenn sich ein Bild unter gleichem Namen ändert (Bilder werden 30 Tage gespeichert)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -3118,7 +3118,7 @@ function renderVip(box) {
   const v = vipD, N = v.wheel.length, seg = 360 / N;
   const FILL = ['#5B0E1B', '#101214', '#0E4733', '#101214', '#5B0E1B', '#0E4733', '#101214', '#5B0E1B', '#0E4733'];
   const conic = v.wheel.map((l, i) => `${l === 'JACKPOT' ? '#C8922A' : FILL[i % FILL.length]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(',');
-  const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost', Gruselnacht: 'gn', Toon: 'toon' };
+  const PK = { Booster: 'standard', Premium: 'premium', Geister: 'ghost', Gruselnacht: 'gn', Toon: 'toon', Mythen: 'myth' };
   const icon = (l) => (PK[l] ? `<img src="/tcg/pack_${PK[l]}.webp?v=${IMGV}" alt="">` : l === 'JACKPOT' ? '<i>👑</i>' : `<img class="dia" src="/tcg/diamond.webp?v=${IMGV}" alt="">`);
   box.innerHTML = `
     <h2 class="rw-h">Glücksrad</h2>
@@ -4258,7 +4258,7 @@ function renderCards() {
     const F = [['alle', 'Alle'], ['haben', 'Meine'], ['fehlen', 'Fehlende'], ['haeufig', 'Häufig'], ['selten', 'Selten'], ['holo', 'Holo'], ['ultra', 'Ultra'], ['legend', 'Legendär'], ['ext', 'Extended'], ['ghost', 'Ghost Rare 👻'], ['mythic', 'Mythisch ✦']];
     const SF = [['set:gn', 'Gruselnacht 🎃' + (home && home.gnOpen ? '' : ' bald')], ['set:standard', 'Standard-Booster'], ['set:premium', 'Premium-Booster'], ['set:toon', 'Toon-Welt 🎩'], ...(hasDev ? [['set:dev', 'Entwickler-Karten ✦']] : [])];
     if (ui2On()) { // neues Design: erst die Sets als Kacheln, dann die Karten des Sets mit einer Filterreihe
-      const SETS = [['alle', 'Alle Karten', U2('i_album')], ['gn', 'Gruselnacht' + (home && home.gnOpen ? '' : ' · bald'), '/tcg/pack_gn.webp?v=' + IMGV], ['standard', 'Standard', '/tcg/pack_standard.webp?v=' + IMGV], ['premium', 'Premium', '/tcg/pack_premium.webp?v=' + IMGV], ['toon', 'Toon-Welt', '/tcg/pack_toon.webp?v=' + IMGV], ...(hasDev ? [['dev', 'Entwickler', '/tcg/pack_secret.webp?v=' + IMGV]] : [])];
+      const SETS = [['alle', 'Alle Karten', U2('i_album')], ['gn', 'Gruselnacht' + (home && home.gnOpen ? '' : ' · bald'), '/tcg/pack_gn.webp?v=' + IMGV], ['standard', 'Standard', '/tcg/pack_standard.webp?v=' + IMGV], ['premium', 'Premium', '/tcg/pack_premium.webp?v=' + IMGV], ['toon', 'Toon-Welt', '/tcg/pack_toon.webp?v=' + IMGV], ...((() => { const mp = tcg.def.packs.find((x) => x.id === 'myth'); return mp && (!mp.offsale || (home && home.me && home.me.admin)) ? [['myth', 'Mythen & Monster' + (mp.offsale ? ' · Test' : ''), '/tcg/pack_myth.webp?v=' + IMGV]] : []; })()), ...(hasDev ? [['dev', 'Entwickler', '/tcg/pack_secret.webp?v=' + IMGV]] : [])];
       const inSet = (k) => (k === 'alle' ? all.filter(cnt) : all.filter((x) => x.c.set === k));
       if (colSet === null) {
         box.innerHTML = `<p class="sub" style="margin-bottom:10px">${have} von ${allN} Varianten gesammelt</p>` + u2Tiles(SETS.map(([k, n, img]) => { const L2 = inSet(k), h = L2.filter((x) => x.n).length; return { key: k, name: n, img, sub: `${h} von ${L2.length} gesammelt`, warn: !h, attr: `data-colset="${k}"`, small: k !== 'alle' }; }));
@@ -4299,7 +4299,7 @@ function renderCards() {
     const byPrice = (a, b) => (b.price || 0) - (a.price || 0);
     const disps = tcg.def.packs.filter((p) => p.display && !p.off).sort(byPrice);
     const pots = tcg.def.packs.filter((p) => p.potion && !p.off).sort(byPrice);
-    const packs = tcg.def.packs.filter((p) => !p.hidden && !p.offsale).sort(byPrice);
+    const packs = tcg.def.packs.filter((p) => !p.hidden && (!p.offsale || (home && home.me && home.me.admin))).sort(byPrice); // nicht im Verkauf: nur der Admin sieht ihn (zum Testen)
     const cats = [['alle', '✨ Alles'], ['booster', '📦 Booster'], disps.length && ['displays', '🗃 Displays'], pots.length && ['traenke', '🧪 Tränke']].filter(Boolean);
     if (!(ui2On() && shopCat === 'hub') && !cats.some(([k]) => k === shopCat)) shopCat = ui2On() ? 'hub' : 'alle';
     const sec = (k, title, list, card) => (list.length && (shopCat === 'alle' || shopCat === k) ? `<h3 class="shop-sec">${title}</h3>` + list.map((p) => `${card(p)}`).join('') : '');
