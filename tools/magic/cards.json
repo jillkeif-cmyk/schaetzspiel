@@ -1,0 +1,12 @@
+[
+ ["z01", "Phönix Aurelion", "legend", "Feuer", 9, 2900, 2700, "Wird diese Karte zerstört: Beschwöre sie zu Beginn deines nächsten Zuges erneut. Einmal pro Duell.", "phoenix"],
+ ["z02", "Erzmagier Valerian", "legend", "Wissen", 9, 3000, 2800, "Einmal pro Zug: Ziehe eine Karte. Alle deine Magie-Monster erhalten 300 ATK, solange diese Karte auf dem Feld ist.", "archmage"],
+ ["z03", "Meisterin der Tränke", "selten", "Alchemie", 6, 1800, 1900, "Einmal pro Zug: Gib einem deiner Monster 500 ATK oder 500 DEF bis zum Ende des Zuges.", "potion mistress"],
+ ["z04", "Besenflieger der Sturmliga", "selten", "Luft", 5, 2100, 1100, "Kann in dem Zug angreifen, in dem er beschworen wurde. Kann nicht von Erde-Monstern angegriffen werden.", "broom racer"],
+ ["z05", "Einhorn im Nebelwald", "selten", "Licht", 6, 1700, 2200, "Einmal pro Zug: Heile 500 Lebenspunkte. Solange diese Karte in Verteidigung ist, kann sie nicht zerstört werden.", "unicorn"],
+ ["z06", "Zauberlehrling Lumina", "haeufig", "Licht", 3, 1100, 900, "Wenn diese Karte beschworen wird: Schau dir die oberste Karte deines Decks an.", "apprentice"],
+ ["z07", "Die Flüsterbibliothek", "haeufig", "Wissen", 4, 600, 2000, "Solange diese Karte auf dem Feld ist, ziehen beide Spieler am Ende ihres Zuges eine zusätzliche Karte.", "library"],
+ ["z08", "Eulenbote Nachtfeder", "haeufig", "Luft", 2, 800, 600, "Wenn diese Karte beschworen wird: Füge deiner Hand eine Wissen-Karte aus deinem Deck hinzu.", "owl"],
+ ["z09", "Kreischende Alraune", "haeufig", "Erde", 2, 500, 1200, "Wenn diese Karte angegriffen wird: Das angreifende Monster verliert 400 ATK bis zum Ende des Zuges.", "mandrake"],
+ ["z10", "Kerkertroll", "haeufig", "Erde", 4, 1600, 1300, "Diese Karte kann nicht direkt angreifen. Erhält 200 ATK für jedes Erde-Monster auf dem Feld.", "troll"]
+]
